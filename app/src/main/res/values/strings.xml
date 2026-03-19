@@ -1,0 +1,188 @@
+<resources>
+    <!-- App -->
+    <string name="app_name">CatRec - Screen Recorder</string>
+    <string name="app_version">Version 0.5.0 Public Beta</string>
+
+    <!-- Bottom Nav Tabs -->
+    <string name="tab_recording">Recording</string>
+    <string name="tab_screenshots">Screenshots</string>
+    <string name="tab_recordings">Recordings</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_support">Support</string>
+    <string name="tab_tools">Tools</string>
+
+    <!-- Common Actions -->
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_share">Share</string>
+    <string name="action_open">Open</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_start">Start</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+
+    <!-- Recording Screen -->
+    <string name="recording_start">Start Recording</string>
+    <string name="recording_stop">Stop Recording</string>
+    <string name="recording_pause">Pause</string>
+    <string name="recording_resume">Resume</string>
+    <string name="recording_countdown">Starting in…</string>
+    <string name="recording_in_progress">Recording in progress</string>
+    <string name="recording_paused">Recording paused</string>
+
+    <!-- Settings Screen - Section Headers -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_controls">Controls</string>
+    <string name="settings_section_video">Video</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_section_overlay">Overlay</string>
+    <string name="settings_section_screenshots">Screenshots</string>
+    <string name="settings_section_theme">Theme</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="settings_section_general">General</string>
+
+    <!-- Video Settings -->
+    <string name="setting_resolution">Resolution</string>
+    <string name="setting_resolution_native">Native</string>
+    <string name="setting_resolution_custom">Custom resolution…</string>
+    <string name="setting_resolution_custom_hint">e.g. 1920x1080</string>
+    <string name="setting_resolution_custom_error">Enter a valid resolution (e.g. 1920x1080)</string>
+    <string name="setting_fps">Frame Rate (FPS)</string>
+    <string name="setting_bitrate">Video Bitrate</string>
+    <string name="setting_video_encoder">Video Encoder</string>
+    <string name="setting_orientation">Orientation</string>
+    <string name="setting_orientation_auto">Auto</string>
+    <string name="setting_orientation_portrait">Portrait</string>
+    <string name="setting_orientation_landscape">Landscape</string>
+
+    <!-- Audio Settings -->
+    <string name="setting_microphone">Microphone</string>
+    <string name="setting_internal_audio">Internal Audio</string>
+    <string name="setting_audio_bitrate">Audio Bitrate</string>
+    <string name="setting_audio_sample_rate">Sample Rate</string>
+    <string name="setting_audio_channels">Channels</string>
+    <string name="setting_audio_channels_mono">Mono</string>
+    <string name="setting_audio_channels_stereo">Stereo</string>
+    <string name="setting_audio_encoder">Audio Encoder</string>
+    <string name="setting_separate_mic">Separate Mic Track</string>
+    <string name="setting_separate_mic_desc">Save microphone as a separate audio file</string>
+
+    <!-- Overlay Settings -->
+    <string name="setting_floating_controls">Floating Controls</string>
+    <string name="setting_show_touches">Show Touches</string>
+    <string name="setting_camera_settings">Camera Settings</string>
+    <string name="setting_watermark">CatRec Watermark</string>
+    <string name="setting_watermark_custom_image">Custom Watermark Image</string>
+    <string name="setting_watermark_size">Watermark Size</string>
+    <string name="setting_watermark_opacity">Watermark Opacity</string>
+    <string name="setting_watermark_position">Watermark Position</string>
+
+    <!-- Camera Settings Dialog -->
+    <string name="camera_settings_title">Camera Settings</string>
+    <string name="camera_enable">Enable Camera</string>
+    <string name="camera_lock_position">Lock Position</string>
+    <string name="camera_lock_position_desc">Prevent moving or resizing the camera overlay</string>
+    <string name="camera_facing">Camera</string>
+    <string name="camera_facing_front">Front</string>
+    <string name="camera_facing_rear">Rear</string>
+    <string name="camera_aspect_ratio">Aspect Ratio</string>
+    <string name="camera_orientation">Orientation</string>
+    <string name="camera_size">Size</string>
+    <string name="camera_opacity">Opacity</string>
+    <string name="camera_preview">Live Preview</string>
+
+    <!-- Screenshot Settings -->
+    <string name="setting_screenshot_format">Format</string>
+    <string name="setting_screenshot_quality">Quality</string>
+
+    <!-- Theme Settings -->
+    <string name="setting_theme">App Theme</string>
+    <string name="theme_system">System Default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Language Settings -->
+    <string name="setting_language">App Language</string>
+    <string name="language_system">System Default</string>
+    <string name="language_english">English</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁體）</string>
+    <string name="language_french">Français</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_japanese">日本語</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_portuguese">Português</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_turkish">Türkçe</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+
+    <!-- Storage Settings -->
+    <string name="setting_save_location">Save Location</string>
+    <string name="setting_save_location_default">Default (Movies/CatRec)</string>
+    <string name="setting_filename_pattern">Filename Pattern</string>
+
+    <!-- General Settings -->
+    <string name="setting_countdown">Countdown</string>
+    <string name="setting_stop_behavior">Stop Behavior</string>
+    <string name="setting_notification_sound">Notification Sound</string>
+
+    <!-- Screenshots Screen -->
+    <string name="screenshots_title">Screenshots</string>
+    <string name="screenshots_empty_title">No Screenshots Yet</string>
+    <string name="screenshots_empty_desc">Tap the screenshot button in the recording overlay to capture the screen</string>
+    <string name="screenshots_delete_confirm">Delete this screenshot?</string>
+    <string name="screenshots_delete_confirm_desc">This action cannot be undone.</string>
+
+    <!-- Recordings Screen -->
+    <string name="recordings_title">Recordings</string>
+    <string name="recordings_empty_title">No Recordings Yet</string>
+    <string name="recordings_empty_desc">Start recording to see your videos here</string>
+    <string name="recordings_delete_confirm">Delete this recording?</string>
+
+    <!-- Support Screen -->
+    <string name="support_title">Support</string>
+    <string name="support_subscribe_youtube">Subscribe to YouTube</string>
+    <string name="support_subscribe_youtube_desc">Follow @ibbie for updates</string>
+    <string name="support_remove_ads">Remove Ads — $1</string>
+    <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
+    <string name="support_ads_removed">Ads Removed — Thank you!</string>
+    <string name="support_watch_ad">Watch an Ad</string>
+    <string name="support_watch_ad_desc">Quick way to support for free</string>
+    <string name="support_donate">Buy me a coffee ($1)</string>
+    <string name="support_donate_desc">One-time donation — keeps CatRec alive</string>
+    <string name="support_share">Share CatRec</string>
+    <string name="support_share_desc">Tell your friends about us</string>
+    <string name="support_changelog">Changelog</string>
+    <string name="support_changelog_desc">See what\'s new in this version</string>
+    <string name="support_thank_you_title">Purr-fect!</string>
+    <string name="support_thank_you_body">Your support helps keep CatRec alive. Thank you so much!</string>
+    <string name="support_you_are_welcome">You\'re Welcome</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_recording">Recording</string>
+    <string name="notif_channel_recording_desc">Screen recording controls</string>
+    <string name="notif_recording_title">CatRec is recording</string>
+    <string name="notif_recording_text">Tap to manage recording</string>
+    <string name="notif_done_title">Recording saved</string>
+    <string name="notif_done_text">Tap to view your recording</string>
+    <string name="notif_screenshot_saved">Screenshot saved</string>
+
+    <!-- Errors / Toast -->
+    <string name="error_screenshot_no_projection">Start recording first to take screenshots</string>
+    <string name="error_permission_denied">Permission denied</string>
+    <string name="error_storage_full">Storage is full</string>
+    <string name="toast_recording_restarted">Recording restarted for orientation change</string>
+    <string name="toast_share_app">Check out CatRec - the coolest screen recorder!</string>
+</resources>

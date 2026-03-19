@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "213506211308",
+    "project_id": "catrec-3028f",
+    "storage_bucket": "catrec-3028f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213506211308:android:ec19b2affc85bdf350d4c9",
+        "android_client_info": {
+          "package_name": "com.ibbie.catrec_screenrecorder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQFoom-9f3nafFY0ydbmO-6pVULfZl2rI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
