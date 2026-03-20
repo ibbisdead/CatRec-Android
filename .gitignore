@@ -14,5 +14,5 @@
 .cxx
 local.properties
 
-# Optional: uncomment the line below to keep your Firebase keys private
-# google-services.json
+# Keep Firebase/Google services keys out of version control
+google-services.json
