@@ -54,10 +54,13 @@ class OverlayService : LifecycleService() {
         const val ACTION_HIDE_CAMERA_PREVIEW = "ACTION_HIDE_CAMERA_PREVIEW"
         const val ACTION_SHOW_CONTROLS = "ACTION_SHOW_CONTROLS"
         const val ACTION_SHOW_IDLE_CONTROLS = "ACTION_SHOW_IDLE_CONTROLS"
+        const val ACTION_HIDE_IDLE_CONTROLS = "ACTION_HIDE_IDLE_CONTROLS"
         const val ACTION_UPDATE_PAUSE_STATE = "ACTION_UPDATE_PAUSE_STATE"
         const val ACTION_UPDATE_MUTE_STATE = "ACTION_UPDATE_MUTE_STATE"
         const val ACTION_UPDATE_RECORDING_STATE = "ACTION_UPDATE_RECORDING_STATE"
         const val EXTRA_IS_RECORDING = "EXTRA_IS_RECORDING"
+        const val ACTION_UPDATE_BUFFERING_STATE = "ACTION_UPDATE_BUFFERING_STATE"
+        const val EXTRA_IS_BUFFERING = "EXTRA_IS_BUFFERING"
 
         const val EXTRA_SHOW_CAMERA = "EXTRA_SHOW_CAMERA"
         const val EXTRA_CAMERA_SIZE = "EXTRA_CAMERA_SIZE"
@@ -81,6 +84,10 @@ class OverlayService : LifecycleService() {
 
         private const val CAMERA_CHANNEL_ID = "CatRec_Camera_Channel"
         private const val CAMERA_NOTIFICATION_ID = 42
+
+        private const val OVERLAY_CHANNEL_ID = "CatRec_Overlay_Channel"
+        private const val OVERLAY_NOTIFICATION_ID = 43
+        const val ACTION_CLOSE_OVERLAY = "com.ibbie.catrec_screenrecorcer.CLOSE_OVERLAY"
 
         var onPreviewPositionChanged: ((xFraction: Float, yFraction: Float) -> Unit)? = null
         var onCameraPreviewPositionChanged: ((xFraction: Float, yFraction: Float) -> Unit)? = null
@@ -120,6 +127,7 @@ class OverlayService : LifecycleService() {
     private var controlsIsPaused = false
     private var controlsIsMuted = false
     private var controlsIsRecording = false
+    private var controlsIsBuffering = false
     private var shouldPersistBubble = false
     private var bubbleAnimator: ValueAnimator? = null
     private var dismissIndicatorView: View? = null
@@ -146,6 +154,7 @@ class OverlayService : LifecycleService() {
         instance = this
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createCameraChannel()
+        createOverlayChannel()
     }
 
     override fun onDestroy() {
@@ -158,6 +167,7 @@ class OverlayService : LifecycleService() {
         hideWatermarkOverlay()
         hideWatermarkPreview()
         hideCameraPreview()
+        cancelOverlayNotification()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -170,6 +180,13 @@ class OverlayService : LifecycleService() {
             hideCameraPreview()
             stopSelf()
             return START_NOT_STICKY
+        }
+
+        if (intent.action == ACTION_CLOSE_OVERLAY) {
+            hideControlsOverlay(userDismissed = true)
+            cancelOverlayNotification()
+            if (cameraView == null && watermarkView == null) stopSelf()
+            return START_STICKY
         }
 
         when (intent.action) {
@@ -217,9 +234,11 @@ class OverlayService : LifecycleService() {
                 hideCameraOverlay(); hideWatermarkOverlay()
                 hideWatermarkPreview(); hideCameraPreview()
                 if (shouldPersistBubble) {
-                    // Switch bubble back to idle mode instead of hiding it
+                    // Switch bubble back to idle mode — always collapse the card so the
+                    // user gets immediate visual feedback that recording has stopped.
                     controlsIsRecording = false
-                    if (controlsCardExpanded) { hideControlsCard(); showControlsCard() }
+                    controlsIsBuffering = false
+                    hideControlsCard()  // collapse; user taps bubble to see fresh idle controls
                 } else {
                     hideControlsOverlay(userDismissed = false)
                     stopSelf()
@@ -228,9 +247,23 @@ class OverlayService : LifecycleService() {
 
             ACTION_SHOW_IDLE_CONTROLS -> {
                 shouldPersistBubble = true
-                controlsIsRecording = false
+                controlsIsRecording = com.ibbie.catrec_screenrecorcer.data.RecordingState.isRecording.value
+                controlsIsBuffering = com.ibbie.catrec_screenrecorcer.data.RecordingState.isBuffering.value
                 controlsDismissedByUser = false
                 if (controlsBubbleView == null) showControlsOverlay()
+                postOverlayNotification()
+            }
+
+            ACTION_HIDE_IDLE_CONTROLS -> {
+                // User turned Floating Controls off in Settings.
+                shouldPersistBubble = false
+                if (!controlsIsRecording && !controlsIsBuffering) {
+                    // Nothing is running — dismiss immediately.
+                    hideControlsOverlay(userDismissed = false)
+                    if (cameraView == null && watermarkView == null) stopSelf()
+                }
+                // If recording/buffering is active the overlay stays until the
+                // session ends; cleanup() already checks shouldPersistBubble.
             }
 
             ACTION_SHOW_CONTROLS -> {
@@ -255,6 +288,16 @@ class OverlayService : LifecycleService() {
                 val newRecording = intent.getBooleanExtra(EXTRA_IS_RECORDING, false)
                 if (newRecording != controlsIsRecording) {
                     controlsIsRecording = newRecording
+                    if (!newRecording) controlsIsBuffering = false
+                    if (controlsCardExpanded) { hideControlsCard(); showControlsCard() }
+                }
+            }
+
+            ACTION_UPDATE_BUFFERING_STATE -> {
+                val newBuffering = intent.getBooleanExtra(EXTRA_IS_BUFFERING, false)
+                if (newBuffering != controlsIsBuffering) {
+                    controlsIsBuffering = newBuffering
+                    if (newBuffering) controlsIsRecording = false
                     if (controlsCardExpanded) { hideControlsCard(); showControlsCard() }
                 }
             }
@@ -553,31 +596,27 @@ class OverlayService : LifecycleService() {
 
     private fun buildControlsBubble(sizePx: Int): FrameLayout {
         val bubble = FrameLayout(this).apply {
+            elevation = dpToPx(8).toFloat()
+            // Force a perfect circle regardless of the system adaptive-icon shape.
             clipToOutline = true
             outlineProvider = object : ViewOutlineProvider() {
-                override fun getOutline(view: View, outline: Outline) { outline.setOval(0, 0, view.width, view.height) }
+                override fun getOutline(view: View, outline: Outline) {
+                    outline.setOval(0, 0, view.width, view.height)
+                }
             }
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(0xF0131313.toInt())
-                setStroke(dpToPx(2), 0xFFE53935.toInt())
+                setColor(0xFF1A1A1A.toInt())
             }
-            elevation = dpToPx(6).toFloat()
         }
         val iconView = ImageView(this).apply {
             setImageResource(R.mipmap.ic_launcher)
             scaleType = ImageView.ScaleType.CENTER_INSIDE
-            val pad = dpToPx(10); setPadding(pad, pad, pad, pad)
+            val pad = (sizePx * 0.12f).toInt()
+            setPadding(pad, pad, pad, pad)
             layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         }
-        val recDot = View(this).apply {
-            val dotSize = dpToPx(9)
-            layoutParams = FrameLayout.LayoutParams(dotSize, dotSize, Gravity.TOP or Gravity.END).apply {
-                setMargins(0, dpToPx(4), dpToPx(4), 0)
-            }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0xFFE53935.toInt()) }
-        }
-        bubble.addView(iconView); bubble.addView(recDot)
+        bubble.addView(iconView)
         return bubble
     }
 
@@ -743,12 +782,71 @@ class OverlayService : LifecycleService() {
             setPadding(padH, padV, padH, padV)
         }
 
-        if (controlsIsRecording) {
-            buildRecordingCard(card)
-        } else {
-            buildIdleCard(card)
+        when {
+            controlsIsBuffering -> buildBufferingCard(card)
+            controlsIsRecording -> buildRecordingCard(card)
+            else                -> buildIdleCard(card)
         }
         return card
+    }
+
+    /** Controls card shown while the rolling-buffer (clipper) is active. */
+    private fun buildBufferingCard(card: LinearLayout) {
+        val btnSize  = dpToPx(40)
+        val btnMargin = dpToPx(4)
+
+        // ── Clip button ───────────────────────────────────────────────────────
+        val clipBtn = android.widget.TextView(this).apply {
+            text = "✂ CLIP"
+            setTextColor(0xFF000000.toInt())
+            textSize = 11f
+            gravity = Gravity.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, btnSize
+            ).apply { setMargins(btnMargin, 0, btnMargin, 0) }
+            background = GradientDrawable().apply {
+                setColor(0xFFFF8C00.toInt())
+                cornerRadius = dpToPx(20).toFloat()
+            }
+            val padH = dpToPx(14); val padV = dpToPx(8)
+            setPadding(padH, padV, padH, padV)
+        }
+        clipBtn.setOnClickListener {
+            startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
+                action = ScreenRecordService.ACTION_SAVE_CLIP
+            })
+        }
+
+        // ── Stop Clipper button ───────────────────────────────────────────────
+        val stopBtn = ImageView(this).apply {
+            setImageDrawable(GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(0xFFE53935.toInt()); cornerRadius = dpToPx(3).toFloat()
+            })
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22E53935.toInt()) }
+            val p = dpToPx(12); setPadding(p, p, p, p)
+        }
+        stopBtn.setOnClickListener {
+            startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
+                action = ScreenRecordService.ACTION_STOP_BUFFER
+            })
+        }
+
+        // ── Label ─────────────────────────────────────────────────────────────
+        val label = android.widget.TextView(this).apply {
+            text = "CLIPPER"
+            setTextColor(0xFFFF8C00.toInt())
+            textSize = 9f
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.MATCH_PARENT
+            ).apply { setMargins(dpToPx(4), 0, dpToPx(4), 0) }
+        }
+
+        card.addView(clipBtn); card.addView(stopBtn); card.addView(label)
     }
 
     private fun buildRecordingCard(card: LinearLayout) {
@@ -821,22 +919,41 @@ class OverlayService : LifecycleService() {
     private fun buildIdleCard(card: LinearLayout) {
         val btnSize = dpToPx(40); val btnMargin = dpToPx(4)
 
-        // Record button — opens MainActivity to start a new recording
         val recordBtn = ImageView(this).apply {
             setImageResource(android.R.drawable.presence_video_online)
-            setColorFilter(0xFFE53935.toInt())
+            setColorFilter(Color.WHITE)
             layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x33E53935.toInt()) }
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
             val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
         }
         recordBtn.setOnClickListener {
-            try {
-                val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                    action = "ACTION_START_RECORDING_FROM_OVERLAY"
+            if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
+                val overlayAction = if (
+                    com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value == "CLIPPER"
+                ) {
+                    ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
+                } else {
+                    ScreenRecordService.ACTION_START_FROM_OVERLAY
                 }
-                if (intent != null) startActivity(intent)
-            } catch (_: Exception) {}
+                startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
+                    action = overlayAction
+                })
+            } else {
+                // Not yet authorized — open the app so the user can tap "Grant"
+                try {
+                    val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    }
+                    if (intent != null) startActivity(intent)
+                } catch (_: Exception) {}
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    android.widget.Toast.makeText(
+                        this@OverlayService,
+                        "Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
 
         // Screenshot button
@@ -880,6 +997,8 @@ class OverlayService : LifecycleService() {
         controlsBubbleView = null; controlsBubbleParams = null
         controlsDismissedByUser = userDismissed
         if (userDismissed) {
+            cancelOverlayNotification()
+            shouldPersistBubble = false
             startService(Intent(this, ScreenRecordService::class.java).apply { action = ScreenRecordService.ACTION_CONTROLS_DISMISSED })
         }
     }
@@ -1139,6 +1258,71 @@ class OverlayService : LifecycleService() {
             }
             else -> false
         }
+    }
+
+    // ── Overlay Controls Notification ──────────────────────────────────────────
+
+    private fun createOverlayChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val mgr = getSystemService(NotificationManager::class.java)
+            mgr.createNotificationChannel(
+                NotificationChannel(OVERLAY_CHANNEL_ID, "Overlay Controls", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "Shown while floating overlay controls are active"
+                    setShowBadge(false)
+                }
+            )
+        }
+    }
+
+    private fun postOverlayNotification() {
+        val startIntent = if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
+            val notifOverlayAction = if (
+                com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value == "CLIPPER"
+            ) ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
+            else ScreenRecordService.ACTION_START_FROM_OVERLAY
+            PendingIntent.getService(
+                this, 0,
+                Intent(this, ScreenRecordService::class.java).apply { action = notifOverlayAction },
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        } else {
+            PendingIntent.getActivity(
+                this, 0,
+                Intent(this, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                },
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+        }
+        val closeIntent = PendingIntent.getService(
+            this, 1,
+            Intent(this, OverlayService::class.java).apply { action = ACTION_CLOSE_OVERLAY },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val openAppIntent = PendingIntent.getActivity(
+            this, 2,
+            Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            },
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(this, OVERLAY_CHANNEL_ID)
+            .setContentTitle("CatRec Overlay Active")
+            .setContentText("Floating controls are enabled")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(openAppIntent)
+            .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .addAction(android.R.drawable.ic_media_play, "Start Recording", startIntent)
+            .addAction(android.R.drawable.ic_delete, "Close Overlay", closeIntent)
+            .build()
+        val mgr = getSystemService(NotificationManager::class.java)
+        mgr.notify(OVERLAY_NOTIFICATION_ID, notification)
+    }
+
+    private fun cancelOverlayNotification() {
+        val mgr = getSystemService(NotificationManager::class.java)
+        mgr.cancel(OVERLAY_NOTIFICATION_ID)
     }
 
     // ── Camera Notification ────────────────────────────────────────────────────

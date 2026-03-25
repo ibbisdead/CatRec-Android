@@ -76,6 +76,12 @@ class SettingsRepository(private val context: Context) {
         // UI Mode
         val PERFORMANCE_MODE = booleanPreferencesKey("performance_mode")
 
+        // Privacy
+        val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
+
+        // Onboarding
+        val BETA_NOTICE_SHOWN = booleanPreferencesKey("beta_notice_shown")
+
         // Accent Color
         val ACCENT_COLOR         = stringPreferencesKey("accent_color")
         val ACCENT_COLOR_2       = stringPreferencesKey("accent_color_2")
@@ -131,7 +137,7 @@ class SettingsRepository(private val context: Context) {
 
     // Theme & Language
     val appTheme: Flow<String> = context.dataStore.data.map { it[APP_THEME] ?: "System" }
-    val appLanguage: Flow<String> = context.dataStore.data.map { it[APP_LANGUAGE] ?: "System" }
+    val appLanguage: Flow<String> = context.dataStore.data.map { it[APP_LANGUAGE] ?: "system" }
 
     // Storage
     val filenamePattern: Flow<String> = context.dataStore.data.map { it[FILENAME_PATTERN] ?: "yyyyMMdd_HHmmss" }
@@ -145,6 +151,12 @@ class SettingsRepository(private val context: Context) {
 
     // UI Mode
     val performanceMode: Flow<Boolean> = context.dataStore.data.map { it[PERFORMANCE_MODE] ?: false }
+
+    // Privacy
+    val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: true }
+
+    // Onboarding
+    val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: false }
 
     // Accent Color
     val accentColor:        Flow<String>  = context.dataStore.data.map { it[ACCENT_COLOR]        ?: "FF0033" }
@@ -218,6 +230,12 @@ class SettingsRepository(private val context: Context) {
 
     // Setters — UI Mode
     suspend fun setPerformanceMode(value: Boolean) { context.dataStore.edit { it[PERFORMANCE_MODE] = value } }
+
+    // Setters — Privacy
+    suspend fun setAnalyticsEnabled(value: Boolean) { context.dataStore.edit { it[ANALYTICS_ENABLED] = value } }
+
+    // Setters — Onboarding
+    suspend fun setBetaNoticeShown(value: Boolean) { context.dataStore.edit { it[BETA_NOTICE_SHOWN] = value } }
 
     // Setters — Accent Color
     suspend fun setAccentColor(value: String)        { context.dataStore.edit { it[ACCENT_COLOR]        = value } }

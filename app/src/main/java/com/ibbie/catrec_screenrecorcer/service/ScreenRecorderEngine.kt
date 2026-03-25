@@ -271,31 +271,96 @@ class ScreenRecorderEngine(
         val mimeType = if (encoderType == "H.265 (HEVC)" && !isEmulator)
             MediaFormat.MIMETYPE_VIDEO_HEVC else MediaFormat.MIMETYPE_VIDEO_AVC
 
-        val discoveryFormat = MediaFormat.createVideoFormat(mimeType, width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-        }
-
+        // ── Encoder selection ──────────────────────────────────────────────────
+        // CRITICAL: do NOT include KEY_BIT_RATE in the discovery format.
+        // Hardware encoders advertise much lower maximum bitrates than what users may
+        // request (e.g. 100 Mbps). Including the requested bitrate causes
+        // findEncoderForFormat() to return null, triggering a silent fallback to the
+        // Google software encoder (OMX.google.h264.encoder) which produces terrible
+        // quality regardless of the requested bitrate.
         val mediaCodecList = android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS)
-        val encoderName = mediaCodecList.findEncoderForFormat(discoveryFormat)
 
-        val configFormat = MediaFormat.createVideoFormat(mimeType, width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-            setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
-            setInteger(MediaFormat.KEY_PRIORITY, 0)
-        }
+        // Scan explicitly for a hardware encoder: prefer non-Google/non-software codecs.
+        val hardwareEncoderName = mediaCodecList.codecInfos
+            .filter { info ->
+                info.isEncoder &&
+                info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
+                !info.name.contains("google", ignoreCase = true) &&
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) info.isHardwareAccelerated else true
+            }
+            .firstOrNull()?.name
 
-        videoEncoder = if (encoderName != null) {
-            MediaCodec.createByCodecName(encoderName)
-        } else {
+        // Fallback: let the system pick via the discovery format (without bitrate).
+        val fallbackName = if (hardwareEncoderName == null) {
+            val discoveryFormat = MediaFormat.createVideoFormat(mimeType, width, height).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            }
+            mediaCodecList.findEncoderForFormat(discoveryFormat)
+        } else null
+
+        val encoderName = hardwareEncoderName ?: fallbackName
+        Log.d("RecorderEngine", "Video encoder selected: $encoderName (hardware=$hardwareEncoderName)")
+
+        // ── Configuration format ───────────────────────────────────────────────
+        // Build with profile; if the encoder rejects it, retry without profile keys.
+        fun buildConfigFormat(withProfile: Boolean): MediaFormat =
+            MediaFormat.createVideoFormat(mimeType, width, height).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+                setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
+                setInteger(MediaFormat.KEY_PRIORITY, 0)
+                // VBR: the encoder may burst above the target bitrate in complex scenes,
+                // which avoids artefacts. CBR would force quality-damaging bit-stuffing
+                // in simple scenes and bit-starvation in complex ones.
+                setInteger(MediaFormat.KEY_BITRATE_MODE,
+                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR)
+                // On API 31+, explicitly permit the encoder to reach the full bitrate.
+                // Use the raw key string to avoid a compile-time dependency on API 31+.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setInteger("max-bitrate", bitrate)
+                }
+                if (withProfile) {
+                    // High Profile (H.264) / Main Profile (HEVC) = better compression
+                    // efficiency and fewer artefacts vs Baseline/Main defaults.
+                    if (mimeType == MediaFormat.MIMETYPE_VIDEO_AVC) {
+                        setInteger(MediaFormat.KEY_PROFILE,
+                            MediaCodecInfo.CodecProfileLevel.AVCProfileHigh)
+                        setInteger(MediaFormat.KEY_LEVEL,
+                            MediaCodecInfo.CodecProfileLevel.AVCLevel41)
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        setInteger(MediaFormat.KEY_PROFILE,
+                            MediaCodecInfo.CodecProfileLevel.HEVCProfileMain)
+                    }
+                }
+            }
+
+        videoEncoder = try {
+            if (encoderName != null) MediaCodec.createByCodecName(encoderName)
+            else MediaCodec.createEncoderByType(mimeType)
+        } catch (e: Exception) {
+            Log.w("RecorderEngine", "Named encoder create failed, using type fallback: ${e.message}")
             MediaCodec.createEncoderByType(mimeType)
         }
 
-        videoEncoder?.configure(configFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        // Try configure with profile; some encoders reject profile hints → fall back cleanly.
+        try {
+            videoEncoder?.configure(buildConfigFormat(withProfile = true), null, null,
+                MediaCodec.CONFIGURE_FLAG_ENCODE)
+        } catch (e: Exception) {
+            Log.w("RecorderEngine", "Profile configure failed, retrying without: ${e.message}")
+            try {
+                videoEncoder?.configure(buildConfigFormat(withProfile = false), null, null,
+                    MediaCodec.CONFIGURE_FLAG_ENCODE)
+            } catch (e2: Exception) {
+                Log.e("RecorderEngine", "Video encoder configure failed entirely", e2)
+                throw e2
+            }
+        }
+
         inputSurface = videoEncoder?.createInputSurface()
     }
 

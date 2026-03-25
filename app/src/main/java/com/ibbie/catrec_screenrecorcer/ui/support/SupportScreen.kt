@@ -1,16 +1,10 @@
 package com.ibbie.catrec_screenrecorcer.ui.support
 
-private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/master/privacy-policy.md"
-
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -40,16 +34,18 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.ibbie.catrec_screenrecorcer.R
 
+private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md"
+private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
+private const val PERMISSIONS_DISCLOSURE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md"
+
 @Composable
 fun SupportScreen() {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val activity = context as? Activity
 
-    var isDonated by rememberSaveable { mutableStateOf(false) }
-    var isAdsRemoved by rememberSaveable { mutableStateOf(false) }
-    var showThankYouDialog by rememberSaveable { mutableStateOf(false) }
     var showChangelogDialog by rememberSaveable { mutableStateOf(false) }
+    var showComingSoonDialog by rememberSaveable { mutableStateOf(false) }
 
     var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
     var isAdLoading by remember { mutableStateOf(false) }
@@ -109,7 +105,7 @@ fun SupportScreen() {
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Version 0.5.0 Public Beta",
+                    "Version 0.9.1 Beta",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -142,37 +138,13 @@ fun SupportScreen() {
 
             Spacer(Modifier.height(12.dp))
 
-            if (!isAdsRemoved) {
-                SupportActionCard(
-                    icon = Icons.Default.RemoveCircleOutline,
-                    title = "Remove Ads — \$1",
-                    subtitle = "One-time purchase, forever ad-free",
-                    highlight = true,
-                    onClick = {
-                        isAdsRemoved = true
-                        Toast.makeText(context, "Ads removed! Thank you for your support.", Toast.LENGTH_LONG).show()
-                    }
-                )
-            } else {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(12.dp))
-                        Text(
-                            "Ads Removed — Thank you!",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
+            SupportActionCard(
+                icon = Icons.Default.RemoveCircleOutline,
+                title = "Remove Ads — Coming Soon",
+                subtitle = "One-time purchase — available when CatRec launches on the Play Store",
+                highlight = false,
+                onClick = { showComingSoonDialog = true }
+            )
 
             Spacer(Modifier.height(12.dp))
 
@@ -210,32 +182,13 @@ fun SupportScreen() {
 
             Spacer(Modifier.height(12.dp))
 
-            AnimatedVisibility(
-                visible = isDonated,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut()
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                ) {
-                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, null, tint = Color.Red)
-                        Spacer(Modifier.width(16.dp))
-                        Text("Thank you for your support! ❤️", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-
-            if (!isDonated) {
             SupportActionCard(
                 icon = Icons.Default.MonetizationOn,
-                title = "Buy me a coffee (\$1)",
-                subtitle = "Repeatable donation — buy as many times as you like!",
-                highlight = true,
-                onClick = { isDonated = true; showThankYouDialog = true }
+                title = "Buy me a coffee — Coming Soon",
+                subtitle = "Repeatable donations available when CatRec launches on the Play Store",
+                highlight = false,
+                onClick = { showComingSoonDialog = true }
             )
-            }
 
             Spacer(Modifier.height(12.dp))
 
@@ -285,17 +238,47 @@ fun SupportScreen() {
                 }
             )
 
+            Spacer(Modifier.height(12.dp))
+
+            SupportActionCard(
+                icon = Icons.Default.Gavel,
+                title = "Terms of Service",
+                subtitle = "Usage rules and disclaimers",
+                onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TERMS_OF_SERVICE_URL)))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SupportActionCard(
+                icon = Icons.Default.Security,
+                title = "Permissions Disclosure",
+                subtitle = "Why each permission is needed",
+                onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PERMISSIONS_DISCLOSURE_URL)))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
             Spacer(Modifier.height(48.dp))
         }
     }
 
-    if (showThankYouDialog) {
+    if (showComingSoonDialog) {
         AlertDialog(
-            onDismissRequest = { showThankYouDialog = false },
-            icon = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
-            title = { Text("Purr-fect!") },
-            text = { Text("Your support helps keep CatRec alive. Thank you so much!") },
-            confirmButton = { TextButton(onClick = { showThankYouDialog = false }) { Text("You're Welcome") } }
+            onDismissRequest = { showComingSoonDialog = false },
+            icon = { Icon(Icons.Default.MonetizationOn, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
+            title = { Text("Coming Soon") },
+            text = { Text("In-app purchases will be available once CatRec launches on the Google Play Store. Thank you for your patience and support!") },
+            confirmButton = { TextButton(onClick = { showComingSoonDialog = false }) { Text("Got it") } }
         )
     }
 
@@ -307,42 +290,47 @@ fun SupportScreen() {
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = "v0.6.0",
-                        label = "Latest",
+                        version = "v0.9.0",
+                        label = "Beta",
                         changes = listOf(
+                            // Recording
+                            "Screen recording with H.264 and H.265 (HEVC) codec support",
                             "60-second rolling Clipper mode with seamless segment stitching",
-                            "Save clip button appears instantly while Clipper is running",
-                            "Accent color customization: presets, gradients, and hex color codes",
-                            "Dynamic theme — all UI elements now follow the chosen accent color",
-                            "Performance mode toggle disables blur for weaker devices",
-                            "Floating overlay available at all times (not just during recording)",
-                            "Floating overlay X dismiss appears immediately on drag",
-                            "Fixed stereo audio recording when stereo channels are selected",
-                            "Fixed audio bitrate accuracy with CBR encoding mode",
-                            "Fixed language preference persisting after app restart"
-                        )
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    ChangelogEntry(
-                        version = "v0.5.0",
-                        label = "Public Beta",
-                        changes = listOf(
-                            "Initial public beta release",
-                            "Screen recording with H.264 and H.265 (HEVC) support",
-                            "Floating controls overlay (pause, stop, mute, screenshot)",
-                            "Camera overlay with live preview",
-                            "Watermark overlay with custom images",
-                            "Audio recording: microphone, internal audio, or mixed",
-                            "Separate microphone track recording option",
-                            "Advanced audio settings: bitrate, sample rate, channels, encoder type",
-                            "Wide resolution selection for all aspect ratios",
-                            "Custom resolution input",
+                            "Save Clip button appears instantly while Clipper is running",
+                            "Wide resolution selection for all aspect ratios, plus custom input",
                             "Auto orientation tracking during recording",
+                            "Countdown timer before recording starts",
+                            "Keep-screen-on option during recording",
+                            // Audio
+                            "Audio recording: microphone, internal audio, or mixed",
+                            "Separate microphone track recording",
+                            "Advanced audio settings: bitrate, sample rate, channels, encoder",
+                            "Fixed stereo audio recording for stereo channel mode",
+                            "Fixed audio bitrate accuracy with CBR encoding",
+                            // Overlay
+                            "Floating controls overlay: pause, stop, mute, screenshot",
+                            "Overlay available at all times, not just during recording",
+                            "Start recording or clipping directly from the overlay button",
+                            "One-tap authorize overlay recording — no repeated permission prompts",
+                            "Overlay X dismiss appears immediately on drag",
+                            "Camera overlay with live face-cam preview",
+                            "Watermark overlay with custom images, shape, opacity, and position",
+                            // Screenshots
                             "Screenshots tab with format and quality settings",
+                            "Screenshots captured from the overlay camera button",
+                            // Customization & UI
+                            "Accent color customization: presets, gradients, and hex input",
+                            "Dynamic theme — all UI elements follow the chosen accent color",
+                            "Performance mode toggle disables blur for lower-end devices",
                             "Full settings reorganization (Controls, Video, Audio, Overlay…)",
                             "Language support for 16 languages",
+                            "Fixed language preference persisting after app restart",
+                            // Library & Notifications
+                            "Recordings library with thumbnail previews",
                             "In-app video trimmer",
-                            "Post-recording notifications with thumbnail"
+                            "Post-recording notification with thumbnail and quick actions",
+                            // Quick Settings
+                            "Quick Settings tiles: CatRec Record and CatRec Clipper"
                         )
                     )
                 }

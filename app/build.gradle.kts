@@ -2,20 +2,20 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
+    id("com.google.gms.google-services") version "4.4.2" apply false
+    id("com.google.firebase.crashlytics") version "3.0.2" apply false
 }
 
 android {
     namespace = "com.ibbie.catrec_screenrecorcer"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0 Public Beta"
+        versionCode = 10
+        versionName = "0.9.1 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,6 +30,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         debug {
             isMinifyEnabled = false
@@ -58,12 +61,12 @@ android {
 
 dependencies {
     // Firebase (BoM manages all Firebase library versions)
-    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-analytics")
 
     // Google Mobile Ads
-    implementation("com.google.android.gms:play-services-ads:25.1.0")
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
 
     // Core Android
     implementation(libs.androidx.core.ktx)
@@ -103,9 +106,9 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     // Media3 / ExoPlayer
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
-    implementation("androidx.media3:media3-common:1.3.1")
+    implementation("androidx.media3:media3-exoplayer:1.5.0")
+    implementation("androidx.media3:media3-ui:1.5.0")
+    implementation("androidx.media3:media3-common:1.5.0")
     
     // Testing
     testImplementation(libs.junit)

@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.CatRecScreenRecorcer" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.CatRec.Transparent" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
 </resources>

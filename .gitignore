@@ -16,3 +16,6 @@ local.properties
 
 # Keep Firebase/Google services keys out of version control
 google-services.json
+
+# Store signing outputs locally; do not commit release binaries
+app/release/

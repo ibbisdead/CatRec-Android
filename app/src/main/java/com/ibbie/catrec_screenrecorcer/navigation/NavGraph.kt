@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.outlined.Pets
 import androidx.compose.material3.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -130,12 +131,12 @@ fun CatRecNavGraph(
                                     Screen.Screenshots -> Icons.Default.CameraAlt
                                     Screen.Recordings  -> Icons.Default.VideoLibrary
                                     Screen.Settings    -> Icons.Default.Settings
-                                    Screen.Support     -> Icons.Outlined.Pets   // paw-print for support
+                                    Screen.Support     -> Icons.Outlined.Pets
                                     else               -> Icons.Default.Videocam
                                 }
-                                Icon(icon, contentDescription = screen.title)
+                                Icon(icon, contentDescription = stringResource(screen.titleRes))
                             },
-                            label = { Text(screen.title) },
+                            label = { Text(stringResource(screen.titleRes)) },
                             selected = selected,
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor   = accentColor,

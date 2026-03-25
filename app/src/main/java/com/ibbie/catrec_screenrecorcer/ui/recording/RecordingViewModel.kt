@@ -19,6 +19,7 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
 
     val isRecording: StateFlow<Boolean>  = RecordingState.isRecording
     val isBuffering: StateFlow<Boolean>  = RecordingState.isBuffering
+    val isPrepared:  StateFlow<Boolean>  = RecordingState.isPrepared
 
     // Video
     val fps: StateFlow<Float> = repository.fps.stateIn(viewModelScope, SharingStarted.Lazily, 30f)
@@ -83,6 +84,12 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
 
     // UI Mode
     val performanceMode: StateFlow<Boolean> = repository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    // Privacy
+    val analyticsEnabled: StateFlow<Boolean> = repository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
+
+    // Onboarding
+    val betaNoticeShown: StateFlow<Boolean> = repository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // Accent Color
     val accentColor:       StateFlow<String>  = repository.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, "FF0033")
@@ -170,6 +177,12 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     // Setters — UI Mode
     fun setPerformanceMode(value: Boolean) = viewModelScope.launch { repository.setPerformanceMode(value) }
 
+    // Setters — Privacy
+    fun setAnalyticsEnabled(value: Boolean) = viewModelScope.launch { repository.setAnalyticsEnabled(value) }
+
+    // Setters — Onboarding
+    fun setBetaNoticeShown(value: Boolean) = viewModelScope.launch { repository.setBetaNoticeShown(value) }
+
     // Setters — Accent Color
     fun setAccentColor(value: String)        = viewModelScope.launch { repository.setAccentColor(value) }
     fun setAccentColor2(value: String)       = viewModelScope.launch { repository.setAccentColor2(value) }
@@ -253,6 +266,29 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
         } else {
             context.startService(intent)
         }
+    }
+
+    /**
+     * Pre-grant mode: obtain MediaProjection while the Activity is visible and keep it
+     * alive in [ScreenRecordService] so the overlay can start recordings without a dialog.
+     */
+    fun prepareForOverlayRecording(context: Context, resultCode: Int, data: Intent) {
+        val intent = Intent(context, ScreenRecordService::class.java).apply {
+            action = ScreenRecordService.ACTION_PREPARE
+            putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
+            putExtra(ScreenRecordService.EXTRA_DATA, data)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    fun revokeOverlayPreparation(context: Context) {
+        context.startService(Intent(context, ScreenRecordService::class.java).apply {
+            action = ScreenRecordService.ACTION_REVOKE_PREPARE
+        })
     }
 
     fun stopBufferService(context: Context) {

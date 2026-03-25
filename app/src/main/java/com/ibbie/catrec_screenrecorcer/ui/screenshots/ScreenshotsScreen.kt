@@ -8,23 +8,30 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
+import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -35,10 +42,11 @@ data class ScreenshotItem(
     val sizeKb: Long
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenshotsScreen() {
     val context = LocalContext.current
+    val accent = LocalAccentColor.current
+
     var screenshots by remember { mutableStateOf<List<ScreenshotItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var screenshotToDelete by remember { mutableStateOf<ScreenshotItem?>(null) }
@@ -54,6 +62,13 @@ fun ScreenshotsScreen() {
         val item = screenshotToDelete!!
         AlertDialog(
             onDismissRequest = { screenshotToDelete = null },
+            icon = {
+                Icon(
+                    Icons.Default.Delete, null,
+                    tint = accent,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
             title = { Text("Delete Screenshot?") },
             text = { Text("\"${item.name}\" will be permanently deleted.") },
             confirmButton = {
@@ -61,7 +76,7 @@ fun ScreenshotsScreen() {
                     try { context.contentResolver.delete(item.uri, null, null) } catch (_: Exception) {}
                     screenshots = screenshots.filter { it.uri != item.uri }
                     screenshotToDelete = null
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text("Delete", color = accent, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
                 TextButton(onClick = { screenshotToDelete = null }) { Text("Cancel") }
@@ -69,154 +84,187 @@ fun ScreenshotsScreen() {
         )
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Screenshots", fontWeight = FontWeight.Bold) },
-                actions = {
-                    if (screenshots.isNotEmpty()) {
-                        IconButton(onClick = { refreshTrigger++ }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
-                    }
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF1A0008), Color(0xFF0A0A0A)),
+                    radius = 900f
+                )
             )
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    ) {
+        when {
+            isLoading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = accent, strokeWidth = 2.dp)
                 }
-                screenshots.isEmpty() -> {
-                    EmptyScreenshotsView(modifier = Modifier.align(Alignment.Center))
+            }
+
+            screenshots.isEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Outlined.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(80.dp),
+                        tint = accent.copy(alpha = 0.3f)
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = "NO SCREENSHOTS YET",
+                        style = MaterialTheme.typography.titleMedium.copy(letterSpacing = 3.sp),
+                        color = Color(0xFF555555),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Tap the camera button in the overlay to capture screenshots",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFF444444),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 40.dp)
+                    )
                 }
-                else -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        items(screenshots) { item ->
-                            ScreenshotCard(
-                                item = item,
-                                onShare = {
-                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                                        type = "image/*"
-                                        putExtra(Intent.EXTRA_STREAM, item.uri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                    context.startActivity(Intent.createChooser(shareIntent, "Share Screenshot"))
-                                },
-                                onDelete = { screenshotToDelete = item },
-                                onOpen = {
-                                    val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-                                        setDataAndType(item.uri, "image/*")
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    try { context.startActivity(viewIntent) } catch (_: Exception) {}
-                                }
+            }
+
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    item(span = { GridItemSpan(2) }) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp, start = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "SCREENSHOTS  ·  ${screenshots.size}",
+                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp),
+                                color = Color(0xFF555555)
                             )
+                            IconButton(onClick = { refreshTrigger++ }, modifier = Modifier.size(32.dp)) {
+                                Icon(
+                                    Icons.Default.Refresh,
+                                    contentDescription = "Refresh",
+                                    tint = Color(0xFF555555),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
+                    }
+
+                    items(screenshots, key = { it.uri.toString() }) { item ->
+                        ScreenshotCard(
+                            item = item,
+                            accent = accent,
+                            onShare = {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "image/*"
+                                    putExtra(Intent.EXTRA_STREAM, item.uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                context.startActivity(Intent.createChooser(shareIntent, "Share Screenshot"))
+                            },
+                            onDelete = { screenshotToDelete = item },
+                            onOpen = {
+                                val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(item.uri, "image/*")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                try { context.startActivity(viewIntent) } catch (_: Exception) {}
+                            }
+                        )
                     }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun EmptyScreenshotsView(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            Icons.Default.CameraAlt,
-            contentDescription = null,
-            modifier = Modifier.size(72.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            "No Screenshots Yet",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            "Tap the camera button in the overlay controls to take screenshots while recording.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
     }
 }
 
 @Composable
 private fun ScreenshotCard(
     item: ScreenshotItem,
+    accent: Color,
     onShare: () -> Unit,
     onDelete: () -> Unit,
     onOpen: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { onOpen() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        cornerRadius = 12.dp
     ) {
-        Box {
+        Box(modifier = Modifier.clickable { onOpen() }) {
             AsyncImage(
                 model = item.uri,
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxWidth().aspectRatio(9f / 16f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(9f / 16f)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             )
 
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .background(Color(0x99000000))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .background(Color(0xCC000000))
+                    .padding(horizontal = 8.dp, vertical = 5.dp)
             ) {
                 Text(
                     item.date,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White,
+                    color = Color(0xFFAAAAAA),
                     modifier = Modifier.align(Alignment.CenterStart)
                 )
                 Text(
                     "${item.sizeKb} KB",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f),
+                    color = accent.copy(alpha = 0.8f),
                     modifier = Modifier.align(Alignment.CenterEnd)
                 )
             }
 
             Box(modifier = Modifier.align(Alignment.TopEnd)) {
                 IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Options", tint = Color.White)
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "Options",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
-                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false },
+                    containerColor = Color(0xFF1E1E1E)
+                ) {
                     DropdownMenuItem(
-                        text = { Text("Open") },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+                        text = { Text("Open", color = Color.White) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = accent) },
                         onClick = { showMenu = false; onOpen() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Share") },
-                        leadingIcon = { Icon(Icons.Default.Share, contentDescription = null) },
+                        text = { Text("Share", color = Color.White) },
+                        leadingIcon = { Icon(Icons.Default.Share, null, tint = accent) },
                         onClick = { showMenu = false; onShare() }
                     )
+                    HorizontalDivider(color = Color(0xFF333333))
                     DropdownMenuItem(
-                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        text = { Text("Delete", color = accent) },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = accent) },
                         onClick = { showMenu = false; onDelete() }
                     )
                 }

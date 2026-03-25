@@ -1,11 +1,21 @@
 package com.ibbie.catrec_screenrecorcer.ui.settings
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
+import com.ibbie.catrec_screenrecorcer.R
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.ibbie.catrec_screenrecorcer.data.AdGate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -116,6 +126,9 @@ fun SettingsScreen(
     // General
     val keepScreenOn by viewModel.keepScreenOn.collectAsState()
 
+    // Privacy
+    val analyticsEnabled by viewModel.analyticsEnabled.collectAsState()
+
     val isRecording by RecordingState.isRecording.collectAsState()
     val scrollState = rememberScrollState()
     val canDrawOverlays = Settings.canDrawOverlays(context)
@@ -181,6 +194,40 @@ fun SettingsScreen(
     var accentHexInput        by remember(accentHex)  { mutableStateOf(accentHex)  }
     var accentHex2Input       by remember(accentHex2) { mutableStateOf(accentHex2) }
 
+    // ── Ad Gate ───────────────────────────────────────────────────────────────
+    // Tracks which feature is pending unlock and what to do once unlocked.
+    var adGateFeature     by remember { mutableStateOf("") }
+    var adGateFeatureName by remember { mutableStateOf("") }
+    var adGatePending     by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showAdGateDialog  by remember { mutableStateOf(false) }
+    var adGateAd          by remember { mutableStateOf<RewardedAd?>(null) }
+    var adGateLoading     by remember { mutableStateOf(false) }
+
+    fun loadAdGateAd() {
+        if (adGateLoading || adGateAd != null) return
+        adGateLoading = true
+        RewardedAd.load(
+            context,
+            // Replace with a dedicated ad unit ID for feature unlocks once live on Play Store.
+            "ca-app-pub-7741372232895726/8137302121",
+            AdRequest.Builder().build(),
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) { adGateAd = ad; adGateLoading = false }
+                override fun onAdFailedToLoad(e: LoadAdError) { adGateAd = null; adGateLoading = false }
+            }
+        )
+    }
+
+    LaunchedEffect(Unit) { loadAdGateAd() }
+    DisposableEffect(Unit) { onDispose { adGateAd = null } }
+
+    /** Show the ad-gate dialog for [feature]. On unlock, [action] is invoked. */
+    fun gateFeature(feature: String, name: String, action: () -> Unit) {
+        if (AdGate.isUnlocked(feature)) { action(); return }
+        adGateFeature = feature; adGateFeatureName = name; adGatePending = action
+        showAdGateDialog = true
+    }
+
     // Resolution options
     val resolutionOptions = listOf(
         "Native",
@@ -214,8 +261,35 @@ fun SettingsScreen(
     if (showFpsDialog) {
         SingleChoiceDialog("Frame Rate (FPS)", listOf("24", "30", "45", "60", "90", "120"),
             "${fps.toInt()}",
-            onOptionSelected = { viewModel.setFps(it.toFloat()); showFpsDialog = false },
+            onOptionSelected = { selected ->
+                showFpsDialog = false
+                if ((selected == "90" || selected == "120") && !AdGate.isUnlocked(AdGate.HIGH_FPS)) {
+                    gateFeature(AdGate.HIGH_FPS, "$selected FPS") { viewModel.setFps(selected.toFloat()) }
+                } else {
+                    viewModel.setFps(selected.toFloat())
+                }
+            },
             onDismiss = { showFpsDialog = false })
+    }
+
+    if (showAdGateDialog) {
+        AdGateDialog(
+            featureName = adGateFeatureName,
+            ad = adGateAd,
+            isAdLoading = adGateLoading,
+            onUnlocked = {
+                AdGate.unlock(adGateFeature)
+                adGatePending?.invoke()
+                adGatePending = null
+                showAdGateDialog = false
+                adGateAd = null
+                loadAdGateAd()
+            },
+            onDismiss = {
+                adGatePending = null
+                showAdGateDialog = false
+            }
+        )
     }
     if (showBitrateDialog) {
         SingleChoiceDialog("Bitrate",
@@ -387,7 +461,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Settings",
+                        stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge.copy(letterSpacing = 2.sp)
                     )
@@ -410,8 +484,8 @@ fun SettingsScreen(
 
             // ── CONTROLS ──────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Controls")
-                SwitchSettingItem(Icons.Default.ControlCamera, "Floating Controls",
+                GlassSectionHeader(stringResource(R.string.settings_section_controls))
+                SwitchSettingItem(Icons.Default.ControlCamera, stringResource(R.string.setting_floating_controls),
                     "Always-on bubble — record, screenshot & controls from any app",
                     floatingControls) {
                     if (it && !Settings.canDrawOverlays(context)) {
@@ -422,6 +496,10 @@ fun SettingsScreen(
                         if (it && Settings.canDrawOverlays(context)) {
                             context.startService(Intent(context, com.ibbie.catrec_screenrecorcer.service.OverlayService::class.java).apply {
                                 action = com.ibbie.catrec_screenrecorcer.service.OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                            })
+                        } else if (!it) {
+                            context.startService(Intent(context, com.ibbie.catrec_screenrecorcer.service.OverlayService::class.java).apply {
+                                action = com.ibbie.catrec_screenrecorcer.service.OverlayService.ACTION_HIDE_IDLE_CONTROLS
                             })
                         }
                     }
@@ -434,36 +512,34 @@ fun SettingsScreen(
                         Toast.makeText(context, "Enable 'Show Taps' manually", Toast.LENGTH_LONG).show()
                     }
                 }
-                ClickableSettingItem(Icons.Default.Timer, "Countdown Timer",
+                ClickableSettingItem(Icons.Default.Timer, stringResource(R.string.setting_countdown),
                     if (countdown == 0) "Off" else "$countdown seconds") { showCountdownDialog = true }
-                ClickableSettingItem(Icons.Default.StopCircle, "Stop Behavior", stopBehavior.joinToString(", ")) {
+                ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehavior.joinToString(", ")) {
                     showStopDialog = true
                 }
             }
 
             // ── VIDEO ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Video")
-                ClickableSettingItem(Icons.Default.Speed, "Frame Rate (FPS)", "${fps.toInt()} FPS") { showFpsDialog = true }
-                ClickableSettingItem(Icons.Default.DataUsage, "Bitrate", "${bitrate.toInt()} Mbps") { showBitrateDialog = true }
-                ClickableSettingItem(Icons.Default.AspectRatio, "Resolution",
-                    if (resolution.contains("x") && !listOf("Native").contains(resolution)) resolution else resolution
-                ) { showResolutionDialog = true }
-                ClickableSettingItem(Icons.Default.VideoSettings, "Video Encoder", videoEncoder) { showVideoEncoderDialog = true }
-                ClickableSettingItem(Icons.Default.ScreenRotation, "Orientation", recordingOrientation) { showOrientationDialog = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_video))
+                ClickableSettingItem(Icons.Default.Speed, stringResource(R.string.setting_fps), "${fps.toInt()} FPS") { showFpsDialog = true }
+                ClickableSettingItem(Icons.Default.DataUsage, stringResource(R.string.setting_bitrate), "${bitrate.toInt()} Mbps") { showBitrateDialog = true }
+                ClickableSettingItem(Icons.Default.AspectRatio, stringResource(R.string.setting_resolution), resolution) { showResolutionDialog = true }
+                ClickableSettingItem(Icons.Default.VideoSettings, stringResource(R.string.setting_video_encoder), videoEncoder) { showVideoEncoderDialog = true }
+                ClickableSettingItem(Icons.Default.ScreenRotation, stringResource(R.string.setting_orientation), recordingOrientation) { showOrientationDialog = true }
             }
 
             // ── AUDIO ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Audio")
-                SwitchSettingItem(Icons.Default.Mic, "Record Microphone", null, recordAudio) { viewModel.setRecordAudio(it) }
-                SwitchSettingItem(Icons.Default.MusicNote, "Internal Audio", "Android 10+ only", internalAudio) { viewModel.setInternalAudio(it) }
-                ClickableSettingItem(Icons.Default.GraphicEq, "Audio Bitrate", "$audioBitrate kbps") { showAudioBitrateDialog = true }
-                ClickableSettingItem(Icons.Default.Audiotrack, "Sample Rate", "$audioSampleRate Hz") { showAudioSampleRateDialog = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_audio))
+                SwitchSettingItem(Icons.Default.Mic, stringResource(R.string.setting_microphone), null, recordAudio) { viewModel.setRecordAudio(it) }
+                SwitchSettingItem(Icons.Default.MusicNote, stringResource(R.string.setting_internal_audio), "Android 10+ only", internalAudio) { viewModel.setInternalAudio(it) }
+                ClickableSettingItem(Icons.Default.GraphicEq, stringResource(R.string.setting_audio_bitrate), "$audioBitrate kbps") { showAudioBitrateDialog = true }
+                ClickableSettingItem(Icons.Default.Audiotrack, stringResource(R.string.setting_audio_sample_rate), "$audioSampleRate Hz") { showAudioSampleRateDialog = true }
 
                 // Audio Channels — segmented
                 ListItem(
-                    headlineContent = { Text("Audio Channels") },
+                    headlineContent = { Text(stringResource(R.string.setting_audio_channels)) },
                     leadingContent = { Icon(Icons.Default.SettingsVoice, contentDescription = null, tint = accent.copy(alpha = 0.7f)) },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     trailingContent = {
@@ -479,20 +555,34 @@ fun SettingsScreen(
                     }
                 )
 
-                ClickableSettingItem(Icons.Default.Tune, "Audio Encoder", audioEncoder) { showAudioEncoderDialog = true }
-                SwitchSettingItem(Icons.AutoMirrored.Filled.CallSplit, "Separate Mic Track",
-                    "Save mic audio as separate file", separateMicRecording) { viewModel.setSeparateMicRecording(it) }
+                ClickableSettingItem(Icons.Default.Tune, stringResource(R.string.setting_audio_encoder), audioEncoder) { showAudioEncoderDialog = true }
+                SwitchSettingItem(Icons.AutoMirrored.Filled.CallSplit, stringResource(R.string.setting_separate_mic),
+                    stringResource(R.string.setting_separate_mic_desc), separateMicRecording) { newValue ->
+                    if (newValue && !AdGate.isUnlocked(AdGate.SEPARATE_MIC)) {
+                        gateFeature(AdGate.SEPARATE_MIC, "Separate Mic Track") {
+                            viewModel.setSeparateMicRecording(true)
+                        }
+                    } else {
+                        viewModel.setSeparateMicRecording(newValue)
+                    }
+                }
             }
 
             // ── OVERLAY ───────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Overlay")
-                ClickableSettingItem(Icons.Default.CameraAlt, "Camera Settings",
+                GlassSectionHeader(stringResource(R.string.settings_section_overlay))
+                ClickableSettingItem(Icons.Default.CameraAlt, stringResource(R.string.setting_camera_settings),
                     if (cameraOverlay) "Enabled — ${cameraAspectRatio} • ${cameraFacing}" else "Disabled") {
-                    showCameraSettingsDialog = true
+                    if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS)) {
+                        gateFeature(AdGate.CAMERA_SETTINGS, "Camera Overlay Settings") {
+                            showCameraSettingsDialog = true
+                        }
+                    } else {
+                        showCameraSettingsDialog = true
+                    }
                 }
 
-                SwitchSettingItem(Icons.AutoMirrored.Filled.BrandingWatermark, "CatRec Watermark", null, showWatermark) {
+                SwitchSettingItem(Icons.AutoMirrored.Filled.BrandingWatermark, stringResource(R.string.setting_watermark), null, showWatermark) {
                     if (it && !Settings.canDrawOverlays(context)) {
                         Toast.makeText(context, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
                         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
@@ -577,17 +667,17 @@ fun SettingsScreen(
 
             // ── SCREENSHOTS ───────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Screenshots")
-                ClickableSettingItem(Icons.Default.PhotoSizeSelectLarge, "Format", screenshotFormat) { showScreenshotFormatDialog = true }
-                GlassSlider("Quality", "${screenshotQuality}%", screenshotQuality.toFloat(), 10f..100f, 17) {
+                GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
+                ClickableSettingItem(Icons.Default.PhotoSizeSelectLarge, stringResource(R.string.setting_screenshot_format), screenshotFormat) { showScreenshotFormatDialog = true }
+                GlassSlider(stringResource(R.string.setting_screenshot_quality), "${screenshotQuality}%", screenshotQuality.toFloat(), 10f..100f, 17) {
                     viewModel.setScreenshotQuality(it.toInt())
                 }
             }
 
             // ── THEME ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Theme")
-                ClickableSettingItem(Icons.Default.SettingsSystemDaydream, "App Theme", appTheme) { showThemeDialog = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_theme))
+                ClickableSettingItem(Icons.Default.SettingsSystemDaydream, stringResource(R.string.setting_theme), appTheme) { showThemeDialog = true }
 
                 // ── Accent Color row ─────────────────────────────────────────
                 val parsedAccent = remember(accentHex) {
@@ -870,7 +960,7 @@ fun SettingsScreen(
 
             // ── LANGUAGE ──────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Language")
+                GlassSectionHeader(stringResource(R.string.settings_section_language))
                 val languageDisplay = when (appLanguage) {
                     "system" -> "System Default"
                     "en"     -> "English"
@@ -891,22 +981,33 @@ fun SettingsScreen(
                     "vi"     -> "Tiếng Việt (Vietnamese)"
                     else     -> "System Default"
                 }
-                ClickableSettingItem(Icons.Default.Language, "App Language", languageDisplay) { showLanguageDialog = true }
+                ClickableSettingItem(Icons.Default.Language, stringResource(R.string.setting_language), languageDisplay) { showLanguageDialog = true }
             }
 
             // ── STORAGE ───────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Storage")
-                ClickableSettingItem(Icons.Default.Folder, "Save Location",
-                    if (saveLocationUri != null) "Custom Folder Set" else "Default (/Movies/CatRec)") { folderPickerLauncher.launch(null) }
-                ClickableSettingItem(Icons.Default.TextFields, "Filename Pattern", filenamePattern) { showPatternDialog = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_storage))
+                ClickableSettingItem(Icons.Default.Folder, stringResource(R.string.setting_save_location),
+                    if (saveLocationUri != null) "Custom Folder Set" else stringResource(R.string.setting_save_location_default)) { folderPickerLauncher.launch(null) }
+                ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), filenamePattern) { showPatternDialog = true }
                 SwitchSettingItem(Icons.Default.DeleteSweep, "Auto-delete Old Recordings", "Keep last 50", autoDelete) { viewModel.setAutoDelete(it) }
             }
 
             // ── GENERAL ───────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("General")
+                GlassSectionHeader(stringResource(R.string.settings_section_general))
                 SwitchSettingItem(Icons.Default.Smartphone, "Keep Screen On", "During recording", keepScreenOn) { viewModel.setKeepScreenOn(it) }
+            }
+
+            // ── PRIVACY ───────────────────────────────────────────────────────
+            GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                GlassSectionHeader("Privacy")
+                SwitchSettingItem(
+                    Icons.Default.PrivacyTip,
+                    "Personalized Ads",
+                    if (analyticsEnabled) "AdMob may use your advertising ID" else "Non-personalized ads only",
+                    analyticsEnabled
+                ) { viewModel.setAnalyticsEnabled(it) }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -1172,26 +1273,90 @@ private fun ResolutionDialog(
     )
 }
 
+// ── Ad Gate Dialog ─────────────────────────────────────────────────────────────
+
+@Composable
+private fun AdGateDialog(
+    featureName: String,
+    ad: RewardedAd?,
+    isAdLoading: Boolean,
+    onUnlocked: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    val accent = LocalAccentColor.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.PlayCircle, null,
+                tint = accent,
+                modifier = Modifier.size(40.dp)
+            )
+        },
+        title = { Text("Premium Feature", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("$featureName is a premium feature.")
+                Text(
+                    if (ad != null) "Watch a short ad to unlock it for this session."
+                    else "Tap Unlock to enable it for this session.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val loadedAd = ad
+                    if (loadedAd != null && activity != null) {
+                        loadedAd.fullScreenContentCallback = object : FullScreenContentCallback() {
+                            override fun onAdFailedToShowFullScreenContent(e: AdError) {
+                                // Ad couldn't show — unlock anyway as fallback
+                                onUnlocked()
+                            }
+                        }
+                        loadedAd.show(activity) { onUnlocked() }
+                    } else {
+                        // No ad loaded yet (not on Play Store / test build) — unlock directly
+                        onUnlocked()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = accent)
+            ) {
+                Text(
+                    when {
+                        isAdLoading -> "Loading…"
+                        ad != null  -> "Watch Ad"
+                        else        -> "Unlock"
+                    }
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
 // ── Language Helper ────────────────────────────────────────────────────────────
 
 private fun applyLanguage(context: android.content.Context, languageCode: String) {
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-        val localeList = if (languageCode == "system") {
-            androidx.core.os.LocaleListCompat.getEmptyLocaleList()
-        } else {
-            androidx.core.os.LocaleListCompat.create(java.util.Locale.forLanguageTag(languageCode))
-        }
-        androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(localeList)
+    // Persist to SharedPreferences first so attachBaseContext picks it up on recreate.
+    com.ibbie.catrec_screenrecorcer.utils.LocaleHelper.persist(context, languageCode)
+
+    val localeList = if (languageCode.equals("system", ignoreCase = true)) {
+        androidx.core.os.LocaleListCompat.getEmptyLocaleList()
     } else {
-        val locale = if (languageCode == "system") java.util.Locale.getDefault()
-        else java.util.Locale.forLanguageTag(languageCode)
-        java.util.Locale.setDefault(locale)
-        val config = android.content.res.Configuration(context.resources.configuration)
-        config.setLocale(locale)
-        @Suppress("DEPRECATION")
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
-        (context as? android.app.Activity)?.recreate()
+        androidx.core.os.LocaleListCompat.forLanguageTags(languageCode)
     }
+    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(localeList)
+
+    // Always recreate so the wrapped context (and all stringResource calls) refresh.
+    (context as? android.app.Activity)?.recreate()
 }
 
 // ── Shared Composables ─────────────────────────────────────────────────────────

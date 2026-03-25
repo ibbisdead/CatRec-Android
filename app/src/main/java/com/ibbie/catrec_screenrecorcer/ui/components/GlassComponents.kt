@@ -5,7 +5,6 @@ import android.content.Context
 import android.os.Build
 import android.os.PowerManager
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -206,19 +204,7 @@ fun GlassPill(
 // ─── CatRecordButton ─────────────────────────────────────────────────────────
 
 /**
- * The signature CatRec record button.
- *
- * Visual anatomy:
- *   - Two angled cat-ear triangles attached to the circle at ~10 o'clock / 2 o'clock
- *   - Glass circle (dark radial gradient + accent rim border)
- *   - Center icon: Record / Stop / Lock
- *   - Accent Pulse ring when recording (disabled in Battery Saver)
- *
- * Ear geometry (canvas 140 × 160 dp, circle center at 70,100 radius 60):
- *   Left ear base-left  ≈ -50° from top of circle → (24, 61.4)
- *   Left ear base-right ≈ -22° from top of circle → (47.5, 44.4)
- *   Both base points are ON the circle surface; the button circle covers the base,
- *   leaving only the visible pointed tip sticking out to the upper-left/upper-right.
+ * CatRec record button — clean glass circle with accent pulse ring.
  */
 @Composable
 fun CatRecordButton(
@@ -227,15 +213,15 @@ fun CatRecordButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val accent        = LocalAccentColor.current
+    val accent         = LocalAccentColor.current
     val isBatterySaver = rememberIsBatterySaver()
-    val showPulse     = isRecording && !isBatterySaver
+    val showPulse      = isRecording && !isBatterySaver
 
     val infiniteTransition = rememberInfiniteTransition(label = "CatPulse")
 
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue  = if (showPulse) 1.20f else 1.0f,
+        targetValue  = if (showPulse) 1.25f else 1.0f,
         animationSpec = infiniteRepeatable(
             animation  = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -251,23 +237,9 @@ fun CatRecordButton(
         ),
         label = "PulseAlpha"
     )
-    val earGlow by infiniteTransition.animateFloat(
-        initialValue = 0.55f,
-        targetValue  = if (showPulse) 1.0f else 0.55f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(900),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "EarGlow"
-    )
 
-    val earColor = when {
-        isRecording -> accent.copy(alpha = if (isBatterySaver) 1f else earGlow)
-        isEnabled   -> accent.darkened(0.35f)
-        else        -> Color(0xFF2A2A2A)
-    }
     val rimColor = when {
-        isRecording -> accent.copy(alpha = if (isBatterySaver) 1f else earGlow)
+        isRecording -> accent
         isEnabled   -> accent.darkened(0.45f)
         else        -> Color(0xFF333333)
     }
@@ -278,26 +250,16 @@ fun CatRecordButton(
     }
 
     Box(
-        contentAlignment = Alignment.BottomCenter,
-        modifier = modifier.size(width = 140.dp, height = 160.dp)
+        contentAlignment = Alignment.Center,
+        modifier = modifier.size(120.dp)
     ) {
-        // ── Crimson pulse ring ───────────────────────────────────────────────
+        // ── Pulse ring ───────────────────────────────────────────────────────
         if (showPulse) {
             Box(
                 modifier = Modifier
                     .size(120.dp * pulseScale)
-                    .align(Alignment.BottomCenter)
                     .clip(CircleShape)
                     .background(accent.copy(alpha = pulseAlpha * 0.35f))
-            )
-        }
-
-        // ── Cat-ear canvas ───────────────────────────────────────────────────
-        // Drawn BEFORE the circle button so the button clips the ear bases.
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCatEars(
-                earColor   = earColor,
-                innerColor = accent.copy(alpha = 0.35f * earColor.alpha)
             )
         }
 
@@ -326,65 +288,11 @@ fun CatRecordButton(
                     else        -> Icons.Default.FiberManualRecord
                 },
                 contentDescription = if (isRecording) "Stop Recording" else "Start Recording",
-                tint   = iconTint,
+                tint     = iconTint,
                 modifier = Modifier.size(48.dp)
             )
         }
     }
-}
-
-/**
- * Draws two angled cat-ear triangles attached to the circle.
- *
- * Canvas is 140 × 160 dp. Circle center: (70, 100), radius 60.
- *
- * Left ear:
- *   base-left  at -50° from top → (w*0.172, h*0.384) ← on circle surface
- *   base-right at -22° from top → (w*0.339, h*0.277) ← on circle surface
- *   tip                         → (w*0.071, h*0.063) ← upper-left
- *
- * Right ear mirrors about x = 0.5.
- *
- * The circle button is rendered ON TOP of the canvas, so the triangle bases
- * are hidden by the button and only the angled tip is visible.
- */
-private fun DrawScope.drawCatEars(earColor: Color, innerColor: Color) {
-    val w = size.width
-    val h = size.height
-
-    // ── Left ear ─────────────────────────────────────────────────────────────
-    val lEar = Path().apply {
-        moveTo(w * 0.071f, h * 0.063f)   // tip  (upper-left, well above circle)
-        lineTo(w * 0.172f, h * 0.384f)   // base-left  (on circle at ~-50°)
-        lineTo(w * 0.339f, h * 0.277f)   // base-right (on circle at ~-22°)
-        close()
-    }
-    drawPath(lEar, earColor)
-
-    val lEarInner = Path().apply {
-        moveTo(w * 0.143f, h * 0.125f)
-        lineTo(w * 0.214f, h * 0.362f)
-        lineTo(w * 0.314f, h * 0.287f)
-        close()
-    }
-    drawPath(lEarInner, innerColor)
-
-    // ── Right ear (mirror about x = 0.5) ─────────────────────────────────────
-    val rEar = Path().apply {
-        moveTo(w * 0.929f, h * 0.063f)
-        lineTo(w * 0.828f, h * 0.384f)
-        lineTo(w * 0.661f, h * 0.277f)
-        close()
-    }
-    drawPath(rEar, earColor)
-
-    val rEarInner = Path().apply {
-        moveTo(w * 0.857f, h * 0.125f)
-        lineTo(w * 0.786f, h * 0.362f)
-        lineTo(w * 0.686f, h * 0.287f)
-        close()
-    }
-    drawPath(rEarInner, innerColor)
 }
 
 // ─── GlassSlider ─────────────────────────────────────────────────────────────

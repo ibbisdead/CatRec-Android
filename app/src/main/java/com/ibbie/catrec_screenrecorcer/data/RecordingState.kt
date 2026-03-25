@@ -15,6 +15,20 @@ object RecordingState {
     private val _isBuffering = MutableStateFlow(false)
     val isBuffering: StateFlow<Boolean> = _isBuffering.asStateFlow()
 
+    /**
+     * True when ScreenRecordService holds a live MediaProjection token and is ready
+     * for the overlay to start a recording without showing a permission dialog.
+     */
+    private val _isPrepared = MutableStateFlow(false)
+    val isPrepared: StateFlow<Boolean> = _isPrepared.asStateFlow()
+
+    /**
+     * The current recording mode selected in the app: "RECORD" or "CLIPPER".
+     * The overlay reads this to decide which action to send when the record button is tapped.
+     */
+    private val _currentMode = MutableStateFlow("RECORD")
+    val currentMode: StateFlow<String> = _currentMode.asStateFlow()
+
     fun setRecording(recording: Boolean) {
         _isRecording.value = recording
     }
@@ -25,5 +39,13 @@ object RecordingState {
 
     fun setBuffering(buffering: Boolean) {
         _isBuffering.value = buffering
+    }
+
+    fun setPrepared(prepared: Boolean) {
+        _isPrepared.value = prepared
+    }
+
+    fun setMode(mode: String) {
+        _currentMode.value = mode
     }
 }

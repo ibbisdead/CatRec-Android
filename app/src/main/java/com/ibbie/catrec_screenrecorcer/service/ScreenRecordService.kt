@@ -59,7 +59,9 @@ import com.ibbie.catrec_screenrecorcer.service.RecordingActionReceiver.Companion
 import com.ibbie.catrec_screenrecorcer.service.RecordingActionReceiver.Companion.EXTRA_RECORDING_URI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
@@ -86,6 +88,16 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         const val ACTION_START_BUFFER = "ACTION_START_BUFFER"
         const val ACTION_STOP_BUFFER  = "ACTION_STOP_BUFFER"
         const val ACTION_SAVE_CLIP    = "ACTION_SAVE_CLIP"
+
+        /**
+         * Pre-grant mode: obtain MediaProjection while the app Activity is visible, then
+         * keep it alive in this foreground service so the overlay can trigger recordings
+         * without any permission dialog.
+         */
+        const val ACTION_PREPARE              = "ACTION_PREPARE"
+        const val ACTION_START_FROM_OVERLAY   = "ACTION_START_FROM_OVERLAY"
+        const val ACTION_START_BUFFER_FROM_OVERLAY = "ACTION_START_BUFFER_FROM_OVERLAY"
+        const val ACTION_REVOKE_PREPARE       = "ACTION_REVOKE_PREPARE"
 
         const val EXTRA_RESULT_CODE = "EXTRA_RESULT_CODE"
         const val EXTRA_DATA = "EXTRA_DATA"
@@ -187,6 +199,8 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private var isRecordingPaused = false
     private var isRecordingMuted = false
     private var controlsDismissedByUser = false
+    /** True when a live MediaProjection is held and the overlay can start recording directly. */
+    private var isPrepared = false
     private var currentFileUri: Uri? = null
     private var currentPfd: ParcelFileDescriptor? = null
     private var separateMicPfd: ParcelFileDescriptor? = null
@@ -326,6 +340,93 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             ACTION_STOP_BUFFER -> stopBuffer()
             ACTION_SAVE_CLIP   -> saveClip()
 
+            ACTION_PREPARE -> {
+                if (isPrepared || isRecorderRunning || isBufferRunning) return START_STICKY
+                resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
+                resultData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
+                } else {
+                    @Suppress("DEPRECATION") intent.getParcelableExtra(EXTRA_DATA)
+                }
+                if (resultCode == 0 || resultData == null) return START_STICKY
+                startPreparedForeground()
+            }
+
+            ACTION_START_FROM_OVERLAY -> {
+                if (!isPrepared || isRecorderRunning) return START_STICKY
+                val repo = com.ibbie.catrec_screenrecorcer.data.SettingsRepository(applicationContext)
+                runBlocking {
+                    fps             = repo.fps.first().toInt()
+                    bitrate         = (repo.bitrate.first() * 1_000_000).toInt()
+                    audioEnabled    = repo.recordAudio.first()
+                    internalAudioEnabled = repo.internalAudio.first()
+                    audioBitrate    = repo.audioBitrate.first() * 1000
+                    audioSampleRate = repo.audioSampleRate.first()
+                    audioChannels   = repo.audioChannels.first()
+                    audioEncoderType = repo.audioEncoder.first()
+                    separateMicRecording = repo.separateMicRecording.first()
+                    showCamera      = repo.cameraOverlay.first()
+                    cameraOverlaySize = repo.cameraOverlaySize.first()
+                    cameraXFraction = repo.cameraXFraction.first()
+                    cameraYFraction = repo.cameraYFraction.first()
+                    cameraLockPosition = repo.cameraLockPosition.first()
+                    cameraFacing    = repo.cameraFacing.first()
+                    cameraAspectRatio = repo.cameraAspectRatio.first()
+                    cameraOpacity   = repo.cameraOpacity.first()
+                    showWatermark   = repo.showWatermark.first()
+                    showFloatingControls = repo.floatingControls.first()
+                    stopBehaviors   = ArrayList(repo.stopBehavior.first())
+                    saveLocationUri = repo.saveLocationUri.first()
+                    videoEncoder    = repo.videoEncoder.first()
+                    resolutionSetting = repo.resolution.first()
+                    filenamePattern = repo.filenamePattern.first()
+                    countdownValue  = repo.countdown.first()
+                    keepScreenOn    = repo.keepScreenOn.first()
+                    recordingOrientationSetting = repo.recordingOrientation.first()
+                    watermarkLocation = repo.watermarkLocation.first()
+                    watermarkImageUri = repo.watermarkImageUri.first()
+                    watermarkShape  = repo.watermarkShape.first()
+                    watermarkOpacity = repo.watermarkOpacity.first()
+                    watermarkSize   = repo.watermarkSize.first()
+                    watermarkXFraction = repo.watermarkXFraction.first()
+                    watermarkYFraction = repo.watermarkYFraction.first()
+                    screenshotFormat = repo.screenshotFormat.first()
+                    screenshotQuality = repo.screenshotQuality.first()
+                }
+                startRecording()
+            }
+
+            ACTION_START_BUFFER_FROM_OVERLAY -> {
+                if (!isPrepared || isBufferRunning || isRecorderRunning) return START_STICKY
+                val repo = com.ibbie.catrec_screenrecorcer.data.SettingsRepository(applicationContext)
+                runBlocking {
+                    fps             = repo.fps.first().toInt()
+                    bitrate         = (repo.bitrate.first() * 1_000_000).toInt()
+                    audioEnabled    = repo.recordAudio.first()
+                    internalAudioEnabled = repo.internalAudio.first()
+                    audioBitrate    = repo.audioBitrate.first() * 1000
+                    audioSampleRate = repo.audioSampleRate.first()
+                    audioChannels   = repo.audioChannels.first()
+                    audioEncoderType = repo.audioEncoder.first()
+                    showFloatingControls = repo.floatingControls.first()
+                    videoEncoder    = repo.videoEncoder.first()
+                    resolutionSetting = repo.resolution.first()
+                }
+                startBuffer()
+            }
+
+            ACTION_REVOKE_PREPARE -> {
+                if (!isRecorderRunning) {
+                    isPrepared = false
+                    RecordingState.setPrepared(false)
+                    mediaProjection?.stop()
+                    mediaProjection = null
+                    try { unregisterReceiver(screenOffReceiver) } catch (_: Exception) {}
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            }
+
             ACTION_TAKE_SCREENSHOT -> {
                 if (isRecorderRunning) {
                     takeScreenshot()
@@ -337,6 +438,69 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             }
         }
         return START_STICKY
+    }
+
+    /**
+     * Consumes the pre-supplied MediaProjection token, keeps it alive in a foreground
+     * service, and signals the overlay that it can now trigger recordings without a dialog.
+     */
+    private fun startPreparedForeground() {
+        val notification = buildReadyNotification()
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID, notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.e("ScreenRecordService", "Prepare foreground start failed", e)
+            stopSelf(); return
+        }
+
+        mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+        if (mediaProjection == null) {
+            stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return
+        }
+        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+            override fun onStop() {
+                super.onStop()
+                isPrepared = false
+                RecordingState.setPrepared(false)
+                if (isRecorderRunning) stopRecording()
+                else {
+                    mediaProjection = null
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            }
+        }, null)
+
+        isPrepared = true
+        RecordingState.setPrepared(true)
+    }
+
+    private fun buildReadyNotification(): Notification {
+        val tapPI = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+        )
+        val revokePI = PendingIntent.getService(
+            this, 50,
+            Intent(this, ScreenRecordService::class.java).apply { action = ACTION_REVOKE_PREPARE },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("CatRec Ready")
+            .setContentText("Tap the overlay \u25CF button to start recording")
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(tapPI)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Revoke", revokePI)
+            .build()
     }
 
     @SuppressLint("WakelockTimeout")
@@ -418,13 +582,18 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             startService(overlayIntent)
         }
 
-        mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
-        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
-            override fun onStop() {
-                super.onStop()
-                stopRecording()
-            }
-        }, null)
+        if (mediaProjection == null) {
+            // Normal path: consume the one-time token from the permission dialog.
+            mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+                override fun onStop() {
+                    super.onStop()
+                    stopRecording()
+                }
+            }, null)
+        }
+        // Prepared-mode path: mediaProjection is already live from ACTION_PREPARE;
+        // the callback was registered there — no need to re-register.
 
         calculateDimensions()
 
@@ -794,10 +963,14 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             stopSelf(); return
         }
 
-        mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
-        mediaProjection?.registerCallback(object : MediaProjection.Callback() {
-            override fun onStop() { super.onStop(); stopBuffer() }
-        }, null)
+        // In prepared mode the MediaProjection is already held — reuse it instead of
+        // consuming the one-time token a second time.
+        if (mediaProjection == null) {
+            mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            mediaProjection?.registerCallback(object : MediaProjection.Callback() {
+                override fun onStop() { super.onStop(); stopBuffer() }
+            }, null)
+        }
 
         calculateDimensions()
 
@@ -832,6 +1005,10 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     RecordingState.setBuffering(true)
                     getSystemService(NotificationManager::class.java)
                         .notify(BUFFER_NOTIFICATION_ID, buildBufferNotification())
+                    startService(Intent(this@ScreenRecordService, OverlayService::class.java).apply {
+                        action = OverlayService.ACTION_UPDATE_BUFFERING_STATE
+                        putExtra(OverlayService.EXTRA_IS_BUFFERING, true)
+                    })
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Buffer start failed", e)
@@ -849,6 +1026,10 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         }
         isBufferRunning = false
         RecordingState.setBuffering(false)
+        startService(Intent(this, OverlayService::class.java).apply {
+            action = OverlayService.ACTION_UPDATE_BUFFERING_STATE
+            putExtra(OverlayService.EXTRA_IS_BUFFERING, false)
+        })
 
         lifecycleScope.launch(Dispatchers.IO) {
             try { rollingBufferEngine?.stop() } catch (e: Exception) {
@@ -915,10 +1096,16 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     }
 
     private fun cleanupBuffer() {
-        mediaProjection?.stop()
-        mediaProjection = null
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        if (!isRecorderRunning) stopSelf()
+        if (isPrepared) {
+            // Keep the service and MediaProjection alive so the overlay can start again.
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildReadyNotification())
+        } else {
+            mediaProjection?.stop()
+            mediaProjection = null
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            if (!isRecorderRunning) stopSelf()
+        }
     }
 
     private fun buildBufferNotification(statusText: String? = null): Notification {
@@ -1150,15 +1337,23 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         isRecordingMuted = false
         controlsDismissedByUser = false
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_HIDE_OVERLAYS })
-        mediaProjection?.stop()
-        mediaProjection = null
         try { unregisterReceiver(screenOffReceiver) } catch (_: Exception) {}
         sensorManager?.unregisterListener(this)
         orientationEventListener?.disable()
         orientationEventListener = null
         if (wakeLock?.isHeld == true) { wakeLock?.release(); wakeLock = null }
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
+
+        if (isPrepared) {
+            // Keep the service and MediaProjection alive so the overlay can start
+            // another recording without showing the permission dialog again.
+            getSystemService(NotificationManager::class.java)
+                .notify(NOTIFICATION_ID, buildReadyNotification())
+        } else {
+            mediaProjection?.stop()
+            mediaProjection = null
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        }
     }
 
     // ── Countdown Overlay ──────────────────────────────────────────────────────

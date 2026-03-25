@@ -16,8 +16,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -30,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -64,25 +68,54 @@ fun RecordingScreen(
 
     val accent = LocalAccentColor.current
 
-    // ---- Recording / Buffer state ----
+    // ---- Recording / Buffer / Prepare state ----
     val isRecording by viewModel.isRecording.collectAsState()
     val isBuffering by viewModel.isBuffering.collectAsState()
+    val isPrepared  by viewModel.isPrepared.collectAsState()
+
+    // Auto-start recording when launched from overlay bubble
+    var pendingAutoStart by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        val activity = context as? Activity
+        if (activity?.intent?.action == "ACTION_START_RECORDING_FROM_OVERLAY") {
+            activity.intent.action = null
+            pendingAutoStart = true
+        }
+    }
     val fps by viewModel.fps.collectAsState()
     val bitrate by viewModel.bitrate.collectAsState()
     val resolution by viewModel.resolution.collectAsState()
     val recordAudio by viewModel.recordAudio.collectAsState()
     val internalAudio by viewModel.internalAudio.collectAsState()
+    val floatingControls by viewModel.floatingControls.collectAsState()
 
     // "RECORD" or "CLIPPER" — mutually exclusive.
     // Lock the tab while either mode is actively running.
     var selectedMode by remember { mutableStateOf("RECORD") }
     val canSwitchMode = !isRecording && !isBuffering
 
+    // Keep selectedMode in sync with the running state so that navigating
+    // away and back while the clipper is active doesn't lose the mode.
+    LaunchedEffect(isBuffering) { if (isBuffering) selectedMode = "CLIPPER" }
+    LaunchedEffect(isRecording) { if (isRecording) selectedMode = "RECORD" }
+
+    // Publish the current mode to RecordingState so the overlay can read it.
+    LaunchedEffect(selectedMode) {
+        com.ibbie.catrec_screenrecorcer.data.RecordingState.setMode(selectedMode)
+    }
+
     // ---- Permission state ----
     var allPermissionsGranted by remember { mutableStateOf(permissionManager.areAllGranted()) }
     var missingPermissions by remember { mutableStateOf(permissionManager.getMissingPermissions()) }
     var showPermissionDialog by remember { mutableStateOf(false) }
     var setupStep by remember { mutableStateOf(PermissionSetupStep.IDLE) }
+
+    // ---- Beta notice ----
+    val betaNoticeShown by viewModel.betaNoticeShown.collectAsState()
+    var showBetaNotice by remember { mutableStateOf(false) }
+    LaunchedEffect(allPermissionsGranted, betaNoticeShown) {
+        if (allPermissionsGranted && !betaNoticeShown) showBetaNotice = true
+    }
 
     // ---- Animations ----
     val infiniteTransition = rememberInfiniteTransition(label = "RecordingBlink")
@@ -225,6 +258,14 @@ fun RecordingScreen(
                 missingPermissions = permissionManager.getMissingPermissions()
                 viewModel.updatePermissionsState(allPermissionsGranted)
                 if (allPermissionsGranted) permissionManager.markSetupComplete()
+
+                // Handle ACTION_START_RECORDING_FROM_OVERLAY delivered via onNewIntent
+                // when the activity was already running (LaunchedEffect(Unit) won't re-run).
+                val activity = context as? Activity
+                if (activity?.intent?.action == "ACTION_START_RECORDING_FROM_OVERLAY") {
+                    activity.intent.action = null
+                    pendingAutoStart = true
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -241,6 +282,19 @@ fun RecordingScreen(
             // Start service immediately; service handles countdown within FGS grace period.
             viewModel.startRecordingService(context, result.resultCode, result.data!!)
             (context as? Activity)?.moveTaskToBack(true)
+        } else {
+            Toast.makeText(context, "Screen recording permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Launcher for the overlay pre-grant flow: obtains MediaProjection while the Activity
+    // is in the foreground, then keeps it alive in ScreenRecordService so the overlay
+    // bubble can start recordings without any permission dialog.
+    val prepareProjectionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            viewModel.prepareForOverlayRecording(context, result.resultCode, result.data!!)
         } else {
             Toast.makeText(context, "Screen recording permission denied", Toast.LENGTH_SHORT).show()
         }
@@ -303,6 +357,15 @@ fun RecordingScreen(
         }
     }
 
+    // Fire the recording flow once permissions are confirmed after returning
+    // from the overlay bubble's record button.
+    LaunchedEffect(pendingAutoStart, allPermissionsGranted, setupStep) {
+        if (pendingAutoStart && allPermissionsGranted && setupStep == PermissionSetupStep.IDLE) {
+            pendingAutoStart = false
+            startRecordingFlow()
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Permission dialog — shown when a permission is missing at record-start
     // OR when the user taps "Fix" on the persistent banner.
@@ -315,6 +378,33 @@ fun RecordingScreen(
                 setupStep = PermissionSetupStep.NOTIFICATIONS
             },
             onDismiss = { showPermissionDialog = false }
+        )
+    }
+
+    // -----------------------------------------------------------------------
+    // Beta launch notice — shown once after all permissions are granted
+    // -----------------------------------------------------------------------
+    if (showBetaNotice) {
+        BetaNoticeDialog(
+            accent = accent,
+            onFeedback = {
+                showBetaNotice = false
+                viewModel.setBetaNoticeShown(true)
+                try {
+                    context.startActivity(
+                        Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
+                            putExtra(Intent.EXTRA_EMAIL, arrayOf("ibbiedead@gmail.com"))
+                            putExtra(Intent.EXTRA_SUBJECT, "CatRec Beta Feedback")
+                        }
+                    )
+                } catch (_: Exception) {
+                    Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onDismiss = {
+                showBetaNotice = false
+                viewModel.setBetaNoticeShown(true)
+            }
         )
     }
 
@@ -364,6 +454,29 @@ fun RecordingScreen(
                 enabled = canSwitchMode,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
+
+            // ── Overlay pre-grant card (only when floating controls are on) ──
+            if (floatingControls && !isRecording && !isBuffering) {
+                if (isPrepared) {
+                    OverlayReadyCard(
+                        onRevoke = { viewModel.revokeOverlayPreparation(context) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+                } else {
+                    OverlayAuthCard(
+                        accent = accent,
+                        onAuthorize = {
+                            val mpm = context.getSystemService(MediaProjectionManager::class.java)
+                            prepareProjectionLauncher.launch(mpm.createScreenCaptureIntent())
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+                }
+            }
 
             // ── Status HUD glass card ────────────────────────────────────────
             GlassCard(
@@ -439,7 +552,7 @@ fun RecordingScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .scale(buttonScale)
-                    .size(280.dp)
+                    .size(260.dp)
             ) {
                 // FPS — top-left
                 GlassPill(
@@ -459,20 +572,17 @@ fun RecordingScreen(
                 )
 
                 // Cat Record Button — centered
-                // In CLIPPER mode the button starts/stops the rolling buffer engine.
+                // Stop logic is based on the actual running state, NOT selectedMode,
+                // so navigating away and back can't cause the wrong action.
                 CatRecordButton(
                     isRecording = isRecording || isBuffering,
                     isEnabled   = allPermissionsGranted,
                     onClick = {
                         when {
-                            selectedMode == "RECORD" -> {
-                                if (isRecording) viewModel.stopRecordingService(context)
-                                else startRecordingFlow()
-                            }
-                            selectedMode == "CLIPPER" -> {
-                                if (isBuffering) viewModel.stopBufferService(context)
-                                else startBufferFlow()
-                            }
+                            isRecording  -> viewModel.stopRecordingService(context)
+                            isBuffering  -> viewModel.stopBufferService(context)
+                            selectedMode == "CLIPPER" -> startBufferFlow()
+                            else -> startRecordingFlow()
                         }
                     },
                     modifier = Modifier.align(Alignment.Center)
@@ -705,4 +815,166 @@ private fun startMediaProjection(
 ) {
     val mpm = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
     launcher.launch(mpm.createScreenCaptureIntent())
+}
+
+// ---------------------------------------------------------------------------
+// Overlay pre-grant cards
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun OverlayAuthCard(
+    accent: Color,
+    onAuthorize: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GlassCard(modifier = modifier, cornerRadius = 12.dp) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Authorize Overlay Recording",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "Grant once so the overlay \u25CF button starts recording immediately",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFAFAFAF)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            TextButton(
+                onClick = onAuthorize,
+                colors = ButtonDefaults.textButtonColors(contentColor = accent)
+            ) {
+                Text("Grant", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverlayReadyCard(
+    onRevoke: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = LocalAccentColor.current
+    GlassCard(modifier = modifier, cornerRadius = 12.dp) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF4CAF50))
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Overlay Ready",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Text(
+                    text = "Tap the overlay \u25CF button to start recording",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFAFAFAF)
+                )
+            }
+            TextButton(
+                onClick = onRevoke,
+                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF888888))
+            ) {
+                Text("Revoke", style = MaterialTheme.typography.labelSmall)
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Beta launch notice dialog
+// ---------------------------------------------------------------------------
+@Composable
+private fun BetaNoticeDialog(
+    accent: Color,
+    onFeedback: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0E0E0E),
+        shape = RoundedCornerShape(20.dp),
+        icon = {
+            Icon(
+                Icons.Default.BugReport,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(36.dp)
+            )
+        },
+        title = {
+            Text(
+                "You're in Early Access",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    "⚠️  This is a beta release.",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = accent
+                )
+                Text(
+                    "You may encounter bugs, crashes, or unfinished features. Your device and data are safe — recordings are saved locally and nothing is uploaded.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFCCCCCC)
+                )
+                HorizontalDivider(color = Color(0xFF2A2A2A))
+                Text(
+                    "Your feedback directly shapes this app. If something breaks or feels off, please report it — even a short message helps enormously.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFFCCCCCC)
+                )
+                Text(
+                    "Thank you for trying CatRec early. 🐱",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF888888)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onFeedback,
+                colors = ButtonDefaults.buttonColors(containerColor = accent),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Leave Feedback", color = Color.Black, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Got it", color = Color(0xFF888888))
+            }
+        }
+    )
 }
