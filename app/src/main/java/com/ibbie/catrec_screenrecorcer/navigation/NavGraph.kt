@@ -1,5 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -11,13 +13,16 @@ import androidx.compose.material3.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,6 +38,7 @@ import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalPerformanceMode
 import com.ibbie.catrec_screenrecorcer.ui.components.rememberIsLowEndDevice
 import com.ibbie.catrec_screenrecorcer.ui.theme.CrimsonRed
+import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 import com.ibbie.catrec_screenrecorcer.ui.player.PlayerScreen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingScreen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
@@ -78,19 +84,20 @@ fun CatRecNavGraph(
         }
     }
 
-    // Build a dynamic MaterialTheme color scheme from the accent
+    // Build a dynamic MaterialTheme color scheme from the accent (preserve light/dark on-* contrast)
     val baseScheme = MaterialTheme.colorScheme
     val dynamicScheme = remember(accentColor, baseScheme) {
+        val light = baseScheme.isLightTheme()
         baseScheme.copy(
-            primary              = accentColor,
-            onPrimary            = Color.White,
-            secondary            = accentColor,
-            onSecondary          = Color.White,
-            tertiary             = accentColor,
-            onTertiary           = Color.White,
-            primaryContainer     = accentColor.copy(alpha = 0.2f),
-            onPrimaryContainer   = Color.White,
-            outline              = accentColor.copy(alpha = 0.3f)
+            primary = accentColor,
+            onPrimary = Color.White,
+            secondary = accentColor,
+            onSecondary = Color.White,
+            tertiary = accentColor,
+            onTertiary = Color.White,
+            primaryContainer = accentColor.copy(alpha = if (light) 0.14f else 0.2f),
+            onPrimaryContainer = if (light) baseScheme.onSurface else Color.White,
+            outline = accentColor.copy(alpha = if (light) 0.35f else 0.3f)
         )
     }
 
@@ -106,25 +113,39 @@ fun CatRecNavGraph(
         route.startsWith("crop") || route.startsWith("player") || route.startsWith("trim")
     } ?: false
 
+    // Immediate tab highlight while NavHost composes the destination (Compose ≠ React;
+    // this is the local equivalent of optimistic UI / decoupling indicator from back stack).
+    var pendingTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(currentRoute) {
+        val route = currentRoute
+        if (route != null && bottomBarScreens.any { it.route == route }) {
+            pendingTabRoute = null
+        }
+    }
+
     CompositionLocalProvider(
         LocalPerformanceMode provides effectivePerformanceMode,
         LocalAccentColor     provides accentColor,
         LocalAccentBrush     provides accentBrush
     ) {
     MaterialTheme(colorScheme = dynamicScheme) {
+    val barScheme = MaterialTheme.colorScheme
     Scaffold(
-        containerColor = Color(0xFF0A0A0A),
+        containerColor = barScheme.background,
         bottomBar = {
             if (!hideBottomBar) {
                 NavigationBar(
-                    containerColor = Color(0xEE0A0A0A),
-                    contentColor = Color.White
+                    containerColor = barScheme.surface,
+                    contentColor = barScheme.onSurface
                 ) {
                     bottomBarScreens.forEach { screen ->
-                        val selected = navBackStackEntry?.destination?.hierarchy
+                        val selectedFromNav = navBackStackEntry?.destination?.hierarchy
                             ?.any { it.route == screen.route } == true
+                        val selected = pendingTabRoute?.let { it == screen.route }
+                            ?: selectedFromNav
 
                         NavigationBarItem(
+                            modifier = Modifier.weight(1f),
                             icon = {
                                 val icon = when (screen) {
                                     Screen.Recording   -> Icons.Default.Videocam
@@ -142,10 +163,11 @@ fun CatRecNavGraph(
                                 selectedIconColor   = accentColor,
                                 selectedTextColor   = accentColor,
                                 indicatorColor      = accentColor.copy(alpha = 0.2f),
-                                unselectedIconColor = Color(0xFF555555),
-                                unselectedTextColor = Color(0xFF555555)
+                                unselectedIconColor = barScheme.onSurfaceVariant,
+                                unselectedTextColor = barScheme.onSurfaceVariant
                             ),
                             onClick = {
+                                pendingTabRoute = screen.route
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
@@ -178,7 +200,7 @@ fun CatRecNavGraph(
                 SettingsScreen(viewModel = sharedViewModel, navController = navController)
             }
             composable(Screen.Support.route) {
-                SupportScreen()
+                SupportScreen(viewModel = sharedViewModel)
             }
 
             composable(

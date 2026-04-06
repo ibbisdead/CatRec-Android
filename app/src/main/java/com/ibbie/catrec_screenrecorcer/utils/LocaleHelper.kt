@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.Locale
 
 /**
@@ -41,31 +42,45 @@ object LocaleHelper {
      * Call this from Activity.attachBaseContext so every resource lookup uses the right locale.
      */
     fun wrap(base: Context): Context {
-        val code = getSaved(base)
-        if (code.isBlank() || code.equals("system", ignoreCase = true)) return base
+        return try {
+            val code = getSaved(base)
+            if (code.isBlank() || code.equals("system", ignoreCase = true)) return base
 
-        val locale = Locale.forLanguageTag(code)
-        Locale.setDefault(locale)
+            val locale = Locale.forLanguageTag(code)
+            Locale.setDefault(locale)
 
-        val config = Configuration(base.resources.configuration)
-        config.setLocale(locale)
-        return base.createConfigurationContext(config)
+            val config = Configuration(base.resources.configuration)
+            config.setLocale(locale)
+            base.createConfigurationContext(config)
+        } catch (e: Exception) {
+            crashlyticsLog("LocaleHelper.wrap failed; using base context")
+            recordCrashlyticsNonFatal(e, "LocaleHelper.wrap")
+            base
+        }
     }
 
     /**
      * Apply a new language immediately and persist it.
-     * Call this when the user picks a language in Settings, then call Activity.recreate().
+     * Call this when the user picks a language in Settings, then call [android.app.Activity.recreate]
+     * on the foreground activity so Compose and Views reload strings from the new configuration.
      */
     fun apply(context: Context, languageCode: String) {
-        persist(context, languageCode)
+        try {
+            crashlyticsLog("Language change to $languageCode")
+            FirebaseCrashlytics.getInstance().setCustomKey(CrashlyticsKeys.APP_LANGUAGE, languageCode)
+            persist(context, languageCode)
 
-        // AppCompatDelegate handles the per-app locale on API 33+ natively;
-        // on older versions it stores the preference and we rely on attachBaseContext.
-        val localeList = if (languageCode.equals("system", ignoreCase = true)) {
-            LocaleListCompat.getEmptyLocaleList()
-        } else {
-            LocaleListCompat.forLanguageTags(languageCode)
+            // AppCompatDelegate handles the per-app locale on API 33+ natively;
+            // on older versions it stores the preference and we rely on attachBaseContext.
+            val localeList = if (languageCode.equals("system", ignoreCase = true)) {
+                LocaleListCompat.getEmptyLocaleList()
+            } else {
+                LocaleListCompat.forLanguageTags(languageCode)
+            }
+            AppCompatDelegate.setApplicationLocales(localeList)
+        } catch (e: Exception) {
+            recordCrashlyticsNonFatal(e, "LocaleHelper.apply($languageCode)")
+            throw e
         }
-        AppCompatDelegate.setApplicationLocales(localeList)
     }
 }

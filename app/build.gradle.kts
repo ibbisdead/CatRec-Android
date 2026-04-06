@@ -1,9 +1,12 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services") version "4.4.2" apply false
-    id("com.google.firebase.crashlytics") version "3.0.2" apply false
+    // Must be applied (no apply false) so google-services.json is processed and Firebase SDKs initialize.
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -14,8 +17,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.9.1 Beta"
+        versionCode = 13
+        versionName = "0.9.7 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,8 +33,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Upload full native debug symbols to both Google Play and Firebase Crashlytics.
             ndk {
                 debugSymbolLevel = "FULL"
+            }
+            configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                nativeSymbolUploadEnabled = true
             }
         }
         debug {
@@ -41,9 +48,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -59,6 +63,12 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
+}
+
 dependencies {
     // Firebase (BoM manages all Firebase library versions)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
@@ -67,6 +77,9 @@ dependencies {
 
     // Google Mobile Ads
     implementation("com.google.android.gms:play-services-ads:23.6.0")
+
+    // Google Play Billing
+    implementation(libs.android.billing.ktx)
 
     // Core Android
     implementation(libs.androidx.core.ktx)
@@ -82,6 +95,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3.window.size)
+    implementation(libs.androidx.constraintlayout.compose)
     
     // Navigation & Icons
     implementation(libs.androidx.navigation.compose)

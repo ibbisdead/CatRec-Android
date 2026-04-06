@@ -68,11 +68,15 @@ class ClipperTileService : TileService() {
     private fun updateTile() {
         val tile = qsTile ?: return
         val isBuffering = RecordingState.isBuffering.value
-        tile.label = "CatRec Clipper"
+        tile.label = getString(R.string.tile_clipper_label)
         tile.icon = Icon.createWithResource(this, R.mipmap.ic_launcher)
         tile.state = if (isBuffering) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = if (isBuffering) "Buffering…" else if (RecordingState.isPrepared.value) "Ready" else "Tap to open app"
+            tile.subtitle = when {
+                isBuffering -> getString(R.string.tile_subtitle_buffering)
+                RecordingState.isPrepared.value -> getString(R.string.tile_subtitle_ready)
+                else -> getString(R.string.tile_subtitle_tap_open)
+            }
         }
         tile.updateTile()
     }

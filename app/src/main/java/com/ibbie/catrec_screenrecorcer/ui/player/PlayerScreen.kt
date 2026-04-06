@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +34,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
+import com.ibbie.catrec_screenrecorcer.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -113,12 +115,12 @@ fun PlayerScreen(
     if (showRenameDialog) {
         AlertDialog(
             onDismissRequest = { showRenameDialog = false },
-            title = { Text("Rename") },
+            title = { Text(stringResource(R.string.player_rename_title)) },
             text = {
                 OutlinedTextField(
                     value = renameText,
                     onValueChange = { renameText = it },
-                    label = { Text("File name") },
+                    label = { Text(stringResource(R.string.player_file_name_label)) },
                     singleLine = true
                 )
             },
@@ -132,15 +134,15 @@ fun PlayerScreen(
                             put(MediaStore.Video.Media.DISPLAY_NAME, newName)
                         }
                         context.contentResolver.update(videoUri, values, null, null)
-                        Toast.makeText(context, "Renamed to $newName", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.player_renamed_to, newName), Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Rename failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.player_rename_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
                     }
                     showRenameDialog = false
-                }) { Text("Rename") }
+                }) { Text(stringResource(R.string.action_rename)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showRenameDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -148,21 +150,21 @@ fun PlayerScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete Recording?") },
-            text = { Text("This recording will be permanently deleted.") },
+            title = { Text(stringResource(R.string.delete_recording_title)) },
+            text = { Text(stringResource(R.string.delete_generic_recording)) },
             confirmButton = {
                 TextButton(onClick = {
                     try {
                         context.contentResolver.delete(videoUri, null, null)
                         navController.popBackStack()
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Delete failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.player_delete_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
                     }
                     showDeleteConfirm = false
-                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
             }
         )
     }
@@ -244,19 +246,19 @@ fun PlayerScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back), tint = Color.White)
                     }
 
                     Box {
                         IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, "More", tint = Color.White)
+                            Icon(Icons.Default.MoreVert, stringResource(R.string.content_desc_more_options), tint = Color.White)
                         }
                         DropdownMenu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Open externally") },
+                                text = { Text(stringResource(R.string.action_open_external)) },
                                 leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null) },
                                 onClick = {
                                     showMenu = false
@@ -266,17 +268,17 @@ fun PlayerScreen(
                                     }
                                     try { context.startActivity(intent) }
                                     catch (_: Exception) {
-                                        Toast.makeText(context, "No app found to open video", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.player_no_app_video), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Rename") },
+                                text = { Text(stringResource(R.string.action_rename)) },
                                 leadingIcon = { Icon(Icons.Default.Edit, null) },
                                 onClick = { showMenu = false; showRenameDialog = true }
                             )
                             DropdownMenuItem(
-                                text = { Text("Trim") },
+                                text = { Text(stringResource(R.string.action_trim)) },
                                 leadingIcon = { Icon(Icons.Default.ContentCut, null) },
                                 onClick = {
                                     showMenu = false
@@ -284,7 +286,7 @@ fun PlayerScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Share") },
+                                text = { Text(stringResource(R.string.action_share)) },
                                 leadingIcon = { Icon(Icons.Default.Share, null) },
                                 onClick = {
                                     showMenu = false
@@ -293,12 +295,12 @@ fun PlayerScreen(
                                         putExtra(Intent.EXTRA_STREAM, videoUri)
                                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
-                                    context.startActivity(Intent.createChooser(intent, "Share"))
+                                    context.startActivity(Intent.createChooser(intent, context.getString(R.string.action_share)))
                                 }
                             )
                             HorizontalDivider()
                             DropdownMenuItem(
-                                text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
+                                text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
                                 leadingIcon = {
                                     Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
                                 },
@@ -324,7 +326,7 @@ fun PlayerScreen(
                         IconButton(onClick = {
                             exoPlayer.seekTo((exoPlayer.currentPosition - 10_000L).coerceAtLeast(0))
                         }) {
-                            Icon(Icons.Default.Replay10, "−10s", tint = Color.White, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.Replay10, stringResource(R.string.content_desc_rewind_10), tint = Color.White, modifier = Modifier.size(32.dp))
                         }
                     }
 
@@ -341,7 +343,7 @@ fun PlayerScreen(
                         }) {
                             Icon(
                                 if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                if (isPlaying) "Pause" else "Play",
+                                if (isPlaying) stringResource(R.string.action_pause) else stringResource(R.string.action_resume),
                                 tint = Color.White,
                                 modifier = Modifier.size(40.dp)
                             )
@@ -360,7 +362,7 @@ fun PlayerScreen(
                                 (exoPlayer.currentPosition + 10_000L).coerceAtMost(exoPlayer.duration)
                             )
                         }) {
-                            Icon(Icons.Default.Forward10, "+10s", tint = Color.White, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.Forward10, stringResource(R.string.content_desc_forward_10), tint = Color.White, modifier = Modifier.size(32.dp))
                         }
                     }
                 }

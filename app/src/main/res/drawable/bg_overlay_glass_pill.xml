@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Glassmorphism pill for the floating overlay card.
+  Three layers stacked:
+    1. Deep-dark base fill  (#E8101010 ≈ 91% opaque dark)
+    2. Top-edge sheen — a short linear gradient that fades from 12% white
+       to transparent, giving the impression of a lit glass surface.
+    3. Border stroke (1dp, 20% white) for the "glass edge" highlight.
+  No blur is needed; the gradient sheen reads as glass against any wallpaper.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Layer 1: dark background fill -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E8101010" />
+            <corners android:radius="32dp" />
+        </shape>
+    </item>
+
+    <!-- Layer 2: top-edge highlight gradient (glass sheen, covers top ~half of pill) -->
+    <item
+        android:bottom="30dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="1dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:endColor="#00FFFFFF"
+                android:startColor="#14FFFFFF"
+                android:type="linear" />
+            <corners
+                android:bottomLeftRadius="0dp"
+                android:bottomRightRadius="0dp"
+                android:topLeftRadius="30dp"
+                android:topRightRadius="30dp" />
+        </shape>
+    </item>
+
+    <!-- Layer 3: glass edge border -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <corners android:radius="32dp" />
+            <stroke
+                android:width="1dp"
+                android:color="#33FFFFFF" />
+        </shape>
+    </item>
+
+</layer-list>

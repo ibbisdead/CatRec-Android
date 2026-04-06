@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,26 +28,30 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ui.components.*
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
-import com.ibbie.catrec_screenrecorcer.ui.theme.CyberBlack
+import com.ibbie.catrec_screenrecorcer.ui.theme.rememberScreenBackgroundBrush
 import com.ibbie.catrec_screenrecorcer.utils.PermissionInfo
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
-import kotlinx.coroutines.launch
 
 // ---------------------------------------------------------------------------
 // Permission setup is driven by a simple state machine so that each step
@@ -63,7 +68,6 @@ fun RecordingScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val scope = rememberCoroutineScope()
     val permissionManager = remember { PermissionManager(context) }
 
     val accent = LocalAccentColor.current
@@ -88,6 +92,7 @@ fun RecordingScreen(
     val recordAudio by viewModel.recordAudio.collectAsState()
     val internalAudio by viewModel.internalAudio.collectAsState()
     val floatingControls by viewModel.floatingControls.collectAsState()
+    val clipperDurationMinutes by viewModel.clipperDurationMinutes.collectAsState()
 
     // "RECORD" or "CLIPPER" — mutually exclusive.
     // Lock the tab while either mode is actively running.
@@ -110,11 +115,15 @@ fun RecordingScreen(
     var showPermissionDialog by remember { mutableStateOf(false) }
     var setupStep by remember { mutableStateOf(PermissionSetupStep.IDLE) }
 
-    // ---- Beta notice ----
-    val betaNoticeShown by viewModel.betaNoticeShown.collectAsState()
+    // ---- Beta notice (once per install: read DataStore, not stateIn’s initial false) ----
     var showBetaNotice by remember { mutableStateOf(false) }
-    LaunchedEffect(allPermissionsGranted, betaNoticeShown) {
-        if (allPermissionsGranted && !betaNoticeShown) showBetaNotice = true
+    LaunchedEffect(allPermissionsGranted) {
+        if (!allPermissionsGranted) {
+            showBetaNotice = false
+            return@LaunchedEffect
+        }
+        val alreadyShown = viewModel.betaNoticePersistedValue()
+        showBetaNotice = !alreadyShown
     }
 
     // ---- Animations ----
@@ -128,12 +137,6 @@ fun RecordingScreen(
         ),
         label = "BlinkAlpha"
     )
-    val buttonScale by animateFloatAsState(
-        targetValue = if (isRecording) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "ButtonScale"
-    )
-
     // -----------------------------------------------------------------------
     // Permission refresh: re-query the system and push state into the ViewModel
     // so any observer (e.g. the record button) immediately reflects reality.
@@ -283,7 +286,7 @@ fun RecordingScreen(
             viewModel.startRecordingService(context, result.resultCode, result.data!!)
             (context as? Activity)?.moveTaskToBack(true)
         } else {
-            Toast.makeText(context, "Screen recording permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -296,7 +299,7 @@ fun RecordingScreen(
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             viewModel.prepareForOverlayRecording(context, result.resultCode, result.data!!)
         } else {
-            Toast.makeText(context, "Screen recording permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -308,7 +311,7 @@ fun RecordingScreen(
             viewModel.startBufferService(context, result.resultCode, result.data!!)
             (context as? Activity)?.moveTaskToBack(true)
         } else {
-            Toast.makeText(context, "Screen recording permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -394,11 +397,11 @@ fun RecordingScreen(
                     context.startActivity(
                         Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
                             putExtra(Intent.EXTRA_EMAIL, arrayOf("ibbiedead@gmail.com"))
-                            putExtra(Intent.EXTRA_SUBJECT, "CatRec Beta Feedback")
+                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.beta_feedback_email_subject))
                         }
                     )
                 } catch (_: Exception) {
-                    Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.toast_no_email_app), Toast.LENGTH_SHORT).show()
                 }
             },
             onDismiss = {
@@ -418,22 +421,32 @@ fun RecordingScreen(
         else                         -> "Mute"
     }
 
+    val screenBg = rememberScreenBackgroundBrush()
+    val windowSizeClass = LocalWindowSizeClass.current
+    val isCompactWidth = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Compact
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(Color(0xFF1A0008), CyberBlack),
-                    radius = 900f
-                )
-            )
+            .background(brush = screenBg)
     ) {
+        val configuration = LocalConfiguration.current
+        val availableHeightDp = configuration.screenHeightDp.dp
+        val needsScroll = isCompactWidth || availableHeightDp < 420.dp
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(
+                    horizontal = if (isCompactWidth) 12.dp else 24.dp,
+                    vertical = 16.dp
+                )
+                .then(
+                    if (needsScroll) Modifier.verticalScroll(scrollState)
+                    else Modifier
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = if (needsScroll) Arrangement.Top else Arrangement.Center
         ) {
 
             // ── Permissions banner ───────────────────────────────────────────
@@ -490,20 +503,27 @@ fun RecordingScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    when {
-                        isRecording -> {
-                            Box(modifier = Modifier.size(10.dp).scale(blinkAlpha)
-                                .clip(RoundedCornerShape(50)).background(accent))
-                            Spacer(modifier = Modifier.width(10.dp))
-                        }
-                        isBuffering -> {
-                            Box(modifier = Modifier.size(10.dp).scale(blinkAlpha)
-                                .clip(RoundedCornerShape(50)).background(Color(0xFFFF8C00)))
-                            Spacer(modifier = Modifier.width(10.dp))
-                        }
-                    }
+                    val isActive = isRecording || isBuffering
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .alpha(if (isActive) blinkAlpha else 1f)
+                            .clip(RoundedCornerShape(50))
+                            .background(
+                                when {
+                                    isRecording -> accent
+                                    isBuffering -> Color(0xFFFF8C00)
+                                    else        -> Color(0xFF666666)
+                                }
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = when { isRecording -> "● REC"; isBuffering -> "◉ CLIPPING"; else -> "STANDBY" },
+                        text = when {
+                            isRecording -> stringResource(R.string.rec_status_rec)
+                            isBuffering -> stringResource(R.string.rec_status_clip)
+                            else -> stringResource(R.string.rec_status_standby)
+                        },
                         style = MaterialTheme.typography.titleMedium.copy(letterSpacing = 3.sp),
                         fontWeight = FontWeight.Bold,
                         color = when { isRecording -> accent; isBuffering -> Color(0xFFFF8C00); else -> Color(0xFF888888) }
@@ -511,7 +531,7 @@ fun RecordingScreen(
                     if (isRecording || isBuffering) {
                         Spacer(Modifier.width(14.dp))
                         Text(
-                            text = "Notification → Stop",
+                            text = stringResource(R.string.notification_arrow_stop),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFF666666),
                             letterSpacing = 1.sp
@@ -539,7 +559,7 @@ fun RecordingScreen(
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "High settings — performance impact possible",
+                        text = stringResource(R.string.rec_high_settings_warning),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color(0xFFBB8888),
                         letterSpacing = 0.5.sp
@@ -547,62 +567,52 @@ fun RecordingScreen(
                 }
             }
 
-            // ── HUD ring: CatRecordButton + 4 floating GlassPills ────────────
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .scale(buttonScale)
-                    .size(260.dp)
-            ) {
-                // FPS — top-left
-                GlassPill(
-                    label = "FPS",
-                    value = "${fps.toInt()}",
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(top = 18.dp, start = 8.dp)
-                )
-                // Resolution — top-right
-                GlassPill(
-                    label = "RES",
-                    value = resolution.take(9),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 18.dp, end = 8.dp)
-                )
-
-                // Cat Record Button — centered
-                // Stop logic is based on the actual running state, NOT selectedMode,
-                // so navigating away and back can't cause the wrong action.
-                CatRecordButton(
-                    isRecording = isRecording || isBuffering,
-                    isEnabled   = allPermissionsGranted,
-                    onClick = {
+            // ── HUD: responsive (guidelines / compact) + 1:1 record control ──
+            if (isCompactWidth) {
+                RecordingHudCompact(
+                    fpsLabel = stringResource(R.string.label_fps),
+                    fpsValue = "${fps.toInt()}",
+                    resLabel = stringResource(R.string.label_res),
+                    resValue = resolution.take(9),
+                    mbpsLabel = stringResource(R.string.label_mbps),
+                    mbpsValue = "${bitrate.toInt()}",
+                    audioLabel = stringResource(R.string.label_audio),
+                    audioValue = audioStatus,
+                    isRecordingOrBuffering = isRecording || isBuffering,
+                    recordEnabled = allPermissionsGranted,
+                    scalePulseFromRecording = isRecording,
+                    onRecordClick = {
                         when {
-                            isRecording  -> viewModel.stopRecordingService(context)
-                            isBuffering  -> viewModel.stopBufferService(context)
+                            isRecording -> viewModel.stopRecordingService(context)
+                            isBuffering -> viewModel.stopBufferService(context)
                             selectedMode == "CLIPPER" -> startBufferFlow()
                             else -> startRecordingFlow()
                         }
                     },
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.fillMaxWidth()
                 )
-
-                // Bitrate — bottom-left
-                GlassPill(
-                    label = "Mbps",
-                    value = "${bitrate.toInt()}",
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(bottom = 18.dp, start = 8.dp)
-                )
-                // Audio mode — bottom-right
-                GlassPill(
-                    label = "Audio",
-                    value = audioStatus,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(bottom = 18.dp, end = 8.dp)
+            } else {
+                RecordingHudWide(
+                    fpsLabel = stringResource(R.string.label_fps),
+                    fpsValue = "${fps.toInt()}",
+                    resLabel = stringResource(R.string.label_res),
+                    resValue = resolution.take(9),
+                    mbpsLabel = stringResource(R.string.label_mbps),
+                    mbpsValue = "${bitrate.toInt()}",
+                    audioLabel = stringResource(R.string.label_audio),
+                    audioValue = audioStatus,
+                    isRecordingOrBuffering = isRecording || isBuffering,
+                    recordEnabled = allPermissionsGranted,
+                    scalePulseFromRecording = isRecording,
+                    onRecordClick = {
+                        when {
+                            isRecording -> viewModel.stopRecordingService(context)
+                            isBuffering -> viewModel.stopBufferService(context)
+                            selectedMode == "CLIPPER" -> startBufferFlow()
+                            else -> startRecordingFlow()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
@@ -611,11 +621,11 @@ fun RecordingScreen(
             // ── Tap label ────────────────────────────────────────────────────
             Text(
                 text = when {
-                    isRecording            -> "TAP TO STOP"
-                    isBuffering            -> "TAP TO STOP CLIPPER"
-                    !allPermissionsGranted -> "PERMISSIONS REQUIRED"
-                    selectedMode == "CLIPPER" -> "TAP TO START CLIPPER"
-                    else                   -> "TAP TO START"
+                    isRecording -> stringResource(R.string.rec_tap_to_stop)
+                    isBuffering -> stringResource(R.string.rec_tap_to_stop_clipper)
+                    !allPermissionsGranted -> stringResource(R.string.rec_permissions_required)
+                    selectedMode == "CLIPPER" -> stringResource(R.string.rec_tap_start_clipper)
+                    else -> stringResource(R.string.rec_tap_to_start)
                 },
                 style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 3.sp),
                 color = when { isRecording -> accent; isBuffering -> Color(0xFFFF8C00); else -> Color(0xFF666666) },
@@ -635,14 +645,14 @@ fun RecordingScreen(
                     modifier = Modifier.fillMaxWidth(0.65f)
                 ) {
                     Text(
-                        text = "✂  SAVE CLIP",
+                        text = stringResource(R.string.rec_save_clip),
                         style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 2.sp),
                         fontWeight = FontWeight.Bold
                     )
                 }
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Saves the last 60 seconds",
+                    text = stringResource(R.string.rec_save_clip_sub, clipperDurationMinutes),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color(0xFF888888),
                     letterSpacing = 0.5.sp
@@ -676,7 +686,7 @@ private fun MissingPermissionsBanner(
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Permissions needed",
+                    text = stringResource(R.string.perm_banner_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -692,7 +702,7 @@ private fun MissingPermissionsBanner(
                 onClick = onFixClick,
                 colors = ButtonDefaults.textButtonColors(contentColor = accent)
             ) {
-                Text("Grant Now", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_grant_now), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -711,11 +721,11 @@ private fun PermissionRationaleDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = accent) },
-        title = { Text("Permissions Required") },
+        title = { Text(stringResource(R.string.perm_dialog_title)) },
         text = {
             Column {
                 Text(
-                    text = "CatRec needs the following permissions to record your screen:",
+                    text = stringResource(R.string.perm_rationale_intro),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -750,10 +760,10 @@ private fun PermissionRationaleDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onGrantNow) { Text("Grant Now") }
+            Button(onClick = onGrantNow) { Text(stringResource(R.string.action_grant_now)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Not Now") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_not_now)) }
         }
     )
 }
@@ -770,39 +780,53 @@ private fun ModeSelector(
 ) {
     val accent = LocalAccentColor.current
     val modes = listOf("RECORD", "CLIPPER")
+    val shape = RoundedCornerShape(12.dp)
 
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+            .height(IntrinsicSize.Min)
+            .clip(shape)
+            .border(1.dp, accent.copy(alpha = 0.35f), shape)
             .background(Color(0x22000000)),
-        horizontalArrangement = Arrangement.Center,
     ) {
         modes.forEachIndexed { idx, mode ->
             val selected = selectedMode == mode
-            val bg = if (selected) accent.copy(alpha = 0.85f) else Color.Transparent
-            val contentColor = if (selected) Color.Black else Color(0xFF888888)
+            val bg = if (selected) accent else Color.Transparent
+            val textColor = when {
+                selected && !enabled -> Color.Black.copy(alpha = 0.55f)
+                selected             -> Color.Black
+                !enabled             -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                else                 -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
 
-            TextButton(
-                onClick = { if (enabled) onModeSelected(mode) },
-                colors = ButtonDefaults.textButtonColors(
-                    containerColor = bg,
-                    contentColor   = contentColor,
-                    disabledContentColor = contentColor.copy(alpha = 0.5f)
-                ),
-                enabled = enabled,
-                shape = when (idx) {
-                    0    -> RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
-                    modes.lastIndex -> RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
-                    else -> RoundedCornerShape(0.dp)
-                },
-                modifier = Modifier.defaultMinSize(minWidth = 110.dp)
+            if (idx > 0) {
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(accent.copy(alpha = 0.3f))
+                )
+            }
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .background(bg)
+                    .clickable(enabled = enabled) { onModeSelected(mode) }
+                    .padding(horizontal = 22.dp, vertical = 12.dp)
+                    .widthIn(min = 100.dp)
             ) {
                 val icon = if (mode == "RECORD") "●" else "◉"
+                val modeLabel = when (mode) {
+                    "RECORD"  -> stringResource(R.string.mode_record)
+                    "CLIPPER" -> stringResource(R.string.mode_clipper)
+                    else      -> mode
+                }
                 Text(
-                    text = "$icon  $mode",
-                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    text       = "$icon  $modeLabel",
+                    style      = MaterialTheme.typography.labelMedium.copy(letterSpacing = 2.sp),
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color      = textColor,
                 )
             }
         }
@@ -841,13 +865,13 @@ private fun OverlayAuthCard(
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Authorize Overlay Recording",
+                    text = stringResource(R.string.overlay_auth_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Text(
-                    text = "Grant once so the overlay \u25CF button starts recording immediately",
+                    text = stringResource(R.string.overlay_auth_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFAFAFAF)
                 )
@@ -857,7 +881,7 @@ private fun OverlayAuthCard(
                 onClick = onAuthorize,
                 colors = ButtonDefaults.textButtonColors(contentColor = accent)
             ) {
-                Text("Grant", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_grant), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -868,7 +892,6 @@ private fun OverlayReadyCard(
     onRevoke: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = LocalAccentColor.current
     GlassCard(modifier = modifier, cornerRadius = 12.dp) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -883,13 +906,13 @@ private fun OverlayReadyCard(
             Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Overlay Ready",
+                    text = stringResource(R.string.overlay_ready_title),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 Text(
-                    text = "Tap the overlay \u25CF button to start recording",
+                    text = stringResource(R.string.overlay_ready_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFAFAFAF)
                 )
@@ -898,7 +921,7 @@ private fun OverlayReadyCard(
                 onClick = onRevoke,
                 colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF888888))
             ) {
-                Text("Revoke", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.action_revoke), style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -927,7 +950,7 @@ private fun BetaNoticeDialog(
         },
         title = {
             Text(
-                "You're in Early Access",
+                stringResource(R.string.beta_title),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color.White,
                 textAlign = TextAlign.Center,
@@ -940,23 +963,23 @@ private fun BetaNoticeDialog(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    "⚠️  This is a beta release.",
+                    stringResource(R.string.beta_line_1),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                     color = accent
                 )
                 Text(
-                    "You may encounter bugs, crashes, or unfinished features. Your device and data are safe — recordings are saved locally and nothing is uploaded.",
+                    stringResource(R.string.beta_line_2),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFCCCCCC)
                 )
                 HorizontalDivider(color = Color(0xFF2A2A2A))
                 Text(
-                    "Your feedback directly shapes this app. If something breaks or feels off, please report it — even a short message helps enormously.",
+                    stringResource(R.string.beta_line_3),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFCCCCCC)
                 )
                 Text(
-                    "Thank you for trying CatRec early. 🐱",
+                    stringResource(R.string.beta_line_4),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF888888)
                 )
@@ -968,12 +991,12 @@ private fun BetaNoticeDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Leave Feedback", color = Color.Black, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.action_leave_feedback), color = Color.Black, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Got it", color = Color(0xFF888888))
+                Text(stringResource(R.string.action_got_it), color = Color(0xFF888888))
             }
         }
     )

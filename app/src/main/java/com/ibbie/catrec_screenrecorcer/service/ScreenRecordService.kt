@@ -20,6 +20,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.MediaMetadataRetriever
 import android.media.MediaScannerConnection
@@ -51,9 +52,14 @@ import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
+import com.ibbie.catrec_screenrecorcer.utils.AppLogger
+import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import com.ibbie.catrec_screenrecorcer.service.RecordingActionReceiver.Companion.ACTION_DELETE_RECORDING
 import com.ibbie.catrec_screenrecorcer.service.RecordingActionReceiver.Companion.EXTRA_NOTIFICATION_ID
 import com.ibbie.catrec_screenrecorcer.service.RecordingActionReceiver.Companion.EXTRA_RECORDING_URI
@@ -64,9 +70,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -137,6 +145,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         const val EXTRA_WATERMARK_Y_FRACTION = "EXTRA_WATERMARK_Y_FRACTION"
         const val EXTRA_SCREENSHOT_FORMAT = "EXTRA_SCREENSHOT_FORMAT"
         const val EXTRA_SCREENSHOT_QUALITY = "EXTRA_SCREENSHOT_QUALITY"
+        const val EXTRA_CLIPPER_DURATION_MINUTES = "EXTRA_CLIPPER_DURATION_MINUTES"
 
         private const val CHANNEL_ID = "CatRec_Recording_Channel"
         private const val CHANNEL_DONE_ID = "CatRec_Done_Channel"
@@ -150,6 +159,14 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private var mediaProjection: MediaProjection? = null
     private var recorderEngine: ScreenRecorderEngine? = null
     private var rollingBufferEngine: RollingBufferEngine? = null
+    /**
+     * [takeScreenshot] without a running engine uses a dedicated [VirtualDisplay]. From Android 14
+     * onward the system rejects a second [MediaProjection.createVirtualDisplay] while one is still
+     * active — always release this before starting [EncoderFrameRelay].
+     */
+    @Volatile
+    private var pendingScreenshotVirtualDisplay: VirtualDisplay? = null
+    private val screenshotVirtualDisplayLock = Any()
     private var isBufferRunning = false
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -194,16 +211,25 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private var watermarkYFraction: Float = 0.05f
     private var screenshotFormat: String = "JPEG"
     private var screenshotQuality: Int = 90
+    /** Rolling Clipper buffer length (1–5 minutes). */
+    private var clipperDurationMinutes: Int = 1
 
     private var isRecorderRunning = false
     private var isRecordingPaused = false
     private var isRecordingMuted = false
     private var controlsDismissedByUser = false
+    // Set by the MediaProjection.Callback when the OS revokes the projection (e.g. the user
+    // switched away from the captured app in single-app recording mode on Android 14+ / Samsung).
+    private var projectionStoppedRecording = false
     /** True when a live MediaProjection is held and the overlay can start recording directly. */
     private var isPrepared = false
     private var currentFileUri: Uri? = null
+    /** MediaMuxer requires a seekable FD; we mux to this temp file then copy to [currentFileUri]. */
+    private var currentTempRecordingFile: File? = null
     private var currentPfd: ParcelFileDescriptor? = null
     private var separateMicPfd: ParcelFileDescriptor? = null
+    private var currentMicDestUri: Uri? = null
+    private var currentTempMicFile: File? = null
 
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
@@ -218,6 +244,17 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == Intent.ACTION_SCREEN_OFF) handleScreenOff()
         }
+    }
+
+    // ── Analytics helper ───────────────────────────────────────────────────────
+
+    private fun logServiceAnalyticsEvent(name: String, params: Map<String, String> = emptyMap()) {
+        try {
+            val bundle = android.os.Bundle()
+            params.forEach { (k, v) -> bundle.putString(k, v.take(100)) }
+            FirebaseAnalytics.getInstance(this).logEvent(name, bundle)
+            FirebaseCrashlytics.getInstance().log("analytics[$name] $params")
+        } catch (_: Exception) {}
     }
 
     override fun onCreate() {
@@ -264,7 +301,9 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 cameraOpacity = intent.getIntExtra(EXTRA_CAMERA_OPACITY, 100)
                 showWatermark = intent.getBooleanExtra(EXTRA_SHOW_WATERMARK, false)
                 showFloatingControls = intent.getBooleanExtra(EXTRA_SHOW_FLOATING_CONTROLS, false)
-                stopBehaviors = intent.getStringArrayListExtra(EXTRA_STOP_BEHAVIOR)
+                stopBehaviors = intent.getStringArrayListExtra(EXTRA_STOP_BEHAVIOR)?.let {
+                    ArrayList(StopBehaviorKeys.migrateSet(it.toSet()).toList())
+                }
                 saveLocationUri = intent.getStringExtra(EXTRA_SAVE_LOCATION)
                 filenamePattern = intent.getStringExtra(EXTRA_FILENAME_PATTERN) ?: "yyyyMMdd_HHmmss"
                 resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
@@ -282,7 +321,13 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 screenshotFormat = intent.getStringExtra(EXTRA_SCREENSHOT_FORMAT) ?: "JPEG"
                 screenshotQuality = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, 90)
 
-                if (resultCode != 0 && resultData != null) startRecording()
+                if (resultCode != 0 && resultData != null) {
+                    try {
+                        startRecording()
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
+                    }
+                }
             }
             ACTION_STOP -> stopRecording()
             ACTION_PAUSE -> pauseRecording()
@@ -334,6 +379,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     audioEncoderType = intent.getStringExtra(EXTRA_AUDIO_ENCODER) ?: "AAC-LC"
                     resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
                     videoEncoder    = intent.getStringExtra(EXTRA_VIDEO_ENCODER) ?: "H.264"
+                    clipperDurationMinutes = intent.getIntExtra(EXTRA_CLIPPER_DURATION_MINUTES, 1).coerceIn(1, 5)
                     if (resultCode != 0 && resultData != null) startBuffer()
                 }
             }
@@ -393,7 +439,11 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     screenshotFormat = repo.screenshotFormat.first()
                     screenshotQuality = repo.screenshotQuality.first()
                 }
-                startRecording()
+                try {
+                    startRecording()
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                }
             }
 
             ACTION_START_BUFFER_FROM_OVERLAY -> {
@@ -411,6 +461,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     showFloatingControls = repo.floatingControls.first()
                     videoEncoder    = repo.videoEncoder.first()
                     resolutionSetting = repo.resolution.first()
+                    clipperDurationMinutes = repo.clipperDurationMinutes.first()
                 }
                 startBuffer()
             }
@@ -428,11 +479,17 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             }
 
             ACTION_TAKE_SCREENSHOT -> {
-                if (isRecorderRunning) {
-                    takeScreenshot()
-                } else {
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(this, "Start recording to use screenshot button", Toast.LENGTH_SHORT).show()
+                when {
+                    recorderEngine != null || rollingBufferEngine != null || mediaProjection != null ->
+                        takeScreenshot()
+                    else -> {
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.error_screenshot_no_projection),
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     }
                 }
             }
@@ -460,13 +517,33 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             stopSelf(); return
         }
 
+        Log.d("ScreenRecordService", "startPreparedForeground: obtaining MediaProjection (resultCode=$resultCode)")
         mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+        Log.d("ScreenRecordService", "startPreparedForeground: MediaProjection=$mediaProjection")
         if (mediaProjection == null) {
+            Log.e("ScreenRecordService", "startPreparedForeground: getMediaProjection returned null")
+            logServiceAnalyticsEvent("capture_denied_or_unsupported", mapOf(
+                "reason" to "projection_null_prepare",
+                "api"    to Build.VERSION.SDK_INT.toString(),
+                "brand"  to Build.BRAND,
+            ))
             stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return
         }
+        logServiceAnalyticsEvent("projection_granted", mapOf(
+            "path"  to "prepare",
+            "api"   to Build.VERSION.SDK_INT.toString(),
+            "brand" to Build.BRAND,
+            "model" to Build.MODEL,
+        ))
+        FirebaseCrashlytics.getInstance().log("MediaProjection granted (prepare path)")
+
         mediaProjection?.registerCallback(object : MediaProjection.Callback() {
             override fun onStop() {
                 super.onStop()
+                Log.w("ScreenRecordService",
+                    "MediaProjection.onStop() fired in prepared mode — projection revoked by OS " +
+                    "(API=${Build.VERSION.SDK_INT} brand=${Build.BRAND})")
+                FirebaseCrashlytics.getInstance().log("MediaProjection.onStop in prepared mode")
                 isPrepared = false
                 RecordingState.setPrepared(false)
                 if (isRecorderRunning) stopRecording()
@@ -492,14 +569,18 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("CatRec Ready")
-            .setContentText("Tap the overlay \u25CF button to start recording")
+            .setContentTitle(getString(R.string.notif_ready_title))
+            .setContentText(getString(R.string.notif_ready_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapPI)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Revoke", revokePI)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                getString(R.string.notif_action_revoke),
+                revokePI,
+            )
             .build()
     }
 
@@ -509,7 +590,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             this, android.Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
-        val notification = buildRecordingNotification(isPaused = false, contentText = "Preparing...")
+        val notification = buildRecordingNotification(isPaused = false, contentText = getString(R.string.notif_preparing))
         val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
             if (hasAudioPermission && audioEnabled) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
@@ -534,12 +615,15 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 val notifMgr = getSystemService(NotificationManager::class.java)
                 for (i in countdownValue downTo 1) {
                     updateCountdownOverlayNumber(i)
-                    notifMgr.notify(NOTIFICATION_ID, buildRecordingNotification(false, "Recording starting in $i..."))
+                    notifMgr.notify(
+                        NOTIFICATION_ID,
+                        buildRecordingNotification(false, getString(R.string.notif_recording_starting_in, i)),
+                    )
                     delay(1000)
                 }
                 hideCountdownOverlay()
             }
-            updateRecordingNotification(isPaused = false)
+            // Keep "Preparing…" until the recorder engine actually starts (see actualStartRecording).
             actualStartRecording()
         }
     }
@@ -582,20 +666,67 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             startService(overlayIntent)
         }
 
+        val hasAudioPerm = ContextCompat.checkSelfPermission(
+            this, android.Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        Log.d("ScreenRecordService", "actualStartRecording: " +
+                "RECORD_AUDIO=${if (hasAudioPerm) "GRANTED" else "DENIED"} " +
+                "internalAudio=$internalAudioEnabled audioEnabled=$audioEnabled " +
+                "API=${Build.VERSION.SDK_INT} brand=${Build.BRAND} model=${Build.MODEL}")
+
         if (mediaProjection == null) {
             // Normal path: consume the one-time token from the permission dialog.
+            Log.d("ScreenRecordService", "Obtaining MediaProjection from token (resultCode=$resultCode)")
             mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            Log.d("ScreenRecordService", "MediaProjection obtained: $mediaProjection")
+
+            if (mediaProjection != null) {
+                FirebaseCrashlytics.getInstance().log("MediaProjection granted (normal path)")
+                logServiceAnalyticsEvent("projection_granted", mapOf(
+                    "path"  to "normal",
+                    "api"   to Build.VERSION.SDK_INT.toString(),
+                    "brand" to Build.BRAND,
+                    "model" to Build.MODEL,
+                ))
+            } else {
+                Log.e("ScreenRecordService", "getMediaProjection returned null — cannot record")
+                FirebaseCrashlytics.getInstance().log("MediaProjection null after getMediaProjection")
+                logServiceAnalyticsEvent("capture_denied_or_unsupported", mapOf(
+                    "reason" to "projection_null",
+                    "api"    to Build.VERSION.SDK_INT.toString(),
+                    "brand"  to Build.BRAND,
+                ))
+            }
+
             mediaProjection?.registerCallback(object : MediaProjection.Callback() {
                 override fun onStop() {
                     super.onStop()
+                    // The OS revoked the projection — most commonly because the user navigated
+                    // away from the captured app in single-app recording mode (Android 14+ / Samsung).
+                    Log.w("ScreenRecordService",
+                        "MediaProjection.onStop() fired — projection revoked by OS " +
+                        "(API=${Build.VERSION.SDK_INT} brand=${Build.BRAND})")
+                    FirebaseCrashlytics.getInstance().log("MediaProjection.onStop — projection revoked")
+                    projectionStoppedRecording = true
                     stopRecording()
                 }
             }, null)
+        } else {
+            // Prepared-mode path: mediaProjection is already live from ACTION_PREPARE.
+            Log.d("ScreenRecordService", "MediaProjection reused from prepared mode: $mediaProjection")
+            FirebaseCrashlytics.getInstance().log("MediaProjection reused from prepared mode")
+            logServiceAnalyticsEvent("projection_granted", mapOf(
+                "path"  to "prepared",
+                "api"   to Build.VERSION.SDK_INT.toString(),
+                "brand" to Build.BRAND,
+                "model" to Build.MODEL,
+            ))
         }
-        // Prepared-mode path: mediaProjection is already live from ACTION_PREPARE;
-        // the callback was registered there — no need to re-register.
 
         calculateDimensions()
+
+        FirebaseCrashlytics.getInstance().log("Recorder started with resolution: $displayWidth x $displayHeight")
+        FirebaseCrashlytics.getInstance().log("Using codec: $videoEncoder")
 
         val pfd = getOutputFileDescriptor()
         if (pfd == null) {
@@ -604,11 +735,20 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         }
         currentPfd = pfd
 
-        // Separate mic file descriptor
+        // Separate mic file descriptor — only valid when mic is actually enabled
         var micPfd: ParcelFileDescriptor? = null
-        if (separateMicRecording && (audioEnabled || internalAudioEnabled)) {
+        if (separateMicRecording && audioEnabled) {
             micPfd = getSeparateMicFileDescriptor()
             separateMicPfd = micPfd
+            if (micPfd == null) {
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.toast_separate_mic_failed),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
 
         val mode = when {
@@ -622,6 +762,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                releasePendingScreenshotVirtualDisplay()
                 recorderEngine = ScreenRecorderEngine(
                     context = this@ScreenRecordService,
                     width = displayWidth,
@@ -637,19 +778,39 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     audioSampleRate = audioSampleRate,
                     audioChannelCount = channelCount,
                     audioEncoderType = audioEncoderType,
-                    separateMicFileDescriptor = micPfd?.fileDescriptor
+                    separateMicFileDescriptor = micPfd?.fileDescriptor,
+                    onInternalAudioSilence = {
+                        // Fired on the audio-capture thread after SILENCE_TIMEOUT_MS of all-zero
+                        // PCM from internal audio. Show a clear UI message and log for diagnostics.
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                this@ScreenRecordService,
+                                getString(R.string.toast_internal_audio_silent),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        Log.w("ScreenRecordService",
+                            "Internal audio silence detected — " +
+                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}. " +
+                            "The captured app may block playback capture (capture policy ALLOW_CAPTURE_BY_NONE) " +
+                            "or this OEM restricts AudioPlaybackCapture on Android ${Build.VERSION.SDK_INT}.")
+                        FirebaseCrashlytics.getInstance().log(
+                            "Internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}"
+                        )
+                    },
                 )
                 recorderEngine?.start()
                 withContext(Dispatchers.Main) {
                     isRecorderRunning = true
                     RecordingState.setRecording(true)
-                    // Set up auto-orientation listener AFTER recording starts
-                    if (recordingOrientationSetting == "Auto") setupAutoOrientationListener()
+                    updateRecordingNotification(isPaused = false)
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Recorder start failed", e)
+                FirebaseCrashlytics.getInstance().log(AppLogger.dump())
+                FirebaseCrashlytics.getInstance().recordException(e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ScreenRecordService, "Failed to start recorder: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@ScreenRecordService, getString(R.string.toast_recorder_start_failed, e.message ?: ""), Toast.LENGTH_LONG).show()
                     stopRecording()
                 }
             }
@@ -707,8 +868,15 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private fun restartRecordingForOrientationChange(isPortrait: Boolean) {
         lifecycleScope.launch(Dispatchers.IO) {
             val savedUri = currentFileUri
+            val savedMicUri = currentMicDestUri
+            val eng = recorderEngine
+            val hadSegmentOutput = try {
+                eng?.hadOutput() ?: false
+            } catch (_: Exception) {
+                false
+            }
             try {
-                recorderEngine?.stop()
+                eng?.stop()
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Orientation restart stop error", e)
             } finally {
@@ -718,7 +886,28 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             try { currentPfd?.close() } catch (_: Exception) {}
             try { separateMicPfd?.close() } catch (_: Exception) {}
 
-            savedUri?.let { finalizeMediaStoreEntry(it) }
+            val tempVid = currentTempRecordingFile
+            if (hadSegmentOutput && savedUri != null && tempVid != null) {
+                commitTempFileToUri(tempVid, savedUri)
+                try { tempVid.delete() } catch (_: Exception) {}
+                finalizeMediaStoreEntry(savedUri)
+            } else {
+                try { tempVid?.delete() } catch (_: Exception) {}
+                savedUri?.let { try { contentResolver.delete(it, null, null) } catch (_: Exception) {} }
+            }
+            currentTempRecordingFile = null
+
+            val tempMic = currentTempMicFile
+            if (hadSegmentOutput && savedMicUri != null && tempMic != null && tempMic.exists() && tempMic.length() > 0L) {
+                commitTempFileToUri(tempMic, savedMicUri)
+                try { tempMic.delete() } catch (_: Exception) {}
+                finalizeAudioMediaStoreEntry(savedMicUri)
+            } else {
+                try { tempMic?.delete() } catch (_: Exception) {}
+                savedMicUri?.let { try { contentResolver.delete(it, null, null) } catch (_: Exception) {} }
+            }
+            currentTempMicFile = null
+            currentMicDestUri = null
 
             val metrics = resources.displayMetrics
             val nativeW = metrics.widthPixels
@@ -739,7 +928,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             currentPfd = pfd
 
             var micPfd: ParcelFileDescriptor? = null
-            if (separateMicRecording && (audioEnabled || internalAudioEnabled)) {
+            if (separateMicRecording && audioEnabled) {
                 micPfd = getSeparateMicFileDescriptor()
                 separateMicPfd = micPfd
             }
@@ -753,6 +942,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             val channelCount = if (audioChannels == "Stereo") 2 else 1
 
             try {
+                releasePendingScreenshotVirtualDisplay()
                 recorderEngine = ScreenRecorderEngine(
                     context = this@ScreenRecordService,
                     width = displayWidth,
@@ -768,11 +958,11 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     audioSampleRate = audioSampleRate,
                     audioChannelCount = channelCount,
                     audioEncoderType = audioEncoderType,
-                    separateMicFileDescriptor = micPfd?.fileDescriptor
+                    separateMicFileDescriptor = micPfd?.fileDescriptor,
                 )
                 recorderEngine?.start()
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ScreenRecordService, "Recording restarted for new orientation", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScreenRecordService, getString(R.string.toast_recording_restarted), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Orientation restart failed", e)
@@ -826,6 +1016,10 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         }
     }
 
+    /**
+     * [MediaMuxer] requires a seekable file descriptor. URIs from MediaStore/SAF are typically
+     * non-seekable pipes, so we mux into a temp file then [commitTempFileToUri] copies to the gallery.
+     */
     private fun getOutputFileDescriptor(): ParcelFileDescriptor? {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val fileName = when (filenamePattern) {
@@ -834,37 +1028,55 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             else -> "${timestamp}.mp4"
         }
 
-        if (!saveLocationUri.isNullOrEmpty()) {
+        try { currentTempRecordingFile?.delete() } catch (_: Exception) {}
+        currentTempRecordingFile = null
+
+        val destUri: Uri? = if (!saveLocationUri.isNullOrEmpty()) {
             try {
                 val treeUri = Uri.parse(saveLocationUri)
                 val docFile = DocumentFile.fromTreeUri(this, treeUri)
                 val file = docFile?.createFile("video/mp4", fileName)
                 if (file != null) {
                     currentFileUri = file.uri
-                    return contentResolver.openFileDescriptor(file.uri, "w")
-                }
+                    file.uri
+                } else null
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Error with SAF location", e)
+                null
+            }
+        } else {
+            try {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
+                    put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + File.separator + "CatRec")
+                        put(MediaStore.Video.Media.IS_PENDING, 1)
+                    }
+                }
+                val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    currentFileUri = uri
+                    uri
+                } else null
+            } catch (e: Exception) {
+                Log.e("ScreenRecordService", "MediaStore insert failed", e)
+                null
             }
         }
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + File.separator + "CatRec")
-                put(MediaStore.Video.Media.IS_PENDING, 1)
-            }
-        }
+        if (destUri == null) return null
 
         return try {
-            val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
-            if (uri != null) {
-                currentFileUri = uri
-                contentResolver.openFileDescriptor(uri, "w")
-            } else null
+            val dir = File(cacheDir, "rec_mux_tmp").apply { mkdirs() }
+            val temp = File.createTempFile("catrec_vid_", ".mp4", dir)
+            currentTempRecordingFile = temp
+            ParcelFileDescriptor.open(temp, ParcelFileDescriptor.MODE_READ_WRITE)
         } catch (e: Exception) {
-            Log.e("ScreenRecordService", "MediaStore insert failed", e)
+            Log.e("ScreenRecordService", "Temp recording file failed", e)
+            try { contentResolver.delete(destUri, null, null) } catch (_: Exception) {}
+            currentFileUri = null
+            currentTempRecordingFile = null
             null
         }
     }
@@ -873,32 +1085,98 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val fileName = "Mic_${timestamp}.m4a"
 
-        if (!saveLocationUri.isNullOrEmpty()) {
+        try { currentTempMicFile?.delete() } catch (_: Exception) {}
+        currentTempMicFile = null
+        currentMicDestUri = null
+
+        val destUri: Uri? = if (!saveLocationUri.isNullOrEmpty()) {
             try {
                 val treeUri = Uri.parse(saveLocationUri)
                 val docFile = DocumentFile.fromTreeUri(this, treeUri)
                 val file = docFile?.createFile("audio/mp4", fileName)
-                if (file != null) return contentResolver.openFileDescriptor(file.uri, "w")
+                if (file != null) {
+                    currentMicDestUri = file.uri
+                    file.uri
+                } else null
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "SAF mic file error", e)
+                null
+            }
+        } else {
+            // Audio MediaStore only allows certain primary directories (Alarms, Music, Recordings,
+            // Ringtones, etc.). Movies/ throws IllegalArgumentException on Android 10+.
+            // We try Music/CatRec first, then Recordings/CatRec (API 31+) as an alternative.
+            fun buildAudioContentValues(relPath: String?): ContentValues = ContentValues().apply {
+                put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
+                put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && relPath != null) {
+                    put(MediaStore.Audio.Media.RELATIVE_PATH, relPath)
+                    put(MediaStore.Audio.Media.IS_PENDING, 1)
+                }
+            }
+            try {
+                val musicPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    Environment.DIRECTORY_MUSIC + File.separator + "CatRec" else null
+
+                var uri: Uri? = null
+                try {
+                    uri = contentResolver.insert(
+                        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                        buildAudioContentValues(musicPath)
+                    )
+                } catch (e: Exception) {
+                    Log.w("ScreenRecordService", "Music/CatRec mic insert failed, trying Recordings/CatRec", e)
+                }
+
+                // Fallback to Recordings/CatRec (API 31+, explicitly allowed by AOSP)
+                if (uri == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    try {
+                        val recPath = Environment.DIRECTORY_RECORDINGS + File.separator + "CatRec"
+                        uri = contentResolver.insert(
+                            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                            buildAudioContentValues(recPath)
+                        )
+                    } catch (e: Exception) {
+                        Log.w("ScreenRecordService", "Recordings/CatRec mic insert failed", e)
+                    }
+                }
+
+                if (uri != null) {
+                    currentMicDestUri = uri
+                    uri
+                } else null
+            } catch (e: Exception) {
+                Log.e("ScreenRecordService", "Mic MediaStore insert failed", e)
+                null
             }
         }
 
-        val contentValues = ContentValues().apply {
-            put(MediaStore.Audio.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Audio.Media.MIME_TYPE, "audio/mp4")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Audio.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + File.separator + "CatRec")
-                put(MediaStore.Audio.Media.IS_PENDING, 1)
-            }
-        }
+        if (destUri == null) return null
 
         return try {
-            val uri = contentResolver.insert(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, contentValues)
-            uri?.let { contentResolver.openFileDescriptor(it, "w") }
+            val dir = File(cacheDir, "rec_mux_tmp").apply { mkdirs() }
+            val temp = File.createTempFile("catrec_mic_", ".m4a", dir)
+            currentTempMicFile = temp
+            ParcelFileDescriptor.open(temp, ParcelFileDescriptor.MODE_READ_WRITE)
         } catch (e: Exception) {
-            Log.e("ScreenRecordService", "Mic MediaStore insert failed", e)
+            Log.e("ScreenRecordService", "Temp mic file failed", e)
+            try { contentResolver.delete(destUri, null, null) } catch (_: Exception) {}
+            currentMicDestUri = null
+            currentTempMicFile = null
             null
+        }
+    }
+
+    private fun commitTempFileToUri(source: File, destUri: Uri): Boolean {
+        return try {
+            if (!source.exists() || source.length() == 0L) return false
+            contentResolver.openOutputStream(destUri)?.use { out ->
+                FileInputStream(source).use { it.copyTo(out) }
+            } ?: return false
+            true
+        } catch (e: Exception) {
+            Log.e("ScreenRecordService", "commitTempFileToUri failed", e)
+            false
         }
     }
 
@@ -907,18 +1185,32 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         orientationEventListener = null
 
         if (!isRecorderRunning && recorderEngine == null) {
+            projectionStoppedRecording = false
             cleanup()
             return
         }
+
+        // Capture and reset the flag atomically on the main thread before launching the
+        // background coroutine, so a second stopRecording() call doesn't re-use it.
+        val wasStoppedByProjection = projectionStoppedRecording
+        projectionStoppedRecording = false
 
         isRecorderRunning = false
         RecordingState.setRecording(false)
 
         val savedUri = currentFileUri
+        val savedMicUri = currentMicDestUri
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val engine = recorderEngine
+            // Snapshot before stop(): stop() clears muxer state used by hadOutput().
+            val hadOutput = try {
+                engine?.hadOutput() ?: false
+            } catch (_: Exception) {
+                false
+            }
             try {
-                recorderEngine?.stop()
+                engine?.stop()
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Engine stop error", e)
             } finally {
@@ -928,12 +1220,60 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             try { currentPfd?.close() } catch (_: Exception) {}
             try { separateMicPfd?.close() } catch (_: Exception) {}
 
-            savedUri?.let { finalizeMediaStoreEntry(it) }
+            if (hadOutput) {
+                val tempVid = currentTempRecordingFile
+                if (savedUri != null && tempVid != null) {
+                    commitTempFileToUri(tempVid, savedUri)
+                    try { tempVid.delete() } catch (_: Exception) {}
+                }
+                currentTempRecordingFile = null
+                savedUri?.let { finalizeMediaStoreEntry(it) }
+
+                val tempMic = currentTempMicFile
+                if (savedMicUri != null && tempMic != null) {
+                    commitTempFileToUri(tempMic, savedMicUri)
+                    try { tempMic.delete() } catch (_: Exception) {}
+                    finalizeAudioMediaStoreEntry(savedMicUri)
+                }
+                currentTempMicFile = null
+                currentMicDestUri = null
+            } else {
+                try { currentTempRecordingFile?.delete() } catch (_: Exception) {}
+                try { currentTempMicFile?.delete() } catch (_: Exception) {}
+                currentTempRecordingFile = null
+                currentTempMicFile = null
+                // Muxer was never started — the file has no usable content (recording was
+                // aborted before any frames were encoded, e.g. projection revoked immediately).
+                // Delete the empty MediaStore entry so it doesn't appear as a broken file.
+                savedUri?.let {
+                    try { contentResolver.delete(it, null, null) } catch (_: Exception) {}
+                }
+                savedMicUri?.let {
+                    try { contentResolver.delete(it, null, null) } catch (_: Exception) {}
+                }
+                currentMicDestUri = null
+            }
             currentFileUri = null
 
-            if (savedUri != null) showPostRecordingNotification(savedUri)
+            if (hadOutput && savedUri != null) showPostRecordingNotification(savedUri)
 
-            withContext(Dispatchers.Main) { cleanup() }
+            withContext(Dispatchers.Main) {
+                when {
+                    wasStoppedByProjection ->
+                        Toast.makeText(
+                            this@ScreenRecordService,
+                            getString(R.string.toast_recording_stopped_projection),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    !hadOutput ->
+                        Toast.makeText(
+                            this@ScreenRecordService,
+                            getString(R.string.toast_recording_failed_no_video),
+                            Toast.LENGTH_LONG
+                        ).show()
+                }
+                cleanup()
+            }
         }
     }
 
@@ -944,7 +1284,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             this, android.Manifest.permission.RECORD_AUDIO
         ) == PackageManager.PERMISSION_GRANTED
 
-        val notification = buildBufferNotification("Starting buffer…")
+        val notification = buildBufferNotification(getString(R.string.notif_buffer_starting))
         val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
             if (hasAudioPermission && (audioEnabled || internalAudioEnabled))
@@ -984,6 +1324,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                releasePendingScreenshotVirtualDisplay()
                 rollingBufferEngine = RollingBufferEngine(
                     context = this@ScreenRecordService,
                     width = displayWidth,
@@ -997,7 +1338,23 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     audioBitrate = audioBitrate,
                     audioSampleRate = audioSampleRate,
                     audioChannelCount = channelCount,
-                    audioEncoderType = audioEncoderType
+                    audioEncoderType = audioEncoderType,
+                    maxSegmentsLimit = RollingBufferEngine.maxSegmentsForClipperMinutes(clipperDurationMinutes),
+                    onInternalAudioSilence = {
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                this@ScreenRecordService,
+                                getString(R.string.toast_internal_audio_silent),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        Log.w("ScreenRecordService",
+                            "Buffer: internal audio silence detected — " +
+                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}")
+                        FirebaseCrashlytics.getInstance().log(
+                            "Buffer internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}"
+                        )
+                    },
                 )
                 rollingBufferEngine?.start()
                 withContext(Dispatchers.Main) {
@@ -1013,7 +1370,11 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Buffer start failed", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ScreenRecordService, "Buffer start failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@ScreenRecordService,
+                        getString(R.string.toast_buffer_start_failed, e.message ?: ""),
+                        Toast.LENGTH_LONG,
+                    ).show()
                     stopBuffer()
                 }
             }
@@ -1054,7 +1415,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 val ok = rollingBufferEngine?.saveClip(tempFile) ?: false
                 if (!ok || !tempFile.exists()) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ScreenRecordService, "Clip is empty – keep buffering longer", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@ScreenRecordService, getString(R.string.toast_clip_empty), Toast.LENGTH_SHORT).show()
                     }
                     tempFile.delete()
                     return@launch
@@ -1084,12 +1445,16 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 tempFile.delete()
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ScreenRecordService, "Clip saved!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ScreenRecordService, getString(R.string.toast_clip_saved), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "saveClip error", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ScreenRecordService, "Clip save failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this@ScreenRecordService,
+                        getString(R.string.toast_clip_save_failed, e.message ?: ""),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             }
         }
@@ -1117,60 +1482,133 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             Intent(this, ScreenRecordService::class.java).apply { action = ACTION_SAVE_CLIP },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
+        val bufferSecs = clipperDurationMinutes.coerceIn(1, 5) * 60
         return NotificationCompat.Builder(this, CHANNEL_BUFFER_ID)
-            .setContentTitle("CatRec — Rolling Buffer")
-            .setContentText(statusText ?: "Buffering last ${RollingBufferEngine.MAX_SEGMENTS * RollingBufferEngine.SEGMENT_DURATION_MS / 1000}s…")
+            .setContentTitle(getString(R.string.notif_buffer_title))
+            .setContentText(
+                statusText ?: getString(R.string.notif_buffer_buffering, bufferSecs.toInt()),
+            )
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapPI)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .addAction(android.R.drawable.ic_menu_save, "Save Clip", clipPI)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPI)
+            .addAction(android.R.drawable.ic_menu_save, getString(R.string.notif_buffer_save_clip), clipPI)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.notif_action_stop), stopPI)
             .build()
     }
 
     // ── Screenshot ─────────────────────────────────────────────────────────────
 
+    private fun releasePendingScreenshotVirtualDisplay() {
+        synchronized(screenshotVirtualDisplayLock) {
+            try {
+                pendingScreenshotVirtualDisplay?.release()
+            } catch (_: Exception) {
+            }
+            pendingScreenshotVirtualDisplay = null
+        }
+    }
+
     private fun takeScreenshot() {
-        val mp = mediaProjection ?: return
+        recorderEngine?.let { eng ->
+            requestScreenshotFromEngine { cb -> eng.requestScreenshot(cb) }
+            return
+        }
+        rollingBufferEngine?.let { eng ->
+            requestScreenshotFromEngine { cb -> eng.requestScreenshot(cb) }
+            return
+        }
+        val mp = mediaProjection ?: run {
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(this, getString(R.string.error_screenshot_no_projection), Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
         val metrics = resources.displayMetrics
         val width = metrics.widthPixels
         val height = metrics.heightPixels
 
+        releasePendingScreenshotVirtualDisplay()
         val imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
-        val virtualDisplay = mp.createVirtualDisplay(
-            "CatRec_Screenshot",
-            width, height, metrics.densityDpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            imageReader.surface, null, null
-        )
+        val virtualDisplay = try {
+            mp.createVirtualDisplay(
+                "CatRec_Screenshot",
+                width, height, metrics.densityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                imageReader.surface, null, null,
+            )
+        } catch (e: SecurityException) {
+            Log.e("ScreenRecordService", "Screenshot VirtualDisplay rejected", e)
+            imageReader.close()
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+        synchronized(screenshotVirtualDisplayLock) {
+            pendingScreenshotVirtualDisplay = virtualDisplay
+        }
 
         imageReader.setOnImageAvailableListener({ reader ->
-            val image = reader.acquireLatestImage()
-            if (image != null) {
+            try {
+                val image = reader.acquireLatestImage()
+                if (image != null) {
+                    try {
+                        val planes = image.planes
+                        val buffer = planes[0].buffer
+                        val pixelStride = planes[0].pixelStride
+                        val rowStride = planes[0].rowStride
+                        val rowPadding = rowStride - pixelStride * width
+                        val bitmap = Bitmap.createBitmap(
+                            width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888,
+                        )
+                        bitmap.copyPixelsFromBuffer(buffer)
+                        val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height)
+                        bitmap.recycle()
+                        saveScreenshotBitmap(croppedBitmap)
+                    } catch (e: Exception) {
+                        Log.e("ScreenRecordService", "Screenshot capture error", e)
+                    } finally {
+                        image.close()
+                    }
+                }
+            } finally {
                 try {
-                    val planes = image.planes
-                    val buffer = planes[0].buffer
-                    val pixelStride = planes[0].pixelStride
-                    val rowStride = planes[0].rowStride
-                    val rowPadding = rowStride - pixelStride * width
-                    val bitmap = Bitmap.createBitmap(
-                        width + rowPadding / pixelStride, height, Bitmap.Config.ARGB_8888
-                    )
-                    bitmap.copyPixelsFromBuffer(buffer)
-                    val croppedBitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height)
-                    bitmap.recycle()
-                    saveScreenshotBitmap(croppedBitmap)
-                } catch (e: Exception) {
-                    Log.e("ScreenRecordService", "Screenshot capture error", e)
-                } finally {
-                    image.close()
+                    reader.close()
+                } catch (_: Exception) {
+                }
+                try {
+                    virtualDisplay.release()
+                } catch (_: Exception) {
+                }
+                synchronized(screenshotVirtualDisplayLock) {
+                    if (pendingScreenshotVirtualDisplay === virtualDisplay) {
+                        pendingScreenshotVirtualDisplay = null
+                    }
                 }
             }
-            reader.close()
-            virtualDisplay?.release()
         }, Handler(Looper.getMainLooper()))
+    }
+
+    /** Relay thread invokes [block] with the next frame bitmap (or null). */
+    private fun requestScreenshotFromEngine(block: ((Bitmap?) -> Unit) -> Unit) {
+        val main = Handler(Looper.getMainLooper())
+        val delivered = AtomicBoolean(false)
+        val timeout = Runnable {
+            if (delivered.compareAndSet(false, true)) {
+                Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
+        main.postDelayed(timeout, 3500L)
+        block { bitmap ->
+            if (!delivered.compareAndSet(false, true)) return@block
+            main.removeCallbacks(timeout)
+            main.post {
+                if (bitmap != null) saveScreenshotBitmap(bitmap)
+                else Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun saveScreenshotBitmap(bitmap: Bitmap) {
@@ -1208,7 +1646,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     contentResolver.update(uri, values, null, null)
                 }
                 Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, "Screenshot saved", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.notif_screenshot_saved), Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Exception) {
@@ -1246,6 +1684,32 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         }
     }
 
+    private fun finalizeAudioMediaStoreEntry(uri: Uri) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(applicationContext, uri)
+                val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+                retriever.release()
+                val values = ContentValues().apply {
+                    put(MediaStore.Audio.Media.IS_PENDING, 0)
+                    if (durationMs != null && durationMs > 0) put(MediaStore.Audio.Media.DURATION, durationMs)
+                }
+                contentResolver.update(uri, values, null, null)
+            } catch (e: Exception) {
+                Log.e("ScreenRecordService", "Audio MediaStore finalize failed", e)
+                try {
+                    contentResolver.update(uri, ContentValues().apply { put(MediaStore.Audio.Media.IS_PENDING, 0) }, null, null)
+                } catch (_: Exception) {}
+            }
+        } else {
+            try {
+                val path = uri.path
+                if (path != null) MediaScannerConnection.scanFile(applicationContext, arrayOf(path), arrayOf("audio/mp4"), null)
+            } catch (_: Exception) {}
+        }
+    }
+
     private fun showPostRecordingNotification(uri: Uri) {
         val notifMgr = getSystemService(NotificationManager::class.java)
         val thumbnail: Bitmap? = try {
@@ -1272,7 +1736,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 type = "video/mp4"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-            }, "Share Recording").apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
+            }, getString(R.string.share_recording_title)).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
             PendingIntent.FLAG_IMMUTABLE
         )
         val deletePending = PendingIntent.getBroadcast(this, 13,
@@ -1284,14 +1748,14 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         )
 
         val builder = NotificationCompat.Builder(this, CHANNEL_DONE_ID)
-            .setContentTitle("Recording finished")
-            .setContentText("Tap to open your recording")
+            .setContentTitle(getString(R.string.notif_post_title))
+            .setContentText(getString(R.string.notif_post_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapPending)
             .setAutoCancel(true)
-            .addAction(android.R.drawable.ic_menu_view, "Open", openPending)
-            .addAction(android.R.drawable.ic_menu_share, "Share", sharePending)
-            .addAction(android.R.drawable.ic_menu_delete, "Delete", deletePending)
+            .addAction(android.R.drawable.ic_menu_view, getString(R.string.notif_post_open), openPending)
+            .addAction(android.R.drawable.ic_menu_share, getString(R.string.notif_post_share), sharePending)
+            .addAction(android.R.drawable.ic_menu_delete, getString(R.string.notif_post_delete), deletePending)
 
         if (thumbnail != null) {
             builder.setLargeIcon(thumbnail)
@@ -1377,7 +1841,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         val dp = resources.displayMetrics.density
 
         val title = TextView(this).apply {
-            text = "CatRec"; textSize = 18f; setTextColor(0xCCFFFFFF.toInt())
+            text = getString(R.string.notif_title_short); textSize = 18f; setTextColor(0xCCFFFFFF.toInt())
             gravity = Gravity.CENTER; typeface = android.graphics.Typeface.DEFAULT_BOLD
             setPadding(0, 0, 0, (6 * dp).toInt())
         }
@@ -1387,7 +1851,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         }
         countdownNumberView = numberView
         val subtitle = TextView(this).apply {
-            text = "Recording starting\u2026"; textSize = 15f; setTextColor(0xCCFFFFFF.toInt())
+            text = getString(R.string.countdown_subtitle); textSize = 15f; setTextColor(0xCCFFFFFF.toInt())
             gravity = Gravity.CENTER; setPadding(0, (6 * dp).toInt(), 0, 0)
         }
 
@@ -1406,8 +1870,12 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
 
         container.addView(inner, FrameLayout.LayoutParams(circleDiameter, circleDiameter, Gravity.CENTER))
         countdownOverlayView = container
-        try { wm.addView(container, params) } catch (e: Exception) {
+        try {
+            wm.addView(container, params)
+            FirebaseCrashlytics.getInstance().log("Overlay: countdown overlay added")
+        } catch (e: Exception) {
             Log.e("ScreenRecordService", "Countdown overlay add failed", e)
+            recordCrashlyticsNonFatal(e, "ScreenRecordService: countdown overlay add failed")
         }
     }
 
@@ -1431,16 +1899,18 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     // ── Stop Behaviors ─────────────────────────────────────────────────────────
 
     private fun setupStopBehaviors() {
-        if (stopBehaviors?.contains("Screen Off") == true || stopBehaviors?.contains("Pause on Screen Off") == true) {
+        if (stopBehaviors?.contains(StopBehaviorKeys.SCREEN_OFF) == true ||
+            stopBehaviors?.contains(StopBehaviorKeys.PAUSE_ON_SCREEN_OFF) == true
+        ) {
             registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
         }
-        if (stopBehaviors?.contains("Shake Device") == true) {
+        if (stopBehaviors?.contains(StopBehaviorKeys.SHAKE) == true) {
             sensorManager?.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
     private fun handleScreenOff() {
-        if (stopBehaviors?.contains("Pause on Screen Off") == true) pauseRecording()
+        if (stopBehaviors?.contains(StopBehaviorKeys.PAUSE_ON_SCREEN_OFF) == true) pauseRecording()
         else stopRecording()
     }
 
@@ -1465,9 +1935,15 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val mgr = getSystemService(NotificationManager::class.java)
-            mgr.createNotificationChannel(NotificationChannel(CHANNEL_ID, "Screen Recording", NotificationManager.IMPORTANCE_LOW))
-            mgr.createNotificationChannel(NotificationChannel(CHANNEL_DONE_ID, "Recording Complete", NotificationManager.IMPORTANCE_DEFAULT))
-            mgr.createNotificationChannel(NotificationChannel(CHANNEL_BUFFER_ID, "Rolling Buffer", NotificationManager.IMPORTANCE_LOW))
+            mgr.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, getString(R.string.notif_channel_screen_recording), NotificationManager.IMPORTANCE_LOW),
+            )
+            mgr.createNotificationChannel(
+                NotificationChannel(CHANNEL_DONE_ID, getString(R.string.notif_channel_recording_complete), NotificationManager.IMPORTANCE_DEFAULT),
+            )
+            mgr.createNotificationChannel(
+                NotificationChannel(CHANNEL_BUFFER_ID, getString(R.string.notif_channel_rolling_buffer), NotificationManager.IMPORTANCE_LOW),
+            )
         }
     }
 
@@ -1479,20 +1955,20 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         val dismissedPI = PendingIntent.getService(this, 99,
             Intent(this, ScreenRecordService::class.java).apply { action = ACTION_NOTIFICATION_DISMISSED },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val muteLabel = if (isRecordingMuted) "Unmute" else "Mute"
+        val muteLabel = if (isRecordingMuted) getString(R.string.notif_action_unmute) else getString(R.string.notif_action_mute)
         val muteAction = if (isRecordingMuted) ACTION_UNMUTE else ACTION_MUTE
         val mutePI = PendingIntent.getService(this, 3,
             Intent(this, ScreenRecordService::class.java).apply { action = muteAction },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val statusLine = contentText ?: when {
-            isPaused -> "Recording Paused"
-            isRecordingMuted -> "Recording (Muted)\u2026"
-            else -> "Recording in Progress\u2026"
+            isPaused -> getString(R.string.notif_recording_paused)
+            isRecordingMuted -> getString(R.string.notif_recording_muted)
+            else -> getString(R.string.notif_recording_in_progress)
         }
 
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("CatRec")
+            .setContentTitle(getString(R.string.notif_title_short))
             .setContentText(statusLine)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapPending)
@@ -1500,18 +1976,18 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopPI)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.notif_action_stop), stopPI)
 
         if (isPaused) {
             val resumePI = PendingIntent.getService(this, 1,
                 Intent(this, ScreenRecordService::class.java).apply { action = ACTION_RESUME },
                 PendingIntent.FLAG_IMMUTABLE)
-            builder.addAction(android.R.drawable.ic_media_play, "Resume", resumePI)
+            builder.addAction(android.R.drawable.ic_media_play, getString(R.string.notif_action_resume), resumePI)
         } else {
             val pausePI = PendingIntent.getService(this, 2,
                 Intent(this, ScreenRecordService::class.java).apply { action = ACTION_PAUSE },
                 PendingIntent.FLAG_IMMUTABLE)
-            builder.addAction(android.R.drawable.ic_media_pause, "Pause", pausePI)
+            builder.addAction(android.R.drawable.ic_media_pause, getString(R.string.notif_action_pause), pausePI)
         }
 
         builder.addAction(android.R.drawable.ic_lock_silent_mode, muteLabel, mutePI)
@@ -1520,7 +1996,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             val showControlsPI = PendingIntent.getService(this, 5,
                 Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_SHOW_CONTROLS },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            builder.addAction(R.mipmap.ic_launcher, "Show Controls", showControlsPI)
+            builder.addAction(R.mipmap.ic_launcher, getString(R.string.notif_action_show_controls), showControlsPI)
         }
 
         val notification = builder.build()

@@ -3,27 +3,67 @@ package com.ibbie.catrec_screenrecorcer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
+import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
+import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
+import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
+import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
+import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
+import com.ibbie.catrec_screenrecorcer.utils.refreshCrashlyticsSessionKeys
+import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
+
+    private enum class ConsentUiState {
+        /** Resolving consent requirement */
+        Checking,
+
+        /** EEA/UK/CH/BR etc.: user must choose before using the app */
+        AwaitingChoice,
+
+        /** Prompt done or not required */
+        Ready,
+    }
 
     /**
      * Wrap the base context with the saved locale BEFORE any layout inflation or
@@ -49,18 +89,48 @@ class MainActivity : ComponentActivity() {
             enableEdgeToEdge()
 
             val settingsRepository = SettingsRepository(applicationContext)
-            val analyticsEnabled = runBlocking { settingsRepository.analyticsEnabled.first() }
-            if (!analyticsEnabled) {
-                MobileAds.setRequestConfiguration(
-                    RequestConfiguration.Builder()
-                        .setTagForUnderAgeOfConsent(RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE)
-                        .build()
-                )
+            val analyticsEnabled: Boolean
+            val personalizedAdsEnabled: Boolean
+            runBlocking {
+                analyticsEnabled = settingsRepository.analyticsEnabled.first()
+                personalizedAdsEnabled = settingsRepository.personalizedAdsEnabled.first()
+                applicationContext.applyPrivacySettings(analyticsEnabled, personalizedAdsEnabled)
+                val consentDone = settingsRepository.analyticsConsentPromptCompleted.first()
+                // Re-apply Crashlytics state from stored consent on every cold start
+                // (only once the user has made an explicit choice — before that,
+                // CatRecApplication.onCreate already armed Crashlytics).
+                if (consentDone) {
+                    applicationContext.applyCrashlyticsCollectionEnabled(analyticsEnabled)
+                }
+                // Anonymous user ID for Crashlytics: before consent, match CatRecApplication (reporting on).
+                val reportingEnabled = if (consentDone) analyticsEnabled else true
+                applicationContext.syncFirebaseUserIdentity(reportingEnabled)
+                crashlyticsLog("App cold start")
+                val appLang = settingsRepository.appLanguage.first()
+                val floatingOn = settingsRepository.floatingControls.first()
+                applicationContext.refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
             MobileAds.initialize(this)
 
+            if (BuildConfig.DEBUG && analyticsEnabled) {
+                FirebaseAnalytics.getInstance(this).logEvent("debug_analytics_verification", null)
+            }
+
             setContent {
-                val themeSetting by settingsRepository.appTheme.collectAsState(initial = "System")
+                val repo = remember { SettingsRepository(applicationContext) }
+                var consentState by remember { mutableStateOf(ConsentUiState.Checking) }
+                val scope = rememberCoroutineScope()
+
+                LaunchedEffect(Unit) {
+                    if (repo.analyticsConsentPromptCompleted.first()) {
+                        consentState = ConsentUiState.Ready
+                        return@LaunchedEffect
+                    }
+                    // First launch for everyone: prompt before using the app.
+                    consentState = ConsentUiState.AwaitingChoice
+                }
+
+                val themeSetting by repo.appTheme.collectAsState(initial = "System")
                 val isDark = when (themeSetting) {
                     "Light" -> false
                     "Dark" -> true
@@ -69,12 +139,72 @@ class MainActivity : ComponentActivity() {
 
                 CatRecScreenRecorderTheme(darkTheme = isDark) {
                     Surface(color = MaterialTheme.colorScheme.background) {
-                        CatRecNavGraph()
+                        when (consentState) {
+                            ConsentUiState.Checking -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                            ConsentUiState.AwaitingChoice -> {
+                                AlertDialog(
+                                    onDismissRequest = { },
+                                    title = { Text(stringResource(R.string.consent_analytics_title)) },
+                                    text = { Text(stringResource(R.string.consent_analytics_message)) },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    repo.applyRegulatedConsentChoice(true)
+                                                    consentState = ConsentUiState.Ready
+                                                }
+                                            },
+                                        ) { Text(stringResource(R.string.consent_accept)) }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    repo.applyRegulatedConsentChoice(false)
+                                                    consentState = ConsentUiState.Ready
+                                                }
+                                            },
+                                        ) { Text(stringResource(R.string.consent_decline)) }
+                                    },
+                                )
+                            }
+                            ConsentUiState.Ready -> {
+                                val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
+                                CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
+                                    CatRecNavGraph()
+                                }
+                            }
+                        }
                     }
                 }
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error in onCreate", e)
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (application as? CatRecApplication)?.billingManager?.refreshPurchasesIfConnected()
+        try {
+            val repo = SettingsRepository(applicationContext)
+            val floatingOn = runBlocking { repo.floatingControls.first() }
+            if (floatingOn && Settings.canDrawOverlays(this)) {
+                startService(Intent(this, OverlayService::class.java).apply {
+                    action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                })
+            }
+        } catch (e: Exception) {
+            Log.w("MainActivity", "Idle overlay start skipped", e)
+            recordCrashlyticsNonFatal(e, "MainActivity.onResume: idle overlay start failed")
         }
     }
 
@@ -106,6 +236,7 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             Log.w("MainActivity", "Could not apply stored language", e)
+            recordCrashlyticsNonFatal(e, "MainActivity.applyStoredLanguage failed")
         }
     }
 }

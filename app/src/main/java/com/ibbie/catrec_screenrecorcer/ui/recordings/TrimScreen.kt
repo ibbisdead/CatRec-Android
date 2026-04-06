@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -30,6 +31,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
+import com.ibbie.catrec_screenrecorcer.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,10 +95,10 @@ fun TrimScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Trim Video", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
                     }
                 }
             )
@@ -140,7 +142,7 @@ fun TrimScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "Start: ${formatMs(startMs)}",
+                        stringResource(R.string.trim_start_label, formatMs(startMs)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -148,7 +150,7 @@ fun TrimScreen(
                     TextButton(onClick = {
                         startFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(0f, endFraction - 0.01f)
                     }) {
-                        Text("Set to current")
+                        Text(stringResource(R.string.trim_set_to_current))
                     }
                 }
                 Slider(
@@ -172,7 +174,7 @@ fun TrimScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        "End: ${formatMs(endMs)}",
+                        stringResource(R.string.trim_end_label, formatMs(endMs)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Medium
@@ -180,7 +182,7 @@ fun TrimScreen(
                     TextButton(onClick = {
                         endFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(startFraction + 0.01f, 1f)
                     }) {
-                        Text("Set to current")
+                        Text(stringResource(R.string.trim_set_to_current))
                     }
                 }
                 Slider(
@@ -199,7 +201,12 @@ fun TrimScreen(
 
                 // Duration summary
                 Text(
-                    "Trim duration: ${formatMs(endMs - startMs)}  (${formatMs(startMs)} → ${formatMs(endMs)})",
+                    stringResource(
+                        R.string.trim_duration_summary,
+                        formatMs(endMs - startMs),
+                        formatMs(startMs),
+                        formatMs(endMs),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -210,7 +217,7 @@ fun TrimScreen(
                 Button(
                     onClick = {
                         if (endMs - startMs < 500L) {
-                            Toast.makeText(context, "Trim range too short (min 0.5s)", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.trim_too_short), Toast.LENGTH_SHORT).show()
                             return@Button
                         }
                         isTrimming = true
@@ -220,10 +227,10 @@ fun TrimScreen(
                             }
                             isTrimming = false
                             if (result != null) {
-                                Toast.makeText(context, "Trim saved successfully", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.trim_saved_success), Toast.LENGTH_SHORT).show()
                                 navController.popBackStack()
                             } else {
-                                Toast.makeText(context, "Trim failed. Please try again.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.trim_failed_retry), Toast.LENGTH_LONG).show()
                             }
                         }
                     },
@@ -237,11 +244,11 @@ fun TrimScreen(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Trimming… ${(trimProgress * 100).toInt()}%")
+                        Text(stringResource(R.string.trim_progress, (trimProgress * 100).toInt()))
                     } else {
                         Icon(Icons.Default.ContentCut, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Trim & Save")
+                        Text(stringResource(R.string.trim_save))
                     }
                 }
             }

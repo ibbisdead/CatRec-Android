@@ -7,8 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ibbie.catrec_screenrecorcer.BuildConfig
+import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.components.CatRecIcons
 
@@ -28,19 +31,19 @@ fun HomeScreen(
         // Header
         Icon(
             imageVector = CatRecIcons.Paw,
-            contentDescription = "CatRec Logo",
+            contentDescription = stringResource(R.string.content_desc_logo),
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
         
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "CatRec",
+                text = stringResource(R.string.home_app_name),
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "v0.5.0 Public Beta",
+                text = stringResource(R.string.home_version, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -63,7 +66,7 @@ fun HomeScreen(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Start Recording",
+                text = stringResource(R.string.recording_start),
                 style = MaterialTheme.typography.headlineSmall
             )
         }
@@ -76,22 +79,22 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             QuickLinkItem(
-                text = "Settings",
+                text = stringResource(R.string.tab_settings),
                 icon = CatRecIcons.Settings,
                 onClick = { onNavigate(Screen.Settings.route) }
             )
             QuickLinkItem(
-                text = "Recordings",
+                text = stringResource(R.string.tab_recordings),
                 icon = CatRecIcons.Recordings,
                 onClick = { onNavigate(Screen.Recordings.route) }
             )
             QuickLinkItem(
-                text = "Tools",
+                text = stringResource(R.string.tab_tools),
                 icon = CatRecIcons.Tools,
                 onClick = { onNavigate(Screen.Tools.route) }
             )
             QuickLinkItem(
-                text = "Support",
+                text = stringResource(R.string.tab_support),
                 icon = CatRecIcons.Support,
                 onClick = { onNavigate(Screen.Support.route) }
             )

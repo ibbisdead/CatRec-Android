@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ibbie.catrec_screenrecorcer.ui.theme.CrimsonRed
 import com.ibbie.catrec_screenrecorcer.ui.theme.RimRed
+import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 
 // ─── Accent Color CompositionLocals ──────────────────────────────────────────
 
@@ -130,18 +131,28 @@ fun GlassCard(
     cornerRadius: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val scheme = MaterialTheme.colorScheme
+    val light = scheme.isLightTheme()
     val canUseBlur = rememberCanUseBlur()
     val rimBrush   = LocalAccentBrush.current
     val shape      = RoundedCornerShape(cornerRadius)
 
-    val surfaceBrush = if (canUseBlur) {
+    val surfaceBrush = if (light) {
+        Brush.verticalGradient(
+            listOf(
+                scheme.surface.copy(alpha = 0.92f),
+                scheme.surfaceVariant.copy(alpha = 0.88f),
+                scheme.surface.copy(alpha = 0.92f)
+            )
+        )
+    } else if (canUseBlur) {
         Brush.verticalGradient(listOf(Color(0x770A0A0A), Color(0xBB0A0A0A)))
     } else {
         Brush.verticalGradient(listOf(Color(0xBB0A0A0A), Color(0xCC0A0A0A), Color(0xBB0A0A0A)))
     }
 
     Box(modifier = modifier.clip(shape)) {
-        if (canUseBlur) {
+        if (canUseBlur && !light) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -170,11 +181,17 @@ fun GlassPill(
     value: String,
     modifier: Modifier = Modifier
 ) {
+    val scheme = MaterialTheme.colorScheme
+    val light = scheme.isLightTheme()
     val canUseBlur = rememberCanUseBlur()
     val accent     = LocalAccentColor.current
     val rimBrush   = LocalAccentBrush.current
     val shape      = RoundedCornerShape(50)
-    val bgColor    = if (canUseBlur) Color(0x990A0A0A) else Color(0xBB0A0A0A)
+    val bgColor = when {
+        light -> scheme.surfaceVariant.copy(alpha = 0.95f)
+        canUseBlur -> Color(0x990A0A0A)
+        else -> Color(0xBB0A0A0A)
+    }
 
     Box(
         modifier = modifier
@@ -194,7 +211,7 @@ fun GlassPill(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFFAFAFAF),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp
             )
         }
@@ -238,42 +255,53 @@ fun CatRecordButton(
         label = "PulseAlpha"
     )
 
+    val scheme = MaterialTheme.colorScheme
+    val onMuted = scheme.onSurfaceVariant
     val rimColor = when {
         isRecording -> accent
         isEnabled   -> accent.darkened(0.45f)
-        else        -> Color(0xFF333333)
+        else        -> onMuted.copy(alpha = 0.5f)
     }
     val iconTint = when {
         isRecording -> accent
         isEnabled   -> accent.copy(alpha = 0.85f)
-        else        -> Color(0xFF555555)
+        else        -> onMuted
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier.size(120.dp)
-    ) {
+    // Caller supplies bounded size (ConstraintLayout / Box + aspectRatio); inner stays circular.
+    Box(modifier = modifier) {
+        val innerFrac = 0.46f
         // ── Pulse ring ───────────────────────────────────────────────────────
         if (showPulse) {
             Box(
                 modifier = Modifier
-                    .size(120.dp * pulseScale)
+                    .align(Alignment.Center)
+                    .fillMaxSize(innerFrac * pulseScale)
                     .clip(CircleShape)
                     .background(accent.copy(alpha = pulseAlpha * 0.35f))
             )
         }
 
         // ── Glass circle button ──────────────────────────────────────────────
+        val circleBrush = if (scheme.isLightTheme()) {
+            Brush.radialGradient(
+                colors = listOf(
+                    scheme.primary.copy(alpha = 0.12f),
+                    scheme.surfaceVariant
+                )
+            )
+        } else {
+            Brush.radialGradient(
+                colors = listOf(Color(0xFF1A0008), Color(0xFF0A0A0A))
+            )
+        }
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(120.dp)
+                .align(Alignment.Center)
+                .fillMaxSize(innerFrac)
                 .clip(CircleShape)
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(Color(0xFF1A0008), Color(0xFF0A0A0A))
-                    )
-                )
+                .background(brush = circleBrush)
                 .border(
                     width = if (isRecording) 2.dp else 1.5.dp,
                     color = rimColor,
@@ -289,7 +317,7 @@ fun CatRecordButton(
                 },
                 contentDescription = if (isRecording) "Stop Recording" else "Start Recording",
                 tint     = iconTint,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.fillMaxSize(0.4f)
             )
         }
     }
@@ -317,7 +345,7 @@ fun GlassSlider(
             Text(
                 text  = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFFCCCCCC)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Surface(
                 shape = RoundedCornerShape(4.dp),
@@ -333,6 +361,7 @@ fun GlassSlider(
             }
         }
         Spacer(Modifier.height(4.dp))
+        val tickSurface = MaterialTheme.colorScheme.surface
         Slider(
             value        = value,
             onValueChange = onValueChange,
@@ -342,7 +371,7 @@ fun GlassSlider(
             colors       = SliderDefaults.colors(
                 thumbColor         = accent,
                 activeTrackColor   = accent,
-                activeTickColor    = Color(0xFF0A0A0A),
+                activeTickColor    = tickSurface,
                 inactiveTrackColor = accent.darkened(0.35f),
                 inactiveTickColor  = accent.darkened(0.2f)
             )

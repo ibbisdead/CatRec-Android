@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Standard overlay button — circular, subtly tinted, with a bright ripple
+  for clear press feedback.
+-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#50FFFFFF">
+
+    <!-- Ripple clipping mask (oval) -->
+    <item android:id="@android:id/mask">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Resting state: 10% white tint -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#1AFFFFFF" />
+        </shape>
+    </item>
+
+</ripple>

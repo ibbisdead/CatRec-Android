@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -31,7 +32,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.BrandingWatermark
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.*
-import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,14 +41,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
+import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.*
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
-import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +82,7 @@ fun SettingsScreen(
     val floatingControls by viewModel.floatingControls.collectAsState()
     val touchOverlay by viewModel.touchOverlay.collectAsState()
     val countdown by viewModel.countdown.collectAsState()
+    val clipperDurationMinutes by viewModel.clipperDurationMinutes.collectAsState()
     val stopBehavior by viewModel.stopBehavior.collectAsState()
 
     // Camera Overlay
@@ -100,6 +103,7 @@ fun SettingsScreen(
     val watermarkSize by viewModel.watermarkSize.collectAsState()
     val watermarkXFraction by viewModel.watermarkXFraction.collectAsState()
     val watermarkYFraction by viewModel.watermarkYFraction.collectAsState()
+    val watermarkLocation by viewModel.watermarkLocation.collectAsState()
 
     // Screenshots
     val screenshotFormat by viewModel.screenshotFormat.collectAsState()
@@ -128,10 +132,22 @@ fun SettingsScreen(
 
     // Privacy
     val analyticsEnabled by viewModel.analyticsEnabled.collectAsState()
+    val personalizedAdsEnabled by viewModel.personalizedAdsEnabled.collectAsState()
+
+    /** Remove-ads purchase — bypasses all rewarded-ad gates ([AdGate]). */
+    val adsDisabled by viewModel.adsDisabled.collectAsState()
 
     val isRecording by RecordingState.isRecording.collectAsState()
     val scrollState = rememberScrollState()
     val canDrawOverlays = Settings.canDrawOverlays(context)
+
+    val clipperDurationLabels = listOf(
+        stringResource(R.string.clipper_duration_1m),
+        stringResource(R.string.clipper_duration_2m),
+        stringResource(R.string.clipper_duration_3m),
+        stringResource(R.string.clipper_duration_4m),
+        stringResource(R.string.clipper_duration_5m),
+    )
 
     // Watermark live preview
     if (showWatermark && canDrawOverlays && !isRecording) {
@@ -178,6 +194,7 @@ fun SettingsScreen(
     var showAudioSampleRateDialog by remember { mutableStateOf(false) }
     var showAudioEncoderDialog by remember { mutableStateOf(false) }
     var showCountdownDialog by remember { mutableStateOf(false) }
+    var showClipperDurationDialog by remember { mutableStateOf(false) }
     var showStopDialog by remember { mutableStateOf(false) }
     var showPatternDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -223,12 +240,12 @@ fun SettingsScreen(
 
     /** Show the ad-gate dialog for [feature]. On unlock, [action] is invoked. */
     fun gateFeature(feature: String, name: String, action: () -> Unit) {
-        if (AdGate.isUnlocked(feature)) { action(); return }
+        if (AdGate.isUnlocked(feature, adsDisabled)) { action(); return }
         adGateFeature = feature; adGateFeatureName = name; adGatePending = action
         showAdGateDialog = true
     }
 
-    // Resolution options
+    // Canonical English values (stored in DataStore / sent to encoder). Separator lines use "—" for grouping.
     val resolutionOptions = listOf(
         "Native",
         "— 16:9 —",
@@ -243,33 +260,63 @@ fun SettingsScreen(
         "1920x1440", "1440x1080", "1280x960", "960x720",
         "— 9:16 (Portrait) —",
         "1080x1920", "720x1280", "1440x2560",
-        "Custom…"
+        "Custom…",
     )
 
-    val languageOptions = listOf(
-        "System Default", "English", "العربية (Arabic)", "中文简体 (Chinese Simplified)",
-        "中文繁體 (Chinese Traditional)", "Français (French)", "Deutsch (German)",
-        "हिन्दी (Hindi)", "Bahasa Indonesia", "Italiano (Italian)", "日本語 (Japanese)",
-        "한국어 (Korean)", "Português (Portuguese)", "Русский (Russian)",
-        "Español (Spanish)", "Türkçe (Turkish)", "Tiếng Việt (Vietnamese)"
+    val languageLabelIds = listOf(
+        R.string.language_system,
+        R.string.language_english,
+        R.string.language_arabic,
+        R.string.language_chinese_simplified,
+        R.string.language_chinese_traditional,
+        R.string.language_french,
+        R.string.language_german,
+        R.string.language_hindi,
+        R.string.language_indonesian,
+        R.string.language_italian,
+        R.string.language_japanese,
+        R.string.language_korean,
+        R.string.language_portuguese,
+        R.string.language_russian,
+        R.string.language_spanish,
+        R.string.language_turkish,
+        R.string.language_vietnamese,
     )
     val languageCodes = listOf(
         "system", "en", "ar", "zh-CN", "zh-TW", "fr", "de", "hi", "in", "it", "ja", "ko", "pt", "ru", "es", "tr", "vi"
     )
 
+    val stopBehaviorSummary = stopBehavior.joinToString(", ") { key ->
+        when (key) {
+            StopBehaviorKeys.NOTIFICATION -> context.getString(R.string.stop_behavior_notification)
+            StopBehaviorKeys.SHAKE -> context.getString(R.string.stop_behavior_shake)
+            StopBehaviorKeys.SCREEN_OFF -> context.getString(R.string.stop_behavior_screen_off)
+            StopBehaviorKeys.PAUSE_ON_SCREEN_OFF -> context.getString(R.string.stop_behavior_pause_on_screen_off)
+            else -> key
+        }
+    }
+    val langIdx = languageCodes.indexOf(appLanguage).takeIf { it >= 0 } ?: 0
+    val languageDisplay = context.getString(languageLabelIds.getOrElse(langIdx) { R.string.language_system })
+
     // ── Dialogs (all logic unchanged) ──────────────────────────────────────────
     if (showFpsDialog) {
-        SingleChoiceDialog("Frame Rate (FPS)", listOf("24", "30", "45", "60", "90", "120"),
-            "${fps.toInt()}",
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_fps_title),
+            options = listOf("24", "30", "45", "60", "90", "120"),
+            selectedOption = "${fps.toInt()}",
             onOptionSelected = { selected ->
                 showFpsDialog = false
-                if ((selected == "90" || selected == "120") && !AdGate.isUnlocked(AdGate.HIGH_FPS)) {
-                    gateFeature(AdGate.HIGH_FPS, "$selected FPS") { viewModel.setFps(selected.toFloat()) }
+                if ((selected == "90" || selected == "120") && !AdGate.isUnlocked(AdGate.HIGH_FPS, adsDisabled)) {
+                    gateFeature(
+                        AdGate.HIGH_FPS,
+                        context.getString(R.string.gate_high_fps, selected),
+                    ) { viewModel.setFps(selected.toFloat()) }
                 } else {
                     viewModel.setFps(selected.toFloat())
                 }
             },
-            onDismiss = { showFpsDialog = false })
+            onDismiss = { showFpsDialog = false },
+        )
     }
 
     if (showAdGateDialog) {
@@ -292,12 +339,20 @@ fun SettingsScreen(
         )
     }
     if (showBitrateDialog) {
-        SingleChoiceDialog("Bitrate",
-            listOf("1 Mbps","2 Mbps","4 Mbps","6 Mbps","8 Mbps","10 Mbps","12 Mbps","16 Mbps",
-                "20 Mbps","25 Mbps","30 Mbps","40 Mbps","50 Mbps","60 Mbps","80 Mbps","100 Mbps","120 Mbps","150 Mbps","200 Mbps"),
-            "${bitrate.toInt()} Mbps",
-            onOptionSelected = { viewModel.setBitrate(it.replace(" Mbps","").toFloatOrNull() ?: 10f); showBitrateDialog = false },
-            onDismiss = { showBitrateDialog = false })
+        val bitrateKeys = listOf(1,2,4,6,8,10,12,16,20,25,30,40,50,60,80,100,120,150,200)
+        val mbpsLabel = stringResource(R.string.label_mbps)
+        val bitrateLabels = bitrateKeys.map { "$it $mbpsLabel" }
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_bitrate_title),
+            options = bitrateLabels,
+            selectedOption = "${bitrate.toInt()} $mbpsLabel",
+            onOptionSelected = { label ->
+                val idx = bitrateLabels.indexOf(label)
+                if (idx >= 0) viewModel.setBitrate(bitrateKeys[idx].toFloat())
+                showBitrateDialog = false
+            },
+            onDismiss = { showBitrateDialog = false },
+        )
     }
     if (showResolutionDialog) {
         ResolutionDialog(
@@ -321,93 +376,177 @@ fun SettingsScreen(
         )
     }
     if (showVideoEncoderDialog) {
-        SingleChoiceDialog("Video Encoder", listOf("H.264", "H.265 (HEVC)"), videoEncoder,
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_video_encoder),
+            options = listOf("H.264", "H.265 (HEVC)"),
+            selectedOption = videoEncoder,
             onOptionSelected = { viewModel.setVideoEncoder(it); showVideoEncoderDialog = false },
-            onDismiss = { showVideoEncoderDialog = false })
+            onDismiss = { showVideoEncoderDialog = false },
+        )
     }
     if (showOrientationDialog) {
-        SingleChoiceDialog("Orientation", listOf("Auto", "Portrait", "Landscape"), recordingOrientation,
-            onOptionSelected = { viewModel.setRecordingOrientation(it); showOrientationDialog = false },
-            onDismiss = { showOrientationDialog = false })
+        val orientKeys   = listOf("Auto", "Portrait", "Landscape")
+        val orientLabels = listOf(
+            stringResource(R.string.setting_orientation_auto),
+            stringResource(R.string.setting_orientation_portrait),
+            stringResource(R.string.setting_orientation_landscape),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.setting_orientation),
+            options = orientLabels,
+            selectedOption = orientLabels[orientKeys.indexOf(recordingOrientation).coerceIn(0, orientLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = orientLabels.indexOf(label)
+                if (idx >= 0) viewModel.setRecordingOrientation(orientKeys[idx])
+                showOrientationDialog = false
+            },
+            onDismiss = { showOrientationDialog = false },
+        )
     }
     if (showAudioBitrateDialog) {
-        SingleChoiceDialog("Audio Bitrate", listOf("32 kbps","64 kbps","96 kbps","128 kbps","192 kbps","256 kbps","320 kbps"),
-            "$audioBitrate kbps",
-            onOptionSelected = { viewModel.setAudioBitrate(it.replace(" kbps","").toIntOrNull() ?: 128); showAudioBitrateDialog = false },
-            onDismiss = { showAudioBitrateDialog = false })
+        val audioBitrateKeys = listOf(32, 64, 96, 128, 192, 256, 320)
+        val kbpsLabel = stringResource(R.string.label_kbps)
+        val audioBitrateLabels = audioBitrateKeys.map { "$it $kbpsLabel" }
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_audio_bitrate),
+            options = audioBitrateLabels,
+            selectedOption = "$audioBitrate $kbpsLabel",
+            onOptionSelected = { label ->
+                val idx = audioBitrateLabels.indexOf(label)
+                if (idx >= 0) viewModel.setAudioBitrate(audioBitrateKeys[idx])
+                showAudioBitrateDialog = false
+            },
+            onDismiss = { showAudioBitrateDialog = false },
+        )
     }
     if (showAudioSampleRateDialog) {
-        SingleChoiceDialog("Sample Rate", listOf("8000 Hz","16000 Hz","22050 Hz","44100 Hz","48000 Hz"),
-            "$audioSampleRate Hz",
-            onOptionSelected = { viewModel.setAudioSampleRate(it.replace(" Hz","").toIntOrNull() ?: 48000); showAudioSampleRateDialog = false },
-            onDismiss = { showAudioSampleRateDialog = false })
+        val sampleRateKeys = listOf(8000, 16000, 22050, 44100, 48000)
+        val hzLabel = stringResource(R.string.label_hz)
+        val sampleRateLabels = sampleRateKeys.map { "$it $hzLabel" }
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_sample_rate),
+            options = sampleRateLabels,
+            selectedOption = "$audioSampleRate $hzLabel",
+            onOptionSelected = { label ->
+                val idx = sampleRateLabels.indexOf(label)
+                if (idx >= 0) viewModel.setAudioSampleRate(sampleRateKeys[idx])
+                showAudioSampleRateDialog = false
+            },
+            onDismiss = { showAudioSampleRateDialog = false },
+        )
     }
     if (showAudioEncoderDialog) {
-        SingleChoiceDialog("Audio Encoder", listOf("AAC-LC", "AAC-HE", "AAC-HE v2", "AAC-ELD"), audioEncoder,
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_audio_encoder),
+            options = listOf("AAC-LC", "AAC-HE", "AAC-HE v2", "AAC-ELD"),
+            selectedOption = audioEncoder,
             onOptionSelected = { viewModel.setAudioEncoder(it); showAudioEncoderDialog = false },
-            onDismiss = { showAudioEncoderDialog = false })
+            onDismiss = { showAudioEncoderDialog = false },
+        )
     }
     if (showCountdownDialog) {
-        SingleChoiceDialog("Countdown Timer", listOf("None","3s","5s","10s"),
-            if (countdown == 0) "None" else "${countdown}s",
-            onOptionSelected = {
-                viewModel.setCountdown(when(it) { "3s"->3; "5s"->5; "10s"->10; else->0 })
+        val countdownKeys   = listOf(0, 3, 5, 10)
+        val countdownLabels = listOf(
+            stringResource(R.string.countdown_none),
+            stringResource(R.string.countdown_3s),
+            stringResource(R.string.countdown_5s),
+            stringResource(R.string.countdown_10s),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_countdown_timer),
+            options = countdownLabels,
+            selectedOption = countdownLabels[countdownKeys.indexOf(countdown).coerceIn(0, countdownLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = countdownLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCountdown(countdownKeys[idx])
                 showCountdownDialog = false
             },
-            onDismiss = { showCountdownDialog = false })
+            onDismiss = { showCountdownDialog = false },
+        )
+    }
+    if (showClipperDurationDialog) {
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_clipper_duration_title),
+            options = clipperDurationLabels,
+            selectedOption = clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
+            onOptionSelected = { sel ->
+                val idx = clipperDurationLabels.indexOf(sel)
+                if (idx >= 0) viewModel.setClipperDurationMinutes(idx + 1)
+                showClipperDurationDialog = false
+            },
+            onDismiss = { showClipperDurationDialog = false },
+        )
     }
     if (showStopDialog) {
+        val stopOpts = listOf(
+            StopBehaviorKeys.NOTIFICATION to R.string.stop_behavior_notification,
+            StopBehaviorKeys.SHAKE to R.string.stop_behavior_shake,
+            StopBehaviorKeys.SCREEN_OFF to R.string.stop_behavior_screen_off,
+            StopBehaviorKeys.PAUSE_ON_SCREEN_OFF to R.string.stop_behavior_pause_on_screen_off,
+        )
         AlertDialog(
             onDismissRequest = { showStopDialog = false },
-            title = { Text("Stop Behavior") },
+            title = { Text(stringResource(R.string.setting_stop_behavior)) },
             text = {
                 Column {
-                    listOf("Notification","Shake Device","Screen Off","Pause on Screen Off").forEach { option ->
+                    stopOpts.forEach { (key, labelRes) ->
                         Row(
-                            modifier = Modifier.fillMaxWidth().clickable { viewModel.setStopBehavior(option) }.padding(vertical = 12.dp),
+                            modifier = Modifier.fillMaxWidth().clickable { viewModel.setStopBehavior(key) }.padding(vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Checkbox(checked = stopBehavior.contains(option), onCheckedChange = { viewModel.setStopBehavior(option) })
-                            Text(option, modifier = Modifier.padding(start = 16.dp))
+                            Checkbox(
+                                checked = stopBehavior.contains(key),
+                                onCheckedChange = { viewModel.setStopBehavior(key) },
+                            )
+                            Text(stringResource(labelRes), modifier = Modifier.padding(start = 16.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showStopDialog = false }) { Text("Done") } }
+            confirmButton = { TextButton(onClick = { showStopDialog = false }) { Text(stringResource(R.string.action_done)) } }
         )
     }
     if (showPatternDialog) {
-        SingleChoiceDialog("Filename Pattern", listOf("yyyyMMdd_HHmmss","CatRec_Timestamp","Date_Time"), filenamePattern,
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_filename_pattern),
+            options = listOf("yyyyMMdd_HHmmss","CatRec_Timestamp","Date_Time"),
+            selectedOption = filenamePattern,
             onOptionSelected = { viewModel.setFilenamePattern(it); showPatternDialog = false },
-            onDismiss = { showPatternDialog = false })
+            onDismiss = { showPatternDialog = false },
+        )
     }
     if (showThemeDialog) {
+        val themeChoices = listOf(
+            "System" to R.string.theme_system,
+            "Light" to R.string.theme_light,
+            "Dark" to R.string.theme_dark,
+        )
         AlertDialog(
             onDismissRequest = { showThemeDialog = false },
-            title = { Text("App Theme") },
+            title = { Text(stringResource(R.string.dialog_theme_title)) },
             text = {
                 Column {
-                    listOf("System","Light","Dark").forEach { theme ->
+                    themeChoices.forEach { (theme, labelRes) ->
                         Row(
                             modifier = Modifier.fillMaxWidth().clickable { viewModel.setAppTheme(theme); showThemeDialog = false }.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(selected = appTheme == theme, onClick = { viewModel.setAppTheme(theme); showThemeDialog = false })
-                            Text(theme, modifier = Modifier.padding(start = 8.dp))
+                            Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showThemeDialog = false }) { Text("Cancel") } }
+            confirmButton = { TextButton(onClick = { showThemeDialog = false }) { Text(stringResource(R.string.action_cancel)) } }
         )
     }
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("App Language") },
+            title = { Text(stringResource(R.string.dialog_language_title)) },
             text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    languageOptions.forEachIndexed { idx, lang ->
+                Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                    languageLabelIds.forEachIndexed { idx, labelRes ->
                         val code = languageCodes[idx]
                         Row(
                             modifier = Modifier.fillMaxWidth()
@@ -424,18 +563,32 @@ fun SettingsScreen(
                                 showLanguageDialog = false
                                 applyLanguage(context, code)
                             })
-                            Text(lang, modifier = Modifier.padding(start = 8.dp))
+                            Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text("Cancel") } }
+            confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.action_cancel)) } }
         )
     }
     if (showScreenshotFormatDialog) {
-        SingleChoiceDialog("Screenshot Format", listOf("JPEG","PNG","WebP"), screenshotFormat,
-            onOptionSelected = { viewModel.setScreenshotFormat(it); showScreenshotFormatDialog = false },
-            onDismiss = { showScreenshotFormatDialog = false })
+        val formatKeys = listOf("JPEG", "PNG", "WebP")
+        val formatLabels = listOf(
+            stringResource(R.string.format_jpeg),
+            stringResource(R.string.format_png),
+            stringResource(R.string.format_webp),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_screenshot_format),
+            options = formatLabels,
+            selectedOption = formatLabels[formatKeys.indexOf(screenshotFormat).takeIf { it >= 0 } ?: 0],
+            onOptionSelected = { label ->
+                val idx = formatLabels.indexOf(label)
+                if (idx >= 0) viewModel.setScreenshotFormat(formatKeys[idx])
+                showScreenshotFormatDialog = false
+            },
+            onDismiss = { showScreenshotFormatDialog = false },
+        )
     }
     if (showCameraSettingsDialog) {
         CameraSettingsDialog(
@@ -467,12 +620,12 @@ fun SettingsScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xCC0A0A0A),
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = Color(0xFF0A0A0A)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -486,10 +639,10 @@ fun SettingsScreen(
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_controls))
                 SwitchSettingItem(Icons.Default.ControlCamera, stringResource(R.string.setting_floating_controls),
-                    "Always-on bubble — record, screenshot & controls from any app",
+                    stringResource(R.string.settings_floating_controls_desc),
                     floatingControls) {
                     if (it && !Settings.canDrawOverlays(context)) {
-                        Toast.makeText(context, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
                     } else {
                         viewModel.setFloatingControls(it)
@@ -504,52 +657,81 @@ fun SettingsScreen(
                         }
                     }
                 }
-                SwitchSettingItem(Icons.Default.TouchApp, "Show Touches", "Enable in Developer Options",
+                SwitchSettingItem(Icons.Default.TouchApp, stringResource(R.string.settings_show_touches), stringResource(R.string.settings_show_touches_desc),
                     touchOverlay) {
                     viewModel.setTouchOverlay(it)
                     if (it) {
                         try { context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) } catch (_: Exception) {}
-                        Toast.makeText(context, "Enable 'Show Taps' manually", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
                     }
                 }
                 ClickableSettingItem(Icons.Default.Timer, stringResource(R.string.setting_countdown),
-                    if (countdown == 0) "Off" else "$countdown seconds") { showCountdownDialog = true }
-                ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehavior.joinToString(", ")) {
+                    if (countdown == 0) stringResource(R.string.setting_countdown_off)
+                    else stringResource(R.string.setting_countdown_seconds, countdown)) { showCountdownDialog = true }
+                ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehaviorSummary) {
                     showStopDialog = true
                 }
+                ClickableSettingItem(
+                    Icons.Default.ContentCut,
+                    stringResource(R.string.setting_clipper_duration),
+                    clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
+                ) { showClipperDurationDialog = true }
             }
 
             // ── VIDEO ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_video))
-                ClickableSettingItem(Icons.Default.Speed, stringResource(R.string.setting_fps), "${fps.toInt()} FPS") { showFpsDialog = true }
-                ClickableSettingItem(Icons.Default.DataUsage, stringResource(R.string.setting_bitrate), "${bitrate.toInt()} Mbps") { showBitrateDialog = true }
-                ClickableSettingItem(Icons.Default.AspectRatio, stringResource(R.string.setting_resolution), resolution) { showResolutionDialog = true }
+                ClickableSettingItem(Icons.Default.Speed, stringResource(R.string.setting_fps), "${fps.toInt()} ${stringResource(R.string.label_fps)}") { showFpsDialog = true }
+                ClickableSettingItem(Icons.Default.DataUsage, stringResource(R.string.setting_bitrate), "${bitrate.toInt()} ${stringResource(R.string.label_mbps)}") { showBitrateDialog = true }
+                val resolutionDisplay = when (resolution) {
+                    "Native"  -> stringResource(R.string.setting_resolution_native)
+                    "Custom…" -> stringResource(R.string.setting_resolution_custom)
+                    else      -> resolution
+                }
+                val orientationDisplay = when (recordingOrientation) {
+                    "Auto"      -> stringResource(R.string.setting_orientation_auto)
+                    "Portrait"  -> stringResource(R.string.setting_orientation_portrait)
+                    "Landscape" -> stringResource(R.string.setting_orientation_landscape)
+                    else        -> recordingOrientation
+                }
+                ClickableSettingItem(Icons.Default.AspectRatio, stringResource(R.string.setting_resolution), resolutionDisplay) { showResolutionDialog = true }
                 ClickableSettingItem(Icons.Default.VideoSettings, stringResource(R.string.setting_video_encoder), videoEncoder) { showVideoEncoderDialog = true }
-                ClickableSettingItem(Icons.Default.ScreenRotation, stringResource(R.string.setting_orientation), recordingOrientation) { showOrientationDialog = true }
+                ClickableSettingItem(Icons.Default.ScreenRotation, stringResource(R.string.setting_orientation), orientationDisplay) { showOrientationDialog = true }
             }
 
             // ── AUDIO ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_audio))
                 SwitchSettingItem(Icons.Default.Mic, stringResource(R.string.setting_microphone), null, recordAudio) { viewModel.setRecordAudio(it) }
-                SwitchSettingItem(Icons.Default.MusicNote, stringResource(R.string.setting_internal_audio), "Android 10+ only", internalAudio) { viewModel.setInternalAudio(it) }
-                ClickableSettingItem(Icons.Default.GraphicEq, stringResource(R.string.setting_audio_bitrate), "$audioBitrate kbps") { showAudioBitrateDialog = true }
-                ClickableSettingItem(Icons.Default.Audiotrack, stringResource(R.string.setting_audio_sample_rate), "$audioSampleRate Hz") { showAudioSampleRateDialog = true }
+                SwitchSettingItem(Icons.Default.MusicNote, stringResource(R.string.setting_internal_audio), stringResource(R.string.setting_internal_audio_note), internalAudio) { viewModel.setInternalAudio(it) }
+                ClickableSettingItem(Icons.Default.GraphicEq, stringResource(R.string.setting_audio_bitrate), "$audioBitrate ${stringResource(R.string.label_kbps)}") { showAudioBitrateDialog = true }
+                ClickableSettingItem(Icons.Default.Audiotrack, stringResource(R.string.setting_audio_sample_rate), "$audioSampleRate ${stringResource(R.string.label_hz)}") { showAudioSampleRateDialog = true }
 
-                // Audio Channels — segmented
-                ListItem(
-                    headlineContent = { Text(stringResource(R.string.setting_audio_channels)) },
+                // Audio Channels — segmented (custom row: ListItem + wide trailing breaks intrinsic constraints)
+                SettingsListRow(
                     leadingContent = { Icon(Icons.Default.SettingsVoice, contentDescription = null, tint = accent.copy(alpha = 0.7f)) },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.setting_audio_channels),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     trailingContent = {
-                        SingleChoiceSegmentedButtonRow {
-                            listOf("Mono","Stereo").forEachIndexed { idx, ch ->
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(idx, 2),
-                                    onClick = { viewModel.setAudioChannels(ch) },
-                                    selected = audioChannels == ch
-                                ) { Text(ch) }
+                        Box(Modifier.horizontalScroll(rememberScrollState())) {
+                            SingleChoiceSegmentedButtonRow {
+                                listOf(
+                                    stringResource(R.string.setting_audio_channels_mono) to "Mono",
+                                    stringResource(R.string.setting_audio_channels_stereo) to "Stereo",
+                                ).forEachIndexed { idx, pair ->
+                                    val label = pair.first
+                                    val value = pair.second
+                                    SegmentedButton(
+                                        shape = SegmentedButtonDefaults.itemShape(idx, 2),
+                                        onClick = { viewModel.setAudioChannels(value) },
+                                        selected = audioChannels == value
+                                    ) { Text(label) }
+                                }
                             }
                         }
                     }
@@ -558,8 +740,8 @@ fun SettingsScreen(
                 ClickableSettingItem(Icons.Default.Tune, stringResource(R.string.setting_audio_encoder), audioEncoder) { showAudioEncoderDialog = true }
                 SwitchSettingItem(Icons.AutoMirrored.Filled.CallSplit, stringResource(R.string.setting_separate_mic),
                     stringResource(R.string.setting_separate_mic_desc), separateMicRecording) { newValue ->
-                    if (newValue && !AdGate.isUnlocked(AdGate.SEPARATE_MIC)) {
-                        gateFeature(AdGate.SEPARATE_MIC, "Separate Mic Track") {
+                    if (newValue && !AdGate.isUnlocked(AdGate.SEPARATE_MIC, adsDisabled)) {
+                        gateFeature(AdGate.SEPARATE_MIC, context.getString(R.string.gate_feature_separate_mic)) {
                             viewModel.setSeparateMicRecording(true)
                         }
                     } else {
@@ -572,9 +754,10 @@ fun SettingsScreen(
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_overlay))
                 ClickableSettingItem(Icons.Default.CameraAlt, stringResource(R.string.setting_camera_settings),
-                    if (cameraOverlay) "Enabled — ${cameraAspectRatio} • ${cameraFacing}" else "Disabled") {
-                    if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS)) {
-                        gateFeature(AdGate.CAMERA_SETTINGS, "Camera Overlay Settings") {
+                    if (cameraOverlay) stringResource(R.string.camera_status_enabled, cameraAspectRatio, cameraFacing)
+                    else stringResource(R.string.state_disabled)) {
+                    if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS, adsDisabled)) {
+                        gateFeature(AdGate.CAMERA_SETTINGS, context.getString(R.string.gate_feature_camera_overlay)) {
                             showCameraSettingsDialog = true
                         }
                     } else {
@@ -584,7 +767,7 @@ fun SettingsScreen(
 
                 SwitchSettingItem(Icons.AutoMirrored.Filled.BrandingWatermark, stringResource(R.string.setting_watermark), null, showWatermark) {
                     if (it && !Settings.canDrawOverlays(context)) {
-                        Toast.makeText(context, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
                     } else viewModel.setShowWatermark(it)
                 }
@@ -599,9 +782,9 @@ fun SettingsScreen(
                             Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                if (canDrawOverlays && !isRecording) "Live preview active — drag watermark to reposition"
-                                else if (isRecording) "Preview unavailable while recording"
-                                else "Grant overlay permission to see live preview",
+                                if (canDrawOverlays && !isRecording) stringResource(R.string.watermark_preview_active)
+                                else if (isRecording) stringResource(R.string.watermark_preview_recording)
+                                else stringResource(R.string.watermark_preview_need_overlay),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = Color(0xFFCCAAAA)
                             )
@@ -610,41 +793,76 @@ fun SettingsScreen(
 
                     var showWatermarkLocDialog2 by remember { mutableStateOf(false) }
                     if (showWatermarkLocDialog2) {
-                        SingleChoiceDialog("Snap to Position", listOf("Top Left","Top Right","Bottom Left","Bottom Right","Center"), "Custom",
-                            onOptionSelected = { pos ->
-                                val (x, y) = when(pos) {
-                                    "Top Left"     -> Pair(0.03f, 0.04f)
-                                    "Top Right"    -> Pair(0.75f, 0.04f)
-                                    "Bottom Left"  -> Pair(0.03f, 0.88f)
-                                    "Bottom Right" -> Pair(0.75f, 0.88f)
-                                    else           -> Pair(0.43f, 0.46f)
+                        val snapKeys = listOf("Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center")
+                        val snapLabels = listOf(
+                            stringResource(R.string.watermark_position_top_left),
+                            stringResource(R.string.watermark_position_top_right),
+                            stringResource(R.string.watermark_position_bottom_left),
+                            stringResource(R.string.watermark_position_bottom_right),
+                            stringResource(R.string.watermark_position_center),
+                        )
+                        val selectedSnapLabel = if (watermarkLocation in snapKeys) {
+                            snapLabels[snapKeys.indexOf(watermarkLocation)]
+                        } else {
+                            stringResource(R.string.watermark_snap_custom)
+                        }
+                        SingleChoiceDialog(
+                            title = stringResource(R.string.watermark_snap_dialog_title),
+                            options = snapLabels,
+                            selectedOption = selectedSnapLabel,
+                            onOptionSelected = { label ->
+                                val idx = snapLabels.indexOf(label)
+                                if (idx < 0) return@SingleChoiceDialog
+                                val pos = snapKeys[idx]
+                                // Fractions are offset / (screen − watermark), so 0/1 are true corners for any size & DPI.
+                                val (x, y) = when (pos) {
+                                    "Top Left" -> Pair(0f, 0f)
+                                    "Top Right" -> Pair(1f, 0f)
+                                    "Bottom Left" -> Pair(0f, 1f)
+                                    "Bottom Right" -> Pair(1f, 1f)
+                                    else -> Pair(0.5f, 0.5f)
                                 }
-                                viewModel.setWatermarkXFraction(x); viewModel.setWatermarkYFraction(y)
-                                viewModel.setWatermarkLocation(pos); showWatermarkLocDialog2 = false
+                                viewModel.setWatermarkXFraction(x)
+                                viewModel.setWatermarkYFraction(y)
+                                viewModel.setWatermarkLocation(pos)
+                                showWatermarkLocDialog2 = false
                             },
-                            onDismiss = { showWatermarkLocDialog2 = false })
+                            onDismiss = { showWatermarkLocDialog2 = false },
+                        )
                     }
-                    ClickableSettingItem(Icons.Default.Place, "Snap to Corner", "Or drag on screen") { showWatermarkLocDialog2 = true }
+                    ClickableSettingItem(Icons.Default.Place, stringResource(R.string.watermark_snap_corner_title), stringResource(R.string.watermark_snap_corner_desc)) { showWatermarkLocDialog2 = true }
 
-                    ListItem(
-                        headlineContent = { Text("Watermark Shape") },
+                    SettingsListRow(
                         leadingContent = { Icon(Icons.Default.Crop, null, tint = accent.copy(alpha = 0.7f)) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.watermark_shape),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
                         trailingContent = {
-                            SingleChoiceSegmentedButtonRow {
-                                listOf("Square","Circle").forEachIndexed { idx, shape ->
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(idx, 2),
-                                        onClick = { viewModel.setWatermarkShape(shape) },
-                                        selected = watermarkShape == shape
-                                    ) { Text(shape) }
+                            Box(Modifier.horizontalScroll(rememberScrollState())) {
+                                SingleChoiceSegmentedButtonRow {
+                                    val shapeKeys = listOf("Square", "Circle")
+                                    val shapeLabels = listOf(
+                                        stringResource(R.string.shape_square),
+                                        stringResource(R.string.shape_circle),
+                                    )
+                                    shapeKeys.forEachIndexed { idx, shape ->
+                                        SegmentedButton(
+                                            shape = SegmentedButtonDefaults.itemShape(idx, shapeKeys.size),
+                                            onClick = { viewModel.setWatermarkShape(shape) },
+                                            selected = watermarkShape == shape
+                                        ) { Text(shapeLabels[idx]) }
+                                    }
                                 }
                             }
                         }
                     )
 
-                    GlassSlider("Size", "${watermarkSize}dp", watermarkSize.toFloat(), 50f..300f, 49) { viewModel.setWatermarkSize(it.toInt()) }
-                    GlassSlider("Opacity", "${watermarkOpacity}%", watermarkOpacity.toFloat(), 10f..100f, 17) { viewModel.setWatermarkOpacity(it.toInt()) }
+                    GlassSlider(stringResource(R.string.setting_watermark_size), stringResource(R.string.label_dp, watermarkSize), watermarkSize.toFloat(), 50f..300f, 49) { viewModel.setWatermarkSize(it.toInt()) }
+                    GlassSlider(stringResource(R.string.setting_watermark_opacity), stringResource(R.string.label_percent, watermarkOpacity), watermarkOpacity.toFloat(), 10f..100f, 17) { viewModel.setWatermarkOpacity(it.toInt()) }
 
                     val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
                         if (uri != null) {
@@ -652,14 +870,16 @@ fun SettingsScreen(
                             navController.navigate("crop/${Uri.encode(uri.toString())}")
                         }
                     }
-                    ClickableSettingItem(Icons.Default.Image, "Watermark Image",
-                        if (watermarkImageUri != null) "Custom image set" else "Default (app icon)") { imagePickerLauncher.launch("image/*") }
+                    ClickableSettingItem(Icons.Default.Image, stringResource(R.string.watermark_image),
+                        if (watermarkImageUri != null) stringResource(R.string.watermark_image_custom) else stringResource(R.string.watermark_image_default)) { imagePickerLauncher.launch("image/*") }
                     if (watermarkImageUri != null) {
                         ListItem(
-                            headlineContent = { Text("Reset to Default Icon") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.setWatermarkImageUri(null) },
+                            headlineContent = { Text(stringResource(R.string.watermark_reset_icon)) },
                             leadingContent = { Icon(Icons.Default.RestartAlt, null, tint = accent.copy(alpha = 0.7f)) },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            modifier = Modifier.clickable { viewModel.setWatermarkImageUri(null) }
                         )
                     }
                 }
@@ -668,7 +888,13 @@ fun SettingsScreen(
             // ── SCREENSHOTS ───────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
-                ClickableSettingItem(Icons.Default.PhotoSizeSelectLarge, stringResource(R.string.setting_screenshot_format), screenshotFormat) { showScreenshotFormatDialog = true }
+                val screenshotFormatDisplay = when (screenshotFormat) {
+                    "JPEG" -> stringResource(R.string.format_jpeg)
+                    "PNG"  -> stringResource(R.string.format_png)
+                    "WebP" -> stringResource(R.string.format_webp)
+                    else   -> screenshotFormat
+                }
+                ClickableSettingItem(Icons.Default.PhotoSizeSelectLarge, stringResource(R.string.setting_screenshot_format), screenshotFormatDisplay) { showScreenshotFormatDialog = true }
                 GlassSlider(stringResource(R.string.setting_screenshot_quality), "${screenshotQuality}%", screenshotQuality.toFloat(), 10f..100f, 17) {
                     viewModel.setScreenshotQuality(it.toInt())
                 }
@@ -677,7 +903,12 @@ fun SettingsScreen(
             // ── THEME ─────────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_theme))
-                ClickableSettingItem(Icons.Default.SettingsSystemDaydream, stringResource(R.string.setting_theme), appTheme) { showThemeDialog = true }
+                val themeDisplay = when (appTheme) {
+                    "Light" -> stringResource(R.string.theme_light)
+                    "Dark"  -> stringResource(R.string.theme_dark)
+                    else    -> stringResource(R.string.theme_system)
+                }
+                ClickableSettingItem(Icons.Default.SettingsSystemDaydream, stringResource(R.string.setting_theme), themeDisplay) { showThemeDialog = true }
 
                 // ── Accent Color row ─────────────────────────────────────────
                 val parsedAccent = remember(accentHex) {
@@ -688,24 +919,27 @@ fun SettingsScreen(
                     runCatching { Color(android.graphics.Color.parseColor("#${accentHex2.removePrefix("#").take(6)}")) }
                         .getOrDefault(Color(0xFFFF6600))
                 }
-                ListItem(
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                SettingsListRow(
                     leadingContent = {
                         Icon(Icons.Default.Palette, null, tint = accent.copy(alpha = 0.7f))
                     },
                     headlineContent = {
-                        Text("Accent Color", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.accent_color_title), style = MaterialTheme.typography.bodyMedium)
                     },
                     supportingContent = {
                         Text(
                             if (accentGradient) "#${accentHex.uppercase()}  →  #${accentHex2.uppercase()}"
                             else "#${accentHex.uppercase()}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF888888)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingContent = {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Box(
                                 modifier = Modifier
                                     .size(22.dp)
@@ -723,7 +957,7 @@ fun SettingsScreen(
                                 )
                             }
                             TextButton(onClick = { showAccentPickerDialog = true }) {
-                                Text("Change", color = accent, style = MaterialTheme.typography.labelMedium)
+                                Text(stringResource(R.string.action_change), color = accent, style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -732,13 +966,14 @@ fun SettingsScreen(
                 // Performance Mode toggle
                 val perfSubtitle = when {
                     isLowEndDevice && performanceMode ->
-                        "Auto-enabled — low-end device detected"
+                        stringResource(R.string.perf_auto_low_end)
                     isLowEndDevice && !performanceMode ->
-                        "Quality mode (may cause lag on this device)"
-                    performanceMode -> "Static glass — blur disabled"
-                    else            -> "Dynamic glass blur enabled"
+                        stringResource(R.string.perf_quality_may_lag)
+                    performanceMode -> stringResource(R.string.perf_static_glass)
+                    else            -> stringResource(R.string.perf_dynamic_glass)
                 }
                 ListItem(
+                    modifier = Modifier.fillMaxWidth(),
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     leadingContent = {
                         Icon(
@@ -748,7 +983,7 @@ fun SettingsScreen(
                         )
                     },
                     headlineContent = {
-                        Text("Performance Mode", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.setting_performance_mode), style = MaterialTheme.typography.bodyMedium)
                     },
                     supportingContent = {
                         Text(
@@ -757,7 +992,7 @@ fun SettingsScreen(
                             color = if (isLowEndDevice && !performanceMode)
                                 accent.copy(alpha = 0.8f)
                             else
-                                Color(0xFF888888)
+                                MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingContent = {
@@ -794,25 +1029,21 @@ fun SettingsScreen(
                             modifier = Modifier.size(28.dp)
                         )
                     },
-                    title = { Text("Performance Warning") },
+                    title = { Text(stringResource(R.string.performance_warning_title)) },
                     text = {
-                        Text(
-                            "Your device has less than 6 GB of RAM or is running Android 11 or below. " +
-                            "Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\n" +
-                            "Do you want to enable Quality Mode anyway?"
-                        )
+                        Text(stringResource(R.string.performance_warning_body))
                     },
                     confirmButton = {
                         TextButton(onClick = {
                             viewModel.setPerformanceMode(false)
                             showLagWarningDialog = false
                         }) {
-                            Text("Enable Anyway", color = accent, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_enable_anyway), color = accent, fontWeight = FontWeight.Bold)
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showLagWarningDialog = false }) {
-                            Text("Keep Performance Mode")
+                            Text(stringResource(R.string.action_keep_performance_mode))
                         }
                     }
                 )
@@ -834,14 +1065,18 @@ fun SettingsScreen(
                     onDismissRequest = { showAccentPickerDialog = false },
                     title = {
                         Text(
-                            if (accentGradient && accentPickingSecond) "Gradient Color 2" else "Accent Color",
+                            text = if (accentGradient && accentPickingSecond) {
+                                stringResource(R.string.accent_gradient_color_2)
+                            } else {
+                                stringResource(R.string.accent_color_title)
+                            },
                             fontWeight = FontWeight.Bold
                         )
                     },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             // Preset swatches
-                            Text("Presets", style = MaterialTheme.typography.labelSmall, color = Color(0xFF888888))
+                            Text(stringResource(R.string.accent_presets), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 accentPresets.take(8).forEach { (hex, _) ->
                                     val c = remember(hex) {
@@ -878,7 +1113,7 @@ fun SettingsScreen(
                             val hexSetter: (String) -> Unit = { v ->
                                 if (accentGradient && accentPickingSecond) accentHex2Input = v else accentHexInput = v
                             }
-                            Text("Hex code", style = MaterialTheme.typography.labelSmall, color = Color(0xFF888888))
+                            Text(stringResource(R.string.label_hex_code), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             OutlinedTextField(
                                 value = hexTarget,
                                 onValueChange = {
@@ -890,7 +1125,7 @@ fun SettingsScreen(
                                     }
                                 },
                                 prefix = { Text("#", color = accent) },
-                                placeholder = { Text("FF0033") },
+                                placeholder = { Text(stringResource(R.string.accent_hex_placeholder)) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -902,8 +1137,8 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text("Gradient accent", style = MaterialTheme.typography.bodyMedium)
-                                    Text("Two-color rim glow", style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+                                    Text(stringResource(R.string.accent_gradient_toggle), style = MaterialTheme.typography.bodyMedium)
+                                    Text(stringResource(R.string.accent_gradient_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Switch(
                                     checked = accentGradient,
@@ -936,7 +1171,7 @@ fun SettingsScreen(
                                     ) {
                                         Box(Modifier.size(14.dp).clip(CircleShape).background(c1))
                                         Spacer(Modifier.width(6.dp))
-                                        Text("Color 1")
+                                        Text(stringResource(R.string.accent_color_1))
                                     }
                                     TextButton(
                                         onClick = { accentPickingSecond = true },
@@ -944,7 +1179,7 @@ fun SettingsScreen(
                                     ) {
                                         Box(Modifier.size(14.dp).clip(CircleShape).background(c2))
                                         Spacer(Modifier.width(6.dp))
-                                        Text("Color 2")
+                                        Text(stringResource(R.string.accent_color_2))
                                     }
                                 }
                             }
@@ -952,7 +1187,7 @@ fun SettingsScreen(
                     },
                     confirmButton = {
                         TextButton(onClick = { showAccentPickerDialog = false }) {
-                            Text("Done", color = accent, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.action_done), color = accent, fontWeight = FontWeight.Bold)
                         }
                     }
                 )
@@ -961,26 +1196,6 @@ fun SettingsScreen(
             // ── LANGUAGE ──────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_language))
-                val languageDisplay = when (appLanguage) {
-                    "system" -> "System Default"
-                    "en"     -> "English"
-                    "ar"     -> "العربية (Arabic)"
-                    "zh-CN"  -> "中文简体 (Chinese Simplified)"
-                    "zh-TW"  -> "中文繁體 (Chinese Traditional)"
-                    "fr"     -> "Français (French)"
-                    "de"     -> "Deutsch (German)"
-                    "hi"     -> "हिन्दी (Hindi)"
-                    "in"     -> "Bahasa Indonesia"
-                    "it"     -> "Italiano (Italian)"
-                    "ja"     -> "日本語 (Japanese)"
-                    "ko"     -> "한국어 (Korean)"
-                    "pt"     -> "Português (Portuguese)"
-                    "ru"     -> "Русский (Russian)"
-                    "es"     -> "Español (Spanish)"
-                    "tr"     -> "Türkçe (Turkish)"
-                    "vi"     -> "Tiếng Việt (Vietnamese)"
-                    else     -> "System Default"
-                }
                 ClickableSettingItem(Icons.Default.Language, stringResource(R.string.setting_language), languageDisplay) { showLanguageDialog = true }
             }
 
@@ -988,26 +1203,33 @@ fun SettingsScreen(
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_storage))
                 ClickableSettingItem(Icons.Default.Folder, stringResource(R.string.setting_save_location),
-                    if (saveLocationUri != null) "Custom Folder Set" else stringResource(R.string.setting_save_location_default)) { folderPickerLauncher.launch(null) }
+                    if (saveLocationUri != null) stringResource(R.string.setting_save_location_custom) else stringResource(R.string.setting_save_location_default)) { folderPickerLauncher.launch(null) }
                 ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), filenamePattern) { showPatternDialog = true }
-                SwitchSettingItem(Icons.Default.DeleteSweep, "Auto-delete Old Recordings", "Keep last 50", autoDelete) { viewModel.setAutoDelete(it) }
+                SwitchSettingItem(Icons.Default.DeleteSweep, stringResource(R.string.setting_auto_delete_title), stringResource(R.string.setting_auto_delete_desc), autoDelete) { viewModel.setAutoDelete(it) }
             }
 
             // ── GENERAL ───────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
                 GlassSectionHeader(stringResource(R.string.settings_section_general))
-                SwitchSettingItem(Icons.Default.Smartphone, "Keep Screen On", "During recording", keepScreenOn) { viewModel.setKeepScreenOn(it) }
+                SwitchSettingItem(Icons.Default.Smartphone, stringResource(R.string.setting_keep_screen_on_title), stringResource(R.string.setting_keep_screen_on_desc), keepScreenOn) { viewModel.setKeepScreenOn(it) }
             }
 
             // ── PRIVACY ───────────────────────────────────────────────────────
             GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                GlassSectionHeader("Privacy")
+                GlassSectionHeader(stringResource(R.string.settings_section_privacy))
+                SwitchSettingItem(
+                    Icons.Default.Analytics,
+                    stringResource(R.string.setting_usage_analytics),
+                    stringResource(R.string.setting_usage_analytics_desc),
+                    analyticsEnabled,
+                ) { viewModel.setAnalyticsEnabled(it) }
                 SwitchSettingItem(
                     Icons.Default.PrivacyTip,
-                    "Personalized Ads",
-                    if (analyticsEnabled) "AdMob may use your advertising ID" else "Non-personalized ads only",
-                    analyticsEnabled
-                ) { viewModel.setAnalyticsEnabled(it) }
+                    stringResource(R.string.setting_personalized_ads),
+                    if (personalizedAdsEnabled) stringResource(R.string.setting_personalized_ads_on_desc)
+                    else stringResource(R.string.setting_personalized_ads_off_desc),
+                    personalizedAdsEnabled,
+                ) { viewModel.setPersonalizedAdsEnabled(it) }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -1040,39 +1262,83 @@ private fun CameraSettingsDialog(
     val cameraOrientation by viewModel.cameraOrientation.collectAsState()
 
     if (showCameraFacingDialog) {
-        SingleChoiceDialog("Camera", listOf("Front","Rear"), cameraFacing,
-            onOptionSelected = { viewModel.setCameraFacing(it); showCameraFacingDialog = false },
-            onDismiss = { showCameraFacingDialog = false })
+        val facingKeys = listOf("Front", "Rear")
+        val facingLabels = listOf(
+            stringResource(R.string.camera_facing_front),
+            stringResource(R.string.camera_facing_rear),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.camera_facing),
+            options = facingLabels,
+            selectedOption = facingLabels[facingKeys.indexOf(cameraFacing).coerceIn(0, facingLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = facingLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraFacing(facingKeys[idx])
+                showCameraFacingDialog = false
+            },
+            onDismiss = { showCameraFacingDialog = false },
+        )
     }
     if (showCameraAspectDialog) {
-        SingleChoiceDialog("Aspect Ratio", listOf("Circle","Square","16:9","4:3"), cameraAspectRatio,
-            onOptionSelected = { viewModel.setCameraAspectRatio(it); showCameraAspectDialog = false },
-            onDismiss = { showCameraAspectDialog = false })
+        val aspectKeys = listOf("Circle", "Square", "16:9", "4:3")
+        val aspectLabels = listOf(
+            stringResource(R.string.shape_circle),
+            stringResource(R.string.shape_square),
+            stringResource(R.string.ratio_16_9),
+            stringResource(R.string.ratio_4_3),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.camera_aspect_ratio),
+            options = aspectLabels,
+            selectedOption = aspectLabels[aspectKeys.indexOf(cameraAspectRatio).coerceIn(0, aspectLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = aspectLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraAspectRatio(aspectKeys[idx])
+                showCameraAspectDialog = false
+            },
+            onDismiss = { showCameraAspectDialog = false },
+        )
     }
     if (showCameraOrientationDialog) {
-        SingleChoiceDialog("Camera Orientation", listOf("Auto","Portrait","Landscape"), cameraOrientation,
-            onOptionSelected = { viewModel.setCameraOrientation(it); showCameraOrientationDialog = false },
-            onDismiss = { showCameraOrientationDialog = false })
+        val orientKeys = listOf("Auto", "Portrait", "Landscape")
+        val orientLabels = listOf(
+            stringResource(R.string.setting_orientation_auto),
+            stringResource(R.string.setting_orientation_portrait),
+            stringResource(R.string.setting_orientation_landscape),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_camera_orientation),
+            options = orientLabels,
+            selectedOption = orientLabels[orientKeys.indexOf(cameraOrientation).coerceIn(0, orientLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = orientLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraOrientation(orientKeys[idx])
+                showCameraOrientationDialog = false
+            },
+            onDismiss = { showCameraOrientationDialog = false },
+        )
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Camera Settings", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.camera_settings_title), fontWeight = FontWeight.Bold) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                 ListItem(
-                    headlineContent = { Text("Enable Camera") },
-                    supportingContent = { Text("Show camera overlay during recording") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.setCameraOverlay(!cameraOverlay) },
+                    headlineContent = { Text(stringResource(R.string.camera_enable)) },
+                    supportingContent = { Text(stringResource(R.string.camera_enable_desc)) },
                     leadingContent = { Icon(Icons.Default.CameraAlt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     trailingContent = {
                         Switch(checked = cameraOverlay, onCheckedChange = {
                             if (it && !canDrawOverlays) {
-                                Toast.makeText(context, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                                 context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
                             } else viewModel.setCameraOverlay(it)
                         })
                     },
-                    modifier = Modifier.clickable { viewModel.setCameraOverlay(!cameraOverlay) }
                 )
 
                 if (cameraOverlay) {
@@ -1105,43 +1371,72 @@ private fun CameraSettingsDialog(
                             Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Visibility, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Drag the camera circle to reposition", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                Text(stringResource(R.string.camera_drag_hint), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                             }
                         }
                     }
 
                     ListItem(
-                        headlineContent = { Text("Lock Position") },
-                        supportingContent = { Text("Prevent accidental movement") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setCameraLockPosition(!cameraLockPosition) },
+                        headlineContent = { Text(stringResource(R.string.camera_lock_position)) },
+                        supportingContent = { Text(stringResource(R.string.camera_lock_desc_short)) },
                         leadingContent = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                         trailingContent = {
                             Switch(checked = cameraLockPosition, onCheckedChange = { viewModel.setCameraLockPosition(it) })
                         },
-                        modifier = Modifier.clickable { viewModel.setCameraLockPosition(!cameraLockPosition) }
                     )
                     ListItem(
-                        headlineContent = { Text("Camera") },
-                        supportingContent = { Text(cameraFacing) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCameraFacingDialog = true },
+                        headlineContent = { Text(stringResource(R.string.camera_facing)) },
+                        supportingContent = {
+                            Text(when (cameraFacing) {
+                                "Front" -> stringResource(R.string.camera_facing_front)
+                                "Rear"  -> stringResource(R.string.camera_facing_rear)
+                                else    -> cameraFacing
+                            })
+                        },
                         leadingContent = { Icon(Icons.Default.Cameraswitch, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.clickable { showCameraFacingDialog = true }
                     )
                     ListItem(
-                        headlineContent = { Text("Aspect Ratio") },
-                        supportingContent = { Text(cameraAspectRatio) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCameraAspectDialog = true },
+                        headlineContent = { Text(stringResource(R.string.camera_aspect_ratio)) },
+                        supportingContent = {
+                            Text(when (cameraAspectRatio) {
+                                "Circle" -> stringResource(R.string.shape_circle)
+                                "Square" -> stringResource(R.string.shape_square)
+                                "16:9"   -> stringResource(R.string.ratio_16_9)
+                                "4:3"    -> stringResource(R.string.ratio_4_3)
+                                else     -> cameraAspectRatio
+                            })
+                        },
                         leadingContent = { Icon(Icons.Default.AspectRatio, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.clickable { showCameraAspectDialog = true }
                     )
                     ListItem(
-                        headlineContent = { Text("Orientation") },
-                        supportingContent = { Text(cameraOrientation) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCameraOrientationDialog = true },
+                        headlineContent = { Text(stringResource(R.string.camera_orientation)) },
+                        supportingContent = {
+                            Text(when (cameraOrientation) {
+                                "Auto"      -> stringResource(R.string.setting_orientation_auto)
+                                "Portrait"  -> stringResource(R.string.setting_orientation_portrait)
+                                "Landscape" -> stringResource(R.string.setting_orientation_landscape)
+                                else        -> cameraOrientation
+                            })
+                        },
                         leadingContent = { Icon(Icons.Default.ScreenRotation, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        modifier = Modifier.clickable { showCameraOrientationDialog = true }
                     )
 
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Size", style = MaterialTheme.typography.bodyMedium)
-                            Text("${cameraOverlaySize}dp", style = MaterialTheme.typography.bodyMedium, color = accent)
+                            Text(stringResource(R.string.camera_size), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.label_dp, cameraOverlaySize), style = MaterialTheme.typography.bodyMedium, color = accent)
                         }
                         Slider(
                             value = cameraOverlaySize.toFloat(), onValueChange = { viewModel.setCameraOverlaySize(it.toInt()) },
@@ -1151,8 +1446,8 @@ private fun CameraSettingsDialog(
                     }
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Opacity", style = MaterialTheme.typography.bodyMedium)
-                            Text("${cameraOpacity}%", style = MaterialTheme.typography.bodyMedium, color = accent)
+                            Text(stringResource(R.string.camera_opacity), style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.label_percent, cameraOpacity), style = MaterialTheme.typography.bodyMedium, color = accent)
                         }
                         Slider(
                             value = cameraOpacity.toFloat(), onValueChange = { viewModel.setCameraOpacity(it.toInt()) },
@@ -1163,8 +1458,35 @@ private fun CameraSettingsDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } }
     )
+}
+
+/**
+ * Row-based settings line (avoids Material3 [ListItem] intrinsic measure bug where
+ * maxWidth can become negative when parent width is 0 or trailing is very wide).
+ */
+@Composable
+private fun SettingsListRow(
+    modifier: Modifier = Modifier,
+    leadingContent: @Composable () -> Unit,
+    headlineContent: @Composable () -> Unit,
+    supportingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.padding(end = 16.dp)) { leadingContent() }
+        Column(Modifier.weight(1f)) {
+            headlineContent()
+            supportingContent?.invoke()
+        }
+        trailingContent?.invoke()
+    }
 }
 
 // ── Custom Resolution Dialog ───────────────────────────────────────────────────
@@ -1175,15 +1497,16 @@ private fun CustomResolutionDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     var text by remember { mutableStateOf(current) }
     var error by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Custom Resolution") },
+        title = { Text(stringResource(R.string.dialog_custom_resolution_title)) },
         text = {
             Column {
-                Text("Enter resolution as WIDTHxHEIGHT (e.g. 1920x1080)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.dialog_custom_resolution_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = text,
@@ -1193,7 +1516,7 @@ private fun CustomResolutionDialog(
                         text = if (xCount <= 1) filtered else text
                         error = null
                     },
-                    label = { Text("e.g. 1920x1080") },
+                    label = { Text(stringResource(R.string.setting_resolution_custom_hint)) },
                     isError = error != null,
                     supportingText = error?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
@@ -1208,14 +1531,14 @@ private fun CustomResolutionDialog(
                 val w = parts.getOrNull(0)?.toIntOrNull()
                 val h = parts.getOrNull(1)?.toIntOrNull()
                 when {
-                    parts.size != 2 || w == null || h == null -> error = "Format must be WxH (e.g. 1920x1080)"
-                    w < 100 || h < 100 -> error = "Minimum resolution is 100x100"
-                    w > 7680 || h > 7680 -> error = "Maximum resolution is 7680 on either side"
+                    parts.size != 2 || w == null || h == null -> error = context.getString(R.string.error_resolution_format)
+                    w < 100 || h < 100 -> error = context.getString(R.string.error_resolution_min)
+                    w > 7680 || h > 7680 -> error = context.getString(R.string.error_resolution_max)
                     else -> onConfirm("${w}x${h}")
                 }
-            }) { Text("Apply") }
+            }) { Text(stringResource(R.string.action_apply)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
 
@@ -1231,14 +1554,23 @@ private fun ResolutionDialog(
     val accent = LocalAccentColor.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Resolution") },
+        title = { Text(stringResource(R.string.dialog_resolution_title)) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                 options.forEach { option ->
                     when {
                         option.startsWith("—") -> {
+                            val label = when (option) {
+                                "— 16:9 —"           -> stringResource(R.string.resolution_group_16_9)
+                                "— 20:9 (Tall Phone) —" -> stringResource(R.string.resolution_group_20_9)
+                                "— 18:9 (2:1) —"     -> stringResource(R.string.resolution_group_18_9)
+                                "— 21:9 (Ultrawide) —" -> stringResource(R.string.resolution_group_21_9)
+                                "— 4:3 —"            -> stringResource(R.string.resolution_group_4_3)
+                                "— 9:16 (Portrait) —" -> stringResource(R.string.resolution_group_9_16)
+                                else                 -> option.trim('—', ' ')
+                            }
                             Text(
-                                option.trim('—', ' '),
+                                label,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = accent,
                                 modifier = Modifier.padding(start = 8.dp, top = 12.dp, bottom = 4.dp)
@@ -1250,11 +1582,12 @@ private fun ResolutionDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
-                                Text("Custom…", modifier = Modifier.padding(start = 16.dp), color = accent, fontWeight = FontWeight.Medium)
+                                Text(stringResource(R.string.setting_resolution_custom), modifier = Modifier.padding(start = 16.dp), color = accent, fontWeight = FontWeight.Medium)
                             }
                         }
                         else -> {
                             val isSelected = selectedOption == option
+                            val displayText = if (option == "Native") stringResource(R.string.setting_resolution_native) else option
                             Row(
                                 modifier = Modifier.fillMaxWidth()
                                     .selectable(selected = isSelected, onClick = { onOptionSelected(option) })
@@ -1262,14 +1595,14 @@ private fun ResolutionDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 RadioButton(selected = isSelected, onClick = { onOptionSelected(option) })
-                                Text(option, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
+                                Text(displayText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
                             }
                         }
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
 
@@ -1296,13 +1629,13 @@ private fun AdGateDialog(
                 modifier = Modifier.size(40.dp)
             )
         },
-        title = { Text("Premium Feature", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.premium_feature_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("$featureName is a premium feature.")
+                Text(stringResource(R.string.premium_feature_body, featureName))
                 Text(
-                    if (ad != null) "Watch a short ad to unlock it for this session."
-                    else "Tap Unlock to enable it for this session.",
+                    if (ad != null) stringResource(R.string.premium_feature_watch_ad)
+                    else stringResource(R.string.premium_feature_tap_unlock),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -1329,15 +1662,15 @@ private fun AdGateDialog(
             ) {
                 Text(
                     when {
-                        isAdLoading -> "Loading…"
-                        ad != null  -> "Watch Ad"
-                        else        -> "Unlock"
+                        isAdLoading -> stringResource(R.string.action_loading)
+                        ad != null  -> stringResource(R.string.action_watch_ad)
+                        else        -> stringResource(R.string.action_unlock)
                     }
                 )
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
 }
@@ -1345,17 +1678,10 @@ private fun AdGateDialog(
 // ── Language Helper ────────────────────────────────────────────────────────────
 
 private fun applyLanguage(context: android.content.Context, languageCode: String) {
-    // Persist to SharedPreferences first so attachBaseContext picks it up on recreate.
-    com.ibbie.catrec_screenrecorcer.utils.LocaleHelper.persist(context, languageCode)
-
-    val localeList = if (languageCode.equals("system", ignoreCase = true)) {
-        androidx.core.os.LocaleListCompat.getEmptyLocaleList()
-    } else {
-        androidx.core.os.LocaleListCompat.forLanguageTags(languageCode)
-    }
-    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(localeList)
-
-    // Always recreate so the wrapped context (and all stringResource calls) refresh.
+    // Persists locale, updates AppCompatDelegate application locales, and keeps SharedPreferences
+    // in sync for attachBaseContext on the next process start.
+    com.ibbie.catrec_screenrecorcer.utils.LocaleHelper.apply(context, languageCode)
+    // Recreate so every Composable and View re-reads resources with the new configuration.
     (context as? android.app.Activity)?.recreate()
 }
 
@@ -1373,7 +1699,7 @@ fun SingleChoiceDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                 options.forEach { option ->
                     Row(
                         modifier = Modifier.fillMaxWidth()
@@ -1387,7 +1713,7 @@ fun SingleChoiceDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } }
     )
 }
 
@@ -1407,8 +1733,11 @@ fun SwitchSettingItem(
 ) {
     val accent = LocalAccentColor.current
     ListItem(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
         headlineContent = { Text(title) },
-        supportingContent = if (subtitle != null) { { Text(subtitle, color = Color(0xFF888888)) } } else null,
+        supportingContent = if (subtitle != null) { { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) } } else null,
         leadingContent = { Icon(icon, null, tint = accent.copy(alpha = 0.7f)) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         trailingContent = {
@@ -1423,7 +1752,6 @@ fun SwitchSettingItem(
                 )
             )
         },
-        modifier = Modifier.clickable { onCheckedChange(!checked) }
     )
 }
 
@@ -1436,10 +1764,10 @@ fun ClickableSettingItem(
 ) {
     val accent = LocalAccentColor.current
     ListItem(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         headlineContent = { Text(title) },
-        supportingContent = if (subtitle != null) { { Text(subtitle, color = Color(0xFF888888)) } } else null,
+        supportingContent = if (subtitle != null) { { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) } } else null,
         leadingContent = { Icon(icon, null, tint = accent.copy(alpha = 0.7f)) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = Modifier.clickable(onClick = onClick)
     )
 }

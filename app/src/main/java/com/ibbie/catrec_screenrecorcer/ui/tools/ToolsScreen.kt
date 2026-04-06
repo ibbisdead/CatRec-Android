@@ -24,9 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 
@@ -38,35 +40,44 @@ fun ToolsScreen(
     val cameraOverlay by viewModel.cameraOverlay.collectAsState()
     val showWatermark by viewModel.showWatermark.collectAsState()
 
+    val camTitle = stringResource(R.string.tools_camera_overlay)
+    val wmTitle = stringResource(R.string.tools_watermark)
+    val trimTitle = stringResource(R.string.tool_video_trim)
+    val compressTitle = stringResource(R.string.tool_compress)
+    val gifTitle = stringResource(R.string.tool_to_gif)
+    val frameTitle = stringResource(R.string.tool_frame_extractor)
+    val mergeTitle = stringResource(R.string.tool_merge_clips)
+    val renameTitle = stringResource(R.string.tool_video_rename)
+
     // Overlay Tools
     val overlayTools = listOf(
-        ToolItem("Camera Overlay", Icons.Default.CameraFront, isActive = cameraOverlay) {
+        ToolItem(camTitle, Icons.Default.CameraFront, isActive = cameraOverlay) {
             toggleOverlay(context, viewModel, "camera", !cameraOverlay)
         },
-        ToolItem("Watermark", Icons.AutoMirrored.Filled.BrandingWatermark, isActive = showWatermark) {
+        ToolItem(wmTitle, Icons.AutoMirrored.Filled.BrandingWatermark, isActive = showWatermark) {
             toggleOverlay(context, viewModel, "watermark", !showWatermark)
         }
     )
-    
+
     // Editing Tools (UI Placeholders for now)
     val editingTools = listOf(
-        ToolItem("Video Trim", Icons.Default.ContentCut, isActive = false) {
-             Toast.makeText(context, "Video Trim: Coming Soon", Toast.LENGTH_SHORT).show()
+        ToolItem(trimTitle, Icons.Default.ContentCut, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_coming, trimTitle), Toast.LENGTH_SHORT).show()
         },
-        ToolItem("Compress", Icons.Default.Compress, isActive = false) {
-             Toast.makeText(context, "Video Compress: Coming Soon", Toast.LENGTH_SHORT).show()
+        ToolItem(compressTitle, Icons.Default.Compress, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_coming, compressTitle), Toast.LENGTH_SHORT).show()
         },
-        ToolItem("To GIF", Icons.Default.Gif, isActive = false) {
-             Toast.makeText(context, "Video to GIF: Coming Soon", Toast.LENGTH_SHORT).show()
+        ToolItem(gifTitle, Icons.Default.Gif, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_coming, gifTitle), Toast.LENGTH_SHORT).show()
         },
-        ToolItem("Frame Extractor", Icons.Default.Image, isActive = false) {
-             Toast.makeText(context, "Frame Extractor: Coming Soon", Toast.LENGTH_SHORT).show()
+        ToolItem(frameTitle, Icons.Default.Image, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_coming, frameTitle), Toast.LENGTH_SHORT).show()
         },
-        ToolItem("Merge Clips", Icons.AutoMirrored.Filled.CallMerge, isActive = false) {
-             Toast.makeText(context, "Merge Clips: Coming Soon", Toast.LENGTH_SHORT).show()
+        ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_coming, mergeTitle), Toast.LENGTH_SHORT).show()
         },
-        ToolItem("Video Rename", Icons.Default.DriveFileRenameOutline, isActive = false) {
-             Toast.makeText(context, "Rename: Use Recordings Tab", Toast.LENGTH_SHORT).show()
+        ToolItem(renameTitle, Icons.Default.DriveFileRenameOutline, isActive = false) {
+            Toast.makeText(context, context.getString(R.string.tools_toast_rename_hint), Toast.LENGTH_SHORT).show()
         }
     )
 
@@ -78,7 +89,7 @@ fun ToolsScreen(
     ) {
         // Section: Quick Overlays
         item(span = { GridItemSpan(2) }) {
-            Text("Quick Overlays", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.tools_quick_overlays), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
         
         items(overlayTools) { tool ->
@@ -87,7 +98,7 @@ fun ToolsScreen(
         
         // Section: Video Editing
         item(span = { GridItemSpan(2) }) {
-            Text("Video Editing", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.tools_video_editing), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         }
         
         items(editingTools) { tool ->
@@ -136,7 +147,7 @@ fun ToolCard(tool: ToolItem) {
             )
             if (tool.isActive) {
                 Text(
-                    text = "Active",
+                    text = stringResource(R.string.label_active),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -147,7 +158,7 @@ fun ToolCard(tool: ToolItem) {
 
 private fun toggleOverlay(context: Context, viewModel: RecordingViewModel, type: String, enable: Boolean) {
     if (enable && !Settings.canDrawOverlays(context)) {
-        Toast.makeText(context, "Please grant Overlay permission", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
         context.startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")))
         return
     }

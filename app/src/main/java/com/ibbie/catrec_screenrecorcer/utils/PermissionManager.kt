@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import com.ibbie.catrec_screenrecorcer.R
 
 data class PermissionInfo(
     val name: String,
@@ -58,32 +59,32 @@ class PermissionManager(private val context: Context) {
         if (!isNotificationGranted()) {
             add(
                 PermissionInfo(
-                    name = "Notifications",
-                    rationale = "Required to show recording controls and live status in the notification shade while recording.",
+                    name = context.getString(R.string.perm_name_notifications),
+                    rationale = context.getString(R.string.perm_rationale_notifications),
                 )
             )
         }
         if (!isAudioGranted()) {
             add(
                 PermissionInfo(
-                    name = "Microphone",
-                    rationale = "Required to capture microphone audio alongside your screen recording.",
+                    name = context.getString(R.string.perm_name_microphone),
+                    rationale = context.getString(R.string.perm_rationale_microphone),
                 )
             )
         }
         if (!isCameraGranted()) {
             add(
                 PermissionInfo(
-                    name = "Camera",
-                    rationale = "Required to show the camera-in-picture overlay on top of your screen recording.",
+                    name = context.getString(R.string.perm_name_camera),
+                    rationale = context.getString(R.string.perm_rationale_camera),
                 )
             )
         }
         if (!isOverlayGranted()) {
             add(
                 PermissionInfo(
-                    name = "Display Over Other Apps",
-                    rationale = "Required to show the floating controls bubble and camera overlay on top of other apps during recording.",
+                    name = context.getString(R.string.perm_name_overlay),
+                    rationale = context.getString(R.string.perm_rationale_overlay),
                 )
             )
         }

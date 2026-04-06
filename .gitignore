@@ -19,3 +19,7 @@ google-services.json
 
 # Store signing outputs locally; do not commit release binaries
 app/release/
+
+# Local IDE / tooling
+.cursor/
+.kotlin/

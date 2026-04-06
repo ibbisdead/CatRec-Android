@@ -14,7 +14,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.PixelFormat
-import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
@@ -34,12 +34,16 @@ import android.widget.LinearLayout
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.camera.view.PreviewView
+import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
+import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlin.math.abs
 
 class OverlayService : LifecycleService() {
@@ -135,7 +139,7 @@ class OverlayService : LifecycleService() {
 
     // Live preview (watermark)
     private var previewBgView: View? = null
-    private var previewWatermarkView: ImageView? = null
+    private var previewWatermarkView: View? = null
     private var previewWatermarkParams: WindowManager.LayoutParams? = null
 
     // Camera preview (settings)
@@ -181,6 +185,8 @@ class OverlayService : LifecycleService() {
             stopSelf()
             return START_NOT_STICKY
         }
+
+        intent.action?.let { crashlyticsLog("Overlay: $it") }
 
         if (intent.action == ACTION_CLOSE_OVERLAY) {
             hideControlsOverlay(userDismissed = true)
@@ -250,8 +256,10 @@ class OverlayService : LifecycleService() {
                 controlsIsRecording = com.ibbie.catrec_screenrecorcer.data.RecordingState.isRecording.value
                 controlsIsBuffering = com.ibbie.catrec_screenrecorcer.data.RecordingState.isBuffering.value
                 controlsDismissedByUser = false
-                if (controlsBubbleView == null) showControlsOverlay()
-                postOverlayNotification()
+                if (controlsBubbleView == null) {
+                    showControlsOverlay()
+                    postOverlayNotification()
+                }
             }
 
             ACTION_HIDE_IDLE_CONTROLS -> {
@@ -362,6 +370,7 @@ class OverlayService : LifecycleService() {
             }
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera foreground start failed: ${e.message}", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera foreground start failed")
             return
         }
 
@@ -379,8 +388,8 @@ class OverlayService : LifecycleService() {
             overlayType(), flags, PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (screenW * xFraction).toInt().coerceIn(0, (screenW - widthPx).coerceAtLeast(0))
-            y = (screenH * yFraction).toInt().coerceIn(0, (screenH - heightPx).coerceAtLeast(0))
+            x = fractionToOverlayOffset(xFraction, screenW, widthPx)
+            y = fractionToOverlayOffset(yFraction, screenH, heightPx)
         }
         cameraViewParams = params
 
@@ -406,8 +415,10 @@ class OverlayService : LifecycleService() {
         cameraView = container
         try {
             windowManager?.addView(container, params)
+            crashlyticsLog("Overlay: camera overlay view added")
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera view add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera view add failed")
             cameraView = null; cameraViewParams = null
             return
         }
@@ -508,6 +519,7 @@ class OverlayService : LifecycleService() {
                 bindCamera(previewView)
             } catch (e: Exception) {
                 Log.e("OverlayService", "CameraProvider init failed", e)
+                recordCrashlyticsNonFatal(e, "Overlay: CameraProvider init failed")
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -521,6 +533,7 @@ class OverlayService : LifecycleService() {
             provider.bindToLifecycle(this, selector, preview)
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera bind failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera bind failed")
         }
     }
 
@@ -547,13 +560,18 @@ class OverlayService : LifecycleService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (screenW * xFraction).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-            y = (screenH * yFraction).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+            x = fractionToOverlayOffset(xFraction, screenW, sizePx)
+            y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         }
         val image = buildWatermarkImageView(sizePx, opacity, shape, imageUri)
         watermarkView = image
-        try { windowManager?.addView(image, params) } catch (e: Exception) {
-            Log.e("OverlayService", "Watermark add failed", e); watermarkView = null
+        try {
+            windowManager?.addView(image, params)
+            crashlyticsLog("Overlay: watermark view added")
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Watermark add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: watermark add failed")
+            watermarkView = null
         }
     }
 
@@ -588,36 +606,42 @@ class OverlayService : LifecycleService() {
 
         try {
             windowManager?.addView(bubble, params)
+            crashlyticsLog("Overlay: controls bubble started")
         } catch (e: Exception) {
             Log.e("OverlayService", "Controls bubble add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: controls bubble add failed")
             controlsBubbleView = null; controlsBubbleParams = null
         }
     }
 
     private fun buildControlsBubble(sizePx: Int): FrameLayout {
-        val bubble = FrameLayout(this).apply {
-            elevation = dpToPx(8).toFloat()
-            // Force a perfect circle regardless of the system adaptive-icon shape.
+        return FrameLayout(this).apply {
+            // Oval GradientDrawable provides the circular clip background,
+            // matching the adaptive icon's own background colour (#D80E0C).
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0xFFD80E0C.toInt())
+            }
             clipToOutline = true
             outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
                     outline.setOval(0, 0, view.width, view.height)
                 }
             }
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(0xFF1A1A1A.toInt())
+            // Hardware layer makes clipToOutline reliable on all API levels.
+            setLayerType(View.LAYER_TYPE_HARDWARE, null)
+            elevation = dpToPx(8).toFloat()
+
+            val iconView = ImageView(this@OverlayService).apply {
+                setImageDrawable(ContextCompat.getDrawable(this@OverlayService, R.mipmap.ic_launcher_foreground))
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
             }
+            addView(iconView)
         }
-        val iconView = ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher)
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            val pad = (sizePx * 0.12f).toInt()
-            setPadding(pad, pad, pad, pad)
-            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        }
-        bubble.addView(iconView)
-        return bubble
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -764,6 +788,7 @@ class OverlayService : LifecycleService() {
             card.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(180).start()
         } catch (e: Exception) {
             Log.e("OverlayService", "Controls card add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: controls card add failed")
             controlsCardView = null; controlsCardParams = null
             controlsPauseButton = null; controlsMuteButton = null; controlsCardExpanded = false
         }
@@ -773,12 +798,9 @@ class OverlayService : LifecycleService() {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            background = GradientDrawable().apply {
-                setColor(0xF0131313.toInt()); cornerRadius = dpToPx(30).toFloat()
-                setStroke(dpToPx(1), 0x33FFFFFF.toInt())
-            }
-            elevation = dpToPx(8).toFloat()
-            val padH = dpToPx(12); val padV = dpToPx(8)
+            background = AppCompatResources.getDrawable(this@OverlayService, R.drawable.bg_overlay_glass_pill)
+            elevation = dpToPx(10).toFloat()
+            val padH = dpToPx(10); val padV = dpToPx(8)
             setPadding(padH, padV, padH, padV)
         }
 
@@ -792,12 +814,12 @@ class OverlayService : LifecycleService() {
 
     /** Controls card shown while the rolling-buffer (clipper) is active. */
     private fun buildBufferingCard(card: LinearLayout) {
-        val btnSize  = dpToPx(40)
+        val btnSize   = dpToPx(40)
         val btnMargin = dpToPx(4)
 
         // ── Clip button ───────────────────────────────────────────────────────
         val clipBtn = android.widget.TextView(this).apply {
-            text = "✂ CLIP"
+            text = getString(R.string.overlay_clip_button)
             setTextColor(0xFF000000.toInt())
             textSize = 11f
             gravity = Gravity.CENTER
@@ -805,13 +827,11 @@ class OverlayService : LifecycleService() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, btnSize
             ).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply {
-                setColor(0xFFFF8C00.toInt())
-                cornerRadius = dpToPx(20).toFloat()
-            }
+            background = AppCompatResources.getDrawable(this@OverlayService, R.drawable.bg_btn_overlay_clip)
             val padH = dpToPx(14); val padV = dpToPx(8)
             setPadding(padH, padV, padH, padV)
         }
+        clipBtn.addPressAnim()
         clipBtn.setOnClickListener {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = ScreenRecordService.ACTION_SAVE_CLIP
@@ -819,17 +839,13 @@ class OverlayService : LifecycleService() {
         }
 
         // ── Stop Clipper button ───────────────────────────────────────────────
-        val stopBtn = ImageView(this).apply {
-            setImageDrawable(GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                setColor(0xFFE53935.toInt()); cornerRadius = dpToPx(3).toFloat()
-            })
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22E53935.toInt()) }
-            val p = dpToPx(12); setPadding(p, p, p, p)
-        }
-        stopBtn.setOnClickListener {
+        val stopBtn = makeOverlayButton(
+            sizePx    = btnSize,
+            marginPx  = btnMargin,
+            iconRes   = R.drawable.ic_stop_rec,
+            bgRes     = R.drawable.bg_btn_overlay_stop,
+            padPx     = dpToPx(9)
+        ) {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = ScreenRecordService.ACTION_STOP_BUFFER
             })
@@ -837,7 +853,7 @@ class OverlayService : LifecycleService() {
 
         // ── Label ─────────────────────────────────────────────────────────────
         val label = android.widget.TextView(this).apply {
-            text = "CLIPPER"
+            text = getString(R.string.overlay_clipper_label)
             setTextColor(0xFFFF8C00.toInt())
             textSize = 9f
             gravity = Gravity.CENTER
@@ -850,63 +866,59 @@ class OverlayService : LifecycleService() {
     }
 
     private fun buildRecordingCard(card: LinearLayout) {
-        val btnSize = dpToPx(40); val btnMargin = dpToPx(4)
+        val btnSize   = dpToPx(40)
+        val btnMargin = dpToPx(4)
+        val pad       = dpToPx(9)
 
         // Pause / Resume
-        val pauseBtn = ImageView(this).apply {
-            setImageResource(if (controlsIsPaused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause)
-            setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
-            val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
-        }
-        controlsPauseButton = pauseBtn
-        pauseBtn.setOnClickListener {
+        val pauseBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = if (controlsIsPaused) R.drawable.ic_play else R.drawable.ic_pause,
+            bgRes    = R.drawable.bg_btn_overlay_normal,
+            padPx    = pad
+        ) {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = if (controlsIsPaused) ScreenRecordService.ACTION_RESUME else ScreenRecordService.ACTION_PAUSE
             })
         }
+        controlsPauseButton = pauseBtn
 
-        // Stop
-        val stopBtn = ImageView(this).apply {
-            setImageDrawable(GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                setColor(0xFFE53935.toInt()); cornerRadius = dpToPx(3).toFloat()
+        // Stop — accent-coloured ring background makes it stand out
+        val stopBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = R.drawable.ic_stop_rec,
+            bgRes    = R.drawable.bg_btn_overlay_stop,
+            padPx    = dpToPx(10)
+        ) {
+            startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
+                action = ScreenRecordService.ACTION_STOP
             })
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setColorFilter(0xFFE53935.toInt())
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22E53935.toInt()) }
-            val stopPad = dpToPx(12); setPadding(stopPad, stopPad, stopPad, stopPad)
-        }
-        stopBtn.setOnClickListener {
-            startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply { action = ScreenRecordService.ACTION_STOP })
         }
 
-        // Mute
-        val muteBtn = ImageView(this).apply {
-            setImageResource(if (controlsIsMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
-            colorFilter = null
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
-            val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
-        }
-        controlsMuteButton = muteBtn
-        muteBtn.setOnClickListener {
+        // Mute — icon colour is driven by the vector itself (white / red)
+        val muteBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = if (controlsIsMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on,
+            bgRes    = R.drawable.bg_btn_overlay_normal,
+            padPx    = pad
+        ) {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = if (controlsIsMuted) ScreenRecordService.ACTION_UNMUTE else ScreenRecordService.ACTION_MUTE
             })
         }
+        controlsMuteButton = muteBtn
 
         // Screenshot
-        val screenshotBtn = ImageView(this).apply {
-            setImageResource(R.drawable.ic_screenshot)
-            setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
-            val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
-        }
-        screenshotBtn.setOnClickListener {
+        val screenshotBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = R.drawable.ic_screenshot,
+            bgRes    = R.drawable.bg_btn_overlay_normal,
+            padPx    = pad
+        ) {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
             })
@@ -917,16 +929,17 @@ class OverlayService : LifecycleService() {
 
     /** Controls card shown when NOT recording — open app to start, or take screenshot. */
     private fun buildIdleCard(card: LinearLayout) {
-        val btnSize = dpToPx(40); val btnMargin = dpToPx(4)
+        val btnSize   = dpToPx(40)
+        val btnMargin = dpToPx(4)
+        val pad       = dpToPx(9)
 
-        val recordBtn = ImageView(this).apply {
-            setImageResource(android.R.drawable.presence_video_online)
-            setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
-            val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
-        }
-        recordBtn.setOnClickListener {
+        val recordBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = R.drawable.ic_record_start,
+            bgRes    = R.drawable.bg_btn_overlay_normal,
+            padPx    = pad
+        ) {
             if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
                 val overlayAction = if (
                     com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value == "CLIPPER"
@@ -939,40 +952,36 @@ class OverlayService : LifecycleService() {
                     action = overlayAction
                 })
             } else {
-                // Not yet authorized — open the app so the user can tap "Grant"
                 try {
-                    val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                     }
-                    if (intent != null) startActivity(intent)
+                    if (launchIntent != null) startActivity(launchIntent)
                 } catch (_: Exception) {}
                 android.os.Handler(android.os.Looper.getMainLooper()).post {
                     android.widget.Toast.makeText(
                         this@OverlayService,
-                        "Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first",
+                        getString(R.string.overlay_toast_authorize_first),
                         android.widget.Toast.LENGTH_LONG
                     ).show()
                 }
             }
         }
 
-        // Screenshot button
-        val screenshotBtn = ImageView(this).apply {
-            setImageResource(R.drawable.ic_screenshot)
-            setColorFilter(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(btnSize, btnSize).apply { setMargins(btnMargin, 0, btnMargin, 0) }
-            background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(0x22FFFFFF.toInt()) }
-            val pad = dpToPx(8); setPadding(pad, pad, pad, pad)
-        }
-        screenshotBtn.setOnClickListener {
+        val screenshotBtn = makeOverlayButton(
+            sizePx   = btnSize,
+            marginPx = btnMargin,
+            iconRes  = R.drawable.ic_screenshot,
+            bgRes    = R.drawable.bg_btn_overlay_normal,
+            padPx    = pad
+        ) {
             startService(Intent(this@OverlayService, ScreenRecordService::class.java).apply {
                 action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
             })
         }
 
-        // Label
         val label = android.widget.TextView(this).apply {
-            text = "CatRec"
+            text = getString(R.string.notif_title_short)
             setTextColor(0xFFAAAAAA.toInt())
             textSize = 10f
             gravity = Gravity.CENTER
@@ -982,6 +991,51 @@ class OverlayService : LifecycleService() {
         }
 
         card.addView(recordBtn); card.addView(screenshotBtn); card.addView(label)
+    }
+
+    /**
+     * Builds a consistently styled overlay icon button with ripple background,
+     * uniform padding, and a scale-down press animation.
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun makeOverlayButton(
+        sizePx: Int,
+        marginPx: Int,
+        iconRes: Int,
+        bgRes: Int,
+        padPx: Int = dpToPx(9),
+        onClick: () -> Unit
+    ): ImageView {
+        return ImageView(this).apply {
+            setImageResource(iconRes)
+            scaleType = ImageView.ScaleType.CENTER_INSIDE
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                setMargins(marginPx, 0, marginPx, 0)
+            }
+            background = AppCompatResources.getDrawable(this@OverlayService, bgRes)
+            setPadding(padPx, padPx, padPx, padPx)
+            addPressAnim()
+            setOnClickListener { onClick() }
+        }
+    }
+
+    /**
+     * Attaches a lightweight scale-down/up animation on touch events so every
+     * button has a clear "pressed" state without needing selector drawables.
+     * Returns false so the click listener still fires normally.
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun View.addPressAnim() {
+        setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN ->
+                    v.animate().scaleX(0.82f).scaleY(0.82f).setDuration(70).start()
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(130)
+                        .setInterpolator(DecelerateInterpolator()).start()
+            }
+            false
+        }
     }
 
     private fun hideControlsCard() {
@@ -1005,7 +1059,7 @@ class OverlayService : LifecycleService() {
 
     private fun updateControlsPauseButton() {
         controlsPauseButton?.setImageResource(
-            if (controlsIsPaused) android.R.drawable.ic_media_play else android.R.drawable.ic_media_pause
+            if (controlsIsPaused) R.drawable.ic_play else R.drawable.ic_pause
         )
     }
 
@@ -1063,8 +1117,14 @@ class OverlayService : LifecycleService() {
         )
         val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000.toInt()) }
         cameraPreviewBgView = bg
-        try { wm.addView(bg, bgParams) } catch (e: Exception) {
-            Log.e("OverlayService", "Camera preview bg add failed", e); cameraPreviewBgView = null; return
+        try {
+            wm.addView(bg, bgParams)
+            crashlyticsLog("Overlay: camera preview (settings) bg added")
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Camera preview bg add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera preview bg add failed")
+            cameraPreviewBgView = null
+            return
         }
 
         val sizePx = dpToPx(sizeDp)
@@ -1073,16 +1133,20 @@ class OverlayService : LifecycleService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (screenW * xFraction).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-            y = (screenH * yFraction).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+            x = fractionToOverlayOffset(xFraction, screenW, sizePx)
+            y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         }
 
         val container = buildCameraPreviewContainer(sizePx)
         container.setOnTouchListener(makeCameraPreviewDragListener(wmParams, container, screenW, screenH, sizePx))
         cameraPreviewOverlayView = container; cameraPreviewOverlayParams = wmParams
 
-        try { wm.addView(container, wmParams) } catch (e: Exception) {
+        try {
+            wm.addView(container, wmParams)
+            crashlyticsLog("Overlay: camera preview (settings) container added")
+        } catch (e: Exception) {
             Log.e("OverlayService", "Camera preview add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera preview container add failed")
             cameraPreviewOverlayView = null; cameraPreviewOverlayParams = null
         }
     }
@@ -1109,7 +1173,10 @@ class OverlayService : LifecycleService() {
                 val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
                 settingsCameraProvider?.unbindAll()
                 settingsCameraProvider?.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
-            } catch (e: Exception) { Log.e("OverlayService", "Settings camera preview bind failed", e) }
+            } catch (e: Exception) {
+                Log.e("OverlayService", "Settings camera preview bind failed", e)
+                recordCrashlyticsNonFatal(e, "Overlay: settings camera preview bind failed")
+            }
         }, ContextCompat.getMainExecutor(this))
         return container
     }
@@ -1144,8 +1211,8 @@ class OverlayService : LifecycleService() {
         val sizePx = dpToPx(sizeDp)
         val screenW = metrics.widthPixels; val screenH = metrics.heightPixels
         params.width = sizePx; params.height = sizePx
-        params.x = (screenW * xFraction).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-        params.y = (screenH * yFraction).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+        params.x = fractionToOverlayOffset(xFraction, screenW, sizePx)
+        params.y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         try { wm.updateViewLayout(view, params) } catch (_: Exception) {}
     }
 
@@ -1169,8 +1236,14 @@ class OverlayService : LifecycleService() {
         )
         val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000.toInt()) }
         previewBgView = bg
-        try { wm.addView(bg, bgParams) } catch (e: Exception) {
-            Log.e("OverlayService", "Preview bg add failed", e); previewBgView = null; return
+        try {
+            wm.addView(bg, bgParams)
+            crashlyticsLog("Overlay: watermark preview bg added")
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Preview bg add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: watermark preview bg add failed")
+            previewBgView = null
+            return
         }
         val sizePx = dpToPx(sizeDp)
         val screenW = metrics.widthPixels; val screenH = metrics.heightPixels
@@ -1178,13 +1251,19 @@ class OverlayService : LifecycleService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = (screenW * xFraction).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-            y = (screenH * yFraction).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+            x = fractionToOverlayOffset(xFraction, screenW, sizePx)
+            y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         }
         val imageView = buildWatermarkImageView(sizePx, opacity, shape, imageUri)
         imageView.setOnTouchListener(makePreviewDragListener(wmParams, imageView, screenW, screenH, sizePx))
         previewWatermarkView = imageView; previewWatermarkParams = wmParams
-        try { wm.addView(imageView, wmParams) } catch (e: Exception) { Log.e("OverlayService", "Preview watermark add failed", e) }
+        try {
+            wm.addView(imageView, wmParams)
+            crashlyticsLog("Overlay: watermark preview image added")
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Preview watermark add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: watermark preview add failed")
+        }
     }
 
     private fun updateWatermarkPreview(sizeDp: Int, opacity: Int, shape: String, imageUri: String?, xFraction: Float, yFraction: Float) {
@@ -1196,12 +1275,17 @@ class OverlayService : LifecycleService() {
         val screenW = metrics.widthPixels; val screenH = metrics.heightPixels
         try { wm.removeView(existingView) } catch (_: Exception) {}
         params.width = sizePx; params.height = sizePx
-        params.x = (screenW * xFraction).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-        params.y = (screenH * yFraction).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+        params.x = fractionToOverlayOffset(xFraction, screenW, sizePx)
+        params.y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         val newView = buildWatermarkImageView(sizePx, opacity, shape, imageUri)
         newView.setOnTouchListener(makePreviewDragListener(params, newView, screenW, screenH, sizePx))
         previewWatermarkView = newView
-        try { wm.addView(newView, params) } catch (e: Exception) { Log.e("OverlayService", "Preview update failed", e) }
+        try {
+            wm.addView(newView, params)
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Preview update failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: watermark preview update failed")
+        }
     }
 
     private fun hideWatermarkPreview() {
@@ -1212,23 +1296,63 @@ class OverlayService : LifecycleService() {
 
     // ── Shared Helpers ─────────────────────────────────────────────────────────
 
-    private fun buildWatermarkImageView(sizePx: Int, opacity: Int, shape: String, imageUri: String?): ImageView {
-        return ImageView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(sizePx, sizePx)
-            scaleType = ImageView.ScaleType.CENTER_CROP
+    /** Same icon the launcher shows — matches "Default (app icon)" in settings, not a separate marketing drawable. */
+    private fun defaultWatermarkDrawable(): Drawable? {
+        val base = try {
+            applicationInfo.loadIcon(packageManager)
+        } catch (_: Exception) {
+            ContextCompat.getDrawable(this, R.mipmap.ic_launcher)
+        }
+        return base?.mutate()
+    }
+
+    private fun buildWatermarkImageView(sizePx: Int, opacity: Int, shape: String, imageUri: String?): View {
+        val pad = if (shape == "Circle") (sizePx * 0.12f).toInt().coerceAtLeast(dpToPx(2)) else 0
+        val appIcon = defaultWatermarkDrawable()
+        val image = ImageView(this).apply {
+            layoutParams = if (shape == "Circle") {
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                )
+            } else {
+                ViewGroup.LayoutParams(sizePx, sizePx)
+            }
+            scaleType = if (shape == "Circle") ImageView.ScaleType.CENTER_INSIDE else ImageView.ScaleType.CENTER_CROP
             alpha = opacity.coerceIn(0, 100) / 100f
-            if (imageUri != null) {
+            if (!imageUri.isNullOrBlank()) {
                 try {
                     setImageURI(Uri.parse(imageUri))
-                    if (drawable == null) setImageResource(R.mipmap.ic_launcher)
-                } catch (_: Exception) { setImageResource(R.mipmap.ic_launcher) }
-            } else { setImageResource(R.mipmap.ic_launcher) }
-            if (shape == "Circle") {
-                clipToOutline = true
-                outlineProvider = object : ViewOutlineProvider() {
-                    override fun getOutline(view: View, outline: Outline) { outline.setOval(0, 0, view.width, view.height) }
+                    if (drawable == null) {
+                        setImageDrawable(appIcon)
+                    }
+                } catch (_: Exception) {
+                    setImageDrawable(appIcon)
+                }
+            } else {
+                setImageDrawable(appIcon)
+            }
+            if (pad > 0) setPadding(pad, pad, pad, pad)
+        }
+        if (shape != "Circle") return image
+        return CardView(this).apply {
+            radius = sizePx / 2f
+            cardElevation = 0f
+            setCardBackgroundColor(Color.TRANSPARENT)
+            preventCornerOverlap = false
+            useCompatPadding = false
+            clipChildren = true
+            clipToOutline = true
+            layoutParams = ViewGroup.LayoutParams(sizePx, sizePx)
+            outlineProvider = object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    val w = view.width
+                    val h = view.height
+                    val r = (minOf(w, h) / 2f).coerceAtLeast(1f)
+                    outline.setRoundRect(0, 0, w, h, r)
                 }
             }
+            addView(image)
         }
     }
 
@@ -1238,9 +1362,19 @@ class OverlayService : LifecycleService() {
 
     private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density + 0.5f).toInt()
 
+    /**
+     * Overlay position fractions are stored as (pixel offset) / (max travel), matching
+     * [makePreviewDragListener] / [makeCameraPreviewDragListener] on release — not as a fraction of full screen.
+     * That way 0 / 1 land flush with start/end for the current view size on any aspect ratio or density.
+     */
+    private fun fractionToOverlayOffset(fraction: Float, screenSpanPx: Int, viewSpanPx: Int): Int {
+        val maxTravel = (screenSpanPx - viewSpanPx).coerceAtLeast(0)
+        return (maxTravel * fraction.coerceIn(0f, 1f)).toInt().coerceIn(0, maxTravel)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private fun makePreviewDragListener(
-        params: WindowManager.LayoutParams, view: ImageView, screenW: Int, screenH: Int, sizePx: Int
+        params: WindowManager.LayoutParams, view: View, screenW: Int, screenH: Int, sizePx: Int
     ) = View.OnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> { view.tag = floatArrayOf(params.x.toFloat(), params.y.toFloat(), event.rawX, event.rawY); true }
@@ -1266,10 +1400,14 @@ class OverlayService : LifecycleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val mgr = getSystemService(NotificationManager::class.java)
             mgr.createNotificationChannel(
-                NotificationChannel(OVERLAY_CHANNEL_ID, "Overlay Controls", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Shown while floating overlay controls are active"
+                NotificationChannel(
+                    OVERLAY_CHANNEL_ID,
+                    getString(R.string.notif_channel_overlay),
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = getString(R.string.notif_channel_overlay_desc)
                     setShowBadge(false)
-                }
+                },
             )
         }
     }
@@ -1307,14 +1445,14 @@ class OverlayService : LifecycleService() {
             PendingIntent.FLAG_IMMUTABLE
         )
         val notification = NotificationCompat.Builder(this, OVERLAY_CHANNEL_ID)
-            .setContentTitle("CatRec Overlay Active")
-            .setContentText("Floating controls are enabled")
+            .setContentTitle(getString(R.string.notif_overlay_active_title))
+            .setContentText(getString(R.string.notif_overlay_controls_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(openAppIntent)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .addAction(android.R.drawable.ic_media_play, "Start Recording", startIntent)
-            .addAction(android.R.drawable.ic_delete, "Close Overlay", closeIntent)
+            .addAction(android.R.drawable.ic_media_play, getString(R.string.notif_overlay_start_recording), startIntent)
+            .addAction(android.R.drawable.ic_delete, getString(R.string.notif_overlay_close_overlay), closeIntent)
             .build()
         val mgr = getSystemService(NotificationManager::class.java)
         mgr.notify(OVERLAY_NOTIFICATION_ID, notification)
@@ -1331,9 +1469,14 @@ class OverlayService : LifecycleService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val mgr = getSystemService(NotificationManager::class.java)
             mgr.createNotificationChannel(
-                NotificationChannel(CAMERA_CHANNEL_ID, "Camera Overlay", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Shows while the camera overlay is active"; setShowBadge(false)
-                }
+                NotificationChannel(
+                    CAMERA_CHANNEL_ID,
+                    getString(R.string.notif_channel_camera_overlay),
+                    NotificationManager.IMPORTANCE_LOW,
+                ).apply {
+                    description = getString(R.string.notif_channel_camera_overlay_desc)
+                    setShowBadge(false)
+                },
             )
         }
     }
@@ -1341,8 +1484,8 @@ class OverlayService : LifecycleService() {
     private fun buildCameraNotification(): Notification {
         val tapIntent = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         return NotificationCompat.Builder(this, CAMERA_CHANNEL_ID)
-            .setContentTitle("Camera in use")
-            .setContentText("CatRec camera overlay is active — tap to return to app")
+            .setContentTitle(getString(R.string.notif_camera_in_use_title))
+            .setContentText(getString(R.string.notif_camera_overlay_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapIntent)
             .setOngoing(true)

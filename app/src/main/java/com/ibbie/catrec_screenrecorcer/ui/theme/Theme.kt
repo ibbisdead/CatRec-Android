@@ -1,14 +1,17 @@
 package com.ibbie.catrec_screenrecorcer.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -56,6 +59,34 @@ private val LightColorScheme = lightColorScheme(
     onSurfaceVariant = md_theme_light_onSurfaceVariant,
     outline = md_theme_light_outline
 )
+
+/** True when using the light (non–AMOLED) appearance. */
+fun ColorScheme.isLightTheme(): Boolean = background.luminance() > 0.5f
+
+/**
+ * Main tab screens: dark cyber gradient or soft light wash matching [MaterialTheme.colorScheme].
+ */
+@Composable
+fun rememberScreenBackgroundBrush(): Brush {
+    val scheme = MaterialTheme.colorScheme
+    val light = scheme.isLightTheme()
+    return remember(scheme.background, scheme.primary, light) {
+        if (light) {
+            Brush.radialGradient(
+                colors = listOf(
+                    scheme.primary.copy(alpha = 0.08f),
+                    scheme.background
+                ),
+                radius = 900f
+            )
+        } else {
+            Brush.radialGradient(
+                colors = listOf(Color(0xFF1A0008), CyberBlack),
+                radius = 900f
+            )
+        }
+    }
+}
 
 @Composable
 fun CatRecScreenRecorderTheme(

@@ -4,8 +4,14 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
+import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -32,6 +38,8 @@ class SettingsRepository(private val context: Context) {
         val FLOATING_CONTROLS = booleanPreferencesKey("floating_controls")
         val TOUCH_OVERLAY = booleanPreferencesKey("touch_overlay")
         val COUNTDOWN = intPreferencesKey("countdown")
+        /** Rolling Clipper buffer length in minutes (1–5). */
+        val CLIPPER_DURATION_MINUTES = intPreferencesKey("clipper_duration_minutes")
         val STOP_BEHAVIOR = stringSetPreferencesKey("stop_behavior_set")
 
         // Overlay — Camera
@@ -78,6 +86,18 @@ class SettingsRepository(private val context: Context) {
 
         // Privacy
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
+        /** AdMob: personalized ads (default on); independent of Firebase Analytics. */
+        val PERSONALIZED_ADS_ENABLED = booleanPreferencesKey("personalized_ads_enabled")
+        /** One-time: user completed the first-launch analytics consent dialog. */
+        val ANALYTICS_CONSENT_PROMPT_COMPLETED = booleanPreferencesKey("analytics_consent_prompt_completed")
+        /** Stable anonymous install ID for Firebase Crashlytics / Analytics (no PII). */
+        val FIREBASE_ANONYMOUS_USER_ID = stringPreferencesKey("firebase_anonymous_user_id")
+
+        /**
+         * When true, all ad-gated premium features are treated as unlocked (see [com.ibbie.catrec_screenrecorcer.data.AdGate]).
+         * Synced from Play Billing for [com.ibbie.catrec_screenrecorcer.billing.BillingProductIds.REMOVE_ADS] and persisted for fast UI/offline.
+         */
+        val ADS_DISABLED = booleanPreferencesKey("ads_disabled_entitlement")
 
         // Onboarding
         val BETA_NOTICE_SHOWN = booleanPreferencesKey("beta_notice_shown")
@@ -108,7 +128,12 @@ class SettingsRepository(private val context: Context) {
     val floatingControls: Flow<Boolean> = context.dataStore.data.map { it[FLOATING_CONTROLS] ?: false }
     val touchOverlay: Flow<Boolean> = context.dataStore.data.map { it[TOUCH_OVERLAY] ?: false }
     val countdown: Flow<Int> = context.dataStore.data.map { it[COUNTDOWN] ?: 0 }
-    val stopBehavior: Flow<Set<String>> = context.dataStore.data.map { it[STOP_BEHAVIOR] ?: setOf("Notification") }
+    val clipperDurationMinutes: Flow<Int> = context.dataStore.data.map { prefs ->
+        (prefs[CLIPPER_DURATION_MINUTES] ?: 1).coerceIn(1, 5)
+    }
+    val stopBehavior: Flow<Set<String>> = context.dataStore.data.map { prefs ->
+        StopBehaviorKeys.migrateSet(prefs[STOP_BEHAVIOR])
+    }
 
     // Camera Overlay
     val cameraOverlay: Flow<Boolean> = context.dataStore.data.map { it[CAMERA_OVERLAY] ?: false }
@@ -152,8 +177,14 @@ class SettingsRepository(private val context: Context) {
     // UI Mode
     val performanceMode: Flow<Boolean> = context.dataStore.data.map { it[PERFORMANCE_MODE] ?: false }
 
-    // Privacy
-    val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: true }
+    // Privacy — analytics default off; personalized ads default on (independent toggles)
+    val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: false }
+    val personalizedAdsEnabled: Flow<Boolean> = context.dataStore.data.map { it[PERSONALIZED_ADS_ENABLED] ?: true }
+    val analyticsConsentPromptCompleted: Flow<Boolean> =
+        context.dataStore.data.map { it[ANALYTICS_CONSENT_PROMPT_COMPLETED] ?: false }
+
+    /** True after remove-ads purchase (or while a pending remove-ads flow completes — Play is source of truth on next sync). */
+    val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
 
     // Onboarding
     val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: false }
@@ -183,6 +214,9 @@ class SettingsRepository(private val context: Context) {
     suspend fun setFloatingControls(value: Boolean) { context.dataStore.edit { it[FLOATING_CONTROLS] = value } }
     suspend fun setTouchOverlay(value: Boolean) { context.dataStore.edit { it[TOUCH_OVERLAY] = value } }
     suspend fun setCountdown(value: Int) { context.dataStore.edit { it[COUNTDOWN] = value } }
+    suspend fun setClipperDurationMinutes(value: Int) {
+        context.dataStore.edit { it[CLIPPER_DURATION_MINUTES] = value.coerceIn(1, 5) }
+    }
     suspend fun setStopBehavior(value: Set<String>) { context.dataStore.edit { it[STOP_BEHAVIOR] = value } }
 
     // Setters — Camera Overlay
@@ -233,6 +267,41 @@ class SettingsRepository(private val context: Context) {
 
     // Setters — Privacy
     suspend fun setAnalyticsEnabled(value: Boolean) { context.dataStore.edit { it[ANALYTICS_ENABLED] = value } }
+
+    suspend fun setPersonalizedAdsEnabled(value: Boolean) {
+        context.dataStore.edit { it[PERSONALIZED_ADS_ENABLED] = value }
+    }
+
+    suspend fun setAnalyticsConsentPromptCompleted(value: Boolean) {
+        context.dataStore.edit { it[ANALYTICS_CONSENT_PROMPT_COMPLETED] = value }
+    }
+
+    /**
+     * Stable anonymous ID per install (UUID) for Firebase Crashlytics / Analytics user identifiers.
+     * Not PII; unchanged until app data is cleared.
+     */
+    suspend fun getOrCreateFirebaseAnonymousUserId(): String {
+        val prefs = context.dataStore.data.first()
+        val existing = prefs[FIREBASE_ANONYMOUS_USER_ID]
+        if (existing != null) return existing
+        val newId = UUID.randomUUID().toString()
+        context.dataStore.edit { it[FIREBASE_ANONYMOUS_USER_ID] = newId }
+        return newId
+    }
+
+    /** First launch / regulated flow: set analytics and mark the one-time prompt completed. */
+    suspend fun applyRegulatedConsentChoice(accepted: Boolean) {
+        context.dataStore.edit {
+            it[ANALYTICS_ENABLED] = accepted
+            it[ANALYTICS_CONSENT_PROMPT_COMPLETED] = true
+        }
+        context.applyAnalyticsCollectionEnabled(accepted)
+        context.applyCrashlyticsCollectionEnabled(accepted)
+        context.applyPersonalizedAdsEnabled(personalizedAdsEnabled.first())
+        context.syncFirebaseUserIdentity(accepted)
+    }
+
+    suspend fun setAdsDisabled(value: Boolean) { context.dataStore.edit { it[ADS_DISABLED] = value } }
 
     // Setters — Onboarding
     suspend fun setBetaNoticeShown(value: Boolean) { context.dataStore.edit { it[BETA_NOTICE_SHOWN] = value } }

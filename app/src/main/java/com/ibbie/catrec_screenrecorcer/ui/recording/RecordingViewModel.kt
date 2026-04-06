@@ -6,11 +6,18 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
+import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
+import com.ibbie.catrec_screenrecorcer.utils.refreshCrashlyticsSessionKeys
+import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,7 +48,14 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     val floatingControls: StateFlow<Boolean> = repository.floatingControls.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val touchOverlay: StateFlow<Boolean> = repository.touchOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val countdown: StateFlow<Int> = repository.countdown.stateIn(viewModelScope, SharingStarted.Lazily, 0)
-    val stopBehavior: StateFlow<Set<String>> = repository.stopBehavior.stateIn(viewModelScope, SharingStarted.Lazily, setOf("Notification"))
+    /** Rolling Clipper buffer length (1–5 minutes). */
+    val clipperDurationMinutes: StateFlow<Int> =
+        repository.clipperDurationMinutes.stateIn(viewModelScope, SharingStarted.Lazily, 1)
+    val stopBehavior: StateFlow<Set<String>> = repository.stopBehavior.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily,
+        setOf(StopBehaviorKeys.NOTIFICATION),
+    )
 
     // Camera Overlay
     val cameraOverlay: StateFlow<Boolean> = repository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -70,7 +84,7 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
 
     // Theme & Language
     val appTheme: StateFlow<String> = repository.appTheme.stateIn(viewModelScope, SharingStarted.Lazily, "System")
-    val appLanguage: StateFlow<String> = repository.appLanguage.stateIn(viewModelScope, SharingStarted.Lazily, "System")
+    val appLanguage: StateFlow<String> = repository.appLanguage.stateIn(viewModelScope, SharingStarted.Lazily, "system")
 
     // Storage
     val filenamePattern: StateFlow<String> = repository.filenamePattern.stateIn(viewModelScope, SharingStarted.Lazily, "yyyyMMdd_HHmmss")
@@ -85,11 +99,21 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     // UI Mode
     val performanceMode: StateFlow<Boolean> = repository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    // Privacy
-    val analyticsEnabled: StateFlow<Boolean> = repository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
+    /** Remove-ads entitlement: disables all rewarded-ad gating when true ([com.ibbie.catrec_screenrecorcer.data.AdGate]). */
+    val adsDisabled: StateFlow<Boolean> =
+        repository.adsDisabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    // Onboarding
-    val betaNoticeShown: StateFlow<Boolean> = repository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    // Privacy
+    val analyticsEnabled: StateFlow<Boolean> = repository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val personalizedAdsEnabled: StateFlow<Boolean> =
+        repository.personalizedAdsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
+
+    // Onboarding (StateFlow defaults false before DataStore loads; use [betaNoticePersistedValue] for gating.)
+    val betaNoticeShown: StateFlow<Boolean> =
+        repository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Reads the persisted flag so the beta dialog is not shown on every cold start (avoids stateIn initial false). */
+    suspend fun betaNoticePersistedValue(): Boolean = repository.betaNoticeShown.first()
 
     // Accent Color
     val accentColor:       StateFlow<String>  = repository.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, "FF0033")
@@ -123,14 +147,19 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     fun setFloatingControls(value: Boolean) = viewModelScope.launch { repository.setFloatingControls(value) }
     fun setTouchOverlay(value: Boolean) = viewModelScope.launch { repository.setTouchOverlay(value) }
     fun setCountdown(value: Int) = viewModelScope.launch { repository.setCountdown(value) }
+    fun setClipperDurationMinutes(value: Int) = viewModelScope.launch { repository.setClipperDurationMinutes(value) }
     fun setStopBehavior(newSelection: String) = viewModelScope.launch {
         val current = stopBehavior.value.toMutableSet()
         if (current.contains(newSelection)) {
             current.remove(newSelection)
         } else {
             current.add(newSelection)
-            if (newSelection == "Screen Off" && current.contains("Pause on Screen Off")) current.remove("Pause on Screen Off")
-            if (newSelection == "Pause on Screen Off" && current.contains("Screen Off")) current.remove("Screen Off")
+            if (newSelection == StopBehaviorKeys.SCREEN_OFF && current.contains(StopBehaviorKeys.PAUSE_ON_SCREEN_OFF)) {
+                current.remove(StopBehaviorKeys.PAUSE_ON_SCREEN_OFF)
+            }
+            if (newSelection == StopBehaviorKeys.PAUSE_ON_SCREEN_OFF && current.contains(StopBehaviorKeys.SCREEN_OFF)) {
+                current.remove(StopBehaviorKeys.SCREEN_OFF)
+            }
         }
         repository.setStopBehavior(current)
     }
@@ -178,7 +207,22 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     fun setPerformanceMode(value: Boolean) = viewModelScope.launch { repository.setPerformanceMode(value) }
 
     // Setters — Privacy
-    fun setAnalyticsEnabled(value: Boolean) = viewModelScope.launch { repository.setAnalyticsEnabled(value) }
+    fun setAnalyticsEnabled(value: Boolean) = viewModelScope.launch {
+        repository.setAnalyticsEnabled(value)
+        val app = getApplication<Application>()
+        app.applyAnalyticsCollectionEnabled(value)
+        app.applyCrashlyticsCollectionEnabled(value)
+        app.syncFirebaseUserIdentity(value)
+        app.refreshCrashlyticsSessionKeys(
+            repository.appLanguage.first(),
+            repository.floatingControls.first(),
+        )
+    }
+
+    fun setPersonalizedAdsEnabled(value: Boolean) = viewModelScope.launch {
+        repository.setPersonalizedAdsEnabled(value)
+        getApplication<Application>().applyPersonalizedAdsEnabled(value)
+    }
 
     // Setters — Onboarding
     fun setBetaNoticeShown(value: Boolean) = viewModelScope.launch { repository.setBetaNoticeShown(value) }
@@ -260,6 +304,7 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
             putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, audioEncoder.value)
             putExtra(ScreenRecordService.EXTRA_RESOLUTION, resolution.value)
             putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, videoEncoder.value)
+            putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, clipperDurationMinutes.value)
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             context.startForegroundService(intent)

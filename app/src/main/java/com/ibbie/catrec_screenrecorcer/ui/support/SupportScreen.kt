@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,26 +34,33 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.ibbie.catrec_screenrecorcer.BuildConfig
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
+import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 
 private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md"
 private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
 private const val PERMISSIONS_DISCLOSURE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md"
 
 @Composable
-fun SupportScreen() {
+fun SupportScreen(viewModel: RecordingViewModel) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val activity = context as? Activity
+    val adsDisabled by viewModel.adsDisabled.collectAsState()
+    val billing = remember(context) {
+        (context.applicationContext as CatRecApplication).billingManager
+    }
 
     var showChangelogDialog by rememberSaveable { mutableStateOf(false) }
-    var showComingSoonDialog by rememberSaveable { mutableStateOf(false) }
 
     var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
     var isAdLoading by remember { mutableStateOf(false) }
 
     fun loadRewardedAd() {
-        if (isAdLoading) return
+        if (adsDisabled || isAdLoading) return
         isAdLoading = true
         RewardedAd.load(
             context,
@@ -70,10 +79,30 @@ fun SupportScreen() {
         )
     }
 
-    LaunchedEffect(Unit) { loadRewardedAd() }
+    LaunchedEffect(adsDisabled) {
+        if (adsDisabled) {
+            rewardedAd = null
+            isAdLoading = false
+        } else {
+            loadRewardedAd()
+        }
+    }
 
-    DisposableEffect(Unit) {
-        onDispose { rewardedAd = null }
+    DisposableEffect(adsDisabled) {
+        onDispose {
+            rewardedAd = null
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        billing.uiEvents.collect { ev ->
+            when (ev) {
+                BillingUiEvent.SupportMeConsumed ->
+                    Toast.makeText(context, context.getString(R.string.billing_thanks_support_me), Toast.LENGTH_SHORT).show()
+                BillingUiEvent.RemoveAdsPending ->
+                    Toast.makeText(context, context.getString(R.string.billing_pending), Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     Scaffold { paddingValues ->
@@ -98,14 +127,14 @@ fun SupportScreen() {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                "CatRec Screen Recorder",
+                stringResource(R.string.support_app_headline),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Version 0.9.1 Beta",
+                    stringResource(R.string.support_version_label, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -116,7 +145,7 @@ fun SupportScreen() {
             Spacer(Modifier.height(32.dp))
 
             Text(
-                "Support the Developer",
+                stringResource(R.string.support_section_support_dev),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -125,13 +154,13 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.OndemandVideo,
-                title = "Subscribe to YouTube",
-                subtitle = "Follow @ibbie for updates",
+                title = stringResource(R.string.support_subscribe_youtube),
+                subtitle = stringResource(R.string.support_subscribe_youtube_desc),
                 onClick = {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://youtube.com/@ibbie")))
                     } catch (_: Exception) {
-                        Toast.makeText(context, "Could not open YouTube", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.support_toast_youtube), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -140,42 +169,68 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.RemoveCircleOutline,
-                title = "Remove Ads — Coming Soon",
-                subtitle = "One-time purchase — available when CatRec launches on the Play Store",
-                highlight = false,
-                onClick = { showComingSoonDialog = true }
+                title = if (adsDisabled) stringResource(R.string.support_ads_removed) else stringResource(R.string.support_remove_ads),
+                subtitle = if (adsDisabled) stringResource(R.string.support_ads_removed_desc)
+                else stringResource(R.string.support_remove_ads_desc),
+                highlight = !adsDisabled,
+                onClick = {
+                    if (adsDisabled) return@SupportActionCard
+                    if (activity == null) return@SupportActionCard
+                    if (!billing.launchRemoveAdsPurchase(activity)) {
+                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        billing.refreshPurchasesIfConnected()
+                    }
+                }
             )
 
             Spacer(Modifier.height(12.dp))
 
+            if (!adsDisabled) {
+                SupportActionCard(
+                    icon = Icons.Default.PlayCircle,
+                    title = stringResource(R.string.support_watch_ad),
+                    subtitle = if (isAdLoading) stringResource(R.string.support_watch_ad_sub_loading)
+                    else stringResource(R.string.support_watch_ad_sub),
+                    onClick = {
+                        val ad = rewardedAd
+                        when {
+                            ad != null && activity != null -> {
+                                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                                    override fun onAdDismissedFullScreenContent() {
+                                        rewardedAd = null
+                                        loadRewardedAd()
+                                    }
+                                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                        rewardedAd = null
+                                        loadRewardedAd()
+                                        Toast.makeText(context, context.getString(R.string.support_toast_ad_failed), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                ad.show(activity) {
+                                    Toast.makeText(context, context.getString(R.string.support_toast_thanks_ad), Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            isAdLoading -> Toast.makeText(context, context.getString(R.string.support_toast_ad_loading), Toast.LENGTH_SHORT).show()
+                            else -> {
+                                Toast.makeText(context, context.getString(R.string.support_toast_no_ad), Toast.LENGTH_SHORT).show()
+                                loadRewardedAd()
+                            }
+                        }
+                    }
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+
             SupportActionCard(
-                icon = Icons.Default.PlayCircle,
-                title = "Watch an Ad",
-                subtitle = if (isAdLoading) "Loading ad…" else "Quick way to support for free",
+                icon = Icons.Default.MonetizationOn,
+                title = stringResource(R.string.support_donate),
+                subtitle = stringResource(R.string.support_donate_desc),
+                highlight = true,
                 onClick = {
-                    val ad = rewardedAd
-                    when {
-                        ad != null && activity != null -> {
-                            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                                override fun onAdDismissedFullScreenContent() {
-                                    rewardedAd = null
-                                    loadRewardedAd()
-                                }
-                                override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                                    rewardedAd = null
-                                    loadRewardedAd()
-                                    Toast.makeText(context, "Couldn't show ad. Try again later.", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                            ad.show(activity) {
-                                Toast.makeText(context, "Thank you for watching! 🐱", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        isAdLoading -> Toast.makeText(context, "Ad is loading, please wait…", Toast.LENGTH_SHORT).show()
-                        else -> {
-                            Toast.makeText(context, "No ad available right now. Try again later.", Toast.LENGTH_SHORT).show()
-                            loadRewardedAd()
-                        }
+                    if (activity == null) return@SupportActionCard
+                    if (!billing.launchSupportMePurchase(activity)) {
+                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        billing.refreshPurchasesIfConnected()
                     }
                 }
             )
@@ -183,23 +238,13 @@ fun SupportScreen() {
             Spacer(Modifier.height(12.dp))
 
             SupportActionCard(
-                icon = Icons.Default.MonetizationOn,
-                title = "Buy me a coffee — Coming Soon",
-                subtitle = "Repeatable donations available when CatRec launches on the Play Store",
-                highlight = false,
-                onClick = { showComingSoonDialog = true }
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            SupportActionCard(
                 icon = Icons.Default.Share,
-                title = "Share CatRec",
-                subtitle = "Tell your friends about us",
+                title = stringResource(R.string.support_share),
+                subtitle = stringResource(R.string.support_share_desc),
                 onClick = {
                     val shareIntent = Intent().apply {
                         action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, "Check out CatRec - the coolest screen recorder!")
+                        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.toast_share_app))
                         type = "text/plain"
                     }
                     context.startActivity(Intent.createChooser(shareIntent, null))
@@ -210,15 +255,15 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.History,
-                title = "Changelog",
-                subtitle = "See what's new in this version",
+                title = stringResource(R.string.support_changelog),
+                subtitle = stringResource(R.string.support_changelog_desc),
                 onClick = { showChangelogDialog = true }
             )
 
             Spacer(Modifier.height(32.dp))
 
             Text(
-                "Legal",
+                stringResource(R.string.support_section_legal),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -227,13 +272,13 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.PrivacyTip,
-                title = "Privacy Policy",
-                subtitle = "How CatRec handles your data",
+                title = stringResource(R.string.support_privacy_policy),
+                subtitle = stringResource(R.string.support_privacy_policy_desc),
                 onClick = {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
                     } catch (_: Exception) {
-                        Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -242,13 +287,13 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.Gavel,
-                title = "Terms of Service",
-                subtitle = "Usage rules and disclaimers",
+                title = stringResource(R.string.support_terms_of_service),
+                subtitle = stringResource(R.string.support_terms_of_service_desc),
                 onClick = {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TERMS_OF_SERVICE_URL)))
                     } catch (_: Exception) {
-                        Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -257,13 +302,13 @@ fun SupportScreen() {
 
             SupportActionCard(
                 icon = Icons.Default.Security,
-                title = "Permissions Disclosure",
-                subtitle = "Why each permission is needed",
+                title = stringResource(R.string.support_permissions_disclosure),
+                subtitle = stringResource(R.string.support_permissions_disclosure_desc),
                 onClick = {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PERMISSIONS_DISCLOSURE_URL)))
                     } catch (_: Exception) {
-                        Toast.makeText(context, "Could not open browser", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -272,70 +317,50 @@ fun SupportScreen() {
         }
     }
 
-    if (showComingSoonDialog) {
-        AlertDialog(
-            onDismissRequest = { showComingSoonDialog = false },
-            icon = { Icon(Icons.Default.MonetizationOn, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp)) },
-            title = { Text("Coming Soon") },
-            text = { Text("In-app purchases will be available once CatRec launches on the Google Play Store. Thank you for your patience and support!") },
-            confirmButton = { TextButton(onClick = { showComingSoonDialog = false }) { Text("Got it") } }
-        )
-    }
-
     if (showChangelogDialog) {
+        val changelog097Items = stringArrayResource(R.array.changelog_v097_items).toList()
+        val changelog096Items = stringArrayResource(R.array.changelog_v096_items).toList()
+        val changelog095Items = stringArrayResource(R.array.changelog_v095_items).toList()
+        val changelog090Items = stringArrayResource(R.array.changelog_v090_items).toList()
         AlertDialog(
             onDismissRequest = { showChangelogDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
             icon = { Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
-            title = { Text("Changelog", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.dialog_changelog_title), fontWeight = FontWeight.Bold) },
             text = {
+                // Newest release at top.
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = "v0.9.0",
-                        label = "Beta",
-                        changes = listOf(
-                            // Recording
-                            "Screen recording with H.264 and H.265 (HEVC) codec support",
-                            "60-second rolling Clipper mode with seamless segment stitching",
-                            "Save Clip button appears instantly while Clipper is running",
-                            "Wide resolution selection for all aspect ratios, plus custom input",
-                            "Auto orientation tracking during recording",
-                            "Countdown timer before recording starts",
-                            "Keep-screen-on option during recording",
-                            // Audio
-                            "Audio recording: microphone, internal audio, or mixed",
-                            "Separate microphone track recording",
-                            "Advanced audio settings: bitrate, sample rate, channels, encoder",
-                            "Fixed stereo audio recording for stereo channel mode",
-                            "Fixed audio bitrate accuracy with CBR encoding",
-                            // Overlay
-                            "Floating controls overlay: pause, stop, mute, screenshot",
-                            "Overlay available at all times, not just during recording",
-                            "Start recording or clipping directly from the overlay button",
-                            "One-tap authorize overlay recording — no repeated permission prompts",
-                            "Overlay X dismiss appears immediately on drag",
-                            "Camera overlay with live face-cam preview",
-                            "Watermark overlay with custom images, shape, opacity, and position",
-                            // Screenshots
-                            "Screenshots tab with format and quality settings",
-                            "Screenshots captured from the overlay camera button",
-                            // Customization & UI
-                            "Accent color customization: presets, gradients, and hex input",
-                            "Dynamic theme — all UI elements follow the chosen accent color",
-                            "Performance mode toggle disables blur for lower-end devices",
-                            "Full settings reorganization (Controls, Video, Audio, Overlay…)",
-                            "Language support for 16 languages",
-                            "Fixed language preference persisting after app restart",
-                            // Library & Notifications
-                            "Recordings library with thumbnail previews",
-                            "In-app video trimmer",
-                            "Post-recording notification with thumbnail and quick actions",
-                            // Quick Settings
-                            "Quick Settings tiles: CatRec Record and CatRec Clipper"
-                        )
+                        version = stringResource(R.string.changelog_version_template, BuildConfig.VERSION_NAME),
+                        label = stringResource(R.string.label_beta),
+                        changes = changelog097Items,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_v096),
+                        label = stringResource(R.string.label_beta),
+                        changes = changelog096Items,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_v095),
+                        label = stringResource(R.string.label_beta),
+                        changes = changelog095Items,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_v090),
+                        label = stringResource(R.string.label_beta),
+                        changes = changelog090Items,
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = { showChangelogDialog = false }) { Text("Close") } }
+            confirmButton = {
+                TextButton(onClick = { showChangelogDialog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
+            },
         )
     }
 }
@@ -353,7 +378,7 @@ private fun ChangelogEntry(version: String, label: String, changes: List<String>
         Spacer(Modifier.height(8.dp))
         changes.forEach { change ->
             Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                Text("•", modifier = Modifier.padding(end = 8.dp, top = 1.dp), color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.list_bullet), modifier = Modifier.padding(end = 8.dp, top = 1.dp), color = MaterialTheme.colorScheme.primary)
                 Text(change, style = MaterialTheme.typography.bodySmall)
             }
         }

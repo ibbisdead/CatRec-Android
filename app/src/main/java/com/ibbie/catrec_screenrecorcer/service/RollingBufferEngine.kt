@@ -3,8 +3,7 @@ package com.ibbie.catrec_screenrecorcer.service
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.hardware.display.DisplayManager
-import android.hardware.display.VirtualDisplay
+import android.graphics.Bitmap
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioPlaybackCaptureConfiguration
@@ -20,6 +19,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Surface
 import androidx.core.content.ContextCompat
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.utils.AppLogger
 import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong
  *   a rotation so there is no codec-startup gap between segments.
  * • Every SEGMENT_DURATION_MS an I-frame is requested.  The drain loop rotates the
  *   MediaMuxer to a fresh file on the very next key-frame so the seam is seamless.
- * • The segment deque keeps at most MAX_SEGMENTS files.  Older files are deleted.
+ * • The segment deque keeps at most [maxSegmentsLimit] files.  Older files are deleted.
  * • saveClip() snapshots the current deque + the active partial segment and merges them.
  */
 class RollingBufferEngine(
@@ -53,21 +55,35 @@ class RollingBufferEngine(
     private val audioBitrate: Int = 128_000,
     private val audioSampleRate: Int = 48_000,
     private val audioChannelCount: Int = 1,
-    private val audioEncoderType: String = "AAC-LC"
+    private val audioEncoderType: String = "AAC-LC",
+    /** Completed segments kept (each [SEGMENT_DURATION_MS]); oldest evicted when over limit. */
+    maxSegmentsLimit: Int = maxSegmentsForClipperMinutes(1),
+    /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
+    private val onInternalAudioSilence: (() -> Unit)? = null,
 ) {
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
+
+    private val maxSegments = maxSegmentsLimit.coerceIn(MIN_MAX_SEGMENTS, ABSOLUTE_MAX_SEGMENTS)
 
     companion object {
         private const val TAG = "RollingBufferEngine"
         const val SEGMENT_DURATION_MS = 10_000L
-        const val MAX_SEGMENTS = 6          // 6 × 10 s = 60 s rolling window
+        private const val SILENCE_TIMEOUT_MS = 5_000L
+        /** Default rolling window (1 min at 10 s/segment). */
+        const val MAX_SEGMENTS_DEFAULT = 6
+        private const val MIN_MAX_SEGMENTS = 6   // 1 min
+        private const val ABSOLUTE_MAX_SEGMENTS = 30 // 5 min × 6 segments
+
+        /** @param minutes Clipper buffer length preset (1–5). */
+        fun maxSegmentsForClipperMinutes(minutes: Int): Int =
+            minutes.coerceIn(1, 5) * (60_000 / SEGMENT_DURATION_MS.toInt())
     }
 
     // ── Encoder objects ────────────────────────────────────────────────────────
     private var videoEncoder: MediaCodec? = null
     private var audioEncoder: MediaCodec? = null
     private var inputSurface: Surface? = null
-    private var virtualDisplay: VirtualDisplay? = null
+    private var frameRelay: EncoderFrameRelay? = null
     private var mAudioMode = audioMode
 
     // ── Muxer state (guarded by muxerLock) ────────────────────────────────────
@@ -115,11 +131,12 @@ class RollingBufferEngine(
         videoEncoder?.start()
         if (mAudioMode != AudioMode.NONE) audioEncoder?.start()
 
-        virtualDisplay = mediaProjection.createVirtualDisplay(
-            "CatRecBuffer", width, height, dpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            inputSurface, null, null
-        )
+        frameRelay = EncoderFrameRelay(
+            mediaProjection,
+            inputSurface!!,
+            width, height, dpi,
+            "CatRecBuffer",
+        ).also { it.start() }
 
         isRunning.set(true)
 
@@ -147,6 +164,9 @@ class RollingBufferEngine(
         rotationScheduler?.shutdown()
         rotationScheduler = null
 
+        try { frameRelay?.stop() } catch (_: Exception) {}
+        frameRelay = null
+
         try { micRecord?.stop() } catch (_: Exception) {}
         try { internalRecord?.stop() } catch (_: Exception) {}
         audioThread?.join(2000)
@@ -156,9 +176,6 @@ class RollingBufferEngine(
 
         videoThread?.join(2000)
         audioDrainThread?.join(2000)
-
-        virtualDisplay?.release()
-        virtualDisplay = null
 
         synchronized(muxerLock) {
             finalizeMuxer()
@@ -192,6 +209,16 @@ class RollingBufferEngine(
         return ClipMerger.merge(files, outputFile)
     }
 
+    /** Next frame after the request is delivered on the relay thread. */
+    fun requestScreenshot(onBitmap: (Bitmap?) -> Unit) {
+        val relay = frameRelay
+        if (!isRunning.get() || relay == null) {
+            onBitmap(null)
+            return
+        }
+        relay.requestScreenshot(onBitmap)
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     //  Internal — segment management
     // ══════════════════════════════════════════════════════════════════════════
@@ -214,7 +241,7 @@ class RollingBufferEngine(
             // Push completed file to the deque; evict oldest if over limit
             currentSegFile?.takeIf { it.exists() && it.length() > 0 }?.let { done ->
                 segments.addLast(done)
-                while (segments.size > MAX_SEGMENTS) segments.removeFirst().delete()
+                while (segments.size > maxSegments) segments.removeFirst().delete()
             }
 
             // Open the next segment
@@ -347,11 +374,23 @@ class RollingBufferEngine(
         val main = ByteArray(bufSize)
         val mix  = ByteArray(bufSize)
 
+        Log.d(TAG, "captureAudioLoop started: mode=$mAudioMode bufSize=$bufSize " +
+                "internalRecord=${internalRecord != null} micRecord=${micRecord != null}")
+
+        var loopCount = 0L
+        var firstAnyNonZeroLogged = false
+        var firstInternalNonZeroLogged = false
+        var internalSilentStartMs = System.currentTimeMillis()
+        var silenceCallbackFired = false
+
         while (isRunning.get()) {
             var readCount = 0
+            var internalReadCount = 0
+
             when {
                 mAudioMode == AudioMode.MIXED && internalRecord != null && micRecord != null -> {
                     val r1 = internalRecord!!.read(main, 0, bufSize)
+                    internalReadCount = r1
                     val r2 = micRecord!!.read(mix, 0, bufSize)
                     when {
                         r1 > 0 && r2 > 0 -> { mixPcm(main, mix, minOf(r1, r2)); readCount = minOf(r1, r2) }
@@ -359,17 +398,69 @@ class RollingBufferEngine(
                         r2 > 0 -> { System.arraycopy(mix, 0, main, 0, r2); readCount = r2 }
                     }
                 }
-                internalRecord != null -> readCount = internalRecord!!.read(main, 0, bufSize)
-                micRecord != null      -> readCount = micRecord!!.read(main, 0, bufSize)
+                internalRecord != null -> {
+                    readCount = internalRecord!!.read(main, 0, bufSize)
+                    internalReadCount = readCount
+                }
+                micRecord != null -> readCount = micRecord!!.read(main, 0, bufSize)
             }
+
+            loopCount++
 
             if (readCount > 0) {
                 if (isMuted.get()) main.fill(0, 0, readCount)
                 feedAudioEncoder(main, readCount)
+
+                if (!firstAnyNonZeroLogged && main.asSequence().take(readCount).any { it != 0.toByte() }) {
+                    firstAnyNonZeroLogged = true
+                    Log.d(TAG, "First non-zero audio buffer at loop=$loopCount mode=$mAudioMode")
+                    logAnalyticsEvent("first_audio_buffer_received", mapOf(
+                        "loop"  to loopCount.toString(),
+                        "mode"  to mAudioMode.name,
+                        "brand" to Build.BRAND,
+                        "model" to Build.MODEL,
+                    ))
+                }
             } else if (readCount < 0) {
+                Log.e(TAG, "Audio read error code=$readCount at loop=$loopCount")
                 try { Thread.sleep(5) } catch (_: Exception) {}
             }
+
+            // Silence-timeout check for internal audio
+            if (internalRecord != null && !silenceCallbackFired && !isMuted.get()) {
+                val now = System.currentTimeMillis()
+                if (internalReadCount > 0 &&
+                    main.asSequence().take(internalReadCount).any { it != 0.toByte() }
+                ) {
+                    if (!firstInternalNonZeroLogged) {
+                        firstInternalNonZeroLogged = true
+                        Log.d(TAG, "First non-zero internal audio at loop=$loopCount")
+                    }
+                    internalSilentStartMs = now
+                } else if (now - internalSilentStartMs >= SILENCE_TIMEOUT_MS) {
+                    silenceCallbackFired = true
+                    val silentMs = now - internalSilentStartMs
+                    Log.w(TAG, "Internal audio silent for ${silentMs}ms — " +
+                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}")
+                    AppLogger.w(TAG, "Buffer internal audio silence timeout after ${silentMs}ms")
+                    logAnalyticsEvent("silent_timeout", mapOf(
+                        "silent_ms" to silentMs.toString(),
+                        "api"       to Build.VERSION.SDK_INT.toString(),
+                        "brand"     to Build.BRAND,
+                        "model"     to Build.MODEL,
+                        "mode"      to mAudioMode.name,
+                    ))
+                    onInternalAudioSilence?.invoke()
+                }
+            }
+
+            if (loopCount % 500L == 0L) {
+                Log.d(TAG, "captureAudioLoop: loop=$loopCount readCount=$readCount " +
+                        "internalRead=$internalReadCount silenceCallbackFired=$silenceCallbackFired")
+            }
         }
+
+        Log.d(TAG, "captureAudioLoop exited after $loopCount iterations")
     }
 
     private fun drainAudioLoop() {
@@ -458,6 +549,15 @@ class RollingBufferEngine(
         } catch (_: Exception) {}
     }
 
+    private fun logAnalyticsEvent(name: String, params: Map<String, String> = emptyMap()) {
+        try {
+            val bundle = android.os.Bundle()
+            params.forEach { (k, v) -> bundle.putString(k, v.take(100)) }
+            FirebaseAnalytics.getInstance(context).logEvent(name, bundle)
+            FirebaseCrashlytics.getInstance().log("analytics[$name] $params")
+        } catch (_: Exception) {}
+    }
+
     private fun mixPcm(base: ByteArray, overlay: ByteArray, size: Int) {
         for (i in 0 until size step 2) {
             val s1 = ((base[i].toInt() and 0xFF) or (base[i + 1].toInt() shl 8)).toShort()
@@ -512,20 +612,36 @@ class RollingBufferEngine(
         val minBuf     = AudioRecord.getMinBufferSize(audioSampleRate, chanMask, AudioFormat.ENCODING_PCM_16BIT)
             .coerceAtLeast(4096)
 
+        Log.d(TAG, "prepareAudioEncoder: mode=$mAudioMode sampleRate=$audioSampleRate " +
+                "channels=$audioChannelCount bufferSize=${minBuf * 2} " +
+                "API=${Build.VERSION.SDK_INT} brand=${Build.BRAND} model=${Build.MODEL}")
+
         try {
-            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED
-            ) throw SecurityException("RECORD_AUDIO permission denied")
+            val audioPermission = ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.RECORD_AUDIO
+            )
+            val permGranted = audioPermission == PackageManager.PERMISSION_GRANTED
+            Log.d(TAG, "RECORD_AUDIO permission: ${if (permGranted) "GRANTED" else "DENIED"}")
+            if (!permGranted) throw SecurityException("RECORD_AUDIO permission denied")
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
                 (mAudioMode == AudioMode.INTERNAL || mAudioMode == AudioMode.MIXED)
             ) {
                 try {
+                    Log.d(TAG, "Building AudioPlaybackCaptureConfiguration: " +
+                            "matchingUsages=[USAGE_MEDIA, USAGE_GAME, USAGE_UNKNOWN] " +
+                            "projection=$mediaProjection")
                     val capture = AudioPlaybackCaptureConfiguration.Builder(mediaProjection)
                         .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
                         .addMatchingUsage(AudioAttributes.USAGE_GAME)
                         .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
                         .build()
+                    Log.d(TAG, "AudioPlaybackCaptureConfiguration built OK")
+                    logAnalyticsEvent("capture_config_created", mapOf(
+                        "api"   to Build.VERSION.SDK_INT.toString(),
+                        "brand" to Build.BRAND,
+                        "model" to Build.MODEL,
+                    ))
                     val fmt = AudioFormat.Builder()
                         .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                         .setSampleRate(audioSampleRate)
@@ -536,11 +652,23 @@ class RollingBufferEngine(
                         .setBufferSizeInBytes(minBuf * 2)
                         .setAudioPlaybackCaptureConfig(capture)
                         .build()
-                    if (internalRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                        throw IllegalStateException("Internal AudioRecord not initialized")
+                    val state = internalRecord?.state
+                    Log.d(TAG, "Internal AudioRecord state=$state " +
+                            "(INITIALIZED=${AudioRecord.STATE_INITIALIZED}) " +
+                            "channelCount=${internalRecord?.channelCount} " +
+                            "sampleRate=${internalRecord?.sampleRate}")
+                    if (state != AudioRecord.STATE_INITIALIZED) {
+                        throw IllegalStateException("Internal AudioRecord not initialized (state=$state)")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Internal audio init failed: ${e.message}")
+                    Log.e(TAG, "Internal audio init failed: ${e.javaClass.simpleName}: ${e.message}", e)
+                    AppLogger.e(TAG, "Buffer internal audio init failed: ${e.message}")
+                    logAnalyticsEvent("capture_denied_or_unsupported", mapOf(
+                        "reason" to (e.message?.take(80) ?: "unknown"),
+                        "api"    to Build.VERSION.SDK_INT.toString(),
+                        "brand"  to Build.BRAND,
+                        "model"  to Build.MODEL,
+                    ))
                     internalRecord = null
                     if (mAudioMode == AudioMode.INTERNAL) mAudioMode = AudioMode.MIC
                 }
@@ -557,9 +685,12 @@ class RollingBufferEngine(
                 } catch (_: Exception) { null }
                 micRecord = if (wantStereo) tryMic(stereoMask) ?: tryMic(monoMask)
                             else             tryMic(monoMask)
+                Log.d(TAG, "Mic AudioRecord: ${if (micRecord != null) "OK (ch=${micRecord!!.channelCount})" else "FAILED"}")
             }
 
             if (internalRecord == null && micRecord == null) {
+                Log.e(TAG, "No audio sources available. Disabling audio.")
+                AppLogger.e(TAG, "Buffer: no audio sources available")
                 mAudioMode = AudioMode.NONE; return
             }
 

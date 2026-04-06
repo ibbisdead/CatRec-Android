@@ -3,7 +3,7 @@ package com.ibbie.catrec_screenrecorcer.navigation
 import androidx.annotation.StringRes
 import com.ibbie.catrec_screenrecorcer.R
 
-sealed class Screen(val route: String, @StringRes val titleRes: Int) {
+sealed class Screen(val route: String, @param:StringRes val titleRes: Int) {
     object Recording   : Screen("recording",                       R.string.tab_recording)
     object Screenshots : Screen("screenshots",                     R.string.tab_screenshots)
     object Recordings  : Screen("recordings",                      R.string.tab_recordings)
