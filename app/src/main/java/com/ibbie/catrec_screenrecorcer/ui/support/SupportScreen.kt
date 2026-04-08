@@ -238,6 +238,21 @@ fun SupportScreen(viewModel: RecordingViewModel) {
             Spacer(Modifier.height(12.dp))
 
             SupportActionCard(
+                icon = Icons.Filled.Restore,
+                title = stringResource(R.string.support_restore_purchases),
+                subtitle = stringResource(R.string.support_restore_purchases_desc),
+                onClick = {
+                    if (billing.refreshPurchasesIfConnected()) {
+                        Toast.makeText(context, context.getString(R.string.support_restore_purchases_toast), Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SupportActionCard(
                 icon = Icons.Default.Share,
                 title = stringResource(R.string.support_share),
                 subtitle = stringResource(R.string.support_share_desc),
@@ -318,7 +333,7 @@ fun SupportScreen(viewModel: RecordingViewModel) {
     }
 
     if (showChangelogDialog) {
-        val changelog097Items = stringArrayResource(R.array.changelog_v097_items).toList()
+        val changelog098Items = stringArrayResource(R.array.changelog_v098_items).toList()
         val changelog096Items = stringArrayResource(R.array.changelog_v096_items).toList()
         val changelog095Items = stringArrayResource(R.array.changelog_v095_items).toList()
         val changelog090Items = stringArrayResource(R.array.changelog_v090_items).toList()
@@ -334,7 +349,7 @@ fun SupportScreen(viewModel: RecordingViewModel) {
                     ChangelogEntry(
                         version = stringResource(R.string.changelog_version_template, BuildConfig.VERSION_NAME),
                         label = stringResource(R.string.label_beta),
-                        changes = changelog097Items,
+                        changes = changelog098Items,
                     )
                     Spacer(Modifier.height(20.dp))
                     ChangelogEntry(

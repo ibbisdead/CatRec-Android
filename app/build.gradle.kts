@@ -17,8 +17,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.9.7 Beta"
+        versionCode = 14
+        versionName = "0.9.8 Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

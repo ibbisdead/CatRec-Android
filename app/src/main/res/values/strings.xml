@@ -1,7 +1,7 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec - Screen Recorder</string>
-    <string name="app_version">Version 0.5.0 Public Beta</string>
+    <string name="app_version">Version 0.9.8 Beta</string>
 
     <!-- Bottom Nav Tabs -->
     <string name="tab_recording">Recording</string>
@@ -167,6 +167,9 @@
     <string name="support_subscribe_youtube_desc">Follow @ibbie for updates</string>
     <string name="support_remove_ads">Remove Ads — $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
+    <string name="support_restore_purchases">Restore purchases</string>
+    <string name="support_restore_purchases_desc">Sync Remove Ads and other purchases from Google Play</string>
+    <string name="support_restore_purchases_toast">Checking Google Play for your purchases…</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium options stay unlocked — no ads to watch.</string>
     <string name="support_watch_ad">Watch an Ad</string>
@@ -577,8 +580,8 @@
         <item>Quick Settings tiles: CatRec Record and CatRec Clipper</item>
     </string-array>
 
-    <!-- Changelog entries (v0.9.7) -->
-    <string-array name="changelog_v097_items">
+    <!-- Changelog entries (v0.9.8) -->
+    <string-array name="changelog_v098_items">
         <item>Watermark: default logo now matches your real app icon; snap-to-corner positions align correctly on all screen sizes</item>
         <item>Faster switching between bottom navigation tabs</item>
         <item>Minor bug fixes and stability improvements</item>

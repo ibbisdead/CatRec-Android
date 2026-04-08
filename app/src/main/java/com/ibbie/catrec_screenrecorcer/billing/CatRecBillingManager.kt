@@ -119,13 +119,18 @@ class CatRecBillingManager(private val application: Application) {
         client.startConnection(connectionListener)
     }
 
-    /** Call from [Activity.onResume] to pick up grants completed outside the app. */
-    fun refreshPurchasesIfConnected() {
-        val c = billingClient ?: return
-        if (c.isReady) {
-            loadProductDetails()
-            syncInAppPurchases()
-        }
+    /**
+     * Call from [Activity.onResume] to pick up grants completed outside the app,
+     * or when the user explicitly restores purchases.
+     *
+     * @return true if a sync with Play was started; false if billing is not connected yet.
+     */
+    fun refreshPurchasesIfConnected(): Boolean {
+        val c = billingClient ?: return false
+        if (!c.isReady) return false
+        loadProductDetails()
+        syncInAppPurchases()
+        return true
     }
 
     fun launchRemoveAdsPurchase(activity: Activity): Boolean {
