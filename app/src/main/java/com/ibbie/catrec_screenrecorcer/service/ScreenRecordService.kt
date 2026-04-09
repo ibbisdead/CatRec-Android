@@ -36,6 +36,7 @@ import android.os.ParcelFileDescriptor
 import android.os.PowerManager
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
 import android.view.Gravity
@@ -91,6 +92,8 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         const val ACTION_UNMUTE = "ACTION_UNMUTE"
         const val ACTION_NOTIFICATION_DISMISSED = "ACTION_NOTIFICATION_DISMISSED"
         const val ACTION_TAKE_SCREENSHOT = "ACTION_TAKE_SCREENSHOT"
+        /** Toggle pause while recording (quick controls / app control notification). */
+        const val ACTION_TOGGLE_PAUSE = "ACTION_TOGGLE_PAUSE"
 
         // Rolling buffer / clipping
         const val ACTION_START_BUFFER = "ACTION_START_BUFFER"
@@ -128,6 +131,8 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         const val EXTRA_CAMERA_OPACITY = "EXTRA_CAMERA_OPACITY"
         const val EXTRA_SHOW_WATERMARK = "EXTRA_SHOW_WATERMARK"
         const val EXTRA_SHOW_FLOATING_CONTROLS = "EXTRA_SHOW_FLOATING_CONTROLS"
+        /** When true, floating controls bubble is not shown while recording (camera/watermark still apply). */
+        const val EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING = "EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING"
         const val EXTRA_STOP_BEHAVIOR = "EXTRA_STOP_BEHAVIOR"
         const val EXTRA_SAVE_LOCATION = "EXTRA_SAVE_LOCATION"
         const val EXTRA_FILENAME_PATTERN = "EXTRA_FILENAME_PATTERN"
@@ -146,6 +151,10 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         const val EXTRA_SCREENSHOT_FORMAT = "EXTRA_SCREENSHOT_FORMAT"
         const val EXTRA_SCREENSHOT_QUALITY = "EXTRA_SCREENSHOT_QUALITY"
         const val EXTRA_CLIPPER_DURATION_MINUTES = "EXTRA_CLIPPER_DURATION_MINUTES"
+        const val EXTRA_GIF_SESSION = "EXTRA_GIF_SESSION"
+        const val EXTRA_GIF_MAX_DURATION_SEC = "EXTRA_GIF_MAX_DURATION_SEC"
+        const val EXTRA_GIF_SCALE_WIDTH = "EXTRA_GIF_SCALE_WIDTH"
+        const val EXTRA_GIF_OUTPUT_FPS = "EXTRA_GIF_OUTPUT_FPS"
 
         private const val CHANNEL_ID = "CatRec_Recording_Channel"
         private const val CHANNEL_DONE_ID = "CatRec_Done_Channel"
@@ -194,6 +203,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private var cameraOpacity: Int = 100
     private var showWatermark: Boolean = false
     private var showFloatingControls: Boolean = false
+    private var hideFloatingIconWhileRecording: Boolean = false
     private var stopBehaviors: ArrayList<String>? = null
     private var saveLocationUri: String? = null
     private var filenamePattern: String = "yyyyMMdd_HHmmss"
@@ -213,6 +223,13 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private var screenshotQuality: Int = 90
     /** Rolling Clipper buffer length (1–5 minutes). */
     private var clipperDurationMinutes: Int = 1
+
+    private var isGifSession: Boolean = false
+    private var gifMaxDurationSec: Int = 0
+    private var gifScaleWidth: Int = 480
+    private var gifOutputFps: Int = 10
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var gifAutoStopRunnable: Runnable? = null
 
     private var isRecorderRunning = false
     private var isRecordingPaused = false
@@ -264,8 +281,9 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         val metrics = resources.displayMetrics
         screenDensity = metrics.densityDpi
-        displayWidth = metrics.widthPixels
-        displayHeight = metrics.heightPixels
+        val (w, h) = currentDisplaySizePx()
+        displayWidth = w
+        displayHeight = h
         createNotificationChannels()
     }
 
@@ -301,6 +319,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 cameraOpacity = intent.getIntExtra(EXTRA_CAMERA_OPACITY, 100)
                 showWatermark = intent.getBooleanExtra(EXTRA_SHOW_WATERMARK, false)
                 showFloatingControls = intent.getBooleanExtra(EXTRA_SHOW_FLOATING_CONTROLS, false)
+                hideFloatingIconWhileRecording = intent.getBooleanExtra(EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING, false)
                 stopBehaviors = intent.getStringArrayListExtra(EXTRA_STOP_BEHAVIOR)?.let {
                     ArrayList(StopBehaviorKeys.migrateSet(it.toSet()).toList())
                 }
@@ -320,6 +339,13 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 watermarkYFraction = intent.getFloatExtra(EXTRA_WATERMARK_Y_FRACTION, 0.05f)
                 screenshotFormat = intent.getStringExtra(EXTRA_SCREENSHOT_FORMAT) ?: "JPEG"
                 screenshotQuality = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, 90)
+                isGifSession = intent.getBooleanExtra(EXTRA_GIF_SESSION, false)
+                gifMaxDurationSec = intent.getIntExtra(EXTRA_GIF_MAX_DURATION_SEC, 0)
+                gifScaleWidth = intent.getIntExtra(EXTRA_GIF_SCALE_WIDTH, 480).coerceIn(160, 1280)
+                gifOutputFps = intent.getIntExtra(EXTRA_GIF_OUTPUT_FPS, 10).coerceIn(1, 30)
+                if (!isGifSession) {
+                    gifMaxDurationSec = 0
+                }
 
                 if (resultCode != 0 && resultData != null) {
                     try {
@@ -332,6 +358,11 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             ACTION_STOP -> stopRecording()
             ACTION_PAUSE -> pauseRecording()
             ACTION_RESUME -> resumeRecording()
+            ACTION_TOGGLE_PAUSE -> {
+                if (isRecorderRunning) {
+                    if (isRecordingPaused) resumeRecording() else pauseRecording()
+                }
+            }
             ACTION_MUTE -> {
                 isRecordingMuted = true
                 recorderEngine?.mute()
@@ -402,8 +433,25 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 if (!isPrepared || isRecorderRunning) return START_STICKY
                 val repo = com.ibbie.catrec_screenrecorcer.data.SettingsRepository(applicationContext)
                 runBlocking {
-                    fps             = repo.fps.first().toInt()
-                    bitrate         = (repo.bitrate.first() * 1_000_000).toInt()
+                    val mode = repo.captureMode.first()
+                    if (mode == com.ibbie.catrec_screenrecorcer.data.CaptureMode.GIF) {
+                        val preset = com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets.byId(
+                            repo.gifRecorderPresetId.first(),
+                        )
+                        fps = preset.fps
+                        bitrate = preset.bitrateBitsPerSec
+                        resolutionSetting = preset.resolutionSetting
+                        isGifSession = true
+                        gifMaxDurationSec = preset.maxDurationSec
+                        gifScaleWidth = preset.maxWidth
+                        gifOutputFps = preset.fps
+                    } else {
+                        isGifSession = false
+                        gifMaxDurationSec = 0
+                        fps = repo.fps.first().toInt()
+                        bitrate = (repo.bitrate.first() * 1_000_000).toInt()
+                        resolutionSetting = repo.resolution.first()
+                    }
                     audioEnabled    = repo.recordAudio.first()
                     internalAudioEnabled = repo.internalAudio.first()
                     audioBitrate    = repo.audioBitrate.first() * 1000
@@ -421,10 +469,10 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     cameraOpacity   = repo.cameraOpacity.first()
                     showWatermark   = repo.showWatermark.first()
                     showFloatingControls = repo.floatingControls.first()
+                    hideFloatingIconWhileRecording = repo.hideFloatingIconWhileRecording.first()
                     stopBehaviors   = ArrayList(repo.stopBehavior.first())
                     saveLocationUri = repo.saveLocationUri.first()
                     videoEncoder    = repo.videoEncoder.first()
-                    resolutionSetting = repo.resolution.first()
                     filenamePattern = repo.filenamePattern.first()
                     countdownValue  = repo.countdown.first()
                     keepScreenOn    = repo.keepScreenOn.first()
@@ -484,10 +532,19 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                         takeScreenshot()
                     else -> {
                         Handler(Looper.getMainLooper()).post {
+                            val launch = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                                putExtra(MainActivity.EXTRA_REQUEST_SCREENSHOT_PROJECTION, true)
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                        Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                                )
+                            }
+                            if (launch != null) startActivity(launch)
                             Toast.makeText(
                                 this,
-                                getString(R.string.error_screenshot_no_projection),
-                                Toast.LENGTH_SHORT,
+                                getString(R.string.toast_grant_capture_for_screenshot),
+                                Toast.LENGTH_LONG,
                             ).show()
                         }
                     }
@@ -642,7 +699,9 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         // Apply orientation lock before getting display metrics
         applyOrientationLock()
 
-        if (Settings.canDrawOverlays(this) && (showCamera || showWatermark || showFloatingControls)) {
+        val showFloatingBubbleWhileRecording =
+            showFloatingControls && !hideFloatingIconWhileRecording
+        if (Settings.canDrawOverlays(this) && (showCamera || showWatermark || showFloatingBubbleWhileRecording)) {
             val overlayIntent = Intent(this, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_SHOW_OVERLAYS
                 putExtra(OverlayService.EXTRA_SHOW_CAMERA, showCamera)
@@ -654,7 +713,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 putExtra(OverlayService.EXTRA_CAMERA_ASPECT_RATIO, cameraAspectRatio)
                 putExtra(OverlayService.EXTRA_CAMERA_OPACITY, cameraOpacity)
                 putExtra(OverlayService.EXTRA_SHOW_WATERMARK, showWatermark)
-                putExtra(OverlayService.EXTRA_SHOW_CONTROLS, showFloatingControls)
+                putExtra(OverlayService.EXTRA_SHOW_CONTROLS, showFloatingBubbleWhileRecording)
                 putExtra(OverlayService.EXTRA_WATERMARK_LOCATION, watermarkLocation)
                 putExtra(OverlayService.EXTRA_WATERMARK_IMAGE_URI, watermarkImageUri)
                 putExtra(OverlayService.EXTRA_WATERMARK_SHAPE, watermarkShape)
@@ -803,7 +862,17 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 withContext(Dispatchers.Main) {
                     isRecorderRunning = true
                     RecordingState.setRecording(true)
+                    RecordingState.setRecordingPaused(false)
                     updateRecordingNotification(isPaused = false)
+                    gifAutoStopRunnable?.let { mainHandler.removeCallbacks(it) }
+                    if (isGifSession && gifMaxDurationSec > 0) {
+                        val r = Runnable {
+                            gifAutoStopRunnable = null
+                            if (isRecorderRunning) stopRecording()
+                        }
+                        gifAutoStopRunnable = r
+                        mainHandler.postDelayed(r, gifMaxDurationSec * 1000L)
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Recorder start failed", e)
@@ -818,9 +887,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     }
 
     private fun applyOrientationLock() {
-        val metrics = resources.displayMetrics
-        val nativeW = metrics.widthPixels
-        val nativeH = metrics.heightPixels
+        val (nativeW, nativeH) = currentDisplaySizePx()
 
         when (recordingOrientationSetting) {
             "Portrait" -> {
@@ -891,6 +958,23 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 commitTempFileToUri(tempVid, savedUri)
                 try { tempVid.delete() } catch (_: Exception) {}
                 finalizeMediaStoreEntry(savedUri)
+                if (isGifSession) {
+                    val gifOk = GifTranscodeHelper.transcodeMp4ToGif(
+                        this@ScreenRecordService,
+                        savedUri,
+                        gifScaleWidth,
+                        gifOutputFps,
+                    )
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ScreenRecordService,
+                            getString(
+                                if (gifOk) R.string.toast_gif_saved else R.string.toast_gif_transcode_failed,
+                            ),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
             } else {
                 try { tempVid?.delete() } catch (_: Exception) {}
                 savedUri?.let { try { contentResolver.delete(it, null, null) } catch (_: Exception) {} }
@@ -909,9 +993,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             currentTempMicFile = null
             currentMicDestUri = null
 
-            val metrics = resources.displayMetrics
-            val nativeW = metrics.widthPixels
-            val nativeH = metrics.heightPixels
+            val (nativeW, nativeH) = currentDisplaySizePx()
 
             if (isPortrait) {
                 displayWidth = minOf(nativeW, nativeH)
@@ -972,15 +1054,13 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     }
 
     private fun calculateDimensions() {
-        val metrics = resources.displayMetrics
-        val nativeWidth = metrics.widthPixels
-        val nativeHeight = metrics.heightPixels
+        val (nativeWidth, nativeHeight) = currentDisplaySizePx()
 
         // Respect orientation lock
         val (baseW, baseH) = when (recordingOrientationSetting) {
             "Portrait" -> Pair(minOf(nativeWidth, nativeHeight), maxOf(nativeWidth, nativeHeight))
             "Landscape" -> Pair(maxOf(nativeWidth, nativeHeight), minOf(nativeWidth, nativeHeight))
-            else -> Pair(displayWidth, displayHeight) // Auto uses current
+            else -> Pair(nativeWidth, nativeHeight) // Auto uses current at start-time
         }
 
         val aspectRatio = baseW.toFloat() / baseH.toFloat()
@@ -1013,6 +1093,25 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     displayHeight = (targetHeight / 16) * 16
                 }
             }
+        }
+    }
+
+    /**
+     * Returns the current real screen bounds in pixels.
+     * `resources.displayMetrics` can be stale in a long-lived Service across rotations.
+     */
+    private fun currentDisplaySizePx(): Pair<Int, Int> {
+        val wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val b = wm.currentWindowMetrics.bounds
+            Pair(b.width(), b.height())
+        } else {
+            @Suppress("DEPRECATION")
+            val display = wm.defaultDisplay
+            val dm = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            display.getRealMetrics(dm)
+            Pair(dm.widthPixels, dm.heightPixels)
         }
     }
 
@@ -1181,6 +1280,9 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     }
 
     private fun stopRecording() {
+        gifAutoStopRunnable?.let { mainHandler.removeCallbacks(it) }
+        gifAutoStopRunnable = null
+
         orientationEventListener?.disable()
         orientationEventListener = null
 
@@ -1197,9 +1299,15 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
 
         isRecorderRunning = false
         RecordingState.setRecording(false)
+        RecordingState.setRecordingPaused(false)
 
         val savedUri = currentFileUri
         val savedMicUri = currentMicDestUri
+        val snapshotGifSession = isGifSession
+        val snapshotGifScaleW = gifScaleWidth
+        val snapshotGifFps = gifOutputFps
+        isGifSession = false
+        gifMaxDurationSec = 0
 
         lifecycleScope.launch(Dispatchers.IO) {
             val engine = recorderEngine
@@ -1228,6 +1336,24 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                 }
                 currentTempRecordingFile = null
                 savedUri?.let { finalizeMediaStoreEntry(it) }
+
+                if (hadOutput && savedUri != null && snapshotGifSession) {
+                    val gifOk = GifTranscodeHelper.transcodeMp4ToGif(
+                        this@ScreenRecordService,
+                        savedUri,
+                        snapshotGifScaleW,
+                        snapshotGifFps,
+                    )
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@ScreenRecordService,
+                            getString(
+                                if (gifOk) R.string.toast_gif_saved else R.string.toast_gif_transcode_failed,
+                            ),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
 
                 val tempMic = currentTempMicFile
                 if (savedMicUri != null && tempMic != null) {
@@ -1635,6 +1761,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
             }
         }
 
+        var savedUri: Uri? = null
         try {
             val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
             if (uri != null) {
@@ -1645,14 +1772,28 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
                     val values = ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) }
                     contentResolver.update(uri, values, null, null)
                 }
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this, getString(R.string.notif_screenshot_saved), Toast.LENGTH_SHORT).show()
-                }
+                savedUri = uri
             }
         } catch (e: Exception) {
             Log.e("ScreenRecordService", "Screenshot save failed", e)
         } finally {
             bitmap.recycle()
+        }
+        val showPostActions = runBlocking(Dispatchers.IO) {
+            com.ibbie.catrec_screenrecorcer.data.SettingsRepository(applicationContext).postScreenshotOptions.first()
+        }
+        Handler(Looper.getMainLooper()).post {
+            val u = savedUri
+            if (u != null) {
+                if (showPostActions) {
+                    startActivity(Intent(this, ScreenshotPostActionActivity::class.java).apply {
+                        putExtra(ScreenshotPostActionActivity.EXTRA_IMAGE_URI, u.toString())
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
+                } else {
+                    Toast.makeText(this, getString(R.string.notif_screenshot_saved), Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -1770,6 +1911,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         if (isRecorderRunning) {
             recorderEngine?.pause()
             isRecordingPaused = true
+            RecordingState.setRecordingPaused(true)
             updateRecordingNotification(isPaused = true)
             startService(Intent(this, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_UPDATE_PAUSE_STATE
@@ -1782,6 +1924,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
         if (isRecorderRunning) {
             recorderEngine?.resume()
             isRecordingPaused = false
+            RecordingState.setRecordingPaused(false)
             updateRecordingNotification(isPaused = false)
             startService(Intent(this, OverlayService::class.java).apply {
                 action = OverlayService.ACTION_UPDATE_PAUSE_STATE
@@ -1798,6 +1941,7 @@ class ScreenRecordService : LifecycleService(), SensorEventListener {
     private fun cleanup() {
         hideCountdownOverlay()
         isRecordingPaused = false
+        RecordingState.setRecordingPaused(false)
         isRecordingMuted = false
         controlsDismissedByUser = false
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_HIDE_OVERLAYS })

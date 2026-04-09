@@ -3,6 +3,42 @@
     <string name="app_name">CatRec - Screen Recorder</string>
     <string name="app_version">Version 0.9.8 Beta</string>
 
+    <string name="brand_catrect">CatRect</string>
+    <string name="faq_content_description">Help and support</string>
+    <string name="capture_mode_recording">Recording</string>
+    <string name="capture_mode_clipper">Clipper</string>
+    <string name="capture_mode_gif">GIF recording</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">FAQ</string>
+    <string name="faq_intro">Find answers by category. Tap a question to expand. If you still need help, use Contact us below.</string>
+    <string name="faq_contact_us">Contact us</string>
+    <string name="feedback_title">Send feedback</string>
+    <string name="feedback_issue_section_title">What went wrong?</string>
+    <string name="feedback_description_title">Details</string>
+    <string name="feedback_description_hint">Please describe what happened, when it started, and what you already tried (e.g. lowered resolution, restarted phone). More detail helps us fix it faster.</string>
+    <string name="feedback_screenshots_title">Screenshots</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">Add up to 5 images (error messages, Settings screens, battery page, etc.).</string>
+    <string name="feedback_add_screenshots">Add images</string>
+    <string name="feedback_send">Send</string>
+    <string name="feedback_send_note">Opens your email app with message to %1$s — tap Send there to deliver.</string>
+    <string name="feedback_send_chooser_title">Send email</string>
+    <string name="feedback_no_email_app">No email app found. Install Gmail or Outlook, or copy details from the next screen if shown.</string>
+    <string name="feedback_select_issue">Please select an issue type.</string>
+    <string name="feedback_description_too_short">Please add a bit more detail (at least a sentence) so we can help.</string>
+    <string name="feedback_issue_recording_stopped">Recording stopped randomly</string>
+    <string name="feedback_issue_crash">App crashed</string>
+    <string name="feedback_issue_no_sound">No sound / audio problems</string>
+    <string name="feedback_issue_video_black">Black screen / frozen video</string>
+    <string name="feedback_issue_cant_start">Can’t start recording</string>
+    <string name="feedback_issue_overlay">Floating controls / overlay</string>
+    <string name="feedback_issue_gif_export">GIF or file export</string>
+    <string name="feedback_issue_battery_oem">Battery / background (Xiaomi, etc.)</string>
+    <string name="feedback_issue_storage">Storage / can’t find files</string>
+    <string name="feedback_issue_quality">Quality / lag / stutter</string>
+    <string name="feedback_issue_other">Other</string>
+
     <!-- Bottom Nav Tabs -->
     <string name="tab_recording">Recording</string>
     <string name="tab_screenshots">Screenshots</string>
@@ -10,6 +46,22 @@
     <string name="tab_settings">Settings</string>
     <string name="tab_support">Support</string>
     <string name="tab_tools">Tools</string>
+    <string name="tab_editor">Editor</string>
+    <string name="fab_start_recording">Record</string>
+    <string name="storage_indicator_format">%1$s used · %2$s free</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+    <string name="admob_banner_unit_id" translatable="false">ca-app-pub-7741372232895726/3068641375</string>
+    <string name="admob_app_open_unit_id" translatable="false">ca-app-pub-7741372232895726/3320754364</string>
+
+    <string name="settings_section_recording_quality">Recording quality</string>
+    <string name="settings_open_audio_menu">Audio settings</string>
+    <string name="settings_open_audio_menu_sub">Microphone, internal audio, bitrate, channels…</string>
+    <string name="settings_open_video_menu">Video &amp; GIF settings</string>
+    <string name="settings_open_video_menu_sub">GIF preset, resolution, FPS, bitrate, encoder…</string>
+
+    <string name="support_section_help">Help</string>
+    <string name="support_send_feedback">Send feedback</string>
+    <string name="support_send_feedback_desc">Same as Contact us in the FAQ — report bugs or suggestions</string>
 
     <!-- Common Actions -->
     <string name="action_ok">OK</string>
@@ -49,6 +101,13 @@
     <string name="settings_title">Settings</string>
     <string name="settings_section_controls">Controls</string>
     <string name="settings_section_video">Video</string>
+    <string name="settings_section_gif_recorder">GIF Recorder</string>
+    <string name="settings_gif_recorder_desc">GIF mode records video first, then converts it. Quality and length follow the preset below; video sliders stay saved for when you switch back to Recording.</string>
+    <string name="setting_gif_preset">GIF quality preset</string>
+    <string name="video_locked_by_gif_preset">Video options are controlled by the GIF preset while GIF mode is selected.</string>
+    <string name="gif_preset_small">Small (faster, smaller file)</string>
+    <string name="gif_preset_medium">Medium</string>
+    <string name="gif_preset_hd">HD (larger file)</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_overlay">Overlay</string>
     <string name="settings_section_screenshots">Screenshots</string>
@@ -85,6 +144,44 @@
 
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">Floating Controls</string>
+    <string name="setting_brush_overlay">Brush</string>
+    <string name="settings_brush_overlay_desc">Show a brush tool on the floating overlay for drawing on screen</string>
+    <string name="setting_hide_floating_while_recording">Hide Floating Icon While Recording</string>
+    <string name="settings_hide_floating_while_recording_desc">Hide the floating controls bubble while a recording is in progress</string>
+    <string name="setting_post_screenshot_options">Post-Screenshot Options</string>
+    <string name="settings_post_screenshot_options_desc">After a screenshot, show options to share or edit</string>
+    <string name="setting_record_single_app">Record a Single App</string>
+    <string name="settings_record_single_app_desc">On Android 14+, choose one app window or full screen when you grant screen capture</string>
+    <string name="screenshot_post_actions_title">Screenshot saved</string>
+    <string name="screenshot_post_actions_message">What would you like to do next?</string>
+    <string name="screenshot_post_edit">Edit</string>
+    <string name="screenshot_post_edit_with">Edit with…</string>
+    <string name="screenshot_post_no_editor">No app available to edit this image</string>
+    <string name="screenshot_post_action_failed">Couldn\'t open share</string>
+    <string name="screenshot_post_tap_outside">Tap outside to close</string>
+    <string name="image_editor_title">Edit image</string>
+    <string name="image_editor_panel_adjust">Adjust</string>
+    <string name="image_editor_panel_crop">Crop</string>
+    <string name="image_editor_panel_draw">Draw</string>
+    <string name="image_editor_rotate_ccw">Rotate left</string>
+    <string name="image_editor_rotate_cw">Rotate right</string>
+    <string name="image_editor_saved">Image saved to Pictures/CatRec/Screenshots</string>
+    <string name="image_editor_save_failed">Couldn\'t save image</string>
+    <string name="image_editor_load_failed">Couldn\'t load image</string>
+    <string name="tool_edit_image">Edit image</string>
+    <string name="brush_line_width">Line width</string>
+    <string name="brush_color_picker_hint">Choose a color, adjust thickness, then tap Apply.</string>
+    <string name="brush_color_back">Back</string>
+    <string name="brush_apply">Apply</string>
+    <string name="brush_tool_pen">Draw</string>
+    <string name="brush_tool_eraser">Eraser</string>
+    <string name="brush_tool_undo">Undo last stroke</string>
+    <string name="brush_tool_square">Rectangle</string>
+    <string name="brush_tool_circle">Ellipse</string>
+    <string name="brush_tool_arrow">Arrow</string>
+    <string name="brush_tool_mosaic">Pixelate area</string>
+    <string name="brush_tool_colors">Color and line width</string>
+    <string name="brush_panel_title">Stroke</string>
     <string name="setting_show_touches">Show Touches</string>
     <string name="setting_camera_settings">Camera Settings</string>
     <string name="setting_watermark">CatRec Watermark</string>
@@ -170,6 +267,9 @@
     <string name="support_restore_purchases">Restore purchases</string>
     <string name="support_restore_purchases_desc">Sync Remove Ads and other purchases from Google Play</string>
     <string name="support_restore_purchases_toast">Checking Google Play for your purchases…</string>
+    <string name="support_play_promo_title">Redeem Play promo code</string>
+    <string name="support_play_promo_desc">If you have a Google Play code for Remove Ads: redeem it on Play, then tap Restore purchases here so the app updates.</string>
+    <string name="support_toast_promo_browser">Couldn\'t open the browser</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium options stay unlocked — no ads to watch.</string>
     <string name="support_watch_ad">Watch an Ad</string>
@@ -344,6 +444,8 @@
     <string name="rec_tap_to_stop_clipper">TAP TO STOP CLIPPER</string>
     <string name="rec_permissions_required">PERMISSIONS REQUIRED</string>
     <string name="rec_tap_start_clipper">TAP TO START CLIPPER</string>
+    <string name="rec_tap_start_gif">TAP TO RECORD (SAVES AS GIF)</string>
+    <string name="rec_gif_hint">Stops at preset max length; MP4 is converted to GIF after you stop.</string>
     <string name="rec_tap_to_start">TAP TO START</string>
     <string name="rec_save_clip">✂  SAVE CLIP</string>
     <!-- Arg: rolling buffer length in minutes (1–5) -->
@@ -404,19 +506,43 @@
     <string name="content_desc_options">Options</string>
     <string name="content_desc_logo">CatRec logo</string>
 
-    <!-- Tools -->
-    <string name="tools_quick_overlays">Quick overlays</string>
+    <!-- Tools / Editor -->
     <string name="tools_video_editing">Video editing</string>
-    <string name="tools_camera_overlay">Camera overlay</string>
-    <string name="tools_watermark">Watermark</string>
-    <string name="tools_toast_coming">%1$s: Coming soon</string>
+    <string name="tools_image_editing">Image editing</string>
     <string name="tool_video_trim">Video trim</string>
-    <string name="tool_compress">Compress</string>
-    <string name="tool_to_gif">To GIF</string>
-    <string name="tool_frame_extractor">Frame extractor</string>
+    <string name="tool_compress">Compress video</string>
+    <string name="tool_video_to_gif">Video to GIF</string>
     <string name="tool_merge_clips">Merge clips</string>
-    <string name="tool_video_rename">Video rename</string>
-    <string name="tools_toast_rename_hint">Rename: Use Recordings tab</string>
+    <string name="editor_pick_video_title">Choose a video</string>
+    <string name="editor_pick_catrec">CatRec recordings</string>
+    <string name="editor_pick_storage">Videos on device</string>
+    <string name="editor_export">Export</string>
+    <string name="editor_saving">Saving…</string>
+    <string name="editor_saved_ok">Saved to Movies/CatRec</string>
+    <string name="editor_failed">Couldn\'t complete export. Try another file or quality.</string>
+    <string name="compress_title">Compress</string>
+    <string name="compress_quality_label">Target quality</string>
+    <string name="compress_quality_high">High</string>
+    <string name="compress_quality_medium">Medium</string>
+    <string name="compress_quality_low">Low</string>
+    <string name="compress_resolution_label">Target resolution (height)</string>
+    <string name="compress_original">Original size</string>
+    <string name="compress_estimated">Estimated size: ~%1$s</string>
+    <string name="compress_source">Source: %1$dx%2$d</string>
+    <string name="gif_title">Video to GIF</string>
+    <string name="gif_fps">FPS: %1$d</string>
+    <string name="gif_quality_label">GIF quality</string>
+    <string name="gif_quality_small">Smaller file</string>
+    <string name="gif_quality_balanced">Balanced</string>
+    <string name="gif_quality_sharper">Sharper</string>
+    <string name="gif_convert">Create GIF</string>
+    <string name="merge_title">Merge clips</string>
+    <string name="merge_add_catrec">Add from CatRec</string>
+    <string name="merge_add_files">Add from files</string>
+    <string name="merge_clear_all">Clear all</string>
+    <string name="merge_run">Merge &amp; save</string>
+    <string name="merge_need_two">Add at least two videos (order is kept).</string>
+    <string name="merge_clip_label">Clip %1$d</string>
     <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME (e.g. 0.9.5 Beta) -->
     <string name="home_version">v%1$s</string>
@@ -499,6 +625,8 @@
     <string name="share_recording_title">Share recording</string>
     <string name="toast_recording_stopped_projection">Recording stopped: the captured app was closed or moved to the background</string>
     <string name="toast_recording_failed_no_video">Recording failed: no video was captured</string>
+    <string name="toast_gif_transcode_failed">Could not create GIF — your MP4 recording was kept.</string>
+    <string name="toast_gif_saved">GIF saved to Pictures/CatRec/GIFs</string>
     <string name="toast_separate_mic_failed">Could not create separate audio file — mic will be recorded in the video instead</string>
     <string name="toast_internal_audio_silent">Internal audio is silent — the app being recorded may not allow audio capture. Try recording mic audio instead.</string>
     <string name="recording_has_separate_audio">Has separate audio track</string>
@@ -519,6 +647,17 @@
     <string name="notif_channel_camera_overlay">Camera overlay</string>
     <string name="notif_channel_camera_overlay_desc">Shows while the camera overlay is active</string>
     <string name="notif_camera_in_use_title">Camera in use</string>
+    <string name="notif_channel_app_controls">Quick controls</string>
+    <string name="notif_channel_app_controls_desc">Recording, screenshot, and overlay shortcuts</string>
+    <string name="notif_app_controls_title">CatRec</string>
+    <string name="notif_app_controls_text_idle">Idle — tap an action below</string>
+    <string name="notif_action_screenshot">Screenshot</string>
+    <string name="notif_action_overlay_hide">Hide overlay</string>
+    <string name="notif_action_overlay_show">Show overlay</string>
+    <string name="notif_action_overlay_enable_in_settings">Overlay off</string>
+    <string name="notif_action_home">Home</string>
+    <string name="notif_action_exit">Exit</string>
+    <string name="toast_grant_capture_for_screenshot">Allow screen capture — then CatRec can take screenshots from the overlay.</string>
     <string name="tile_subtitle_recording">Recording…</string>
     <string name="tile_subtitle_buffering">Buffering…</string>
     <string name="tile_subtitle_ready">Ready</string>

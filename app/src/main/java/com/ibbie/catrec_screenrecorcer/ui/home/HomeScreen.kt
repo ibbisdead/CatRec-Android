@@ -17,7 +17,9 @@ import com.ibbie.catrec_screenrecorcer.ui.components.CatRecIcons
 
 @Composable
 fun HomeScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    /** When null, opens Recordings (FAB starts capture from the main graph). */
+    onStartRecording: (() -> Unit)? = null,
 ) {
     Column(
         modifier = Modifier
@@ -53,7 +55,7 @@ fun HomeScreen(
 
         // Start Recording Button
         Button(
-            onClick = { onNavigate(Screen.Recording.route) },
+            onClick = { onStartRecording?.invoke() ?: onNavigate(Screen.Recordings.route) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp),
@@ -89,9 +91,9 @@ fun HomeScreen(
                 onClick = { onNavigate(Screen.Recordings.route) }
             )
             QuickLinkItem(
-                text = stringResource(R.string.tab_tools),
+                text = stringResource(R.string.tab_editor),
                 icon = CatRecIcons.Tools,
-                onClick = { onNavigate(Screen.Tools.route) }
+                onClick = { onNavigate(Screen.Editor.route) }
             )
             QuickLinkItem(
                 text = stringResource(R.string.tab_support),

@@ -1,18 +1,41 @@
 package com.ibbie.catrec_screenrecorcer.navigation
 
-import androidx.compose.foundation.layout.Box
+import android.net.Uri
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.outlined.Pets
-import androidx.compose.material3.*
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,9 +43,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ibbie.catrec_screenrecorcer.MainActivity
+import com.ibbie.catrec_screenrecorcer.R
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -33,21 +66,35 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.ui.components.BannerAdRow
+import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
+import com.ibbie.catrec_screenrecorcer.ui.components.CaptureModePill
+import com.ibbie.catrec_screenrecorcer.ui.components.StorageIndicator
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalPerformanceMode
 import com.ibbie.catrec_screenrecorcer.ui.components.rememberIsLowEndDevice
+import com.ibbie.catrec_screenrecorcer.ui.theme.CaptureModeColors
 import com.ibbie.catrec_screenrecorcer.ui.theme.CrimsonRed
 import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 import com.ibbie.catrec_screenrecorcer.ui.player.PlayerScreen
-import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingScreen
+import com.ibbie.catrec_screenrecorcer.ui.recording.FabRecordingBridge
+import com.ibbie.catrec_screenrecorcer.ui.recording.LocalFabRecordingControl
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingsScreen
 import com.ibbie.catrec_screenrecorcer.ui.recordings.TrimScreen
 import com.ibbie.catrec_screenrecorcer.ui.screenshots.ScreenshotsScreen
 import com.ibbie.catrec_screenrecorcer.ui.settings.CropScreen
 import com.ibbie.catrec_screenrecorcer.ui.settings.SettingsScreen
+import com.ibbie.catrec_screenrecorcer.ui.faq.FaqScreen
+import com.ibbie.catrec_screenrecorcer.ui.faq.FeedbackScreen
 import com.ibbie.catrec_screenrecorcer.ui.support.SupportScreen
+import com.ibbie.catrec_screenrecorcer.ui.editor.ImageEditorScreen
+import com.ibbie.catrec_screenrecorcer.ui.tools.CompressVideoScreen
+import com.ibbie.catrec_screenrecorcer.ui.tools.MergeVideosScreen
+import com.ibbie.catrec_screenrecorcer.ui.tools.ToolsScreen
+import com.ibbie.catrec_screenrecorcer.ui.tools.VideoToGifScreen
 
 @Composable
 fun CatRecNavGraph(
@@ -55,6 +102,30 @@ fun CatRecNavGraph(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    fun drainQueuedImageEditor() {
+        val act = context as? MainActivity ?: return
+        val raw = act.takeQueuedImageEditorUri() ?: return
+        val enc = Uri.encode(raw)
+        navController.navigate("image_editor?imageUri=$enc") {
+            launchSingleTop = true
+        }
+    }
+
+    LaunchedEffect(navController) {
+        drainQueuedImageEditor()
+    }
+
+    DisposableEffect(lifecycleOwner, navController) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) drainQueuedImageEditor()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val sharedViewModel: RecordingViewModel = viewModel()
 
@@ -101,95 +172,236 @@ fun CatRecNavGraph(
         )
     }
 
-    val bottomBarScreens = listOf(
-        Screen.Recording,
-        Screen.Screenshots,
+    val mainTabScreens = listOf(
         Screen.Recordings,
+        Screen.Screenshots,
+        Screen.Editor,
         Screen.Settings,
-        Screen.Support
+        Screen.Support,
     )
 
-    val hideBottomBar = currentRoute?.let { route ->
-        route.startsWith("crop") || route.startsWith("player") || route.startsWith("trim")
+    val adsDisabled by sharedViewModel.adsDisabled.collectAsState()
+
+    val hideChrome = currentRoute?.let { route ->
+        route.startsWith("crop") ||
+            route.startsWith("player") ||
+            route.startsWith("trim") ||
+            route.startsWith("image_editor") ||
+            route == Screen.Faq.route ||
+            route == Screen.Feedback.route
     } ?: false
+
+    /** Full-screen editor flows where the FAB would cover tool UI (trim uses hideChrome; these keep the top bar). */
+    val hideRecordFab = currentRoute?.let { route ->
+        route.startsWith("trim") ||
+            route.startsWith("compress") ||
+            route.startsWith("video_to_gif") ||
+            route.startsWith("image_editor") ||
+            route == Screen.MergeVideos.route
+    } ?: false
+
+    val isRecording by sharedViewModel.isRecording.collectAsState()
+    val isBuffering by sharedViewModel.isBuffering.collectAsState()
+    val captureMode by sharedViewModel.captureMode.collectAsState()
+    val pillSelectedMode = when {
+        isBuffering -> CaptureMode.CLIPPER
+        isRecording && captureMode == CaptureMode.GIF -> CaptureMode.GIF
+        isRecording -> CaptureMode.RECORD
+        else -> captureMode
+    }
+    val canSwitchCaptureMode = !isRecording && !isBuffering
 
     // Immediate tab highlight while NavHost composes the destination (Compose ≠ React;
     // this is the local equivalent of optimistic UI / decoupling indicator from back stack).
     var pendingTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(currentRoute) {
         val route = currentRoute
-        if (route != null && bottomBarScreens.any { it.route == route }) {
+        if (route != null && mainTabScreens.any { it.route == route }) {
             pendingTabRoute = null
         }
     }
 
+    val suppressRecordFabForListSelection = remember { mutableStateOf(false) }
+    val listSelectionSuppressesFab by suppressRecordFabForListSelection
+
     CompositionLocalProvider(
         LocalPerformanceMode provides effectivePerformanceMode,
-        LocalAccentColor     provides accentColor,
-        LocalAccentBrush     provides accentBrush
+        LocalAccentColor provides accentColor,
+        LocalAccentBrush provides accentBrush,
+        LocalSuppressRecordFabForListSelection provides suppressRecordFabForListSelection,
     ) {
     MaterialTheme(colorScheme = dynamicScheme) {
+    FabRecordingBridge(viewModel = sharedViewModel) {
     val barScheme = MaterialTheme.colorScheme
     Scaffold(
         containerColor = barScheme.background,
-        bottomBar = {
-            if (!hideBottomBar) {
-                NavigationBar(
-                    containerColor = barScheme.surface,
-                    contentColor = barScheme.onSurface
+        topBar = {
+            if (!hideChrome) {
+                val chipScroll = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 8.dp, vertical = 6.dp)
                 ) {
-                    bottomBarScreens.forEach { screen ->
-                        val selectedFromNav = navBackStackEntry?.destination?.hierarchy
-                            ?.any { it.route == screen.route } == true
-                        val selected = pendingTabRoute?.let { it == screen.route }
-                            ?: selectedFromNav
-
-                        NavigationBarItem(
-                            modifier = Modifier.weight(1f),
-                            icon = {
-                                val icon = when (screen) {
-                                    Screen.Recording   -> Icons.Default.Videocam
-                                    Screen.Screenshots -> Icons.Default.CameraAlt
-                                    Screen.Recordings  -> Icons.Default.VideoLibrary
-                                    Screen.Settings    -> Icons.Default.Settings
-                                    Screen.Support     -> Icons.Outlined.Pets
-                                    else               -> Icons.Default.Videocam
-                                }
-                                Icon(icon, contentDescription = stringResource(screen.titleRes))
-                            },
-                            label = { Text(stringResource(screen.titleRes)) },
-                            selected = selected,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor   = accentColor,
-                                selectedTextColor   = accentColor,
-                                indicatorColor      = accentColor.copy(alpha = 0.2f),
-                                unselectedIconColor = barScheme.onSurfaceVariant,
-                                unselectedTextColor = barScheme.onSurfaceVariant
-                            ),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.brand_catrect),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                letterSpacing = 0.5.sp,
+                                color = barScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(2.dp))
+                            StorageIndicator()
+                        }
+                        IconButton(
                             onClick = {
-                                pendingTabRoute = screen.route
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                navController.navigate(Screen.Faq.route) { launchSingleTop = true }
+                            },
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.HelpOutline,
+                                contentDescription = stringResource(R.string.faq_content_description),
+                                tint = barScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        CaptureModePill(
+                            selectedMode = pillSelectedMode,
+                            onModeSelected = { sharedViewModel.setCaptureMode(it) },
+                            enabled = canSwitchCaptureMode,
+                            isRecording = isRecording,
+                            isBuffering = isBuffering,
+                            captureMode = captureMode,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(chipScroll),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        mainTabScreens.forEach { screen ->
+                            val selectedFromNav = navBackStackEntry?.destination?.hierarchy
+                                ?.any { it.route == screen.route } == true
+                            val selected = pendingTabRoute?.let { it == screen.route }
+                                ?: selectedFromNav
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    pendingTabRoute = screen.route
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
+                                },
+                                label = {
+                                    Text(
+                                        stringResource(screen.titleRes),
+                                        maxLines = 1,
+                                    )
+                                },
+                                leadingIcon = if (selected) {
+                                    {
+                                        val icon = when (screen) {
+                                            Screen.Screenshots -> Icons.Default.CameraAlt
+                                            Screen.Recordings -> Icons.Default.VideoLibrary
+                                            Screen.Editor -> Icons.Default.ContentCut
+                                            Screen.Settings -> Icons.Default.Settings
+                                            Screen.Support -> Icons.Outlined.Pets
+                                            else -> Icons.Default.Videocam
+                                        }
+                                        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    }
+                                } else null,
+                                modifier = Modifier.padding(start = 4.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        bottomBar = {
+            if (!hideChrome) {
+                Surface(
+                    color = barScheme.surface,
+                    tonalElevation = 1.dp,
+                ) {
+                    Column(Modifier.navigationBarsPadding()) {
+                        BannerAdRow(adsDisabled = adsDisabled)
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            if (!hideChrome && !hideRecordFab && !listSelectionSuppressesFab) {
+                val fabBg = when (pillSelectedMode) {
+                    CaptureMode.CLIPPER -> CaptureModeColors.ClipperYellow
+                    CaptureMode.GIF -> CaptureModeColors.GifBlue
+                    else -> CaptureModeColors.RecordingRed
+                }
+                val fabCd = when {
+                    isRecording || isBuffering -> stringResource(R.string.notif_action_stop)
+                    pillSelectedMode == CaptureMode.CLIPPER -> stringResource(R.string.capture_mode_clipper)
+                    pillSelectedMode == CaptureMode.GIF -> stringResource(R.string.capture_mode_gif)
+                    else -> stringResource(R.string.fab_start_recording)
+                }
+                FloatingActionButton(
+                    onClick = LocalFabRecordingControl.current,
+                    containerColor = fabBg,
+                    contentColor = Color.White,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                ) {
+                    if (isRecording || isBuffering) {
+                        Icon(
+                            Icons.Default.Stop,
+                            contentDescription = fabCd,
+                            modifier = Modifier.size(28.dp),
+                        )
+                    } else when (pillSelectedMode) {
+                        CaptureMode.CLIPPER -> Icon(
+                            Icons.Default.ContentCut,
+                            contentDescription = fabCd,
+                            modifier = Modifier.size(26.dp),
+                        )
+                        CaptureMode.GIF -> Text(
+                            text = "GIF",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            letterSpacing = 0.6.sp,
+                            modifier = Modifier,
+                        )
+                        else -> Icon(
+                            Icons.Default.Videocam,
+                            contentDescription = fabCd,
+                            modifier = Modifier.size(26.dp),
                         )
                     }
                 }
             }
-        }
+        },
+        floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Recording.route,
+            startDestination = Screen.Recordings.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Recording.route) {
-                RecordingScreen(viewModel = sharedViewModel)
-            }
             composable(Screen.Screenshots.route) {
                 ScreenshotsScreen()
             }
@@ -200,7 +412,33 @@ fun CatRecNavGraph(
                 SettingsScreen(viewModel = sharedViewModel, navController = navController)
             }
             composable(Screen.Support.route) {
-                SupportScreen(viewModel = sharedViewModel)
+                SupportScreen(viewModel = sharedViewModel, navController = navController)
+            }
+            composable(Screen.Editor.route) {
+                ToolsScreen(navController = navController)
+            }
+            composable(
+                route = Screen.Compress.route,
+                arguments = listOf(navArgument("videoUri") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val encodedUri = backStackEntry.arguments?.getString("videoUri") ?: ""
+                CompressVideoScreen(encodedUri = encodedUri, navController = navController)
+            }
+            composable(
+                route = Screen.VideoToGif.route,
+                arguments = listOf(navArgument("videoUri") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val encodedUri = backStackEntry.arguments?.getString("videoUri") ?: ""
+                VideoToGifScreen(encodedUri = encodedUri, navController = navController)
+            }
+            composable(Screen.MergeVideos.route) {
+                MergeVideosScreen(navController = navController)
+            }
+            composable(Screen.Faq.route) {
+                FaqScreen(navController = navController)
+            }
+            composable(Screen.Feedback.route) {
+                FeedbackScreen(navController = navController)
             }
 
             composable(
@@ -216,6 +454,14 @@ fun CatRecNavGraph(
                     },
                     onCancel = { navController.popBackStack() }
                 )
+            }
+
+            composable(
+                route = Screen.ImageEditor.route,
+                arguments = listOf(navArgument("imageUri") { type = NavType.StringType }),
+            ) { backStackEntry ->
+                val imageUri = backStackEntry.arguments?.getString("imageUri") ?: ""
+                ImageEditorScreen(encodedImageUri = imageUri, navController = navController)
             }
 
             composable(
@@ -235,6 +481,7 @@ fun CatRecNavGraph(
             }
         }
     }
+    } // end FabRecordingBridge
     } // end MaterialTheme
     } // end CompositionLocalProvider
 }

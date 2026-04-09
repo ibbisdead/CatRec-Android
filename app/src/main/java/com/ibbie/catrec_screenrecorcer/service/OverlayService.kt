@@ -11,6 +11,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.PixelFormat
@@ -19,6 +20,7 @@ import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
@@ -26,6 +28,7 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
@@ -42,8 +45,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 
 class OverlayService : LifecycleService() {
@@ -59,6 +66,8 @@ class OverlayService : LifecycleService() {
         const val ACTION_SHOW_CONTROLS = "ACTION_SHOW_CONTROLS"
         const val ACTION_SHOW_IDLE_CONTROLS = "ACTION_SHOW_IDLE_CONTROLS"
         const val ACTION_HIDE_IDLE_CONTROLS = "ACTION_HIDE_IDLE_CONTROLS"
+        /** Re-read overlay control prefs (e.g. Brush toggle) and rebuild the expanded pill if visible. */
+        const val ACTION_REBUILD_CONTROLS_CARD = "ACTION_REBUILD_CONTROLS_CARD"
         const val ACTION_UPDATE_PAUSE_STATE = "ACTION_UPDATE_PAUSE_STATE"
         const val ACTION_UPDATE_MUTE_STATE = "ACTION_UPDATE_MUTE_STATE"
         const val ACTION_UPDATE_RECORDING_STATE = "ACTION_UPDATE_RECORDING_STATE"
@@ -92,6 +101,11 @@ class OverlayService : LifecycleService() {
         private const val OVERLAY_CHANNEL_ID = "CatRec_Overlay_Channel"
         private const val OVERLAY_NOTIFICATION_ID = 43
         const val ACTION_CLOSE_OVERLAY = "com.ibbie.catrec_screenrecorcer.CLOSE_OVERLAY"
+
+        /** True while the floating controls bubble is attached (idle or expanded). */
+        @Volatile
+        var idleControlsBubbleVisible: Boolean = false
+            private set
 
         var onPreviewPositionChanged: ((xFraction: Float, yFraction: Float) -> Unit)? = null
         var onCameraPreviewPositionChanged: ((xFraction: Float, yFraction: Float) -> Unit)? = null
@@ -137,6 +151,10 @@ class OverlayService : LifecycleService() {
     private var dismissIndicatorView: View? = null
     private var dismissIndicatorParams: WindowManager.LayoutParams? = null
 
+    private var brushOverlayView: BrushOverlayLayout? = null
+    private val settingsRepo by lazy { SettingsRepository(applicationContext) }
+    private var brushOverlayEnabled = false
+
     // Live preview (watermark)
     private var previewBgView: View? = null
     private var previewWatermarkView: View? = null
@@ -159,6 +177,28 @@ class OverlayService : LifecycleService() {
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createCameraChannel()
         createOverlayChannel()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val wm = windowManager ?: return
+        val (screenW, screenH) = currentScreenSizePx()
+
+        fun clamp(params: WindowManager.LayoutParams?, view: View?) {
+            if (params == null || view == null) return
+            val w = params.width.coerceAtLeast(0)
+            val h = params.height.coerceAtLeast(0)
+            params.x = params.x.coerceIn(0, (screenW - w).coerceAtLeast(0))
+            params.y = params.y.coerceIn(0, (screenH - h).coerceAtLeast(0))
+            try { wm.updateViewLayout(view, params) } catch (_: Exception) {}
+        }
+
+        clamp(controlsBubbleParams, controlsBubbleView)
+        if (brushOverlayView != null) hideBrushOverlay()
+        if (controlsCardExpanded) { hideControlsCard(); showControlsCard() }
+        clamp(cameraPreviewOverlayParams, cameraPreviewOverlayView)
+        clamp(previewWatermarkParams, previewWatermarkView)
+        hideDismissIndicator()
     }
 
     override fun onDestroy() {
@@ -245,6 +285,11 @@ class OverlayService : LifecycleService() {
                     controlsIsRecording = false
                     controlsIsBuffering = false
                     hideControlsCard()  // collapse; user taps bubble to see fresh idle controls
+                    // Bubble was removed during recording (e.g. hide-while-recording) — restore if floating controls are on.
+                    if (controlsBubbleView == null && readFloatingControlsEnabled()) {
+                        showControlsOverlay()
+                        postOverlayNotification()
+                    }
                 } else {
                     hideControlsOverlay(userDismissed = false)
                     stopSelf()
@@ -259,6 +304,15 @@ class OverlayService : LifecycleService() {
                 if (controlsBubbleView == null) {
                     showControlsOverlay()
                     postOverlayNotification()
+                }
+            }
+
+            ACTION_REBUILD_CONTROLS_CARD -> {
+                brushOverlayEnabled = readBrushOverlayEnabled()
+                if (!brushOverlayEnabled) hideBrushOverlay()
+                if (controlsCardExpanded) {
+                    hideControlsCard()
+                    showControlsCard()
                 }
             }
 
@@ -588,8 +642,7 @@ class OverlayService : LifecycleService() {
         controlsDismissedByUser = false
 
         val bubbleSizePx = dpToPx(52)
-        val metrics = resources.displayMetrics
-        val screenW = metrics.widthPixels; val screenH = metrics.heightPixels
+        val (screenW, _) = currentScreenSizePx()
 
         val params = WindowManager.LayoutParams(bubbleSizePx, bubbleSizePx, overlayType(),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
@@ -602,15 +655,17 @@ class OverlayService : LifecycleService() {
 
         val bubble = buildControlsBubble(bubbleSizePx)
         controlsBubbleView = bubble
-        bubble.setOnTouchListener(makeControlsDragListener(params, bubble, bubbleSizePx, screenW, screenH))
+        bubble.setOnTouchListener(makeControlsDragListener(params, bubble, bubbleSizePx))
 
         try {
             windowManager?.addView(bubble, params)
+            idleControlsBubbleVisible = true
             crashlyticsLog("Overlay: controls bubble started")
         } catch (e: Exception) {
             Log.e("OverlayService", "Controls bubble add failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: controls bubble add failed")
             controlsBubbleView = null; controlsBubbleParams = null
+            idleControlsBubbleVisible = false
         }
     }
 
@@ -647,11 +702,8 @@ class OverlayService : LifecycleService() {
     @SuppressLint("ClickableViewAccessibility")
     private fun makeControlsDragListener(
         params: WindowManager.LayoutParams, bubble: FrameLayout,
-        bubbleSizePx: Int, screenW: Int, screenH: Int
+        bubbleSizePx: Int
     ): View.OnTouchListener {
-        val dismissZoneTop = (screenH * 0.80f).toInt()
-        val dismissZoneCenterX = screenW / 2
-        val dismissZoneHalfWidth = (screenW * 0.18f).toInt()
         var initialX = 0; var initialY = 0
         var touchX = 0f; var touchY = 0f
         var hasDragged = false; var inDismissZone = false
@@ -665,6 +717,10 @@ class OverlayService : LifecycleService() {
                     hasDragged = false; inDismissZone = false; true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    val (screenW, screenH) = currentScreenSizePx()
+                    val dismissZoneTop = (screenH * 0.80f).toInt()
+                    val dismissZoneCenterX = screenW / 2
+                    val dismissZoneHalfWidth = (screenW * 0.18f).toInt()
                     val dx = (event.rawX - touchX).toInt()
                     val dy = (event.rawY - touchY).toInt()
                     if (!hasDragged && (abs(dx) > 8 || abs(dy) > 8)) {
@@ -694,11 +750,16 @@ class OverlayService : LifecycleService() {
                         if (controlsCardExpanded) hideControlsCard()
                         else { controlsCardExpanded = true; showControlsCard() }
                     } else {
+                        val (screenW, screenH) = currentScreenSizePx()
+                        val dismissZoneTop = (screenH * 0.80f).toInt()
+                        val dismissZoneCenterX = screenW / 2
+                        val dismissZoneHalfWidth = (screenW * 0.18f).toInt()
                         val bubbleCenterX = params.x + bubbleSizePx / 2
                         if (params.y >= dismissZoneTop && abs(bubbleCenterX - dismissZoneCenterX) <= dismissZoneHalfWidth) {
-                            animateDismissBubble(params, bubble, screenW, screenH, bubbleSizePx)
+                            animateDismissBubble(params, bubble, bubbleSizePx)
                         } else {
-                            animateSnapBubble(params, bubble, if (bubbleCenterX < screenW / 2) 0 else screenW - bubbleSizePx)
+                            val targetX = if (bubbleCenterX < screenW / 2) 0 else (screenW - bubbleSizePx).coerceAtLeast(0)
+                            animateSnapBubble(params, bubble, targetX)
                         }
                     }
                     inDismissZone = false; true
@@ -766,18 +827,27 @@ class OverlayService : LifecycleService() {
         if (controlsCardView != null) return
         val bubbleParams = controlsBubbleParams ?: return
         val wm = windowManager ?: return
-        val metrics = resources.displayMetrics
+        brushOverlayEnabled = readBrushOverlayEnabled()
+        val (screenW, screenH) = currentScreenSizePx()
         val bubbleSizePx = bubbleParams.width
-        val cardW = dpToPx(232)
-        val cardH = dpToPx(60)
         val margin = dpToPx(10)
-        val isUpperHalf = bubbleParams.y < metrics.heightPixels / 2
-        val cardX = (bubbleParams.x + bubbleSizePx / 2 - cardW / 2).coerceIn(0, (metrics.widthPixels - cardW).coerceAtLeast(0))
-        val cardY = if (isUpperHalf) bubbleParams.y + bubbleSizePx + margin else (bubbleParams.y - cardH - margin).coerceAtLeast(0)
+        val isUpperHalf = bubbleParams.y < screenH / 2
+        // Toolbar width grows with more buttons (e.g. brush); a fixed estimate mis-centers the pill.
+        val estCardW = (screenW - margin * 2).coerceAtMost(dpToPx(560))
+        val cardX = (bubbleParams.x + bubbleSizePx / 2 - estCardW / 2).coerceIn(0, (screenW - estCardW).coerceAtLeast(0))
+        val estCardH = dpToPx(72)
+        val cardY = if (isUpperHalf) {
+            bubbleParams.y + bubbleSizePx + margin
+        } else {
+            (bubbleParams.y - estCardH - margin).coerceAtLeast(0)
+        }
 
-        val cardParams = WindowManager.LayoutParams(cardW, cardH, overlayType(),
+        val cardParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            overlayType(),
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-            PixelFormat.TRANSLUCENT
+            PixelFormat.TRANSLUCENT,
         ).apply { gravity = Gravity.TOP or Gravity.START; x = cardX; y = cardY }
         controlsCardParams = cardParams
 
@@ -786,12 +856,63 @@ class OverlayService : LifecycleService() {
         try {
             wm.addView(card, cardParams)
             card.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(180).start()
+            scheduleSnapControlsCardToBubble(card)
         } catch (e: Exception) {
             Log.e("OverlayService", "Controls card add failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: controls card add failed")
             controlsCardView = null; controlsCardParams = null
             controlsPauseButton = null; controlsMuteButton = null; controlsCardExpanded = false
         }
+    }
+
+    /**
+     * Re-aligns the tool strip to the bubble using measured size (fixes wide rows when brush etc. are shown).
+     */
+    private fun snapControlsCardToBubble() {
+        val card = controlsCardView ?: return
+        val params = controlsCardParams ?: return
+        val bubbleParams = controlsBubbleParams ?: return
+        val wm = windowManager ?: return
+        val w = card.width
+        val h = card.height
+        if (w <= 0 || h <= 0) return
+        val (screenW, screenH) = currentScreenSizePx()
+        val bubbleSizePx = bubbleParams.width
+        val margin = dpToPx(10)
+        val bubbleCenterX = bubbleParams.x + bubbleSizePx / 2
+        params.x = (bubbleCenterX - w / 2).coerceIn(0, (screenW - w).coerceAtLeast(0))
+        val isUpperHalf = bubbleParams.y < screenH / 2
+        params.y = if (isUpperHalf) {
+            bubbleParams.y + bubbleSizePx + margin
+        } else {
+            (bubbleParams.y - h - margin).coerceAtLeast(0)
+        }
+        try {
+            wm.updateViewLayout(card, params)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun scheduleSnapControlsCardToBubble(card: LinearLayout) {
+        val runSnap = Runnable {
+            if (controlsCardView !== card) return@Runnable
+            if (card.width > 0 && card.height > 0) {
+                snapControlsCardToBubble()
+            }
+        }
+        card.post(runSnap)
+        card.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                if (controlsCardView !== card) {
+                    card.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    return
+                }
+                if (card.width > 0 && card.height > 0) {
+                    card.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    snapControlsCardToBubble()
+                }
+            }
+        })
     }
 
     private fun buildControlsCard(): LinearLayout {
@@ -911,7 +1032,16 @@ class OverlayService : LifecycleService() {
         }
         controlsMuteButton = muteBtn
 
-        // Screenshot
+        val brushBtn = if (brushOverlayEnabled) {
+            makeOverlayButton(
+                sizePx   = btnSize,
+                marginPx = btnMargin,
+                iconRes  = R.drawable.ic_brush,
+                bgRes    = R.drawable.bg_btn_overlay_normal,
+                padPx    = pad,
+            ) { showBrushOverlay() }
+        } else null
+
         val screenshotBtn = makeOverlayButton(
             sizePx   = btnSize,
             marginPx = btnMargin,
@@ -924,7 +1054,11 @@ class OverlayService : LifecycleService() {
             })
         }
 
-        card.addView(pauseBtn); card.addView(stopBtn); card.addView(muteBtn); card.addView(screenshotBtn)
+        card.addView(pauseBtn)
+        card.addView(stopBtn)
+        card.addView(muteBtn)
+        brushBtn?.let { card.addView(it) }
+        card.addView(screenshotBtn)
     }
 
     /** Controls card shown when NOT recording — open app to start, or take screenshot. */
@@ -942,7 +1076,8 @@ class OverlayService : LifecycleService() {
         ) {
             if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
                 val overlayAction = if (
-                    com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value == "CLIPPER"
+                    com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value ==
+                        com.ibbie.catrec_screenrecorcer.data.CaptureMode.CLIPPER
                 ) {
                     ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
                 } else {
@@ -968,6 +1103,16 @@ class OverlayService : LifecycleService() {
             }
         }
 
+        val brushBtn = if (brushOverlayEnabled) {
+            makeOverlayButton(
+                sizePx   = btnSize,
+                marginPx = btnMargin,
+                iconRes  = R.drawable.ic_brush,
+                bgRes    = R.drawable.bg_btn_overlay_normal,
+                padPx    = pad,
+            ) { showBrushOverlay() }
+        } else null
+
         val screenshotBtn = makeOverlayButton(
             sizePx   = btnSize,
             marginPx = btnMargin,
@@ -990,7 +1135,10 @@ class OverlayService : LifecycleService() {
             ).apply { setMargins(dpToPx(4), 0, dpToPx(4), 0) }
         }
 
-        card.addView(recordBtn); card.addView(screenshotBtn); card.addView(label)
+        card.addView(recordBtn)
+        brushBtn?.let { card.addView(it) }
+        card.addView(screenshotBtn)
+        card.addView(label)
     }
 
     /**
@@ -1044,11 +1192,60 @@ class OverlayService : LifecycleService() {
         controlsPauseButton = null; controlsMuteButton = null; controlsCardExpanded = false
     }
 
+    private fun readBrushOverlayEnabled(): Boolean = runBlocking(Dispatchers.IO) {
+        settingsRepo.brushOverlayEnabled.first()
+    }
+
+    private fun readFloatingControlsEnabled(): Boolean = runBlocking(Dispatchers.IO) {
+        settingsRepo.floatingControls.first()
+    }
+
+    private fun hideBrushOverlay() {
+        brushOverlayView?.let { v -> try { windowManager?.removeView(v) } catch (_: Exception) {} }
+        brushOverlayView = null
+    }
+
+    private fun showBrushOverlay() {
+        if (brushOverlayView != null) return
+        val wm = windowManager ?: return
+        val root = BrushOverlayLayout(
+            this,
+            onClose = { hideBrushOverlay() },
+            onScreenshot = {
+                startService(Intent(this, ScreenRecordService::class.java).apply {
+                    action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
+                })
+            },
+        )
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            overlayType(),
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = 0
+            y = 0
+        }
+        brushOverlayView = root
+        try {
+            wm.addView(root, params)
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Brush overlay add failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: brush overlay add failed")
+            brushOverlayView = null
+        }
+    }
+
     private fun hideControlsOverlay(userDismissed: Boolean) {
         bubbleAnimator?.cancel(); bubbleAnimator = null
-        hideDismissIndicator(); hideControlsCard()
+        hideDismissIndicator(); hideControlsCard(); hideBrushOverlay()
         controlsBubbleView?.let { try { windowManager?.removeView(it) } catch (_: Exception) {} }
         controlsBubbleView = null; controlsBubbleParams = null
+        idleControlsBubbleVisible = false
         controlsDismissedByUser = userDismissed
         if (userDismissed) {
             cancelOverlayNotification()
@@ -1080,8 +1277,9 @@ class OverlayService : LifecycleService() {
         }
     }
 
-    private fun animateDismissBubble(params: WindowManager.LayoutParams, bubble: FrameLayout, screenW: Int, screenH: Int, bubbleSizePx: Int) {
+    private fun animateDismissBubble(params: WindowManager.LayoutParams, bubble: FrameLayout, bubbleSizePx: Int) {
         bubbleAnimator?.cancel()
+        val (screenW, screenH) = currentScreenSizePx()
         val targetX = screenW / 2 - bubbleSizePx / 2
         val targetY = screenH - dpToPx(90) - bubbleSizePx / 2
         val startX = params.x; val startY = params.y
@@ -1138,7 +1336,7 @@ class OverlayService : LifecycleService() {
         }
 
         val container = buildCameraPreviewContainer(sizePx)
-        container.setOnTouchListener(makeCameraPreviewDragListener(wmParams, container, screenW, screenH, sizePx))
+        container.setOnTouchListener(makeCameraPreviewDragListener(wmParams, container, sizePx))
         cameraPreviewOverlayView = container; cameraPreviewOverlayParams = wmParams
 
         try {
@@ -1183,11 +1381,14 @@ class OverlayService : LifecycleService() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun makeCameraPreviewDragListener(
-        params: WindowManager.LayoutParams, view: FrameLayout, screenW: Int, screenH: Int, sizePx: Int
+        params: WindowManager.LayoutParams,
+        view: FrameLayout,
+        sizePx: Int
     ) = View.OnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> { view.tag = floatArrayOf(params.x.toFloat(), params.y.toFloat(), event.rawX, event.rawY); true }
             MotionEvent.ACTION_MOVE -> {
+                val (screenW, screenH) = currentScreenSizePx()
                 val tag = view.tag as? FloatArray ?: return@OnTouchListener false
                 val newX = (tag[0] + (event.rawX - tag[2])).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
                 val newY = (tag[1] + (event.rawY - tag[3])).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
@@ -1195,6 +1396,7 @@ class OverlayService : LifecycleService() {
                 try { windowManager?.updateViewLayout(view, params) } catch (_: Exception) {}; true
             }
             MotionEvent.ACTION_UP -> {
+                val (screenW, screenH) = currentScreenSizePx()
                 val maxX = (screenW - sizePx).coerceAtLeast(1).toFloat()
                 val maxY = (screenH - sizePx).coerceAtLeast(1).toFloat()
                 onCameraPreviewPositionChanged?.invoke((params.x / maxX).coerceIn(0f, 1f), (params.y / maxY).coerceIn(0f, 1f)); true
@@ -1255,7 +1457,7 @@ class OverlayService : LifecycleService() {
             y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         }
         val imageView = buildWatermarkImageView(sizePx, opacity, shape, imageUri)
-        imageView.setOnTouchListener(makePreviewDragListener(wmParams, imageView, screenW, screenH, sizePx))
+        imageView.setOnTouchListener(makePreviewDragListener(wmParams, imageView, sizePx))
         previewWatermarkView = imageView; previewWatermarkParams = wmParams
         try {
             wm.addView(imageView, wmParams)
@@ -1278,7 +1480,7 @@ class OverlayService : LifecycleService() {
         params.x = fractionToOverlayOffset(xFraction, screenW, sizePx)
         params.y = fractionToOverlayOffset(yFraction, screenH, sizePx)
         val newView = buildWatermarkImageView(sizePx, opacity, shape, imageUri)
-        newView.setOnTouchListener(makePreviewDragListener(params, newView, screenW, screenH, sizePx))
+        newView.setOnTouchListener(makePreviewDragListener(params, newView, sizePx))
         previewWatermarkView = newView
         try {
             wm.addView(newView, params)
@@ -1374,11 +1576,14 @@ class OverlayService : LifecycleService() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun makePreviewDragListener(
-        params: WindowManager.LayoutParams, view: View, screenW: Int, screenH: Int, sizePx: Int
+        params: WindowManager.LayoutParams,
+        view: View,
+        sizePx: Int
     ) = View.OnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> { view.tag = floatArrayOf(params.x.toFloat(), params.y.toFloat(), event.rawX, event.rawY); true }
             MotionEvent.ACTION_MOVE -> {
+                val (screenW, screenH) = currentScreenSizePx()
                 val tag = view.tag as? FloatArray ?: return@OnTouchListener false
                 val newX = (tag[0] + (event.rawX - tag[2])).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
                 val newY = (tag[1] + (event.rawY - tag[3])).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
@@ -1386,11 +1591,28 @@ class OverlayService : LifecycleService() {
                 try { windowManager?.updateViewLayout(view, params) } catch (_: Exception) {}; true
             }
             MotionEvent.ACTION_UP -> {
+                val (screenW, screenH) = currentScreenSizePx()
                 val maxX = (screenW - sizePx).coerceAtLeast(1).toFloat()
                 val maxY = (screenH - sizePx).coerceAtLeast(1).toFloat()
                 onPreviewPositionChanged?.invoke((params.x / maxX).coerceIn(0f, 1f), (params.y / maxY).coerceIn(0f, 1f)); true
             }
             else -> false
+        }
+    }
+
+    /** Real screen bounds in px for overlays (handles rotation reliably). */
+    private fun currentScreenSizePx(): Pair<Int, Int> {
+        val wm = windowManager ?: (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val b = wm.currentWindowMetrics.bounds
+            Pair(b.width(), b.height())
+        } else {
+            @Suppress("DEPRECATION")
+            val display = wm.defaultDisplay
+            val dm = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            display.getRealMetrics(dm)
+            Pair(dm.widthPixels, dm.heightPixels)
         }
     }
 
@@ -1415,7 +1637,8 @@ class OverlayService : LifecycleService() {
     private fun postOverlayNotification() {
         val startIntent = if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
             val notifOverlayAction = if (
-                com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value == "CLIPPER"
+                com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value ==
+                    com.ibbie.catrec_screenrecorcer.data.CaptureMode.CLIPPER
             ) ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
             else ScreenRecordService.ACTION_START_FROM_OVERLAY
             PendingIntent.getService(

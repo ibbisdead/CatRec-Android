@@ -42,3 +42,4 @@
 # These are Android platform classes — no keep rules needed, but suppress any
 # warnings R8 might emit about internal implementation classes.
 -dontwarn android.media.**
+

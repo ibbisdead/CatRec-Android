@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.navigation.NavController
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -38,14 +40,19 @@ import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
+import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
+import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 
 private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md"
 private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
 private const val PERMISSIONS_DISCLOSURE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md"
 
 @Composable
-fun SupportScreen(viewModel: RecordingViewModel) {
+fun SupportScreen(
+    viewModel: RecordingViewModel,
+    navController: NavController,
+) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val activity = context as? Activity
@@ -141,6 +148,25 @@ fun SupportScreen(viewModel: RecordingViewModel) {
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.Outlined.Pets, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
             }
+
+            Spacer(Modifier.height(28.dp))
+
+            Text(
+                stringResource(R.string.support_section_help),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                textAlign = TextAlign.Start
+            )
+
+            SupportActionCard(
+                icon = Icons.Default.Email,
+                title = stringResource(R.string.support_send_feedback),
+                subtitle = stringResource(R.string.support_send_feedback_desc),
+                onClick = {
+                    navController.navigate(Screen.Feedback.route) { launchSingleTop = true }
+                }
+            )
 
             Spacer(Modifier.height(32.dp))
 
@@ -246,6 +272,23 @@ fun SupportScreen(viewModel: RecordingViewModel) {
                         Toast.makeText(context, context.getString(R.string.support_restore_purchases_toast), Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SupportActionCard(
+                icon = Icons.Default.CardGiftcard,
+                title = stringResource(R.string.support_play_promo_title),
+                subtitle = stringResource(R.string.support_play_promo_desc),
+                onClick = {
+                    try {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/redeem"))
+                        )
+                    } catch (_: Exception) {
+                        Toast.makeText(context, context.getString(R.string.support_toast_promo_browser), Toast.LENGTH_SHORT).show()
                     }
                 }
             )
@@ -409,23 +452,44 @@ fun SupportActionCard(
     highlight: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val scheme = MaterialTheme.colorScheme
+    val light = scheme.isLightTheme()
+    val containerColor = when {
+        highlight && !light -> scheme.primaryContainer
+        highlight && light -> scheme.surfaceVariant
+        else -> scheme.surfaceVariant
+    }
+    val titleColor = when {
+        highlight && !light -> scheme.onPrimaryContainer
+        else -> scheme.onSurface
+    }
+    val subtitleColor = when {
+        highlight && !light -> scheme.onPrimaryContainer.copy(alpha = 0.72f)
+        else -> scheme.onSurfaceVariant
+    }
+    val iconTint = scheme.primary
+    val shape = RoundedCornerShape(16.dp)
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (highlight) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (highlight && light) {
+                    Modifier.border(1.5.dp, scheme.primary.copy(alpha = 0.42f), shape)
+                } else {
+                    Modifier
+                }
+            )
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
+        shape = shape,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (light) 0.dp else 2.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, modifier = Modifier.size(32.dp),
-                tint = if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary)
+            Icon(icon, null, modifier = Modifier.size(32.dp), tint = iconTint)
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                    color = if (highlight) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall,
-                    color = if (highlight) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = titleColor)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = subtitleColor)
             }
         }
     }

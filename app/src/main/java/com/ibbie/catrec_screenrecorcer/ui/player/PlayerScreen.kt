@@ -35,6 +35,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -379,12 +380,12 @@ fun PlayerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            formatMs(currentPositionMs),
+                            formatDurationMs(currentPositionMs),
                             color = Color.White,
                             style = MaterialTheme.typography.labelMedium
                         )
                         Text(
-                            formatMs(durationMs),
+                            formatDurationMs(durationMs),
                             color = Color.White.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.labelMedium
                         )
@@ -411,13 +412,4 @@ fun PlayerScreen(
             }
         }
     }
-}
-
-private fun formatMs(ms: Long): String {
-    val totalSec = ms / 1000
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return if (h > 0) String.format("%d:%02d:%02d", h, m, s)
-    else String.format("%d:%02d", m, s)
 }

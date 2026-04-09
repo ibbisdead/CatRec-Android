@@ -3,6 +3,8 @@ package com.ibbie.catrec_screenrecorcer
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -18,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,13 +36,20 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.core.os.LocaleListCompat
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
+import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
+import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
@@ -53,6 +64,35 @@ import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        /** Opens the screen-capture dialog, then prepares projection and takes one screenshot. */
+        const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
+            "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
+        /** Finishes the task and stops recorder/overlay services. */
+        const val EXTRA_EXIT_APP = "com.ibbie.catrec_screenrecorcer.EXIT_APP"
+        /** Raw image URI string; [takeQueuedImageEditorUri] consumes it for in-app editor navigation. */
+        const val EXTRA_OPEN_IMAGE_EDITOR_URI = "com.ibbie.catrec_screenrecorcer.OPEN_IMAGE_EDITOR_URI"
+    }
+
+    private val pendingImageEditorLock = Any()
+    @Volatile
+    private var pendingImageEditorUri: String? = null
+
+    /** Called from NavHost after resume / first frame to open [Screen.ImageEditor]. */
+    fun takeQueuedImageEditorUri(): String? = synchronized(pendingImageEditorLock) {
+        val v = pendingImageEditorUri
+        pendingImageEditorUri = null
+        v
+    }
+
+    private fun consumeOpenImageEditorIntent(intent: Intent?) {
+        val uriStr = intent?.getStringExtra(EXTRA_OPEN_IMAGE_EDITOR_URI)?.trim().orEmpty()
+        if (uriStr.isEmpty()) return
+        synchronized(pendingImageEditorLock) {
+            pendingImageEditorUri = uriStr
+        }
+    }
 
     private enum class ConsentUiState {
         /** Resolving consent requirement */
@@ -76,6 +116,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (consumeExitIntent(intent)) return
+        consumeOpenImageEditorIntent(intent)
 
         val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
@@ -176,6 +219,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             ConsentUiState.Ready -> {
+                                AppOpenAdOnStartEffect(activity = this@MainActivity)
                                 val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
                                 CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
                                     CatRecNavGraph()
@@ -210,9 +254,24 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Update the activity's intent so Composable observers (e.g. RecordingScreen's
-        // ON_RESUME handler) can read the latest action (ACTION_START_RECORDING_FROM_OVERLAY).
         setIntent(intent)
+        if (consumeExitIntent(intent)) return
+        consumeOpenImageEditorIntent(intent)
+        // Latest action for FabRecordingBridge (ACTION_START_RECORDING_FROM_OVERLAY).
+    }
+
+    private fun consumeExitIntent(intent: Intent?): Boolean {
+        if (intent?.getBooleanExtra(EXTRA_EXIT_APP, false) != true) return false
+        stopService(Intent(this, OverlayService::class.java))
+        startService(Intent(this, ScreenRecordService::class.java).apply {
+            action = ScreenRecordService.ACTION_STOP
+        })
+        startService(Intent(this, ScreenRecordService::class.java).apply {
+            action = ScreenRecordService.ACTION_STOP_BUFFER
+        })
+        AppControlNotification.cancel(this)
+        finishAffinity()
+        return true
     }
 
     private fun applyStoredLanguage() {
@@ -238,5 +297,27 @@ class MainActivity : ComponentActivity() {
             Log.w("MainActivity", "Could not apply stored language", e)
             recordCrashlyticsNonFatal(e, "MainActivity.applyStoredLanguage failed")
         }
+    }
+}
+
+@Composable
+private fun AppOpenAdOnStartEffect(activity: ComponentActivity) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val unitId = remember(activity) { activity.getString(R.string.admob_app_open_unit_id) }
+    DisposableEffect(lifecycleOwner, unitId) {
+        val runShow = {
+            Handler(Looper.getMainLooper()).post {
+                AppOpenAdManager.showIfAvailable(activity, unitId)
+            }
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) runShow()
+        }
+        val lifecycle = lifecycleOwner.lifecycle
+        lifecycle.addObserver(observer)
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            runShow()
+        }
+        onDispose { lifecycle.removeObserver(observer) }
     }
 }

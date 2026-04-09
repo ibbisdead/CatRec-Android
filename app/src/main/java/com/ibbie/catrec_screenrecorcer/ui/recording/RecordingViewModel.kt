@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
@@ -17,12 +19,22 @@ import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class RecordingViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SettingsRepository(application)
+
+    init {
+        viewModelScope.launch {
+            combine(repository.captureMode, RecordingState.isBuffering) { mode, buffering ->
+                if (buffering) CaptureMode.CLIPPER else mode
+            }.collect { RecordingState.setMode(it) }
+        }
+    }
 
     val isRecording: StateFlow<Boolean>  = RecordingState.isRecording
     val isBuffering: StateFlow<Boolean>  = RecordingState.isBuffering
@@ -56,6 +68,44 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
         SharingStarted.Lazily,
         setOf(StopBehaviorKeys.NOTIFICATION),
     )
+    val brushOverlayEnabled: StateFlow<Boolean> =
+        repository.brushOverlayEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val hideFloatingIconWhileRecording: StateFlow<Boolean> =
+        repository.hideFloatingIconWhileRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val postScreenshotOptions: StateFlow<Boolean> =
+        repository.postScreenshotOptions.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val recordSingleAppEnabled: StateFlow<Boolean> =
+        repository.recordSingleAppEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+    val captureMode: StateFlow<String> =
+        repository.captureMode.stateIn(viewModelScope, SharingStarted.Eagerly, CaptureMode.RECORD)
+    val gifRecorderPresetId: StateFlow<String> = repository.gifRecorderPresetId.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        GifRecordingPresets.default.id,
+    )
+    val isGifCaptureMode: StateFlow<Boolean> =
+        captureMode.map { it == CaptureMode.GIF }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /** Values used when starting a screen recording (GIF uses the selected preset; user video prefs stay unchanged). */
+    val effectiveRecordingFps: StateFlow<Int> =
+        combine(captureMode, gifRecorderPresetId, repository.fps) { mode, presetId, userFps ->
+            if (mode == CaptureMode.GIF) GifRecordingPresets.byId(presetId).fps else userFps.toInt()
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, 30)
+
+    val effectiveRecordingBitrateBits: StateFlow<Int> =
+        combine(captureMode, gifRecorderPresetId, repository.bitrate) { mode, presetId, userMbps ->
+            if (mode == CaptureMode.GIF) {
+                GifRecordingPresets.byId(presetId).bitrateBitsPerSec
+            } else {
+                (userMbps * 1_000_000).toInt()
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, 10_000_000)
+
+    val effectiveRecordingResolution: StateFlow<String> =
+        combine(captureMode, gifRecorderPresetId, repository.resolution) { mode, presetId, userRes ->
+            if (mode == CaptureMode.GIF) GifRecordingPresets.byId(presetId).resolutionSetting else userRes
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, "Native")
 
     // Camera Overlay
     val cameraOverlay: StateFlow<Boolean> = repository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -148,6 +198,17 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
     fun setTouchOverlay(value: Boolean) = viewModelScope.launch { repository.setTouchOverlay(value) }
     fun setCountdown(value: Int) = viewModelScope.launch { repository.setCountdown(value) }
     fun setClipperDurationMinutes(value: Int) = viewModelScope.launch { repository.setClipperDurationMinutes(value) }
+    fun setBrushOverlayEnabled(value: Boolean) = viewModelScope.launch { repository.setBrushOverlayEnabled(value) }
+    fun setHideFloatingIconWhileRecording(value: Boolean) = viewModelScope.launch {
+        repository.setHideFloatingIconWhileRecording(value)
+    }
+    fun setPostScreenshotOptions(value: Boolean) = viewModelScope.launch { repository.setPostScreenshotOptions(value) }
+    fun setRecordSingleAppEnabled(value: Boolean) = viewModelScope.launch { repository.setRecordSingleAppEnabled(value) }
+
+    fun setCaptureMode(mode: String) = viewModelScope.launch { repository.setCaptureMode(mode) }
+
+    fun setGifRecorderPresetId(id: String) = viewModelScope.launch { repository.setGifRecorderPresetId(id) }
+
     fun setStopBehavior(newSelection: String) = viewModelScope.launch {
         val current = stopBehavior.value.toMutableSet()
         if (current.contains(newSelection)) {
@@ -234,12 +295,14 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
 
     // Service Control
     fun startRecordingService(context: Context, resultCode: Int, data: Intent) {
+        val gif = captureMode.value == CaptureMode.GIF
+        val gifPreset = if (gif) GifRecordingPresets.byId(gifRecorderPresetId.value) else null
         val intent = Intent(context, ScreenRecordService::class.java).apply {
             action = ScreenRecordService.ACTION_START
             putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
             putExtra(ScreenRecordService.EXTRA_DATA, data)
-            putExtra(ScreenRecordService.EXTRA_FPS, fps.value.toInt())
-            putExtra(ScreenRecordService.EXTRA_BITRATE, (bitrate.value * 1_000_000).toInt())
+            putExtra(ScreenRecordService.EXTRA_FPS, effectiveRecordingFps.value)
+            putExtra(ScreenRecordService.EXTRA_BITRATE, effectiveRecordingBitrateBits.value)
             putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, recordAudio.value)
             putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, internalAudio.value)
             putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, audioBitrate.value * 1000)
@@ -260,7 +323,11 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
             putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, saveLocationUri.value)
             putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, videoEncoder.value)
             putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, floatingControls.value)
-            putExtra(ScreenRecordService.EXTRA_RESOLUTION, resolution.value)
+            putExtra(
+                ScreenRecordService.EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING,
+                hideFloatingIconWhileRecording.value,
+            )
+            putExtra(ScreenRecordService.EXTRA_RESOLUTION, effectiveRecordingResolution.value)
             putExtra(ScreenRecordService.EXTRA_FILENAME_PATTERN, filenamePattern.value)
             putExtra(ScreenRecordService.EXTRA_COUNTDOWN, countdown.value)
             putExtra(ScreenRecordService.EXTRA_KEEP_SCREEN_ON, keepScreenOn.value)
@@ -274,6 +341,12 @@ class RecordingViewModel(application: Application) : AndroidViewModel(applicatio
             putExtra(ScreenRecordService.EXTRA_WATERMARK_Y_FRACTION, watermarkYFraction.value)
             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, screenshotFormat.value)
             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, screenshotQuality.value)
+            putExtra(ScreenRecordService.EXTRA_GIF_SESSION, gif)
+            if (gif && gifPreset != null) {
+                putExtra(ScreenRecordService.EXTRA_GIF_MAX_DURATION_SEC, gifPreset.maxDurationSec)
+                putExtra(ScreenRecordService.EXTRA_GIF_SCALE_WIDTH, gifPreset.maxWidth)
+                putExtra(ScreenRecordService.EXTRA_GIF_OUTPUT_FPS, gifPreset.fps)
+            }
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             context.startForegroundService(intent)

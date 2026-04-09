@@ -45,8 +45,14 @@ import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
+import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
 import com.ibbie.catrec_screenrecorcer.ui.theme.rememberScreenBackgroundBrush
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class ScreenshotItem(
@@ -65,19 +71,35 @@ fun ScreenshotsScreen() {
     var screenshots by remember { mutableStateOf<List<ScreenshotItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var screenshotToDelete by remember { mutableStateOf<ScreenshotItem?>(null) }
-    var refreshTrigger by remember { mutableIntStateOf(0) }
+    /** Increment to force a reload while this tab is visible (toolbar refresh control). */
+    var manualRefreshKey by remember { mutableIntStateOf(0) }
     var selectedUris by remember { mutableStateOf<Set<Uri>>(emptySet()) }
     val isSelectionMode = selectedUris.isNotEmpty()
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
+    val suppressRecordFab = LocalSuppressRecordFabForListSelection.current
+    val scope = rememberCoroutineScope()
 
     BackHandler(enabled = isSelectionMode) {
         selectedUris = emptySet()
     }
 
-    LaunchedEffect(refreshTrigger) {
+    DisposableEffect(isSelectionMode) {
+        suppressRecordFab.value = isSelectionMode
+        onDispose { suppressRecordFab.value = false }
+    }
+
+    // Reload when returning to this tab, after manual refresh, or when the key changes.
+    LifecycleResumeEffect(manualRefreshKey) {
         isLoading = true
-        screenshots = withContext(Dispatchers.IO) { loadScreenshots(context) }
-        isLoading = false
+        val job = scope.launch {
+            try {
+                val list = withContext(Dispatchers.IO) { loadScreenshots(context) }
+                screenshots = list
+            } finally {
+                isLoading = false
+            }
+        }
+        onPauseOrDispose { job.cancel() }
     }
 
     if (screenshotToDelete != null) {
@@ -205,7 +227,7 @@ fun ScreenshotsScreen() {
                                 style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            IconButton(onClick = { refreshTrigger++ }, modifier = Modifier.size(32.dp)) {
+                            IconButton(onClick = { manualRefreshKey++ }, modifier = Modifier.size(32.dp)) {
                                 Icon(
                                     Icons.Default.Refresh,
                                     contentDescription = stringResource(R.string.content_desc_refresh),

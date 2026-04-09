@@ -23,11 +23,16 @@ object RecordingState {
     val isPrepared: StateFlow<Boolean> = _isPrepared.asStateFlow()
 
     /**
-     * The current recording mode selected in the app: "RECORD" or "CLIPPER".
-     * The overlay reads this to decide which action to send when the record button is tapped.
+     * Capture mode: [CaptureMode.RECORD], [CaptureMode.CLIPPER], or [CaptureMode.GIF].
+     * The overlay treats GIF like RECORD (start recording), not rolling buffer.
+     * While the rolling buffer is active, this is driven to CLIPPER regardless of pill selection.
      */
     private val _currentMode = MutableStateFlow("RECORD")
     val currentMode: StateFlow<String> = _currentMode.asStateFlow()
+
+    /** Mirrors recorder pause so UI and quick controls can show Pause vs Resume. */
+    private val _isRecordingPaused = MutableStateFlow(false)
+    val isRecordingPaused: StateFlow<Boolean> = _isRecordingPaused.asStateFlow()
 
     fun setRecording(recording: Boolean) {
         _isRecording.value = recording
@@ -47,5 +52,9 @@ object RecordingState {
 
     fun setMode(mode: String) {
         _currentMode.value = mode
+    }
+
+    fun setRecordingPaused(paused: Boolean) {
+        _isRecordingPaused.value = paused
     }
 }

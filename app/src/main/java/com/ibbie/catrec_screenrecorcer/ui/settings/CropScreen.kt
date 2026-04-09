@@ -166,42 +166,49 @@ fun CropScreen(
     }
 }
 
+/**
+ * Maps the on-screen crop square to a new bitmap (same math as [saveCroppedImage]).
+ */
+fun createCroppedBitmap(
+    source: Bitmap,
+    offset: Offset,
+    scale: Float,
+    cropSizePx: Float,
+): Bitmap? {
+    return try {
+        val bw = source.width
+        val bh = source.height
+        val startX = ((-cropSizePx / 2f - offset.x) / scale) + bw / 2f
+        val startY = ((-cropSizePx / 2f - offset.y) / scale) + bh / 2f
+        val cropW = cropSizePx / scale
+        val cropH = cropSizePx / scale
+        val finalX = max(0, startX.toInt())
+        val finalY = max(0, startY.toInt())
+        val finalW = min(bw - finalX, cropW.toInt())
+        val finalH = min(bh - finalY, cropH.toInt())
+        if (finalW <= 0 || finalH <= 0) return null
+        Bitmap.createBitmap(source, finalX, finalY, finalW, finalH)
+    } catch (_: Exception) {
+        null
+    }
+}
+
 suspend fun saveCroppedImage(
-    context: Context, 
-    source: Bitmap, 
-    offset: Offset, 
-    scale: Float, 
-    cropSizePx: Float
+    context: Context,
+    source: Bitmap,
+    offset: Offset,
+    scale: Float,
+    cropSizePx: Float,
 ): Uri? {
     return withContext(Dispatchers.IO) {
         try {
-            val bw = source.width
-            val bh = source.height
-            
-            // Formula derived from mapping screen crop rect to bitmap coords
-            val startX = ((-cropSizePx/2f - offset.x) / scale) + bw/2f
-            val startY = ((-cropSizePx/2f - offset.y) / scale) + bh/2f
-            
-            val cropW = cropSizePx / scale
-            val cropH = cropSizePx / scale
-            
-            // Safe bounds
-            val finalX = max(0, startX.toInt())
-            val finalY = max(0, startY.toInt())
-            val finalW = min(bw - finalX, cropW.toInt())
-            val finalH = min(bh - finalY, cropH.toInt())
-            
-            if (finalW <= 0 || finalH <= 0) return@withContext null
-            
-            val croppedBm = Bitmap.createBitmap(source, finalX, finalY, finalW, finalH)
-            
-            // Save to internal storage
+            val croppedBm = createCroppedBitmap(source, offset, scale, cropSizePx) ?: return@withContext null
             val file = File(context.filesDir, "custom_watermark.png")
             val out = FileOutputStream(file)
             croppedBm.compress(Bitmap.CompressFormat.PNG, 100, out)
             out.flush()
             out.close()
-            
+            if (croppedBm !== source) croppedBm.recycle()
             Uri.fromFile(file)
         } catch (e: Exception) {
             e.printStackTrace()

@@ -41,6 +41,20 @@ class SettingsRepository(private val context: Context) {
         /** Rolling Clipper buffer length in minutes (1–5). */
         val CLIPPER_DURATION_MINUTES = intPreferencesKey("clipper_duration_minutes")
         val STOP_BEHAVIOR = stringSetPreferencesKey("stop_behavior_set")
+        /** Show Brush tool on floating controls overlay. */
+        val BRUSH_OVERLAY_ENABLED = booleanPreferencesKey("brush_overlay_enabled")
+        /** Hide floating controls bubble while a recording session is active. */
+        val HIDE_FLOATING_ICON_WHILE_RECORDING = booleanPreferencesKey("hide_floating_icon_while_recording")
+        /** After saving a screenshot, show share/edit options. */
+        val POST_SCREENSHOT_OPTIONS = booleanPreferencesKey("post_screenshot_options")
+        /**
+         * When true (Android 14+), screen capture intent allows choosing a single app window.
+         * When false on API 34+, capture is restricted to the full display.
+         */
+        val RECORD_SINGLE_APP_ENABLED = booleanPreferencesKey("record_single_app_enabled")
+        /** [CaptureMode.RECORD], [CaptureMode.CLIPPER], or [CaptureMode.GIF]. */
+        val CAPTURE_MODE = stringPreferencesKey("capture_mode")
+        val GIF_RECORDER_PRESET_ID = stringPreferencesKey("gif_recorder_preset_id")
 
         // Overlay — Camera
         val CAMERA_OVERLAY = booleanPreferencesKey("camera_overlay")
@@ -134,6 +148,20 @@ class SettingsRepository(private val context: Context) {
     val stopBehavior: Flow<Set<String>> = context.dataStore.data.map { prefs ->
         StopBehaviorKeys.migrateSet(prefs[STOP_BEHAVIOR])
     }
+    val brushOverlayEnabled: Flow<Boolean> = context.dataStore.data.map { it[BRUSH_OVERLAY_ENABLED] ?: false }
+    val hideFloatingIconWhileRecording: Flow<Boolean> =
+        context.dataStore.data.map { it[HIDE_FLOATING_ICON_WHILE_RECORDING] ?: false }
+    val postScreenshotOptions: Flow<Boolean> =
+        context.dataStore.data.map { it[POST_SCREENSHOT_OPTIONS] ?: false }
+    val recordSingleAppEnabled: Flow<Boolean> =
+        context.dataStore.data.map { it[RECORD_SINGLE_APP_ENABLED] ?: false }
+    val captureMode: Flow<String> = context.dataStore.data.map { prefs ->
+        val raw = prefs[CAPTURE_MODE] ?: CaptureMode.RECORD
+        if (CaptureMode.isValid(raw)) raw else CaptureMode.RECORD
+    }
+    val gifRecorderPresetId: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[GIF_RECORDER_PRESET_ID] ?: GifRecordingPresets.default.id
+    }
 
     // Camera Overlay
     val cameraOverlay: Flow<Boolean> = context.dataStore.data.map { it[CAMERA_OVERLAY] ?: false }
@@ -218,6 +246,24 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[CLIPPER_DURATION_MINUTES] = value.coerceIn(1, 5) }
     }
     suspend fun setStopBehavior(value: Set<String>) { context.dataStore.edit { it[STOP_BEHAVIOR] = value } }
+    suspend fun setBrushOverlayEnabled(value: Boolean) { context.dataStore.edit { it[BRUSH_OVERLAY_ENABLED] = value } }
+    suspend fun setHideFloatingIconWhileRecording(value: Boolean) {
+        context.dataStore.edit { it[HIDE_FLOATING_ICON_WHILE_RECORDING] = value }
+    }
+    suspend fun setPostScreenshotOptions(value: Boolean) {
+        context.dataStore.edit { it[POST_SCREENSHOT_OPTIONS] = value }
+    }
+    suspend fun setRecordSingleAppEnabled(value: Boolean) {
+        context.dataStore.edit { it[RECORD_SINGLE_APP_ENABLED] = value }
+    }
+    suspend fun setCaptureMode(value: String) {
+        val v = if (CaptureMode.isValid(value)) value else CaptureMode.RECORD
+        context.dataStore.edit { it[CAPTURE_MODE] = v }
+    }
+    suspend fun setGifRecorderPresetId(value: String) {
+        val id = GifRecordingPresets.byId(value).id
+        context.dataStore.edit { it[GIF_RECORDER_PRESET_ID] = id }
+    }
 
     // Setters — Camera Overlay
     suspend fun setCameraOverlay(value: Boolean) { context.dataStore.edit { it[CAMERA_OVERLAY] = value } }

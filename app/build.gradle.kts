@@ -66,6 +66,7 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+        freeCompilerArgs.add("-opt-in=androidx.media3.common.util.UnstableApi")
     }
 }
 
@@ -96,7 +97,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3.window.size)
-    implementation(libs.androidx.constraintlayout.compose)
     
     // Navigation & Icons
     implementation(libs.androidx.navigation.compose)
@@ -124,6 +124,8 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.0")
     implementation("androidx.media3:media3-ui:1.5.0")
     implementation("androidx.media3:media3-common:1.5.0")
+    implementation("androidx.media3:media3-transformer:1.5.0")
+    implementation("androidx.media3:media3-effect:1.5.0")
     
     // Testing
     testImplementation(libs.junit)

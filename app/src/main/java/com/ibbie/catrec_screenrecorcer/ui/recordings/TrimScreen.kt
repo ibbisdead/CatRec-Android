@@ -32,6 +32,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -142,7 +143,7 @@ fun TrimScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        stringResource(R.string.trim_start_label, formatMs(startMs)),
+                        stringResource(R.string.trim_start_label, formatDurationMs(startMs)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -174,7 +175,7 @@ fun TrimScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        stringResource(R.string.trim_end_label, formatMs(endMs)),
+                        stringResource(R.string.trim_end_label, formatDurationMs(endMs)),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.secondary,
                         fontWeight = FontWeight.Medium
@@ -203,9 +204,9 @@ fun TrimScreen(
                 Text(
                     stringResource(
                         R.string.trim_duration_summary,
-                        formatMs(endMs - startMs),
-                        formatMs(startMs),
-                        formatMs(endMs),
+                        formatDurationMs(endMs - startMs),
+                        formatDurationMs(startMs),
+                        formatDurationMs(endMs),
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -363,13 +364,4 @@ private suspend fun trimVideo(
     } finally {
         extractor.release()
     }
-}
-
-private fun formatMs(ms: Long): String {
-    val totalSec = ms / 1000
-    val h = totalSec / 3600
-    val m = (totalSec % 3600) / 60
-    val s = totalSec % 60
-    return if (h > 0) String.format("%d:%02d:%02d", h, m, s)
-    else String.format("%d:%02d", m, s)
 }
