@@ -56,22 +56,22 @@ import kotlin.math.min
 fun CropScreen(
     imageUriString: String,
     onCropDone: (Uri) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     // Transformation State
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
-    
+
     // Crop area size (square)
     val cropSize = 200.dp
     val cropSizePx = with(LocalDensity.current) { cropSize.toPx() }
-    
+
     // Load Bitmap
     LaunchedEffect(imageUriString) {
         withContext(Dispatchers.IO) {
@@ -94,33 +94,34 @@ fun CropScreen(
                     Icon(Icons.Default.Close, "Cancel")
                 }
                 FloatingActionButton(onClick = {
-                     scope.launch {
-                         bitmap?.let { bm ->
-                             val croppedUri = saveCroppedImage(context, bm, offset, scale, cropSizePx)
-                             if (croppedUri != null) {
-                                 onCropDone(croppedUri)
-                             }
-                         }
-                     }
+                    scope.launch {
+                        bitmap?.let { bm ->
+                            val croppedUri = saveCroppedImage(context, bm, offset, scale, cropSizePx)
+                            if (croppedUri != null) {
+                                onCropDone(croppedUri)
+                            }
+                        }
+                    }
                 }) {
                     Icon(Icons.Default.Check, "Save")
                 }
             }
-        }
+        },
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .background(Color.Black)
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale *= zoom
-                        scale = max(0.5f, min(5f, scale))
-                        offset += pan
-                    }
-                },
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(Color.Black)
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            scale *= zoom
+                            scale = max(0.5f, min(5f, scale))
+                            offset += pan
+                        }
+                    },
+            contentAlignment = Alignment.Center,
         ) {
             if (isLoading) {
                 CircularProgressIndicator()
@@ -129,38 +130,46 @@ fun CropScreen(
                     Image(
                         bitmap = bm.asImageBitmap(),
                         contentDescription = null,
-                        modifier = Modifier
-                            .graphicsLayer(
-                                scaleX = scale,
-                                scaleY = scale,
-                                translationX = offset.x,
-                                translationY = offset.y
-                            )
+                        modifier =
+                            Modifier
+                                .graphicsLayer(
+                                    scaleX = scale,
+                                    scaleY = scale,
+                                    translationX = offset.x,
+                                    translationY = offset.y,
+                                ),
                     )
                 }
             }
-            
+
             // Overlay
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val canvasWidth = size.width
                 val canvasHeight = size.height
-                
+
                 val holeLeft = (canvasWidth - cropSizePx) / 2
                 val holeTop = (canvasHeight - cropSizePx) / 2
                 val holeRight = holeLeft + cropSizePx
                 val holeBottom = holeTop + cropSizePx
-                
+
                 // Draw dimmed background with hole
-                val holePath = Path().apply {
-                    addRect(Rect(holeLeft, holeTop, holeRight, holeBottom))
-                }
-                
+                val holePath =
+                    Path().apply {
+                        addRect(Rect(holeLeft, holeTop, holeRight, holeBottom))
+                    }
+
                 clipPath(holePath, clipOp = ClipOp.Difference) {
                     drawRect(Color.Black.copy(alpha = 0.6f))
                 }
-                
+
                 // Draw border
-                drawPath(holePath, color = Color.White, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()))
+                drawPath(
+                    holePath,
+                    color = Color.White,
+                    style =
+                        androidx.compose.ui.graphics.drawscope
+                            .Stroke(width = 2.dp.toPx()),
+                )
             }
         }
     }
@@ -168,7 +177,44 @@ fun CropScreen(
 
 /**
  * Maps the on-screen crop square to a new bitmap (same math as [saveCroppedImage]).
+ *
+ * Freeform crop: [cropLeft]–[cropBottom] are in the same coordinate space as the on-screen
+ * image bounds ([imageBoundsLeft], [imageBoundsTop], [imageDisplayWidth] × [imageDisplayHeight]).
  */
+fun createCroppedBitmapFromOverlay(
+    source: Bitmap,
+    imageBoundsLeft: Float,
+    imageBoundsTop: Float,
+    imageDisplayWidth: Float,
+    imageDisplayHeight: Float,
+    cropLeft: Float,
+    cropTop: Float,
+    cropRight: Float,
+    cropBottom: Float,
+): Bitmap? {
+    return try {
+        if (imageDisplayWidth <= 0f || imageDisplayHeight <= 0f) return null
+        val imgR = imageBoundsLeft + imageDisplayWidth
+        val imgB = imageBoundsTop + imageDisplayHeight
+        val cl = max(imageBoundsLeft, min(cropLeft, cropRight))
+        val ct = max(imageBoundsTop, min(cropTop, cropBottom))
+        val cr = min(imgR, max(cropLeft, cropRight))
+        val cb = min(imgB, max(cropTop, cropBottom))
+        if (cr - cl < 1f || cb - ct < 1f) return null
+        val relL = (cl - imageBoundsLeft) / imageDisplayWidth * source.width
+        val relT = (ct - imageBoundsTop) / imageDisplayHeight * source.height
+        val relR = (cr - imageBoundsLeft) / imageDisplayWidth * source.width
+        val relB = (cb - imageBoundsTop) / imageDisplayHeight * source.height
+        val x0 = relL.toInt().coerceIn(0, source.width - 1)
+        val y0 = relT.toInt().coerceIn(0, source.height - 1)
+        val x1 = relR.toInt().coerceIn(x0 + 1, source.width)
+        val y1 = relB.toInt().coerceIn(y0 + 1, source.height)
+        Bitmap.createBitmap(source, x0, y0, x1 - x0, y1 - y0)
+    } catch (_: Exception) {
+        null
+    }
+}
+
 fun createCroppedBitmap(
     source: Bitmap,
     offset: Offset,

@@ -11,14 +11,15 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
-    <style name="Theme.CatRec.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:windowNoTitle">true</item>
-    </style>
-
-    <style name="Theme.CatRec.Transparent" parent="android:Theme.Translucent.NoTitleBar">
+    <!-- AppCompatActivity (e.g. ScreenshotPostActionActivity) requires an AppCompat/MaterialComponents theme.
+         Plain android:Theme.Translucent.* crashes in AppCompatDelegateImpl.createSubDecor (Crashlytics 6c117401…). -->
+    <style name="Theme.CatRec.Transparent" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
     </style>
 </resources>

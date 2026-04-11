@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +40,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -67,19 +67,20 @@ private data class FeedbackIssueOption(
     val labelRes: Int,
 )
 
-private val feedbackIssues = listOf(
-    FeedbackIssueOption("recording_stopped", R.string.feedback_issue_recording_stopped),
-    FeedbackIssueOption("crash", R.string.feedback_issue_crash),
-    FeedbackIssueOption("no_sound", R.string.feedback_issue_no_sound),
-    FeedbackIssueOption("video_black", R.string.feedback_issue_video_black),
-    FeedbackIssueOption("cant_start", R.string.feedback_issue_cant_start),
-    FeedbackIssueOption("overlay", R.string.feedback_issue_overlay),
-    FeedbackIssueOption("gif_export", R.string.feedback_issue_gif_export),
-    FeedbackIssueOption("battery_oem", R.string.feedback_issue_battery_oem),
-    FeedbackIssueOption("storage", R.string.feedback_issue_storage),
-    FeedbackIssueOption("quality", R.string.feedback_issue_quality),
-    FeedbackIssueOption("other", R.string.feedback_issue_other),
-)
+private val feedbackIssues =
+    listOf(
+        FeedbackIssueOption("recording_stopped", R.string.feedback_issue_recording_stopped),
+        FeedbackIssueOption("crash", R.string.feedback_issue_crash),
+        FeedbackIssueOption("no_sound", R.string.feedback_issue_no_sound),
+        FeedbackIssueOption("video_black", R.string.feedback_issue_video_black),
+        FeedbackIssueOption("cant_start", R.string.feedback_issue_cant_start),
+        FeedbackIssueOption("overlay", R.string.feedback_issue_overlay),
+        FeedbackIssueOption("gif_export", R.string.feedback_issue_gif_export),
+        FeedbackIssueOption("battery_oem", R.string.feedback_issue_battery_oem),
+        FeedbackIssueOption("storage", R.string.feedback_issue_storage),
+        FeedbackIssueOption("quality", R.string.feedback_issue_quality),
+        FeedbackIssueOption("other", R.string.feedback_issue_other),
+    )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -89,13 +90,14 @@ fun FeedbackScreen(navController: NavController) {
     var description by remember { mutableStateOf("") }
     val attachments = remember { mutableStateListOf<Uri>() }
 
-    val pickImages = rememberLauncherForActivityResult(
-        PickMultipleVisualMedia(maxItems = 5),
-    ) { uris ->
-        for (u in uris) {
-            if (attachments.size < 5 && u !in attachments) attachments.add(u)
+    val pickImages =
+        rememberLauncherForActivityResult(
+            PickMultipleVisualMedia(maxItems = 5),
+        ) { uris ->
+            for (u in uris) {
+                if (attachments.size < 5 && u !in attachments) attachments.add(u)
+            }
         }
-    }
 
     Scaffold(
         topBar = {
@@ -109,18 +111,20 @@ fun FeedbackScreen(navController: NavController) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
             )
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
         ) {
             Text(
                 text = stringResource(R.string.feedback_issue_section_title),
@@ -206,17 +210,19 @@ fun FeedbackScreen(navController: NavController) {
                             AsyncImage(
                                 model = uri,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(96.dp)
-                                    .aspectRatio(1f)
-                                    .clip(RoundedCornerShape(12.dp)),
+                                modifier =
+                                    Modifier
+                                        .size(96.dp)
+                                        .aspectRatio(1f)
+                                        .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop,
                             )
                             IconButton(
                                 onClick = { attachments.remove(uri) },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .size(28.dp),
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(28.dp),
                             ) {
                                 Icon(Icons.Default.Close, contentDescription = stringResource(R.string.action_delete))
                             }
@@ -229,20 +235,22 @@ fun FeedbackScreen(navController: NavController) {
             Button(
                 onClick = {
                     if (selectedIssueIndex < 0) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.feedback_select_issue),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                context,
+                                context.getString(R.string.feedback_select_issue),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         return@Button
                     }
                     val desc = description.trim()
                     if (desc.length < 8) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.feedback_description_too_short),
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                context,
+                                context.getString(R.string.feedback_description_too_short),
+                                Toast.LENGTH_LONG,
+                            ).show()
                         return@Button
                     }
                     val issue = feedbackIssues[selectedIssueIndex]

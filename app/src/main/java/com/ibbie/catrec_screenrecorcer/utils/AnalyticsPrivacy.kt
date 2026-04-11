@@ -5,6 +5,7 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 
 /** Firebase Analytics only — independent of AdMob personalization. */
@@ -42,10 +43,11 @@ suspend fun Context.syncFirebaseUserIdentity(
         FirebaseAnalytics.getInstance(this).setUserId(null)
         return
     }
-    val id = when {
-        !signedInUserId.isNullOrBlank() -> signedInUserId
-        else -> SettingsRepository(this).getOrCreateFirebaseAnonymousUserId()
-    }
+    val id =
+        when {
+            !signedInUserId.isNullOrBlank() -> signedInUserId
+            else -> SettingsRepository(this).getOrCreateFirebaseAnonymousUserId()
+        }
     FirebaseCrashlytics.getInstance().setUserId(id)
     FirebaseAnalytics.getInstance(this).setUserId(id)
 }
@@ -63,22 +65,19 @@ suspend fun Context.setCrashlyticsUserId(
 }
 
 /**
- * AdMob global request configuration for personalized vs limited/non-personalized ads.
- * When [personalized] is false, requests use restricted signaling (aligned with prior NPA behavior).
+ * AdMob: when [personalized] is false, all ad requests must include the `npa=1` extra
+ * ([AdMobAdRequestFactory]); do not use tag-for-under-age-of-consent for NPA — that is for minor-directed
+ * inventory and causes severe NO_FILL if applied to general users.
  */
 fun Context.applyPersonalizedAdsEnabled(personalized: Boolean) {
-    if (!personalized) {
-        MobileAds.setRequestConfiguration(
-            RequestConfiguration.Builder()
-                .setTagForUnderAgeOfConsent(RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE)
-                .build(),
-        )
-    } else {
-        MobileAds.setRequestConfiguration(RequestConfiguration.Builder().build())
-    }
+    AdMobAdRequestFactory.personalizedAdsEnabled = personalized
+    MobileAds.setRequestConfiguration(RequestConfiguration.Builder().build())
 }
 
-fun Context.applyPrivacySettings(analyticsEnabled: Boolean, personalizedAdsEnabled: Boolean) {
+fun Context.applyPrivacySettings(
+    analyticsEnabled: Boolean,
+    personalizedAdsEnabled: Boolean,
+) {
     applyAnalyticsCollectionEnabled(analyticsEnabled)
     applyPersonalizedAdsEnabled(personalizedAdsEnabled)
 }

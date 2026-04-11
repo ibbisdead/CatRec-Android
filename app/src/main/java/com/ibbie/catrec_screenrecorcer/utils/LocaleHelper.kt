@@ -11,6 +11,10 @@ import java.util.Locale
  * Handles locale persistence and context wrapping so that:
  * - The chosen language survives process restarts (via SharedPreferences, which is
  *   synchronously readable inside attachBaseContext).
+ * - Do **not** read DataStore inside [wrap]: it runs during [Application.attachBaseContext] /
+ *   [android.app.Activity.attachBaseContext] before the app is fully up; blocking I/O there
+ *   can deadlock or crash with little useful logcat. [persist] uses [commit] so SP stays in
+ *   sync with DataStore after language changes; [MainActivity] also reconciles on cold start.
  * - All stringResource / getString calls in both Compose and XML layouts pick up
  *   the correct values-xx strings after an Activity recreate.
  *
@@ -19,22 +23,28 @@ import java.util.Locale
  *   Language changed in Settings   → LocaleHelper.persist(ctx, code) then Activity.recreate()
  */
 object LocaleHelper {
-
     private const val PREFS = "catrec_locale"
-    private const val KEY   = "language_code"
+    private const val KEY = "language_code"
 
-    /** Save the language code to SharedPreferences for synchronous access later. */
-    fun persist(context: Context, languageCode: String) {
+    /**
+     * Save the language code to SharedPreferences for synchronous access in [wrap].
+     * Uses [commit] so the value is on disk before the process can be killed (unlike [apply]).
+     */
+    fun persist(
+        context: Context,
+        languageCode: String,
+    ) {
         context.applicationContext
             .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY, languageCode)
-            .apply()
+            .commit()
     }
 
     /** Read the saved language code (never null; defaults to "system"). */
     fun getSaved(context: Context): String =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        context
+            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY, "system") ?: "system"
 
     /**
@@ -64,7 +74,10 @@ object LocaleHelper {
      * Call this when the user picks a language in Settings, then call [android.app.Activity.recreate]
      * on the foreground activity so Compose and Views reload strings from the new configuration.
      */
-    fun apply(context: Context, languageCode: String) {
+    fun apply(
+        context: Context,
+        languageCode: String,
+    ) {
         try {
             crashlyticsLog("Language change to $languageCode")
             FirebaseCrashlytics.getInstance().setCustomKey(CrashlyticsKeys.APP_LANGUAGE, languageCode)
@@ -72,11 +85,12 @@ object LocaleHelper {
 
             // AppCompatDelegate handles the per-app locale on API 33+ natively;
             // on older versions it stores the preference and we rely on attachBaseContext.
-            val localeList = if (languageCode.equals("system", ignoreCase = true)) {
-                LocaleListCompat.getEmptyLocaleList()
-            } else {
-                LocaleListCompat.forLanguageTags(languageCode)
-            }
+            val localeList =
+                if (languageCode.equals("system", ignoreCase = true)) {
+                    LocaleListCompat.getEmptyLocaleList()
+                } else {
+                    LocaleListCompat.forLanguageTags(languageCode)
+                }
             AppCompatDelegate.setApplicationLocales(localeList)
         } catch (e: Exception) {
             recordCrashlyticsNonFatal(e, "LocaleHelper.apply($languageCode)")

@@ -13,7 +13,6 @@ import com.ibbie.catrec_screenrecorcer.data.RecordingState
 
 @RequiresApi(Build.VERSION_CODES.N)
 class RecordTileService : TileService() {
-
     override fun onStartListening() {
         super.onStartListening()
         updateTile()
@@ -22,14 +21,14 @@ class RecordTileService : TileService() {
     override fun onClick() {
         super.onClick()
         val isRecording = RecordingState.isRecording.value
-        val isPrepared  = RecordingState.isPrepared.value
+        val isPrepared = RecordingState.isPrepared.value
 
         when {
             isRecording -> {
                 startService(
                     Intent(this, ScreenRecordService::class.java).apply {
                         action = ScreenRecordService.ACTION_STOP
-                    }
+                    },
                 )
             }
             isPrepared -> {
@@ -37,24 +36,25 @@ class RecordTileService : TileService() {
                     startForegroundService(
                         Intent(this, ScreenRecordService::class.java).apply {
                             action = ScreenRecordService.ACTION_START_FROM_OVERLAY
-                        }
+                        },
                     )
                 } else {
                     startService(
                         Intent(this, ScreenRecordService::class.java).apply {
                             action = ScreenRecordService.ACTION_START_FROM_OVERLAY
-                        }
+                        },
                     )
                 }
             }
             else -> {
                 // Not authorized — open the app so the user can grant overlay permission.
-                val intent = Intent(this, MainActivity::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                }
+                val intent =
+                    Intent(this, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     startActivityAndCollapse(
-                        PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+                        PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE),
                     )
                 } else {
                     @Suppress("DEPRECATION")
@@ -72,11 +72,12 @@ class RecordTileService : TileService() {
         tile.icon = Icon.createWithResource(this, R.mipmap.ic_launcher)
         tile.state = if (isRecording) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = when {
-                isRecording -> getString(R.string.tile_subtitle_recording)
-                RecordingState.isPrepared.value -> getString(R.string.tile_subtitle_ready)
-                else -> getString(R.string.tile_subtitle_tap_open)
-            }
+            tile.subtitle =
+                when {
+                    isRecording -> getString(R.string.tile_subtitle_recording)
+                    RecordingState.isPrepared.value -> getString(R.string.tile_subtitle_ready)
+                    else -> getString(R.string.tile_subtitle_tap_open)
+                }
         }
         tile.updateTile()
     }

@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,6 +8,8 @@ plugins {
     // Must be applied (no apply false) so google-services.json is processed and Firebase SDKs initialize.
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
 }
 
 android {
@@ -17,8 +20,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "0.9.8 Beta"
+        versionCode = 15
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -31,7 +34,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             // Upload full native debug symbols to both Google Play and Firebase Crashlytics.
             ndk {
@@ -70,6 +73,27 @@ kotlin {
     }
 }
 
+detekt {
+    buildUponDefaultConfig = true
+    parallel = true
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+}
+
+tasks.withType<Detekt>().configureEach {
+    jvmTarget = "11"
+}
+
+tasks.named("check") {
+    dependsOn(tasks.named("detekt"), tasks.named("ktlintCheck"))
+}
+
+ktlint {
+    // Align with Kotlin 2.2 (embedded parser in default ktlint 1.3.x fails on some sources).
+    version.set("1.7.1")
+    android.set(true)
+    outputToConsole.set(true)
+}
+
 dependencies {
     // Firebase (BoM manages all Firebase library versions)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
@@ -88,7 +112,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation(libs.androidx.documentfile)
-    
+
     // Compose
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -97,14 +121,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material3.window.size)
-    
+
     // Navigation & Icons
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
-    
+
     // Persistence
     implementation(libs.androidx.datastore.preferences)
-    
+
     // AppCompat — required for per-app locale switching (AppCompatDelegate)
     implementation("androidx.appcompat:appcompat:1.7.0")
 
@@ -126,14 +150,14 @@ dependencies {
     implementation("androidx.media3:media3-common:1.5.0")
     implementation("androidx.media3:media3-transformer:1.5.0")
     implementation("androidx.media3:media3-effect:1.5.0")
-    
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    
+
     // Debugging (Only for debug builds ideally, but kept for dev)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

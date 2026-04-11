@@ -17,12 +17,13 @@ import com.ibbie.catrec_screenrecorcer.R
 import kotlinx.coroutines.delay
 import java.util.Locale
 
-private fun formatBytes(bytes: Long): String = when {
-    bytes >= 1L shl 30 -> String.format(Locale.US, "%.1f GB", bytes / (1L shl 30).toDouble())
-    bytes >= 1L shl 20 -> String.format(Locale.US, "%.0f MB", bytes / (1L shl 20).toDouble())
-    bytes >= 1L shl 10 -> String.format(Locale.US, "%.0f KB", bytes / (1L shl 10).toDouble())
-    else -> "$bytes B"
-}
+private fun formatBytes(bytes: Long): String =
+    when {
+        bytes >= 1L shl 30 -> String.format(Locale.US, "%.1f GB", bytes / (1L shl 30).toDouble())
+        bytes >= 1L shl 20 -> String.format(Locale.US, "%.0f MB", bytes / (1L shl 20).toDouble())
+        bytes >= 1L shl 10 -> String.format(Locale.US, "%.0f KB", bytes / (1L shl 10).toDouble())
+        else -> "$bytes B"
+    }
 
 @Composable
 fun StorageIndicator(modifier: Modifier = Modifier) {
@@ -43,11 +44,12 @@ fun StorageIndicator(modifier: Modifier = Modifier) {
     }
 
     Text(
-        text = stringResource(
-            R.string.storage_indicator_format,
-            formatBytes(usedBytes),
-            formatBytes(freeBytes),
-        ),
+        text =
+            stringResource(
+                R.string.storage_indicator_format,
+                formatBytes(usedBytes),
+                formatBytes(freeBytes),
+            ),
         modifier = modifier,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,

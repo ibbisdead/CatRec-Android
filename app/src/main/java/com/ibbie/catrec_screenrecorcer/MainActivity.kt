@@ -20,7 +20,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,60 +34,61 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import androidx.compose.ui.res.stringResource
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.core.os.LocaleListCompat
-import com.google.android.gms.ads.MobileAds
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
+import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
-import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
+import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import com.ibbie.catrec_screenrecorcer.utils.refreshCrashlyticsSessionKeys
 import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
-
     companion object {
         /** Opens the screen-capture dialog, then prepares projection and takes one screenshot. */
         const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
             "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
+
         /** Finishes the task and stops recorder/overlay services. */
         const val EXTRA_EXIT_APP = "com.ibbie.catrec_screenrecorcer.EXIT_APP"
+
         /** Raw image URI string; [takeQueuedImageEditorUri] consumes it for in-app editor navigation. */
         const val EXTRA_OPEN_IMAGE_EDITOR_URI = "com.ibbie.catrec_screenrecorcer.OPEN_IMAGE_EDITOR_URI"
     }
 
     private val pendingImageEditorLock = Any()
+
     @Volatile
     private var pendingImageEditorUri: String? = null
 
     /** Called from NavHost after resume / first frame to open [Screen.ImageEditor]. */
-    fun takeQueuedImageEditorUri(): String? = synchronized(pendingImageEditorLock) {
-        val v = pendingImageEditorUri
-        pendingImageEditorUri = null
-        v
-    }
+    fun takeQueuedImageEditorUri(): String? =
+        synchronized(pendingImageEditorLock) {
+            val v = pendingImageEditorUri
+            pendingImageEditorUri = null
+            v
+        }
 
     private fun consumeOpenImageEditorIntent(intent: Intent?) {
         val uriStr = intent?.getStringExtra(EXTRA_OPEN_IMAGE_EDITOR_URI)?.trim().orEmpty()
@@ -153,7 +157,7 @@ class MainActivity : ComponentActivity() {
                 val floatingOn = settingsRepository.floatingControls.first()
                 applicationContext.refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
-            MobileAds.initialize(this)
+            // AdMob is initialized in [CatRecApplication] (single SDK init per process).
 
             if (BuildConfig.DEBUG && analyticsEnabled) {
                 FirebaseAnalytics.getInstance(this).logEvent("debug_analytics_verification", null)
@@ -174,11 +178,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val themeSetting by repo.appTheme.collectAsState(initial = "System")
-                val isDark = when (themeSetting) {
-                    "Light" -> false
-                    "Dark" -> true
-                    else -> isSystemInDarkTheme()
-                }
+                val isDark =
+                    when (themeSetting) {
+                        "Light" -> false
+                        "Dark" -> true
+                        else -> isSystemInDarkTheme()
+                    }
 
                 CatRecScreenRecorderTheme(darkTheme = isDark) {
                     Surface(color = MaterialTheme.colorScheme.background) {
@@ -238,17 +243,23 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         (application as? CatRecApplication)?.billingManager?.refreshPurchasesIfConnected()
-        try {
-            val repo = SettingsRepository(applicationContext)
-            val floatingOn = runBlocking { repo.floatingControls.first() }
-            if (floatingOn && Settings.canDrawOverlays(this)) {
-                startService(Intent(this, OverlayService::class.java).apply {
-                    action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
-                })
+        lifecycleScope.launch {
+            try {
+                val floatingOn =
+                    withContext(Dispatchers.IO) {
+                        SettingsRepository(applicationContext).floatingControls.first()
+                    }
+                if (floatingOn && Settings.canDrawOverlays(this@MainActivity)) {
+                    startService(
+                        Intent(this@MainActivity, OverlayService::class.java).apply {
+                            action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                        },
+                    )
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Idle overlay start skipped", e)
+                recordCrashlyticsNonFatal(e, "MainActivity.onResume: idle overlay start failed")
             }
-        } catch (e: Exception) {
-            Log.w("MainActivity", "Idle overlay start skipped", e)
-            recordCrashlyticsNonFatal(e, "MainActivity.onResume: idle overlay start failed")
         }
     }
 
@@ -263,12 +274,16 @@ class MainActivity : ComponentActivity() {
     private fun consumeExitIntent(intent: Intent?): Boolean {
         if (intent?.getBooleanExtra(EXTRA_EXIT_APP, false) != true) return false
         stopService(Intent(this, OverlayService::class.java))
-        startService(Intent(this, ScreenRecordService::class.java).apply {
-            action = ScreenRecordService.ACTION_STOP
-        })
-        startService(Intent(this, ScreenRecordService::class.java).apply {
-            action = ScreenRecordService.ACTION_STOP_BUFFER
-        })
+        startService(
+            Intent(this, ScreenRecordService::class.java).apply {
+                action = ScreenRecordService.ACTION_STOP
+            },
+        )
+        startService(
+            Intent(this, ScreenRecordService::class.java).apply {
+                action = ScreenRecordService.ACTION_STOP_BUFFER
+            },
+        )
         AppControlNotification.cancel(this)
         finishAffinity()
         return true
@@ -310,9 +325,10 @@ private fun AppOpenAdOnStartEffect(activity: ComponentActivity) {
                 AppOpenAdManager.showIfAvailable(activity, unitId)
             }
         }
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_START) runShow()
-        }
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_START) runShow()
+            }
         val lifecycle = lifecycleOwner.lifecycle
         lifecycle.addObserver(observer)
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {

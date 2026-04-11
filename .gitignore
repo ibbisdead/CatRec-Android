@@ -23,3 +23,6 @@ app/release/
 # Local IDE / tooling
 .cursor/
 .kotlin/
+
+tmp_count.txt
+**/__pycache__/

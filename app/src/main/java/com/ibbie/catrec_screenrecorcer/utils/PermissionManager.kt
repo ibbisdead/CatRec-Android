@@ -13,8 +13,9 @@ data class PermissionInfo(
     val rationale: String,
 )
 
-class PermissionManager(private val context: Context) {
-
+class PermissionManager(
+    private val context: Context,
+) {
     companion object {
         private const val PREFS_NAME = "catrec_permissions"
         private const val KEY_SETUP_COMPLETE = "setup_complete"
@@ -33,7 +34,8 @@ class PermissionManager(private val context: Context) {
     fun isNotificationGranted(): Boolean =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
-                context, Manifest.permission.POST_NOTIFICATIONS
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
@@ -41,73 +43,108 @@ class PermissionManager(private val context: Context) {
 
     fun isAudioGranted(): Boolean =
         ContextCompat.checkSelfPermission(
-            context, Manifest.permission.RECORD_AUDIO
+            context,
+            Manifest.permission.RECORD_AUDIO,
         ) == PackageManager.PERMISSION_GRANTED
 
     fun isCameraGranted(): Boolean =
         ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
+            context,
+            Manifest.permission.CAMERA,
         ) == PackageManager.PERMISSION_GRANTED
 
     fun isOverlayGranted(): Boolean = Settings.canDrawOverlays(context)
 
-    fun areAllGranted(): Boolean =
-        isNotificationGranted() && isAudioGranted() && isCameraGranted() && isOverlayGranted()
+    /**
+     * Read access for Recordings / Screenshots tabs (MediaStore). API 33+: video + images + audio;
+     * older: [READ_EXTERNAL_STORAGE].
+     */
+    fun mediaLibraryReadPermissions(): Array<String> =
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                )
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+            else -> emptyArray()
+        }
 
-    /** Returns a list of [PermissionInfo] for every permission that is NOT currently granted. */
-    fun getMissingPermissions(): List<PermissionInfo> = buildList {
-        if (!isNotificationGranted()) {
-            add(
-                PermissionInfo(
-                    name = context.getString(R.string.perm_name_notifications),
-                    rationale = context.getString(R.string.perm_rationale_notifications),
-                )
-            )
-        }
-        if (!isAudioGranted()) {
-            add(
-                PermissionInfo(
-                    name = context.getString(R.string.perm_name_microphone),
-                    rationale = context.getString(R.string.perm_rationale_microphone),
-                )
-            )
-        }
-        if (!isCameraGranted()) {
-            add(
-                PermissionInfo(
-                    name = context.getString(R.string.perm_name_camera),
-                    rationale = context.getString(R.string.perm_rationale_camera),
-                )
-            )
-        }
-        if (!isOverlayGranted()) {
-            add(
-                PermissionInfo(
-                    name = context.getString(R.string.perm_name_overlay),
-                    rationale = context.getString(R.string.perm_rationale_overlay),
-                )
-            )
+    fun isMediaLibraryReadGranted(): Boolean {
+        val perms = mediaLibraryReadPermissions()
+        if (perms.isEmpty()) return true
+        return perms.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
     }
 
+    fun areAllGranted(): Boolean =
+        isNotificationGranted() &&
+            isAudioGranted() &&
+            isCameraGranted() &&
+            isOverlayGranted() &&
+            isMediaLibraryReadGranted()
+
+    /** Returns a list of [PermissionInfo] for every permission that is NOT currently granted. */
+    fun getMissingPermissions(): List<PermissionInfo> =
+        buildList {
+            if (!isNotificationGranted()) {
+                add(
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_notifications),
+                        rationale = context.getString(R.string.perm_rationale_notifications),
+                    ),
+                )
+            }
+            if (!isAudioGranted()) {
+                add(
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_microphone),
+                        rationale = context.getString(R.string.perm_rationale_microphone),
+                    ),
+                )
+            }
+            if (!isCameraGranted()) {
+                add(
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_camera),
+                        rationale = context.getString(R.string.perm_rationale_camera),
+                    ),
+                )
+            }
+            if (!isOverlayGranted()) {
+                add(
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_overlay),
+                        rationale = context.getString(R.string.perm_rationale_overlay),
+                    ),
+                )
+            }
+            if (!isMediaLibraryReadGranted()) {
+                add(
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_media_library),
+                        rationale = context.getString(R.string.perm_rationale_media_library),
+                    ),
+                )
+            }
+        }
+
     // --- SharedPreferences: persist granted state across sessions ---
 
-    fun saveNotificationGranted(granted: Boolean) =
-        prefs.edit().putBoolean(KEY_NOTIFICATIONS_GRANTED, granted).apply()
+    fun saveNotificationGranted(granted: Boolean) = prefs.edit().putBoolean(KEY_NOTIFICATIONS_GRANTED, granted).apply()
 
-    fun saveAudioGranted(granted: Boolean) =
-        prefs.edit().putBoolean(KEY_AUDIO_GRANTED, granted).apply()
+    fun saveAudioGranted(granted: Boolean) = prefs.edit().putBoolean(KEY_AUDIO_GRANTED, granted).apply()
 
-    fun saveCameraGranted(granted: Boolean) =
-        prefs.edit().putBoolean(KEY_CAMERA_GRANTED, granted).apply()
+    fun saveCameraGranted(granted: Boolean) = prefs.edit().putBoolean(KEY_CAMERA_GRANTED, granted).apply()
 
-    fun saveOverlayGranted(granted: Boolean) =
-        prefs.edit().putBoolean(KEY_OVERLAY_GRANTED, granted).apply()
+    fun saveOverlayGranted(granted: Boolean) = prefs.edit().putBoolean(KEY_OVERLAY_GRANTED, granted).apply()
 
     // --- First-launch setup tracking ---
 
     fun isSetupComplete(): Boolean = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
 
-    fun markSetupComplete() =
-        prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
+    fun markSetupComplete() = prefs.edit().putBoolean(KEY_SETUP_COMPLETE, true).apply()
 }

@@ -24,15 +24,17 @@ import java.nio.ByteBuffer
  *  3. Writes all remaining segments with that offset applied.
  */
 object ClipMerger {
-
     private const val TAG = "ClipMerger"
-    private const val BUFFER_SIZE = 1 * 1024 * 1024   // 1 MB read buffer
+    private const val BUFFER_SIZE = 1 * 1024 * 1024 // 1 MB read buffer
 
     /**
      * Merges [inputFiles] into [outputFile].
      * @return true if at least one sample was written, false otherwise.
      */
-    fun merge(inputFiles: List<File>, outputFile: File): Boolean {
+    fun merge(
+        inputFiles: List<File>,
+        outputFile: File,
+    ): Boolean {
         val validFiles = inputFiles.filter { it.exists() && it.length() > 0 }
         if (validFiles.isEmpty()) {
             Log.w(TAG, "No valid segment files to merge.")
@@ -48,7 +50,7 @@ object ClipMerger {
         // muxer track index per MIME type (e.g. "video/avc" → 0, "audio/mp4a-latm" → 1)
         val muxerTracks = mutableMapOf<String, Int>()
 
-        var globalPtsOffsetUs = 0L   // running PTS offset across segments
+        var globalPtsOffsetUs = 0L // running PTS offset across segments
 
         val readBuffer = ByteBuffer.allocate(BUFFER_SIZE)
         val bufferInfo = MediaCodec.BufferInfo()
@@ -98,7 +100,7 @@ object ClipMerger {
                     if (bufferInfo.size < 0) break
 
                     val extTrack = extractor.sampleTrackIndex
-                    val mime     = mimeByExtTrack[extTrack]
+                    val mime = mimeByExtTrack[extTrack]
                     val muxerTrack = if (mime != null) muxerTracks[mime] else null
 
                     if (mime == null || muxerTrack == null) {
@@ -109,7 +111,7 @@ object ClipMerger {
                     val rawPts = extractor.sampleTime
                     bufferInfo.presentationTimeUs = rawPts + globalPtsOffsetUs
                     bufferInfo.offset = 0
-                    bufferInfo.flags  = extractor.sampleFlags
+                    bufferInfo.flags = extractor.sampleFlags
 
                     readBuffer.position(0)
                     readBuffer.limit(bufferInfo.size)
@@ -123,9 +125,8 @@ object ClipMerger {
 
                 // Advance the global offset by the duration of this segment.
                 // Add one video-frame worth of padding to avoid PTS collisions.
-                globalPtsOffsetUs += maxPtsUs + 33_333L  // ≈ 1 frame @30 fps
+                globalPtsOffsetUs += maxPtsUs + 33_333L // ≈ 1 frame @30 fps
                 Log.d(TAG, "Segment $segIdx merged, maxPts=$maxPtsUs µs, nextOffset=$globalPtsOffsetUs µs")
-
             } catch (e: Exception) {
                 Log.e(TAG, "Error merging segment ${file.name}: ${e.message}", e)
             } finally {

@@ -9,8 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items as gridItems
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMerge
@@ -19,6 +17,8 @@ import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Gif
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,19 +26,22 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
+import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingEntry
 import com.ibbie.catrec_screenrecorcer.ui.recordings.loadAppRecordings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.lazy.grid.items as gridItems
 
 private enum class PendingVideoTool { Trim, Compress, Gif }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun ToolsScreen(navController: NavController) {
     val context = LocalContext.current
@@ -49,7 +52,10 @@ fun ToolsScreen(navController: NavController) {
     var pendingTool by remember { mutableStateOf<PendingVideoTool?>(null) }
     var showCatRecSheet by remember { mutableStateOf(false) }
 
-    fun navigateForTool(tool: PendingVideoTool, uri: Uri) {
+    fun navigateForTool(
+        tool: PendingVideoTool,
+        uri: Uri,
+    ) {
         val enc = Uri.encode(uri.toString())
         when (tool) {
             PendingVideoTool.Trim -> navController.navigate("trim?videoUri=$enc")
@@ -58,24 +64,26 @@ fun ToolsScreen(navController: NavController) {
         }
     }
 
-    val storageLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent(),
-    ) { uri ->
-        val tool = pendingTool
-        pendingTool = null
-        if (uri != null && tool != null) navigateForTool(tool, uri)
-    }
+    val storageLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.GetContent(),
+        ) { uri ->
+            val tool = pendingTool
+            pendingTool = null
+            if (uri != null && tool != null) navigateForTool(tool, uri)
+        }
 
-    val imageEditorLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent(),
-    ) { uri ->
-        if (uri != null) {
-            val enc = Uri.encode(uri.toString())
-            navController.navigate("image_editor?imageUri=$enc") {
-                launchSingleTop = true
+    val imageEditorLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.GetContent(),
+        ) { uri ->
+            if (uri != null) {
+                val enc = Uri.encode(uri.toString())
+                navController.navigate("image_editor?imageUri=$enc") {
+                    launchSingleTop = true
+                }
             }
         }
-    }
 
     val trimTitle = stringResource(R.string.tool_video_trim)
     val compressTitle = stringResource(R.string.tool_compress)
@@ -84,29 +92,31 @@ fun ToolsScreen(navController: NavController) {
 
     val editImageTitle = stringResource(R.string.tool_edit_image)
 
-    val imageTools = listOf(
-        ToolItem(editImageTitle, Icons.Default.Image) {
-            imageEditorLauncher.launch("image/*")
-        },
-    )
+    val imageTools =
+        listOf(
+            ToolItem(editImageTitle, Icons.Default.Image) {
+                imageEditorLauncher.launch("image/*")
+            },
+        )
 
-    val tools = listOf(
-        ToolItem(trimTitle, Icons.Default.ContentCut) {
-            pendingTool = PendingVideoTool.Trim
-            showSourceDialog = true
-        },
-        ToolItem(compressTitle, Icons.Default.Compress) {
-            pendingTool = PendingVideoTool.Compress
-            showSourceDialog = true
-        },
-        ToolItem(gifTitle, Icons.Default.Gif) {
-            pendingTool = PendingVideoTool.Gif
-            showSourceDialog = true
-        },
-        ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge) {
-            navController.navigate(Screen.MergeVideos.route)
-        },
-    )
+    val tools =
+        listOf(
+            ToolItem(trimTitle, Icons.Default.ContentCut) {
+                pendingTool = PendingVideoTool.Trim
+                showSourceDialog = true
+            },
+            ToolItem(compressTitle, Icons.Default.Compress) {
+                pendingTool = PendingVideoTool.Compress
+                showSourceDialog = true
+            },
+            ToolItem(gifTitle, Icons.Default.Gif) {
+                pendingTool = PendingVideoTool.Gif
+                showSourceDialog = true
+            },
+            ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge) {
+                navController.navigate(Screen.MergeVideos.route)
+            },
+        )
 
     if (showSourceDialog && pendingTool != null) {
         AlertDialog(
@@ -169,15 +179,16 @@ fun ToolsScreen(navController: NavController) {
                 items(entries, key = { it.uri.toString() }) { entry ->
                     ListItem(
                         headlineContent = { Text(entry.displayName) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                if (tool != null) {
-                                    navigateForTool(tool, entry.uri)
-                                    pendingTool = null
-                                }
-                                showCatRecSheet = false
-                            },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (tool != null) {
+                                        navigateForTool(tool, entry.uri)
+                                        pendingTool = null
+                                    }
+                                    showCatRecSheet = false
+                                },
                         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                     )
                     HorizontalDivider()
@@ -186,11 +197,16 @@ fun ToolsScreen(navController: NavController) {
         }
     }
 
+    val toolGridColumns =
+        when (LocalWindowSizeClass.current.widthSizeClass) {
+            WindowWidthSizeClass.Compact -> GridCells.Adaptive(minSize = 136.dp)
+            else -> GridCells.Fixed(2)
+        }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = toolGridColumns,
         contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(span = { GridItemSpan(2) }) {
             Text(
@@ -227,16 +243,18 @@ data class ToolItem(
 @Composable
 fun ToolCard(tool: ToolItem) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1.2f)
-            .clickable { tool.onClick() },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(1.2f)
+                .clickable { tool.onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -249,9 +267,11 @@ fun ToolCard(tool: ToolItem) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = tool.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

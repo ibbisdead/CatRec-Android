@@ -6,6 +6,5 @@ object CaptureMode {
     const val CLIPPER = "CLIPPER"
     const val GIF = "GIF"
 
-    fun isValid(value: String): Boolean =
-        value == RECORD || value == CLIPPER || value == GIF
+    fun isValid(value: String): Boolean = value == RECORD || value == CLIPPER || value == GIF
 }

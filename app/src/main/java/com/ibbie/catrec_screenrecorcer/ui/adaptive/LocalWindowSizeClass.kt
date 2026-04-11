@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
  * [WindowSizeClass] for the activity window (multi-window / resize aware).
  * Defaults suit previews when not provided.
  */
-val LocalWindowSizeClass = compositionLocalOf<WindowSizeClass> {
-    WindowSizeClass.calculateFromSize(DpSize(400.dp, 800.dp))
-}
+val LocalWindowSizeClass =
+    compositionLocalOf<WindowSizeClass> {
+        WindowSizeClass.calculateFromSize(DpSize(400.dp, 800.dp))
+    }

@@ -17,13 +17,19 @@ fun crashlyticsLog(message: String) {
 /**
  * Records a non-fatal for the dashboard; optional log line is written first.
  */
-fun recordCrashlyticsNonFatal(e: Exception, logMessage: String? = null) {
+fun recordCrashlyticsNonFatal(
+    e: Exception,
+    logMessage: String? = null,
+) {
     val crash = FirebaseCrashlytics.getInstance()
     logMessage?.let { crash.log(it) }
     crash.recordException(e)
 }
 
-fun Context.refreshCrashlyticsSessionKeys(appLanguageCode: String, floatingControlsEnabled: Boolean) {
+fun Context.refreshCrashlyticsSessionKeys(
+    appLanguageCode: String,
+    floatingControlsEnabled: Boolean,
+) {
     FirebaseCrashlytics.getInstance().apply {
         setCustomKey(CrashlyticsKeys.APP_LANGUAGE, appLanguageCode)
         setCustomKey(CrashlyticsKeys.FLOATING_CONTROLS_ENABLED, floatingControlsEnabled)

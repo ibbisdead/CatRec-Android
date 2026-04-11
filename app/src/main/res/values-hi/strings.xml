@@ -1,33 +1,101 @@
 <resources>
+    <!-- App -->
     <string name="app_name">CatRec - स्क्रीन रिकॉर्डर</string>
-    <string name="tab_recording">रिकॉर्डिंग</string>
+
+    <string name="brand_catrect">CatRect</string>
+    <string name="faq_content_description">सहायता और समर्थन</string>
+    <string name="capture_mode_recording">रिकॉर्डिंग</string>
+    <string name="capture_mode_clipper">काटनेवाला</string>
+    <string name="capture_mode_gif">जीआईएफ रिकॉर्डिंग</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">अक्सर पूछे जाने वाले प्रश्न</string>
+    <string name="faq_intro">श्रेणी के अनुसार उत्तर खोजें. विस्तार करने के लिए किसी प्रश्न पर टैप करें. यदि आपको अभी भी सहायता की आवश्यकता है, तो नीचे हमसे संपर्क करें का उपयोग करें।</string>
+    <string name="faq_contact_us">हमसे संपर्क करें</string>
+    <string name="feedback_title">प्रतिक्रिया भेजें</string>
+    <string name="feedback_issue_section_title">क्या गलत हो गया?</string>
+    <string name="feedback_description_title">विवरण</string>
+    <string name="feedback_description_hint">कृपया बताएं कि क्या हुआ, यह कब शुरू हुआ और आपने पहले से क्या प्रयास किया है (उदाहरण के लिए कम रिज़ॉल्यूशन, पुनः चालू किया गया फ़ोन)। अधिक विवरण हमें इसे तेजी से ठीक करने में मदद करता है।</string>
+    <string name="feedback_screenshots_title">स्क्रीनशॉट</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">अधिकतम 5 छवियाँ जोड़ें (त्रुटि संदेश, सेटिंग्स स्क्रीन, बैटरी पृष्ठ, आदि)।</string>
+    <string name="feedback_add_screenshots">छवियां जोड़ें</string>
+    <string name="feedback_send">भेजना</string>
+    <string name="feedback_send_note">%1$s के संदेश के साथ आपका ईमेल ऐप खोलता है - डिलीवर करने के लिए वहां भेजें पर टैप करें।</string>
+    <string name="feedback_send_chooser_title">ईमेल भेजें</string>
+    <string name="feedback_no_email_app">कोई ईमेल ऐप नहीं मिला. जीमेल या आउटलुक इंस्टॉल करें, या यदि दिखाई दे तो अगली स्क्रीन से विवरण कॉपी करें।</string>
+    <string name="feedback_select_issue">कृपया एक समस्या प्रकार चुनें.</string>
+    <string name="feedback_description_too_short">कृपया थोड़ा और विवरण (कम से कम एक वाक्य) जोड़ें ताकि हम मदद कर सकें।</string>
+    <string name="feedback_issue_recording_stopped">रिकॉर्डिंग अचानक बंद हो गई</string>
+    <string name="feedback_issue_crash">ऐप क्रैश हो गया</string>
+    <string name="feedback_issue_no_sound">कोई ध्वनि/श्रव्य समस्या नहीं</string>
+    <string name="feedback_issue_video_black">काली स्क्रीन/जमे हुए वीडियो</string>
+    <string name="feedback_issue_cant_start">रिकॉर्डिंग प्रारंभ नहीं की जा सकती</string>
+    <string name="feedback_issue_overlay">फ़्लोटिंग नियंत्रण/ओवरले</string>
+    <string name="feedback_issue_gif_export">जीआईएफ या फ़ाइल निर्यात</string>
+    <string name="feedback_issue_battery_oem">बैटरी/पृष्ठभूमि (Xiaomi, आदि)</string>
+    <string name="feedback_issue_storage">संग्रहण/फ़ाइलें नहीं मिल सकीं</string>
+    <string name="feedback_issue_quality">गुणवत्ता / अंतराल / हकलाना</string>
+    <string name="feedback_issue_other">अन्य</string>
+
+    <!-- Bottom Nav Tabs -->
     <string name="tab_screenshots">स्क्रीनशॉट</string>
     <string name="tab_recordings">रिकॉर्डिंग्स</string>
     <string name="tab_settings">सेटिंग्स</string>
     <string name="tab_support">सहायता</string>
     <string name="tab_tools">टूल्स</string>
-    <string name="action_ok">ठीक है</string>
+    <string name="tab_editor">संपादक</string>
+    <string name="fab_start_recording">अभिलेख</string>
+    <string name="storage_indicator_format">%1$s का उपयोग किया गया · %2$s निःशुल्क</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">रिकॉर्डिंग गुणवत्ता</string>
+    <string name="settings_open_audio_menu">श्रव्य विन्यास</string>
+    <string name="settings_open_audio_menu_sub">माइक्रोफोन, आंतरिक ऑडियो, बिटरेट, चैनल...</string>
+    <string name="settings_open_video_menu">वीडियो और GIF सेटिंग्स</string>
+    <string name="settings_open_video_menu_sub">GIF प्रीसेट, रिज़ॉल्यूशन, FPS, बिटरेट, एनकोडर…</string>
+
+    <string name="support_section_help">मदद</string>
+    <string name="support_send_feedback">प्रतिक्रिया भेजें</string>
+    <string name="support_send_feedback_desc">FAQ में हमसे संपर्क करें के समान - बग या सुझावों की रिपोर्ट करें</string>
+
+    <!-- Common Actions -->
     <string name="action_cancel">रद्द करें</string>
     <string name="action_close">बंद करें</string>
     <string name="action_save">सहेजें</string>
     <string name="action_delete">हटाएं</string>
     <string name="action_share">साझा करें</string>
     <string name="action_open">खोलें</string>
-    <string name="action_confirm">पुष्टि करें</string>
+    <string name="consent_analytics_title">उपयोग विश्लेषण</string>
+    <string name="consent_analytics_message">वैकल्पिक उपयोग और क्रैश विश्लेषण की अनुमति देकर CatRec को बेहतर बनाने में हमारी सहायता करें। वैयक्तिकृत विज्ञापनों को सेटिंग्स में (डिफ़ॉल्ट रूप से चालू) अलग से नियंत्रित किया जाता है। आप इसे सेटिंग में कभी भी बदल सकते हैं.</string>
+    <string name="setting_usage_analytics">उपयोग विश्लेषण</string>
+    <string name="setting_usage_analytics_desc">ऐप सुधार के लिए क्रैश और उपयोग आंकड़े</string>
+    <string name="setting_personalized_ads">वैयक्तिकृत विज्ञापन</string>
+    <string name="setting_personalized_ads_on_desc">AdMob प्रासंगिक विज्ञापनों के लिए आपकी विज्ञापन आईडी उपयोग कर सकता है</string>
+    <string name="setting_personalized_ads_off_desc">केवल गैर-वैयक्तिकृत विज्ञापन</string>
+    <string name="consent_accept">अनुमति दें</string>
+    <string name="consent_decline">गिरावट</string>
     <string name="action_apply">लागू करें</string>
-    <string name="action_reset">रीसेट करें</string>
-    <string name="action_start">शुरू करें</string>
-    <string name="action_stop">रोकें</string>
     <string name="action_pause">रुकें</string>
     <string name="action_resume">जारी रखें</string>
+
+    <!-- Recording Screen -->
     <string name="recording_start">रिकॉर्डिंग शुरू करें</string>
-    <string name="recording_stop">रिकॉर्डिंग रोकें</string>
-    <string name="recording_countdown">शुरू होने में…</string>
-    <string name="recording_in_progress">रिकॉर्डिंग जारी है</string>
-    <string name="recording_paused">रिकॉर्डिंग रुकी हुई है</string>
+
+    <!-- Settings Screen - Section Headers -->
     <string name="settings_title">सेटिंग्स</string>
     <string name="settings_section_controls">नियंत्रण</string>
+    <string name="setting_allow_background_title">अप्रतिबंधित बैटरी उपयोग</string>
+    <string name="setting_allow_background_desc">ऐप छोड़ने पर रिकॉर्डिंग, तैयार कैप्चर सत्र या ओवरले रोकने की संभावना कम करता है। सिस्टम बैटरी सेटिंग खोलता है।</string>
+    <string name="toast_battery_settings_failed">बैटरी सेटिंग नहीं खोल सकते। सिस्टम सेटिंग में बैटरी → CatRec आज़माएँ।</string>
     <string name="settings_section_video">वीडियो</string>
+    <string name="settings_section_gif_recorder">जीआईएफ रिकॉर्डर</string>
+    <string name="settings_gif_recorder_desc">GIF मोड पहले वीडियो रिकॉर्ड करता है, फिर उसे परिवर्तित करता है। गुणवत्ता और लंबाई नीचे दिए गए पूर्व निर्धारित का पालन करें; जब आप रिकॉर्डिंग पर वापस स्विच करते हैं तो वीडियो स्लाइडर सहेजे रहते हैं।</string>
+    <string name="setting_gif_preset">जीआईएफ गुणवत्ता प्रीसेट</string>
+    <string name="video_locked_by_gif_preset">GIF मोड चयनित होने पर वीडियो विकल्प GIF प्रीसेट द्वारा नियंत्रित होते हैं।</string>
+    <string name="gif_preset_small">छोटी (तेज़, छोटी फ़ाइल)</string>
+    <string name="gif_preset_medium">मध्यम</string>
+    <string name="gif_preset_hd">एचडी (बड़ी फ़ाइल)</string>
     <string name="settings_section_audio">ऑडियो</string>
     <string name="settings_section_overlay">ओवरले</string>
     <string name="settings_section_screenshots">स्क्रीनशॉट</string>
@@ -35,11 +103,12 @@
     <string name="settings_section_language">भाषा</string>
     <string name="settings_section_storage">स्टोरेज</string>
     <string name="settings_section_general">सामान्य</string>
+
+    <!-- Video Settings -->
     <string name="setting_resolution">रिज़ॉल्यूशन</string>
     <string name="setting_resolution_native">मूल</string>
     <string name="setting_resolution_custom">कस्टम रिज़ॉल्यूशन…</string>
     <string name="setting_resolution_custom_hint">उदा. 1920x1080</string>
-    <string name="setting_resolution_custom_error">सही रिज़ॉल्यूशन दर्ज करें (उदा. 1920x1080)</string>
     <string name="setting_fps">फ्रेम रेट (FPS)</string>
     <string name="setting_bitrate">वीडियो बिटरेट</string>
     <string name="setting_video_encoder">वीडियो एन्कोडर</string>
@@ -47,6 +116,8 @@
     <string name="setting_orientation_auto">स्वचालित</string>
     <string name="setting_orientation_portrait">पोर्ट्रेट</string>
     <string name="setting_orientation_landscape">लैंडस्केप</string>
+
+    <!-- Audio Settings -->
     <string name="setting_microphone">माइक्रोफोन</string>
     <string name="setting_internal_audio">आंतरिक ऑडियो</string>
     <string name="setting_audio_bitrate">ऑडियो बिटरेट</string>
@@ -57,14 +128,53 @@
     <string name="setting_audio_encoder">ऑडियो एन्कोडर</string>
     <string name="setting_separate_mic">अलग माइक ट्रैक</string>
     <string name="setting_separate_mic_desc">माइक्रोफोन को अलग ऑडियो फ़ाइल के रूप में सहेजें</string>
+
+    <!-- Overlay Settings -->
     <string name="setting_floating_controls">फ्लोटिंग नियंत्रण</string>
-    <string name="setting_show_touches">टच दिखाएं</string>
+    <string name="setting_brush_overlay">ब्रश</string>
+    <string name="settings_brush_overlay_desc">स्क्रीन पर ड्राइंग के लिए फ्लोटिंग ओवरले पर ब्रश टूल दिखाएं</string>
+    <string name="setting_hide_floating_while_recording">रिकॉर्डिंग करते समय फ़्लोटिंग आइकन छिपाएँ</string>
+    <string name="settings_hide_floating_while_recording_desc">जब रिकॉर्डिंग चल रही हो तो फ़्लोटिंग कंट्रोल बबल छिपाएँ</string>
+    <string name="setting_post_screenshot_options">स्क्रीनशॉट के बाद के विकल्प</string>
+    <string name="settings_post_screenshot_options_desc">स्क्रीनशॉट के बाद, साझा करने या संपादित करने के विकल्प दिखाएं</string>
+    <string name="setting_record_single_app">एक एकल ऐप रिकॉर्ड करें</string>
+    <string name="settings_record_single_app_desc">Android 14+ पर, स्क्रीन कैप्चर देते समय एक ऐप विंडो या पूर्ण स्क्रीन चुनें</string>
+    <string name="screenshot_post_edit">संपादन करना</string>
+    <string name="screenshot_post_action_failed">शेयर नहीं खुल सका</string>
+    <string name="screenshot_post_tap_outside">बंद करने के लिए बाहर टैप करें</string>
+    <string name="image_editor_title">संपादित छवि</string>
+    <string name="image_editor_panel_rotate">घुमाएँ</string>
+    <string name="image_editor_panel_crop">काटना</string>
+    <string name="image_editor_panel_draw">खींचना</string>
+    <string name="image_editor_rotate_ccw">बायीं तरफ</string>
+    <string name="image_editor_rotate_cw">दाएं घुमाएं</string>
+    <string name="image_editor_saved">छवि को Pictures/CatRec/स्क्रीनशॉट में सहेजा गया</string>
+    <string name="image_editor_save_failed">छवि सहेजी नहीं जा सकी</string>
+    <string name="image_editor_load_failed">छवि लोड नहीं हो सकी</string>
+    <string name="tool_edit_image">संपादित छवि</string>
+    <string name="brush_line_width">रेखा की चौडाई</string>
+    <string name="brush_color_picker_hint">एक रंग चुनें, मोटाई समायोजित करें, फिर लागू करें पर टैप करें।</string>
+    <string name="brush_color_back">पीछे</string>
+    <string name="brush_apply">आवेदन करना</string>
+    <string name="brush_tool_pen">खींचना</string>
+    <string name="brush_tool_eraser">रबड़</string>
+    <string name="brush_tool_undo">अंतिम स्ट्रोक पूर्ववत करें</string>
+    <string name="brush_tool_square">आयत</string>
+    <string name="brush_tool_circle">अंडाकार</string>
+    <string name="brush_tool_arrow">तीर</string>
+    <string name="brush_tool_mosaic">पिक्सेलेट क्षेत्र</string>
+    <string name="brush_tool_colors">रंग और रेखा की चौड़ाई</string>
+    <string name="brush_panel_title">आघात</string>
     <string name="setting_camera_settings">कैमरा सेटिंग्स</string>
     <string name="setting_watermark">CatRec वॉटरमार्क</string>
+    <string name="setting_watermark_size">वॉटरमार्क आकार</string>
+    <string name="setting_watermark_opacity">वॉटरमार्क अपारदर्शिता</string>
+
+    <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
     <string name="camera_enable">कैमरा सक्षम करें</string>
+    <string name="camera_enable_desc">रिकॉर्डिंग के दौरान कैमरा ओवरले दिखाएं</string>
     <string name="camera_lock_position">स्थिति लॉक करें</string>
-    <string name="camera_lock_position_desc">कैमरा ओवरले को हिलाने या आकार बदलने से रोकें</string>
     <string name="camera_facing">कैमरा</string>
     <string name="camera_facing_front">फ्रंट</string>
     <string name="camera_facing_rear">रियर</string>
@@ -72,85 +182,107 @@
     <string name="camera_orientation">दिशा</string>
     <string name="camera_size">आकार</string>
     <string name="camera_opacity">अपारदर्शिता</string>
-    <string name="camera_preview">लाइव प्रीव्यू</string>
+
+    <!-- Screenshot Settings -->
     <string name="setting_screenshot_format">प्रारूप</string>
     <string name="setting_screenshot_quality">गुणवत्ता</string>
+
+    <!-- Theme Settings -->
     <string name="setting_theme">ऐप थीम</string>
     <string name="theme_system">सिस्टम डिफ़ॉल्ट</string>
     <string name="theme_light">लाइट</string>
     <string name="theme_dark">डार्क</string>
+
+    <!-- Language Settings -->
     <string name="setting_language">ऐप भाषा</string>
     <string name="language_system">सिस्टम डिफ़ॉल्ट</string>
+    <string name="language_english">अंग्रेज़ी</string>
+    <string name="language_arabic">धन्यवाद</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁體）</string>
+    <string name="language_french">फ़्रांसीसी</string>
+    <string name="language_german">deutsch</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">बहासा इंडोनेशिया</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_japanese">ठीक है</string>
+    <string name="language_korean">धन्यवाद</string>
+    <string name="language_portuguese">पुर्तगाली</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_turkish">तुर्कसे</string>
+    <string name="language_vietnamese">तियांग वियत</string>
+
+    <!-- Storage Settings -->
     <string name="setting_save_location">सहेजने का स्थान</string>
+    <string name="setting_save_location_default">डिफ़ॉल्ट (Movies/CatRec)</string>
     <string name="setting_filename_pattern">फ़ाइलनाम पैटर्न</string>
+
+    <!-- General Settings -->
     <string name="setting_countdown">काउंटडाउन</string>
     <string name="setting_stop_behavior">स्टॉप व्यवहार</string>
-    <string name="screenshots_title">स्क्रीनशॉट</string>
+
+    <!-- Screenshots Screen -->
     <string name="screenshots_empty_title">अभी तक कोई स्क्रीनशॉट नहीं</string>
     <string name="screenshots_empty_desc">स्क्रीन कैप्चर करने के लिए रिकॉर्डिंग ओवरले में स्क्रीनशॉट बटन दबाएं</string>
-    <string name="screenshots_delete_confirm">यह स्क्रीनशॉट हटाएं?</string>
-    <string name="screenshots_delete_confirm_desc">यह क्रिया पूर्ववत नहीं की जा सकती।</string>
-    <string name="recordings_title">रिकॉर्डिंग्स</string>
+
+    <!-- Recordings Screen -->
     <string name="recordings_empty_title">अभी तक कोई रिकॉर्डिंग नहीं</string>
     <string name="recordings_empty_desc">यहाँ वीडियो देखने के लिए रिकॉर्डिंग शुरू करें</string>
-    <string name="support_title">सहायता</string>
+
+    <!-- Support Screen -->
     <string name="support_subscribe_youtube">YouTube सब्सक्राइब करें</string>
+    <string name="support_subscribe_youtube_desc">अपडेट के लिए @ibbie को फ़ॉलो करें</string>
     <string name="support_remove_ads">विज्ञापन हटाएं — $1</string>
     <string name="support_remove_ads_desc">एकमुश्त खरीद, हमेशा के लिए विज्ञापन-मुक्त</string>
+    <string name="support_restore_purchases">खरीदारी वापस लौटाएं</string>
+    <string name="support_restore_purchases_desc">Google Play से विज्ञापन और अन्य खरीदारी को सिंक करें</string>
+    <string name="support_restore_purchases_toast">आपकी खरीदारी के लिए Google Play की जाँच की जा रही है...</string>
+    <string name="support_play_promo_title">प्ले प्रोमो कोड रिडीम करें</string>
+    <string name="support_play_promo_desc">यदि आपके पास विज्ञापन हटाने के लिए Google Play कोड है: इसे Play पर रिडीम करें, फिर यहां खरीदारी पुनर्स्थापित करें पर टैप करें ताकि ऐप अपडेट हो जाए।</string>
+    <string name="support_toast_promo_browser">ब्राउज़र नहीं खुल सका</string>
     <string name="support_ads_removed">विज्ञापन हटा दिए — धन्यवाद!</string>
+    <string name="support_ads_removed_desc">प्रीमियम विकल्प अनलॉक रहेंगे - देखने के लिए कोई विज्ञापन नहीं।</string>
+    <string name="support_watch_ad">एक विज्ञापन देखें</string>
     <string name="support_donate">मुझे कॉफी खिलाएं ($1)</string>
     <string name="support_donate_desc">एकमुश्त दान — CatRec को जीवित रखें</string>
     <string name="support_share">CatRec साझा करें</string>
+    <string name="support_share_desc">अपने दोस्तों को हमारे बारे में बताएं</string>
     <string name="support_changelog">परिवर्तन लॉग</string>
-    <string name="support_thank_you_title">बहुत बढ़िया!</string>
-    <string name="support_thank_you_body">आपका समर्थन CatRec को जीवित रखने में मदद करता है। बहुत-बहुत धन्यवाद!</string>
-    <string name="support_you_are_welcome">स्वागत है!</string>
-    <string name="notif_recording_title">CatRec रिकॉर्ड कर रहा है</string>
-    <string name="notif_done_title">रिकॉर्डिंग सहेजी गई</string>
+    <string name="support_changelog_desc">देखें इस संस्करण में क्या नया है</string>
+
+    <!-- Notifications -->
     <string name="notif_screenshot_saved">स्क्रीनशॉट सहेजा गया</string>
+
+    <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">स्क्रीनशॉट लेने के लिए पहले रिकॉर्डिंग शुरू करें</string>
+    <string name="error_screenshot_capture_failed">स्क्रीनशॉट कैप्चर नहीं किया जा सका. पुनः प्रयास करें।</string>
     <string name="toast_recording_restarted">ओरिएंटेशन बदलने के कारण रिकॉर्डिंग पुनः शुरू हुई</string>
-    <string name="home_version">v%1$s</string>
-    <string name="support_version_label">संस्करण %1$s</string>
-    <string name="changelog_version_template">v%1$s</string>
-    <string name="label_active">सक्रिय</string>
-    <string name="toast_screen_capture_denied">स्क्रीन रिकॉर्डिंग अनुमति अस्वीकृत</string>
-    <string name="toast_no_email_app">कोई ईमेल ऐप नहीं मिला</string>
-    <string name="share_screenshot_chooser_title">स्क्रीनशॉट साझा करें</string>
-    <string name="recordings_header_format">लाइब्रेरी · %1$d</string>
-    <string name="screenshots_header_format">स्क्रीनशॉट · %1$d</string>
-    <string name="overlay_clip_button">✂ CLIP</string>
-    <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">पहले CatRec खोलें और «ओवरले रिकॉर्डिंग अधिकृत करें» पर टैप करें</string>
-    <string name="countdown_subtitle">रिकॉर्डिंग शुरू हो रही है…</string>
-    <string name="toast_recorder_start_failed">रिकॉर्डर शुरू नहीं हो सका: %1$s</string>
-    <string name="format_jpeg">JPEG</string>
-    <string name="format_png">PNG</string>
-    <string name="format_webp">WebP</string>
-    <string name="content_desc_more_options">अधिक विकल्प</string>
-    <string name="content_desc_rewind_10">10 सेकंड पीछे</string>
-    <string name="content_desc_forward_10">10 सेकंड आगे</string>
-    <string name="beta_feedback_email_subject">CatRec बीटा प्रतिक्रिया</string>
-    <string name="list_bullet">•</string>
+    <string name="toast_share_app">CatRec देखें - सबसे बढ़िया स्क्रीन रिकॉर्डर!</string>
 
-    <string name="rec_save_clip_sub">पिछले %1$d मिनट सहेजें</string>
-    <string name="setting_clipper_duration">क्लिपर बफ़र अवधि</string>
-    <string name="dialog_clipper_duration_title">क्लिपर बफ़र अवधि</string>
-    <string name="clipper_duration_1m">1 मिनट</string>
-    <string name="clipper_duration_2m">2 मिनट</string>
-    <string name="clipper_duration_3m">3 मिनट</string>
-    <string name="clipper_duration_4m">4 मिनट</string>
-    <string name="clipper_duration_5m">5 मिनट</string>
-
-    <!-- Settings additions (localization patch) -->
+    <!-- Actions (extra) -->
     <string name="action_done">हो गया</string>
-    <string name="action_change">बदलें</string>
+    <string name="action_grant_now">अभी अनुदान दें</string>
+    <string name="action_not_now">अभी नहीं</string>
+    <string name="action_rename">नाम बदलें</string>
+    <string name="action_trim">काट-छांट करना</string>
+    <string name="action_open_external">बाह्य रूप से खोलें</string>
     <string name="action_loading">लोड हो रहा है…</string>
     <string name="action_watch_ad">विज्ञापन देखें</string>
     <string name="action_unlock">अनलॉक करें</string>
+    <string name="action_got_it">समझ गया</string>
+    <string name="action_leave_feedback">प्रतिक्रिया दें</string>
+    <string name="action_change">बदलें</string>
     <string name="action_enable_anyway">फिर भी सक्षम करें</string>
     <string name="action_keep_performance_mode">परफॉर्मेंस मोड बनाए रखें</string>
-    <string name="settings_section_privacy">गोपनीयता</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">अधिसूचना</string>
+    <string name="stop_behavior_shake">डिवाइस हिलाएं</string>
+    <string name="stop_behavior_screen_off">स्क्रीन बंद होने पर</string>
+    <string name="stop_behavior_pause_on_screen_off">स्क्रीन बंद होने पर रुकें</string>
+
+    <!-- Settings extras -->
     <string name="settings_floating_controls_desc">हमेशा दिखने वाला बबल — किसी भी ऐप से रिकॉर्ड और कैप्चर करें</string>
     <string name="settings_show_touches">टच दिखाएं</string>
     <string name="settings_show_touches_desc">डेवलपर विकल्पों में सक्षम करें</string>
@@ -159,46 +291,10 @@
     <string name="setting_countdown_off">बंद</string>
     <string name="setting_countdown_seconds">%1$d सेकंड</string>
     <string name="setting_internal_audio_note">केवल Android 10+</string>
-    <string name="stop_behavior_notification">अधिसूचना</string>
-    <string name="stop_behavior_shake">डिवाइस हिलाएं</string>
-    <string name="stop_behavior_screen_off">स्क्रीन बंद होने पर</string>
-    <string name="stop_behavior_pause_on_screen_off">स्क्रीन बंद होने पर रुकें</string>
     <string name="gate_feature_separate_mic">अलग माइक ट्रैक</string>
     <string name="gate_feature_camera_overlay">कैमरा ओवरले सेटिंग्स</string>
     <string name="camera_status_enabled">सक्रिय — %1$s • %2$s</string>
     <string name="state_disabled">अक्षम</string>
-    <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_enable_desc">रिकॉर्डिंग के दौरान कैमरा ओवरले दिखाएं</string>
-    <string name="camera_drag_hint">कैमरा सर्कल को पुनः स्थापित करने के लिए खींचें</string>
-    <string name="camera_lock_desc_short">आकस्मिक हलचल रोकें</string>
-    <string name="dialog_camera_orientation">कैमरा दिशा</string>
-    <string name="dialog_fps_title">फ्रेम रेट (FPS)</string>
-    <string name="dialog_bitrate_title">बिटरेट</string>
-    <string name="dialog_video_encoder">वीडियो एन्कोडर</string>
-    <string name="dialog_audio_bitrate">ऑडियो बिटरेट</string>
-    <string name="dialog_sample_rate">सैंपल रेट</string>
-    <string name="dialog_audio_encoder">ऑडियो एन्कोडर</string>
-    <string name="dialog_countdown_timer">काउंटडाउन टाइमर</string>
-    <string name="dialog_theme_title">ऐप थीम</string>
-    <string name="dialog_language_title">ऐप भाषा</string>
-    <string name="dialog_screenshot_format">स्क्रीनशॉट प्रारूप</string>
-    <string name="dialog_filename_pattern">फ़ाइलनाम पैटर्न</string>
-    <string name="dialog_custom_resolution_title">कस्टम रिज़ॉल्यूशन</string>
-    <string name="dialog_custom_resolution_hint">रिज़ॉल्यूशन चौड़ाई×ऊंचाई में दर्ज करें (उदा. 1920×1080)</string>
-    <string name="dialog_resolution_title">रिज़ॉल्यूशन</string>
-    <string name="error_resolution_format">प्रारूप चौ×ऊं होना चाहिए (उदा. 1920×1080)</string>
-    <string name="error_resolution_min">न्यूनतम रिज़ॉल्यूशन 100×100 है</string>
-    <string name="error_resolution_max">अधिकतम रिज़ॉल्यूशन किसी भी ओर 7680 है</string>
-    <string name="resolution_group_16_9">16:9</string>
-    <string name="resolution_group_20_9">20:9 (लंबा फोन)</string>
-    <string name="resolution_group_18_9">18:9 (2:1)</string>
-    <string name="resolution_group_21_9">21:9 (अल्ट्रावाइड)</string>
-    <string name="resolution_group_4_3">4:3</string>
-    <string name="resolution_group_9_16">9:16 (पोर्ट्रेट)</string>
-    <string name="countdown_none">कोई नहीं</string>
-    <string name="countdown_3s">3 से.</string>
-    <string name="countdown_5s">5 से.</string>
-    <string name="countdown_10s">10 से.</string>
     <string name="watermark_preview_active">लाइव प्रीव्यू सक्रिय — वॉटरमार्क को पुनः स्थापित करने के लिए खींचें</string>
     <string name="watermark_preview_recording">रिकॉर्डिंग के दौरान प्रीव्यू उपलब्ध नहीं</string>
     <string name="watermark_preview_need_overlay">लाइव प्रीव्यू के लिए ओवरले अनुमति दें</string>
@@ -211,28 +307,17 @@
     <string name="watermark_image_custom">कस्टम छवि सेट है</string>
     <string name="watermark_image_default">डिफ़ॉल्ट (ऐप आइकन)</string>
     <string name="watermark_reset_icon">डिफ़ॉल्ट आइकन पर रीसेट करें</string>
-    <string name="setting_watermark_size">वॉटरमार्क आकार</string>
-    <string name="setting_watermark_opacity">वॉटरमार्क अपारदर्शिता</string>
-    <string name="watermark_position_top_left">ऊपर बाईं ओर</string>
-    <string name="watermark_position_top_right">ऊपर दाईं ओर</string>
-    <string name="watermark_position_bottom_left">नीचे बाईं ओर</string>
-    <string name="watermark_position_bottom_right">नीचे दाईं ओर</string>
-    <string name="watermark_position_center">केंद्र</string>
-    <string name="shape_square">वर्ग</string>
-    <string name="shape_circle">वृत्त</string>
-    <string name="ratio_16_9">16:9</string>
-    <string name="ratio_4_3">4:3</string>
-    <string name="setting_save_location_default">डिफ़ॉल्ट (Movies/CatRec)</string>
-    <string name="setting_save_location_custom">कस्टम फ़ोल्डर सेट है</string>
-    <string name="setting_auto_delete_title">पुरानी रिकॉर्डिंग स्वतः हटाएं</string>
-    <string name="setting_auto_delete_desc">अंतिम 50 रखें</string>
-    <string name="setting_keep_screen_on_title">स्क्रीन चालू रखें</string>
-    <string name="setting_keep_screen_on_desc">रिकॉर्डिंग के दौरान</string>
-    <string name="setting_usage_analytics">उपयोग विश्लेषण</string>
-    <string name="setting_usage_analytics_desc">ऐप सुधार के लिए क्रैश और उपयोग आंकड़े</string>
-    <string name="setting_personalized_ads">वैयक्तिकृत विज्ञापन</string>
-    <string name="setting_personalized_ads_on_desc">AdMob प्रासंगिक विज्ञापनों के लिए आपकी विज्ञापन आईडी उपयोग कर सकता है</string>
-    <string name="setting_personalized_ads_off_desc">केवल गैर-वैयक्तिकृत विज्ञापन</string>
+    <string name="label_dp">%1$ddp</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">केबीपीएस</string>
+    <string name="label_hz">हर्ट्ज</string>
+    <string name="perf_auto_low_end">स्वतः सक्रिय — कम-प्रदर्शन डिवाइस पहचाना</string>
+    <string name="perf_quality_may_lag">गुणवत्ता मोड (इस डिवाइस पर लैग हो सकता है)</string>
+    <string name="perf_static_glass">स्थैतिक ग्लास — ब्लर अक्षम</string>
+    <string name="perf_dynamic_glass">डायनामिक ग्लास ब्लर सक्षम</string>
+    <string name="setting_performance_mode">परफॉर्मेंस मोड</string>
+    <string name="performance_warning_title">प्रदर्शन चेतावनी</string>
+    <string name="performance_warning_body">आपके डिवाइस में 6 GB से कम RAM है या Android 11 या इससे पुराना संस्करण चल रहा है। रियल-टाइम ग्लास ब्लर प्रभाव सक्षम करने से UI में देरी हो सकती है, विशेषकर रिकॉर्डिंग के दौरान।\n\nफिर भी गुणवत्ता मोड सक्षम करें?</string>
     <string name="accent_color_title">एक्सेंट रंग</string>
     <string name="accent_gradient_color_2">ग्रेडिएंट रंग 2</string>
     <string name="accent_presets">प्रीसेट</string>
@@ -242,20 +327,309 @@
     <string name="accent_gradient_desc">दो-रंगी चमकदार बॉर्डर</string>
     <string name="accent_color_1">रंग 1</string>
     <string name="accent_color_2">रंग 2</string>
-    <string name="setting_performance_mode">परफॉर्मेंस मोड</string>
-    <string name="perf_auto_low_end">स्वतः सक्रिय — कम-प्रदर्शन डिवाइस पहचाना</string>
-    <string name="perf_quality_may_lag">गुणवत्ता मोड (इस डिवाइस पर लैग हो सकता है)</string>
-    <string name="perf_static_glass">स्थैतिक ग्लास — ब्लर अक्षम</string>
-    <string name="perf_dynamic_glass">डायनामिक ग्लास ब्लर सक्षम</string>
-    <string name="performance_warning_title">प्रदर्शन चेतावनी</string>
-    <string name="performance_warning_body">आपके डिवाइस में 6 GB से कम RAM है या Android 11 या इससे पुराना संस्करण चल रहा है। रियल-टाइम ग्लास ब्लर प्रभाव सक्षम करने से UI में देरी हो सकती है, विशेषकर रिकॉर्डिंग के दौरान।\n\nफिर भी गुणवत्ता मोड सक्षम करें?</string>
+    <string name="setting_save_location_custom">कस्टम फ़ोल्डर सेट है</string>
+    <string name="setting_auto_delete_title">पुरानी रिकॉर्डिंग स्वतः हटाएं</string>
+    <string name="setting_auto_delete_desc">अंतिम 50 रखें</string>
+    <string name="setting_keep_screen_on_title">स्क्रीन चालू रखें</string>
+    <string name="setting_keep_screen_on_desc">रिकॉर्डिंग के दौरान</string>
+    <string name="settings_section_privacy">गोपनीयता</string>
+    <string name="dialog_custom_resolution_title">कस्टम रिज़ॉल्यूशन</string>
+    <string name="dialog_custom_resolution_hint">रिज़ॉल्यूशन चौड़ाई×ऊंचाई में दर्ज करें (उदा. 1920×1080)</string>
+    <string name="error_resolution_format">प्रारूप चौ×ऊं होना चाहिए (उदा. 1920×1080)</string>
+    <string name="error_resolution_min">न्यूनतम रिज़ॉल्यूशन 100×100 है</string>
+    <string name="error_resolution_max">अधिकतम रिज़ॉल्यूशन किसी भी ओर 7680 है</string>
+    <string name="dialog_resolution_title">रिज़ॉल्यूशन</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9 (लंबा फोन)</string>
+    <string name="resolution_group_18_9">18:9 (2:1)</string>
+    <string name="resolution_group_21_9">21:9 (अल्ट्रावाइड)</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16 (पोर्ट्रेट)</string>
+    <string name="dialog_theme_title">ऐप थीम</string>
+    <string name="dialog_language_title">ऐप भाषा</string>
+    <string name="dialog_filename_pattern">फ़ाइलनाम पैटर्न</string>
+    <string name="dialog_countdown_timer">काउंटडाउन टाइमर</string>
+    <string name="countdown_none">कोई नहीं</string>
+    <string name="countdown_3s">3 से.</string>
+    <string name="countdown_5s">5 से.</string>
+    <string name="countdown_10s">10 से.</string>
+    <string name="dialog_video_encoder">वीडियो एन्कोडर</string>
+    <string name="dialog_audio_encoder">ऑडियो एन्कोडर</string>
+    <string name="dialog_audio_bitrate">ऑडियो बिटरेट</string>
+    <string name="dialog_sample_rate">सैंपल रेट</string>
+    <string name="dialog_bitrate_title">बिटरेट</string>
+    <string name="dialog_fps_title">फ्रेम रेट (FPS)</string>
+    <string name="dialog_screenshot_format">स्क्रीनशॉट प्रारूप</string>
+    <string name="dialog_camera_orientation">कैमरा दिशा</string>
     <string name="premium_feature_title">प्रीमियम सुविधा</string>
     <string name="premium_feature_body">%1$s एक प्रीमियम सुविधा है।</string>
     <string name="premium_feature_watch_ad">इस सत्र के लिए अनलॉक करने हेतु एक छोटा विज्ञापन देखें।</string>
     <string name="premium_feature_tap_unlock">इस सत्र के लिए सक्रिय करने हेतु अनलॉक पर टैप करें।</string>
-    <string name="label_dp">%1$ddp</string>
-    <string name="label_percent">%1$d%%</string>
-    <string name="label_kbps">kbps</string>
-    <string name="label_hz">Hz</string>
+    <string name="gate_high_fps">%1$s एफपीएस</string>
+    <string name="camera_drag_hint">कैमरा सर्कल को पुनः स्थापित करने के लिए खींचें</string>
+    <string name="camera_lock_desc_short">आकस्मिक हलचल रोकें</string>
+    <string name="shape_square">वर्ग</string>
+    <string name="shape_circle">वृत्त</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">ऊपर बाईं ओर</string>
+    <string name="watermark_position_top_right">ऊपर दाईं ओर</string>
+    <string name="watermark_position_bottom_left">नीचे बाईं ओर</string>
+    <string name="watermark_position_bottom_right">नीचे दाईं ओर</string>
+    <string name="watermark_position_center">केंद्र</string>
 
+    <!-- Recording screen -->
+    <string name="label_fps">एफपीएस</string>
+    <string name="label_mbps">एमबीपीएस</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">क्लिपर अवधि</string>
+    <string name="dialog_clipper_duration_title">क्लिपर अवधि</string>
+    <string name="clipper_duration_1m">1 मिनट</string>
+    <string name="clipper_duration_2m">2 मिनट</string>
+    <string name="clipper_duration_3m">3 मिनट</string>
+    <string name="clipper_duration_4m">4 मिनट</string>
+    <string name="clipper_duration_5m">5 मिनट</string>
+    <string name="perm_rationale_intro">आपकी स्क्रीन रिकॉर्ड करने के लिए CatRec को निम्नलिखित अनुमतियों की आवश्यकता है:</string>
+    <string name="perm_dialog_title">अनुमतियाँ आवश्यक हैं</string>
+    <string name="beta_title">आप प्रारंभिक पहुंच में हैं</string>
+    <string name="beta_line_1">⚠️ यह एक बीटा रिलीज़ है।</string>
+    <string name="beta_line_2">आपको बग, क्रैश या अधूरी सुविधाओं का सामना करना पड़ सकता है। आपका डिवाइस और डेटा सुरक्षित है - रिकॉर्डिंग स्थानीय रूप से सहेजी जाती है और कुछ भी अपलोड नहीं किया जाता है।</string>
+    <string name="beta_line_3">आपकी प्रतिक्रिया सीधे तौर पर इस ऐप को आकार देती है। यदि कोई चीज़ टूटती है या महसूस होती है, तो कृपया इसकी रिपोर्ट करें - यहां तक ​​कि एक छोटा संदेश भी बहुत मदद करता है।</string>
+    <string name="beta_line_4">कैटरेक को जल्दी आज़माने के लिए धन्यवाद। 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">रिकॉर्डिंग हटाएँ?</string>
+    <string name="delete_recording_message">"%1$s" स्थायी रूप से हटा दिया जाएगा।</string>
+    <string name="delete_screenshot_title">स्क्रीनशॉट हटाएं?</string>
+    <string name="delete_screenshot_message">"%1$s" स्थायी रूप से हटा दिया जाएगा।</string>
+    <string name="multiselect_selected_count">%1$d चयनित</string>
+    <string name="multiselect_select_all">सबका चयन करें</string>
+    <string name="multiselect_deselect_all">सबको अचयनित करो</string>
+    <string name="multiselect_delete_title">%1$d आइटम हटाएं?</string>
+    <string name="multiselect_delete_message">ये फ़ाइलें स्थायी रूप से हटा दी जाएंगी.</string>
+    <string name="multiselect_share_recordings">रिकॉर्डिंग साझा करें</string>
+    <string name="multiselect_share_screenshots">स्क्रीनशॉट साझा करें</string>
+    <string name="delete_generic_recording">यह रिकॉर्डिंग स्थायी रूप से हटा दी जाएगी.</string>
+    <string name="player_renamed_to">%1$s का नाम बदला गया</string>
+    <string name="player_rename_failed">नाम बदलना विफल: %1$s</string>
+    <string name="player_delete_failed">हटाना विफल: %1$s</string>
+    <string name="player_no_app_video">वीडियो खोलने के लिए कोई ऐप नहीं मिला</string>
+    <string name="player_rename_title">नाम बदलें</string>
+    <string name="player_file_name_label">फ़ाइल का नाम</string>
+    <string name="trim_title">वीडियो ट्रिम करें</string>
+    <string name="trim_set_to_current">वर्तमान पर सेट करें</string>
+    <string name="trim_start_label">प्रारंभ: %1$s</string>
+    <string name="trim_end_label">अंत: %1$s</string>
+    <string name="trim_duration_summary">ट्रिम अवधि: %1$s (%2$s → %3$s)</string>
+    <string name="trim_too_short">ट्रिम रेंज बहुत कम (न्यूनतम 0.5 सेकंड)</string>
+    <string name="trim_saved_success">ट्रिम सफलतापूर्वक सहेजा गया</string>
+    <string name="trim_failed_retry">ट्रिम विफल रहा. कृपया पुन: प्रयास करें।</string>
+    <string name="trim_progress">ट्रिमिंग... %1$d%%</string>
+    <string name="trim_save">ट्रिम करें और सहेजें</string>
+    <string name="content_desc_back">पीछे</string>
+    <string name="content_desc_refresh">ताज़ा करना</string>
+    <string name="content_desc_options">विकल्प</string>
+    <string name="content_desc_logo">कैटरेक लोगो</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">वीडियो संपादन</string>
+    <string name="tools_image_editing">छवि संपादन</string>
+    <string name="tool_video_trim">वीडियो ट्रिम</string>
+    <string name="tool_compress">वीडियो संपीड़ित करें</string>
+    <string name="tool_video_to_gif">वीडियो से GIF</string>
+    <string name="tool_merge_clips">क्लिप मर्ज करें</string>
+    <string name="editor_pick_video_title">एक वीडियो चुनें</string>
+    <string name="editor_pick_catrec">कैटरेक रिकॉर्डिंग</string>
+    <string name="editor_pick_storage">डिवाइस पर वीडियो</string>
+    <string name="editor_export">निर्यात</string>
+    <string name="editor_saving">सहेजा जा रहा है...</string>
+    <string name="editor_saved_ok">मूवीज़/कैटरेक में सहेजा गया</string>
+    <string name="editor_failed">निर्यात पूरा नहीं किया जा सका. किसी अन्य फ़ाइल या गुणवत्ता का प्रयास करें.</string>
+    <string name="compress_title">संकुचित करें</string>
+    <string name="compress_quality_label">लक्ष्य गुणवत्ता</string>
+    <string name="compress_quality_high">उच्च</string>
+    <string name="compress_quality_medium">मध्यम</string>
+    <string name="compress_quality_low">कम</string>
+    <string name="compress_resolution_label">लक्ष्य संकल्प (ऊंचाई)</string>
+    <string name="compress_original">मूल आकार</string>
+    <string name="compress_estimated">अनुमानित आकार: ~%1$s</string>
+    <string name="compress_source">स्रोत: %1$dx%2$d</string>
+    <string name="gif_title">वीडियो से GIF</string>
+    <string name="gif_fps">एफपीएस: %1$d</string>
+    <string name="gif_quality_label">जीआईएफ गुणवत्ता</string>
+    <string name="gif_quality_small">छोटी फ़ाइल</string>
+    <string name="gif_quality_balanced">संतुलित</string>
+    <string name="gif_quality_sharper">ठग</string>
+    <string name="gif_convert">GIF बनाएं</string>
+    <string name="merge_title">क्लिप मर्ज करें</string>
+    <string name="merge_add_catrec">CatRec से जोड़ें</string>
+    <string name="merge_clear_all">सभी साफ करें</string>
+    <string name="merge_run">मर्ज करें और सहेजें</string>
+    <string name="merge_need_two">कम से कम दो वीडियो जोड़ें (ऑर्डर रखा गया है)।</string>
+    <string name="merge_clip_label">क्लिप %1$d</string>
+    <string name="home_app_name">कैटरेक</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="home_version">v%1$s</string>
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">कैटरेक स्क्रीन रिकॉर्डर</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">संस्करण %1$s</string>
+    <string name="changelog_version_template">v%1$s</string>
+    <string name="support_section_support_dev">डेवलपर का समर्थन करें</string>
+    <string name="support_section_legal">कानूनी</string>
+    <string name="support_watch_ad_sub_loading">विज्ञापन लोड हो रहा है...</string>
+    <string name="support_watch_ad_sub">मुफ़्त में सहायता करने का त्वरित तरीका</string>
+    <string name="support_toast_youtube">यूट्यूब नहीं खुल सका</string>
+    <string name="support_toast_ad_failed">विज्ञापन नहीं दिखाया जा सका. बाद में पुन: प्रयास।</string>
+    <string name="support_toast_thanks_ad">देखने के लिए धन्यवाद! 🐱</string>
+    <string name="support_toast_ad_loading">विज्ञापन लोड हो रहा है, कृपया प्रतीक्षा करें...</string>
+    <string name="support_toast_no_ad">अभी कोई विज्ञापन उपलब्ध नहीं है. बाद में पुन: प्रयास।</string>
+    <string name="support_toast_browser">ब्राउज़र नहीं खुल सका</string>
+    <string name="billing_store_not_ready">Play Store अभी तैयार नहीं है. अपना कनेक्शन जांचें और पुनः प्रयास करें।</string>
+    <string name="billing_thanks_support_me">आपके समर्थन के लिए धन्यवाद! 🐱</string>
+    <string name="billing_pending">खरीदारी लंबित है - इसके पूरा होने पर आपको पहुंच मिल जाएगी।</string>
+    <string name="dialog_changelog_title">बदलाव का</string>
+    <string name="label_beta">बीटा</string>
+    <string name="support_privacy_policy">गोपनीयता नीति</string>
+    <string name="support_privacy_policy_desc">CatRec आपके डेटा को कैसे प्रबंधित करता है</string>
+    <string name="support_terms_of_service">सेवा की शर्तें</string>
+    <string name="support_terms_of_service_desc">उपयोग नियम और अस्वीकरण</string>
+    <string name="support_permissions_disclosure">अनुमतियाँ प्रकटीकरण</string>
+    <string name="support_permissions_disclosure_desc">प्रत्येक अनुमति की आवश्यकता क्यों है?</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">सूचनाएं</string>
+    <string name="perm_rationale_notifications">रिकॉर्डिंग करते समय नोटिफिकेशन शेड में रिकॉर्डिंग नियंत्रण और लाइव स्थिति दिखाना आवश्यक है।</string>
+    <string name="perm_name_microphone">माइक्रोफ़ोन</string>
+    <string name="perm_rationale_microphone">आपकी स्क्रीन रिकॉर्डिंग के साथ-साथ माइक्रोफ़ोन ऑडियो कैप्चर करने के लिए आवश्यक है।</string>
+    <string name="perm_name_camera">कैमरा</string>
+    <string name="perm_rationale_camera">आपकी स्क्रीन रिकॉर्डिंग के शीर्ष पर कैमरा-इन-पिक्चर ओवरले दिखाना आवश्यक है।</string>
+    <string name="perm_name_overlay">अन्य ऐप्स पर प्रदर्शित करें</string>
+    <string name="perm_rationale_overlay">रिकॉर्डिंग के दौरान अन्य ऐप्स के शीर्ष पर फ्लोटिंग कंट्रोल बबल और कैमरा ओवरले दिखाना आवश्यक है।</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">स्क्रीन रिकॉर्डिंग</string>
+    <string name="notif_channel_recording_complete">रिकॉर्डिंग पूरी हो गई</string>
+    <string name="notif_channel_rolling_buffer">रोलिंग बफ़र</string>
+    <string name="notif_ready_title">कैटरेक तैयार</string>
+    <string name="notif_ready_text">रिकॉर्डिंग शुरू करने के लिए ओवरले ● बटन पर टैप करें</string>
+    <string name="notif_action_revoke">रद्द करना</string>
+    <string name="notif_preparing">तैयारी हो रही है...</string>
+    <string name="notif_recording_starting_in">रिकॉर्डिंग %1$d से शुरू हो रही है...</string>
+    <string name="notif_recording_paused">रिकॉर्डिंग रोक दी गई</string>
+    <string name="notif_recording_muted">रिकॉर्डिंग (मौन)…</string>
+    <string name="notif_recording_in_progress">रिकॉर्डिंग चल रही है...</string>
+    <string name="notif_title_short">कैटरेक</string>
+    <string name="notif_action_stop">रुकना</string>
+    <string name="notif_action_pause">विराम</string>
+    <string name="notif_action_resume">फिर शुरू करना</string>
+    <string name="notif_action_mute">आवाज़ बंद करना</string>
+    <string name="notif_action_unmute">अनम्यूट</string>
+    <string name="notif_action_show_controls">नियंत्रण दिखाएँ</string>
+    <string name="notif_buffer_title">कैटरेक - रोलिंग बफर</string>
+    <string name="notif_buffer_starting">बफ़र प्रारंभ हो रहा है…</string>
+    <string name="notif_buffer_buffering">अंतिम %1$d बफ़रिंग…</string>
+    <string name="notif_buffer_save_clip">क्लिप सहेजें</string>
+    <string name="notif_post_title">रिकॉर्डिंग ख़त्म</string>
+    <string name="notif_post_text">अपनी रिकॉर्डिंग खोलने के लिए टैप करें</string>
+    <string name="notif_post_open">खुला</string>
+    <string name="notif_post_share">शेयर करना</string>
+    <string name="notif_post_delete">मिटाना</string>
+    <string name="share_recording_title">रिकॉर्डिंग साझा करें</string>
+    <string name="toast_recording_stopped_projection">रिकॉर्डिंग बंद हो गई: कैप्चर किया गया ऐप बंद हो गया या पृष्ठभूमि में चला गया</string>
+    <string name="toast_recording_failed_no_video">रिकॉर्डिंग विफल: कोई वीडियो कैप्चर नहीं किया गया</string>
+    <string name="toast_gif_transcode_failed">GIF नहीं बनाया जा सका - आपकी MP4 रिकॉर्डिंग रखी गई थी।</string>
+    <string name="toast_gif_saved">GIF को Pictures/CatRec/GIFs में सहेजा गया</string>
+    <string name="toast_separate_mic_failed">अलग ऑडियो फ़ाइल नहीं बनाई जा सकी - इसके बजाय वीडियो में माइक रिकॉर्ड किया जाएगा</string>
+    <string name="toast_internal_audio_silent">आंतरिक ऑडियो मौन है - रिकॉर्ड किया जा रहा ऐप ऑडियो कैप्चर की अनुमति नहीं दे सकता है। इसके बजाय माइक ऑडियो रिकॉर्ड करने का प्रयास करें।</string>
+    <string name="recording_has_separate_audio">अलग ऑडियो ट्रैक है</string>
+    <string name="toast_buffer_start_failed">बफ़र प्रारंभ विफल: %1$s</string>
+    <string name="toast_clip_empty">क्लिप खाली है - अधिक समय तक बफरिंग करते रहें</string>
+    <string name="toast_clip_saved">क्लिप सहेजी गई!</string>
+    <string name="toast_clip_save_failed">क्लिप सहेजना विफल: %1$s</string>
+    <string name="notif_overlay_controls_text">फ़्लोटिंग नियंत्रण सक्षम हैं</string>
+    <string name="notif_camera_overlay_text">कैटरेक कैमरा ओवरले सक्रिय है - ऐप पर लौटने के लिए टैप करें</string>
+    <string name="tile_record_label">कैटरेक रिकॉर्ड</string>
+    <string name="tile_clipper_label">कैटरेक क्लिपर</string>
+    <string name="notif_channel_overlay">ओवरले नियंत्रण</string>
+    <string name="notif_channel_overlay_desc">फ़्लोटिंग ओवरले नियंत्रण सक्रिय होने पर दिखाया गया है</string>
+    <string name="notif_overlay_active_title">कैटरेक ओवरले सक्रिय</string>
+    <string name="notif_overlay_start_recording">रिकॉर्डिंग प्रारंभ करें</string>
+    <string name="notif_overlay_close_overlay">ओवरले बंद करें</string>
+    <string name="notif_channel_camera_overlay">कैमरा ओवरले</string>
+    <string name="notif_channel_camera_overlay_desc">कैमरा ओवरले सक्रिय होने पर दिखाता है</string>
+    <string name="notif_camera_in_use_title">कैमरा उपयोग में है</string>
+    <string name="notif_channel_app_controls">त्वरित नियंत्रण</string>
+    <string name="notif_channel_app_controls_desc">रिकॉर्डिंग, स्क्रीनशॉट और ओवरले शॉर्टकट</string>
+    <string name="notif_app_controls_title">कैटरेक</string>
+    <string name="notif_app_controls_text_idle">निष्क्रिय - नीचे एक क्रिया पर टैप करें</string>
+    <string name="notif_action_screenshot">स्क्रीनशॉट</string>
+    <string name="notif_action_overlay_hide">आवरण छुपाएं</string>
+    <string name="notif_action_overlay_show">ओवरले दिखाएँ</string>
+    <string name="notif_action_overlay_enable_in_settings">ओवरले बंद</string>
+    <string name="notif_action_home">घर</string>
+    <string name="notif_action_exit">बाहर निकलना</string>
+    <string name="toast_grant_capture_for_screenshot">स्क्रीन कैप्चर की अनुमति दें - फिर CatRec ओवरले से स्क्रीनशॉट ले सकता है।</string>
+    <string name="tile_subtitle_recording">रिकॉर्डिंग...</string>
+    <string name="tile_subtitle_buffering">बफ़रिंग...</string>
+    <string name="tile_subtitle_ready">तैयार</string>
+    <string name="tile_subtitle_tap_open">ऐप खोलने के लिए टैप करें</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">स्क्रीन रिकॉर्डिंग अनुमति अस्वीकृत</string>
+    <string name="toast_no_email_app">कोई ईमेल ऐप नहीं मिला</string>
+    <string name="share_screenshot_chooser_title">स्क्रीनशॉट साझा करें</string>
+    <string name="recordings_header_format">लाइब्रेरी · %1$d</string>
+    <string name="screenshots_header_format">स्क्रीनशॉट · %1$d</string>
+    <string name="overlay_clip_button">✂ क्लिप</string>
+    <string name="overlay_clipper_label">काटनेवाला</string>
+    <string name="overlay_toast_authorize_first">पहले CatRec खोलें और «ओवरले रिकॉर्डिंग अधिकृत करें» पर टैप करें</string>
+    <string name="countdown_subtitle">रिकॉर्डिंग शुरू हो रही है…</string>
+    <string name="toast_recorder_start_failed">रिकॉर्डर शुरू नहीं हो सका: %1$s</string>
+    <string name="format_jpeg">जेपीईजी</string>
+    <string name="format_png">पीएनजी</string>
+    <string name="format_webp">वेबपी</string>
+    <string name="content_desc_more_options">अधिक विकल्प</string>
+    <string name="content_desc_rewind_10">10 सेकंड पीछे</string>
+    <string name="content_desc_forward_10">10 सेकंड आगे</string>
+    <string name="beta_feedback_email_subject">CatRec बीटा प्रतिक्रिया</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>H.264 और H.265 (HEVC) कोडेक समर्थन के साथ स्क्रीन रिकॉर्डिंग</item>
+        <item>निर्बाध खंड सिलाई और त्वरित अवधि प्रीसेट के साथ रोलिंग क्लिपर बफर (1-5 मिनट, कॉन्फ़िगर करने योग्य)</item>
+        <item>जब क्लिपर चल रहा हो तो क्लिप सहेजें बटन</item>
+        <item>सभी पहलू अनुपातों के साथ-साथ कस्टम इनपुट के लिए व्यापक रिज़ॉल्यूशन चयन</item>
+        <item>रिकॉर्डिंग के दौरान ऑटो ओरिएंटेशन ट्रैकिंग</item>
+        <item>रिकॉर्डिंग शुरू होने से पहले उलटी गिनती घड़ी</item>
+        <item>रिकॉर्डिंग के दौरान स्क्रीन-ऑन विकल्प रखें</item>
+        <item>ऑडियो: माइक्रोफ़ोन, आंतरिक ऑडियो, या मिश्रित; विश्वसनीय निर्यात के साथ वैकल्पिक अलग माइक्रोफोन ट्रैक</item>
+        <item>उन्नत ऑडियो सेटिंग्स: बिटरेट, नमूना दर, चैनल, एनकोडर; सटीक स्टीरियो और सीबीआर एन्कोडिंग</item>
+        <item>गुणवत्ता प्रीसेट के साथ GIF रिकॉर्डिंग मोड</item>
+        <item>फ़्लोटिंग नियंत्रण ओवरले: रोकें, रोकें, म्यूट करें, स्क्रीनशॉट, क्लिप एक्सेस</item>
+        <item>ओवरले किसी भी समय उपलब्ध है; ओवरले से रिकॉर्डिंग या क्लिपिंग प्रारंभ करें</item>
+        <item>एक-टैप ओवरले रिकॉर्डिंग को अधिकृत करता है - न्यूनतम बार-बार अनुमति के संकेत देता है</item>
+        <item>फ्लोटिंग ओवरले पर ब्रश टूल</item>
+        <item>लाइव फेस-कैम पूर्वावलोकन के साथ कैमरा ओवरले</item>
+        <item>वॉटरमार्क ओवरले: कस्टम छवियां, आकार, अस्पष्टता, स्थिति, स्नैप-टू-कॉर्नर; डिफ़ॉल्ट ऐप आइकन से मेल खाता है</item>
+        <item>प्रारूप और गुणवत्ता सेटिंग्स के साथ स्क्रीनशॉट; ओवरले से कैप्चर करें</item>
+        <item>पोस्ट-स्क्रीनशॉट साझा/संपादन प्रवाह (वैकल्पिक)</item>
+        <item>थंबनेल के साथ रिकॉर्डिंग लाइब्रेरी; इन-ऐप ट्रिमर; मर्ज क्लिप; वीडियो से GIF; छवि संपादक और फसल उपकरण</item>
+        <item>इन-ऐप वीडियो प्लेयर</item>
+        <item>उच्चारण रंग: प्रीसेट, ग्रेडिएंट और हेक्स; पूरे यूआई में गतिशील थीम</item>
+        <item>बेहतर प्रकाश-थीम कंट्रास्ट के साथ हल्के और गहरे रंग की थीम</item>
+        <item>निचले स्तर के उपकरणों के लिए प्रदर्शन मोड</item>
+        <item>व्यवस्थित सेटिंग्स: नियंत्रण, रिकॉर्डिंग गुणवत्ता, ओवरले, थीम, भाषा, भंडारण, और बहुत कुछ</item>
+        <item>विश्वसनीय पृष्ठभूमि रिकॉर्डिंग के लिए अप्रतिबंधित बैटरी उपयोग की अनुमति देने के लिए सेटिंग्स शॉर्टकट</item>
+        <item>लगातार अनुवाद के साथ 16+ भाषाएँ</item>
+        <item>स्पष्ट स्थिति संकेतक के साथ रिकॉर्ड/क्लिपर मोड चयनकर्ता</item>
+        <item>त्वरित सेटिंग्स टाइल्स: कैटरेक रिकॉर्ड और कैटरेक क्लिपर</item>
+        <item>कार्रवाई के साथ रिकॉर्डिंग अधिसूचना; तैयार-कैप्चर सत्र समर्थन</item>
+        <item>स्थिरता में सुधार के लिए वैकल्पिक ऑप्ट-इन विश्लेषण</item>
+        <item>गोपनीयता नियंत्रण: विश्लेषण और विज्ञापन वैयक्तिकरण टॉगल</item>
+        <item>समर्थन स्क्रीन: चेंजलॉग, कानूनी लिंक और वैकल्पिक पुरस्कृत समर्थन</item>
+    </string-array>
 </resources>

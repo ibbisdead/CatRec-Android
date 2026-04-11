@@ -69,14 +69,14 @@ class RollingBufferEngine(
         private const val TAG = "RollingBufferEngine"
         const val SEGMENT_DURATION_MS = 10_000L
         private const val SILENCE_TIMEOUT_MS = 5_000L
+
         /** Default rolling window (1 min at 10 s/segment). */
         const val MAX_SEGMENTS_DEFAULT = 6
-        private const val MIN_MAX_SEGMENTS = 6   // 1 min
+        private const val MIN_MAX_SEGMENTS = 6 // 1 min
         private const val ABSOLUTE_MAX_SEGMENTS = 30 // 5 min × 6 segments
 
-        /** @param minutes Clipper buffer length preset (1–5). */
-        fun maxSegmentsForClipperMinutes(minutes: Int): Int =
-            minutes.coerceIn(1, 5) * (60_000 / SEGMENT_DURATION_MS.toInt())
+        /** @param minutes Clipper duration preset in minutes (1–5). */
+        fun maxSegmentsForClipperMinutes(minutes: Int): Int = minutes.coerceIn(1, 5) * (60_000 / SEGMENT_DURATION_MS.toInt())
     }
 
     // ── Encoder objects ────────────────────────────────────────────────────────
@@ -89,22 +89,23 @@ class RollingBufferEngine(
     // ── Muxer state (guarded by muxerLock) ────────────────────────────────────
     private val muxerLock = Object()
     private var currentMuxer: MediaMuxer? = null
-    private var currentSegFile: File? = null  // file currently being written
+    private var currentSegFile: File? = null // file currently being written
     private var muxerVideoTrack = -1
     private var muxerAudioTrack = -1
     private var isMuxerReady = false
     private var storedVideoFmt: MediaFormat? = null
     private var storedAudioFmt: MediaFormat? = null
+
     // Timestamp base for the current segment (encoder time when the segment started)
     private var segStartPtsUs = AtomicLong(-1L)
 
     // ── Completed segment queue ────────────────────────────────────────────────
-    private val segments = ArrayDeque<File>()   // oldest-first; guarded by muxerLock
+    private val segments = ArrayDeque<File>() // oldest-first; guarded by muxerLock
     private val segmentDir = File(context.cacheDir, "rolling_segments").also { it.mkdirs() }
 
     // ── Control flags ──────────────────────────────────────────────────────────
-    private val isRunning      = AtomicBoolean(false)
-    private val pendingRotate  = AtomicBoolean(false)
+    private val isRunning = AtomicBoolean(false)
+    private val pendingRotate = AtomicBoolean(false)
 
     // ── Audio ──────────────────────────────────────────────────────────────────
     private var micRecord: AudioRecord? = null
@@ -126,25 +127,34 @@ class RollingBufferEngine(
         clearSegmentDir()
         prepareVideoEncoder()
         prepareAudioEncoder()
-        openNewSegment()          // prepare the first muxer before we start encoding
+        openNewSegment() // prepare the first muxer before we start encoding
 
         videoEncoder?.start()
         if (mAudioMode != AudioMode.NONE) audioEncoder?.start()
 
-        frameRelay = EncoderFrameRelay(
-            mediaProjection,
-            inputSurface!!,
-            width, height, dpi,
-            "CatRecBuffer",
-        ).also { it.start() }
+        frameRelay =
+            EncoderFrameRelay(
+                mediaProjection,
+                inputSurface!!,
+                width,
+                height,
+                dpi,
+                "CatRecBuffer",
+            ).also { it.start() }
 
         isRunning.set(true)
 
         videoThread = Thread({ drainVideoLoop() }, "CatRec-Buffer-Video").also { it.start() }
 
         if (mAudioMode != AudioMode.NONE) {
-            try { micRecord?.startRecording() } catch (_: Exception) {}
-            try { internalRecord?.startRecording() } catch (_: Exception) {}
+            try {
+                micRecord?.startRecording()
+            } catch (_: Exception) {
+            }
+            try {
+                internalRecord?.startRecording()
+            } catch (_: Exception) {
+            }
             audioThread = Thread({ captureAudioLoop() }, "CatRec-Buffer-AudioCap").also { it.start() }
             audioDrainThread = Thread({ drainAudioLoop() }, "CatRec-Buffer-AudioDrain").also { it.start() }
         }
@@ -153,7 +163,9 @@ class RollingBufferEngine(
         rotationScheduler = Executors.newSingleThreadScheduledExecutor()
         rotationScheduler?.scheduleAtFixedRate(
             { requestRotation() },
-            SEGMENT_DURATION_MS, SEGMENT_DURATION_MS, TimeUnit.MILLISECONDS
+            SEGMENT_DURATION_MS,
+            SEGMENT_DURATION_MS,
+            TimeUnit.MILLISECONDS,
         )
     }
 
@@ -164,14 +176,26 @@ class RollingBufferEngine(
         rotationScheduler?.shutdown()
         rotationScheduler = null
 
-        try { frameRelay?.stop() } catch (_: Exception) {}
+        try {
+            frameRelay?.stop()
+        } catch (_: Exception) {
+        }
         frameRelay = null
 
-        try { micRecord?.stop() } catch (_: Exception) {}
-        try { internalRecord?.stop() } catch (_: Exception) {}
+        try {
+            micRecord?.stop()
+        } catch (_: Exception) {
+        }
+        try {
+            internalRecord?.stop()
+        } catch (_: Exception) {
+        }
         audioThread?.join(2000)
 
-        try { videoEncoder?.signalEndOfInputStream() } catch (_: Exception) {}
+        try {
+            videoEncoder?.signalEndOfInputStream()
+        } catch (_: Exception) {
+        }
         signalAudioEOS()
 
         videoThread?.join(2000)
@@ -181,23 +205,33 @@ class RollingBufferEngine(
             finalizeMuxer()
         }
 
-        videoEncoder?.release(); videoEncoder = null
-        audioEncoder?.release(); audioEncoder = null
-        micRecord?.release();    micRecord = null
-        internalRecord?.release(); internalRecord = null
+        videoEncoder?.release()
+        videoEncoder = null
+        audioEncoder?.release()
+        audioEncoder = null
+        micRecord?.release()
+        micRecord = null
+        internalRecord?.release()
+        internalRecord = null
         Log.d(TAG, "Buffer engine stopped.")
     }
 
-    fun mute()   { isMuted.set(true) }
-    fun unmute() { isMuted.set(false) }
+    fun mute() {
+        isMuted.set(true)
+    }
+
+    fun unmute() {
+        isMuted.set(false)
+    }
 
     /**
      * Returns a snapshot of all completed segments plus the current partial segment.
      * Call this before stop() to ensure the active segment is included.
      */
-    fun getSegmentSnapshot(): List<File> = synchronized(muxerLock) {
-        (segments.toList() + listOfNotNull(currentSegFile?.takeIf { it.exists() && it.length() > 0 }))
-    }
+    fun getSegmentSnapshot(): List<File> =
+        synchronized(muxerLock) {
+            (segments.toList() + listOfNotNull(currentSegFile?.takeIf { it.exists() && it.length() > 0 }))
+        }
 
     /**
      * Merges all buffered segments into [outputFile] using stream-copy (no re-encode).
@@ -229,7 +263,8 @@ class RollingBufferEngine(
         try {
             val p = Bundle().apply { putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0) }
             videoEncoder?.setParameters(p)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     /** Called from the video drain thread at an I-frame boundary. */
@@ -271,15 +306,21 @@ class RollingBufferEngine(
             muxer.start()
             isMuxerReady = true
         }
-        Log.d(TAG, "New segment: ${file.name}  immediate=${isMuxerReady}")
+        Log.d(TAG, "New segment: ${file.name}  immediate=$isMuxerReady")
     }
 
     private fun finalizeMuxer() {
         if (isMuxerReady) {
-            try { currentMuxer?.stop() } catch (_: Exception) {}
+            try {
+                currentMuxer?.stop()
+            } catch (_: Exception) {
+            }
             isMuxerReady = false
         }
-        try { currentMuxer?.release() } catch (_: Exception) {}
+        try {
+            currentMuxer?.release()
+        } catch (_: Exception) {
+        }
         currentMuxer = null
     }
 
@@ -296,19 +337,30 @@ class RollingBufferEngine(
         val info = MediaCodec.BufferInfo()
         while (isRunning.get()) {
             drainVideoOnce(info)
-            try { Thread.sleep(4) } catch (_: InterruptedException) {}
+            try {
+                Thread.sleep(4)
+            } catch (_: InterruptedException) {
+            }
         }
         // Drain remaining frames
         repeat(60) {
             drainVideoOnce(info)
-            try { Thread.sleep(4) } catch (_: InterruptedException) {}
+            try {
+                Thread.sleep(4)
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
     private fun drainVideoOnce(info: MediaCodec.BufferInfo) {
         val enc = videoEncoder ?: return
         loop@ while (true) {
-            val status = try { enc.dequeueOutputBuffer(info, 0) } catch (_: Exception) { break@loop }
+            val status =
+                try {
+                    enc.dequeueOutputBuffer(info, 0)
+                } catch (_: Exception) {
+                    break@loop
+                }
             when {
                 status == MediaCodec.INFO_TRY_AGAIN_LATER -> break@loop
 
@@ -339,8 +391,8 @@ class RollingBufferEngine(
                     }
 
                     val buf = enc.getOutputBuffer(status)
-                    if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                        && info.size > 0
+                    if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 &&
+                        info.size > 0
                     ) {
                         synchronized(muxerLock) {
                             if (isMuxerReady && muxerVideoTrack >= 0) {
@@ -351,9 +403,10 @@ class RollingBufferEngine(
                                 val adjPts = info.presentationTimeUs - segStartPtsUs.get()
                                 buf.position(info.offset)
                                 buf.limit(info.offset + info.size)
-                                val adjInfo = MediaCodec.BufferInfo().apply {
-                                    set(info.offset, info.size, adjPts.coerceAtLeast(0L), info.flags)
-                                }
+                                val adjInfo =
+                                    MediaCodec.BufferInfo().apply {
+                                        set(info.offset, info.size, adjPts.coerceAtLeast(0L), info.flags)
+                                    }
                                 currentMuxer?.writeSampleData(muxerVideoTrack, buf, adjInfo)
                             }
                         }
@@ -372,10 +425,13 @@ class RollingBufferEngine(
     private fun captureAudioLoop() {
         val bufSize = 2048 * effectiveChannelCount.get()
         val main = ByteArray(bufSize)
-        val mix  = ByteArray(bufSize)
+        val mix = ByteArray(bufSize)
 
-        Log.d(TAG, "captureAudioLoop started: mode=$mAudioMode bufSize=$bufSize " +
-                "internalRecord=${internalRecord != null} micRecord=${micRecord != null}")
+        Log.d(
+            TAG,
+            "captureAudioLoop started: mode=$mAudioMode bufSize=$bufSize " +
+                "internalRecord=${internalRecord != null} micRecord=${micRecord != null}",
+        )
 
         var loopCount = 0L
         var firstAnyNonZeroLogged = false
@@ -393,9 +449,15 @@ class RollingBufferEngine(
                     internalReadCount = r1
                     val r2 = micRecord!!.read(mix, 0, bufSize)
                     when {
-                        r1 > 0 && r2 > 0 -> { mixPcm(main, mix, minOf(r1, r2)); readCount = minOf(r1, r2) }
+                        r1 > 0 && r2 > 0 -> {
+                            mixPcm(main, mix, minOf(r1, r2))
+                            readCount = minOf(r1, r2)
+                        }
                         r1 > 0 -> readCount = r1
-                        r2 > 0 -> { System.arraycopy(mix, 0, main, 0, r2); readCount = r2 }
+                        r2 > 0 -> {
+                            System.arraycopy(mix, 0, main, 0, r2)
+                            readCount = r2
+                        }
                     }
                 }
                 internalRecord != null -> {
@@ -414,16 +476,22 @@ class RollingBufferEngine(
                 if (!firstAnyNonZeroLogged && main.asSequence().take(readCount).any { it != 0.toByte() }) {
                     firstAnyNonZeroLogged = true
                     Log.d(TAG, "First non-zero audio buffer at loop=$loopCount mode=$mAudioMode")
-                    logAnalyticsEvent("first_audio_buffer_received", mapOf(
-                        "loop"  to loopCount.toString(),
-                        "mode"  to mAudioMode.name,
-                        "brand" to Build.BRAND,
-                        "model" to Build.MODEL,
-                    ))
+                    logAnalyticsEvent(
+                        "first_audio_buffer_received",
+                        mapOf(
+                            "loop" to loopCount.toString(),
+                            "mode" to mAudioMode.name,
+                            "brand" to Build.BRAND,
+                            "model" to Build.MODEL,
+                        ),
+                    )
                 }
             } else if (readCount < 0) {
                 Log.e(TAG, "Audio read error code=$readCount at loop=$loopCount")
-                try { Thread.sleep(5) } catch (_: Exception) {}
+                try {
+                    Thread.sleep(5)
+                } catch (_: Exception) {
+                }
             }
 
             // Silence-timeout check for internal audio
@@ -440,23 +508,32 @@ class RollingBufferEngine(
                 } else if (now - internalSilentStartMs >= SILENCE_TIMEOUT_MS) {
                     silenceCallbackFired = true
                     val silentMs = now - internalSilentStartMs
-                    Log.w(TAG, "Internal audio silent for ${silentMs}ms — " +
-                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}")
+                    Log.w(
+                        TAG,
+                        "Internal audio silent for ${silentMs}ms — " +
+                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}",
+                    )
                     AppLogger.w(TAG, "Buffer internal audio silence timeout after ${silentMs}ms")
-                    logAnalyticsEvent("silent_timeout", mapOf(
-                        "silent_ms" to silentMs.toString(),
-                        "api"       to Build.VERSION.SDK_INT.toString(),
-                        "brand"     to Build.BRAND,
-                        "model"     to Build.MODEL,
-                        "mode"      to mAudioMode.name,
-                    ))
+                    logAnalyticsEvent(
+                        "silent_timeout",
+                        mapOf(
+                            "silent_ms" to silentMs.toString(),
+                            "api" to Build.VERSION.SDK_INT.toString(),
+                            "brand" to Build.BRAND,
+                            "model" to Build.MODEL,
+                            "mode" to mAudioMode.name,
+                        ),
+                    )
                     onInternalAudioSilence?.invoke()
                 }
             }
 
             if (loopCount % 500L == 0L) {
-                Log.d(TAG, "captureAudioLoop: loop=$loopCount readCount=$readCount " +
-                        "internalRead=$internalReadCount silenceCallbackFired=$silenceCallbackFired")
+                Log.d(
+                    TAG,
+                    "captureAudioLoop: loop=$loopCount readCount=$readCount " +
+                        "internalRead=$internalReadCount silenceCallbackFired=$silenceCallbackFired",
+                )
             }
         }
 
@@ -467,18 +544,29 @@ class RollingBufferEngine(
         val info = MediaCodec.BufferInfo()
         while (isRunning.get()) {
             drainAudioOnce(info)
-            try { Thread.sleep(4) } catch (_: InterruptedException) {}
+            try {
+                Thread.sleep(4)
+            } catch (_: InterruptedException) {
+            }
         }
         repeat(60) {
             drainAudioOnce(info)
-            try { Thread.sleep(4) } catch (_: InterruptedException) {}
+            try {
+                Thread.sleep(4)
+            } catch (_: InterruptedException) {
+            }
         }
     }
 
     private fun drainAudioOnce(info: MediaCodec.BufferInfo) {
         val enc = audioEncoder ?: return
         loop@ while (true) {
-            val status = try { enc.dequeueOutputBuffer(info, 0) } catch (_: Exception) { break@loop }
+            val status =
+                try {
+                    enc.dequeueOutputBuffer(info, 0)
+                } catch (_: Exception) {
+                    break@loop
+                }
             when {
                 status == MediaCodec.INFO_TRY_AGAIN_LATER -> break@loop
 
@@ -503,8 +591,8 @@ class RollingBufferEngine(
 
                 status >= 0 -> {
                     val buf = enc.getOutputBuffer(status)
-                    if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0
-                        && info.size > 0
+                    if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 &&
+                        info.size > 0
                     ) {
                         synchronized(muxerLock) {
                             if (isMuxerReady && muxerAudioTrack >= 0) {
@@ -512,9 +600,10 @@ class RollingBufferEngine(
                                 val adjPts = if (base < 0) 0L else (info.presentationTimeUs - base).coerceAtLeast(0L)
                                 buf.position(info.offset)
                                 buf.limit(info.offset + info.size)
-                                val adjInfo = MediaCodec.BufferInfo().apply {
-                                    set(info.offset, info.size, adjPts, info.flags)
-                                }
+                                val adjInfo =
+                                    MediaCodec.BufferInfo().apply {
+                                        set(info.offset, info.size, adjPts, info.flags)
+                                    }
                                 currentMuxer?.writeSampleData(muxerAudioTrack, buf, adjInfo)
                             }
                         }
@@ -530,15 +619,22 @@ class RollingBufferEngine(
     //  Helpers
     // ══════════════════════════════════════════════════════════════════════════
 
-    private fun feedAudioEncoder(data: ByteArray, length: Int) {
+    private fun feedAudioEncoder(
+        data: ByteArray,
+        length: Int,
+    ) {
         val enc = audioEncoder ?: return
         try {
             val idx = enc.dequeueInputBuffer(0)
             if (idx >= 0) {
-                enc.getInputBuffer(idx)?.apply { clear(); put(data, 0, length) }
+                enc.getInputBuffer(idx)?.apply {
+                    clear()
+                    put(data, 0, length)
+                }
                 enc.queueInputBuffer(idx, 0, length, System.nanoTime() / 1000, 0)
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     private fun signalAudioEOS() {
@@ -546,24 +642,33 @@ class RollingBufferEngine(
         try {
             val idx = enc.dequeueInputBuffer(5000L)
             if (idx >= 0) enc.queueInputBuffer(idx, 0, 0, System.nanoTime() / 1000, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
-    private fun logAnalyticsEvent(name: String, params: Map<String, String> = emptyMap()) {
+    private fun logAnalyticsEvent(
+        name: String,
+        params: Map<String, String> = emptyMap(),
+    ) {
         try {
             val bundle = android.os.Bundle()
             params.forEach { (k, v) -> bundle.putString(k, v.take(100)) }
             FirebaseAnalytics.getInstance(context).logEvent(name, bundle)
             FirebaseCrashlytics.getInstance().log("analytics[$name] $params")
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
-    private fun mixPcm(base: ByteArray, overlay: ByteArray, size: Int) {
+    private fun mixPcm(
+        base: ByteArray,
+        overlay: ByteArray,
+        size: Int,
+    ) {
         for (i in 0 until size step 2) {
             val s1 = ((base[i].toInt() and 0xFF) or (base[i + 1].toInt() shl 8)).toShort()
             val s2 = ((overlay[i].toInt() and 0xFF) or (overlay[i + 1].toInt() shl 8)).toShort()
             val mixed = (s1.toInt() + s2.toInt()).coerceIn(-32768, 32767).toShort().toInt()
-            base[i]     = (mixed and 0xFF).toByte()
+            base[i] = (mixed and 0xFF).toByte()
             base[i + 1] = ((mixed shr 8) and 0xFF).toByte()
         }
     }
@@ -573,30 +678,46 @@ class RollingBufferEngine(
     // ══════════════════════════════════════════════════════════════════════════
 
     private fun prepareVideoEncoder() {
-        val isEmulator = Build.MODEL.contains("sdk_gphone", true) ||
+        val isEmulator =
+            Build.MODEL.contains("sdk_gphone", true) ||
                 Build.MODEL.contains("google_sdk", true)
-        val mime = if (encoderType == "H.265 (HEVC)" && !isEmulator)
-            MediaFormat.MIMETYPE_VIDEO_HEVC else MediaFormat.MIMETYPE_VIDEO_AVC
+        val mime =
+            if (encoderType == "H.265 (HEVC)" && !isEmulator) {
+                MediaFormat.MIMETYPE_VIDEO_HEVC
+            } else {
+                MediaFormat.MIMETYPE_VIDEO_AVC
+            }
 
-        val discoveryFmt = MediaFormat.createVideoFormat(mime, width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-        }
-        val list = android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS)
-        val name = list.findEncoderForFormat(discoveryFmt)
+        val name = VideoEncoderResolver.resolveVideoEncoderName(mime, width, height, fps)
 
-        val configFmt = MediaFormat.createVideoFormat(mime, width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-            setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-            setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
-            setInteger(MediaFormat.KEY_PRIORITY, 0)
-        }
+        val configFmt =
+            MediaFormat.createVideoFormat(mime, width, height).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+                setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
+                setInteger(MediaFormat.KEY_PRIORITY, 0)
+                setInteger(
+                    MediaFormat.KEY_BITRATE_MODE,
+                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setInteger("max-bitrate", bitrate)
+                }
+            }
 
-        videoEncoder = if (name != null) MediaCodec.createByCodecName(name)
-                       else              MediaCodec.createEncoderByType(mime)
+        videoEncoder =
+            try {
+                if (name != null) {
+                    MediaCodec.createByCodecName(name)
+                } else {
+                    MediaCodec.createEncoderByType(mime)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Named encoder create failed, using type fallback: ${e.message}")
+                MediaCodec.createEncoderByType(mime)
+            }
         videoEncoder?.configure(configFmt, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
         inputSurface = videoEncoder?.createInputSurface()
     }
@@ -607,19 +728,26 @@ class RollingBufferEngine(
 
         val wantStereo = audioChannelCount == 2
         val stereoMask = AudioFormat.CHANNEL_IN_STEREO
-        val monoMask   = AudioFormat.CHANNEL_IN_MONO
-        val chanMask   = if (wantStereo) stereoMask else monoMask
-        val minBuf     = AudioRecord.getMinBufferSize(audioSampleRate, chanMask, AudioFormat.ENCODING_PCM_16BIT)
-            .coerceAtLeast(4096)
+        val monoMask = AudioFormat.CHANNEL_IN_MONO
+        val chanMask = if (wantStereo) stereoMask else monoMask
+        val minBuf =
+            AudioRecord
+                .getMinBufferSize(audioSampleRate, chanMask, AudioFormat.ENCODING_PCM_16BIT)
+                .coerceAtLeast(4096)
 
-        Log.d(TAG, "prepareAudioEncoder: mode=$mAudioMode sampleRate=$audioSampleRate " +
+        Log.d(
+            TAG,
+            "prepareAudioEncoder: mode=$mAudioMode sampleRate=$audioSampleRate " +
                 "channels=$audioChannelCount bufferSize=${minBuf * 2} " +
-                "API=${Build.VERSION.SDK_INT} brand=${Build.BRAND} model=${Build.MODEL}")
+                "API=${Build.VERSION.SDK_INT} brand=${Build.BRAND} model=${Build.MODEL}",
+        )
 
         try {
-            val audioPermission = ContextCompat.checkSelfPermission(
-                context, android.Manifest.permission.RECORD_AUDIO
-            )
+            val audioPermission =
+                ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.RECORD_AUDIO,
+                )
             val permGranted = audioPermission == PackageManager.PERMISSION_GRANTED
             Log.d(TAG, "RECORD_AUDIO permission: ${if (permGranted) "GRANTED" else "DENIED"}")
             if (!permGranted) throw SecurityException("RECORD_AUDIO permission denied")
@@ -628,102 +756,147 @@ class RollingBufferEngine(
                 (mAudioMode == AudioMode.INTERNAL || mAudioMode == AudioMode.MIXED)
             ) {
                 try {
-                    Log.d(TAG, "Building AudioPlaybackCaptureConfiguration: " +
+                    Log.d(
+                        TAG,
+                        "Building AudioPlaybackCaptureConfiguration: " +
                             "matchingUsages=[USAGE_MEDIA, USAGE_GAME, USAGE_UNKNOWN] " +
-                            "projection=$mediaProjection")
-                    val capture = AudioPlaybackCaptureConfiguration.Builder(mediaProjection)
-                        .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
-                        .addMatchingUsage(AudioAttributes.USAGE_GAME)
-                        .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
-                        .build()
+                            "projection=$mediaProjection",
+                    )
+                    val capture =
+                        AudioPlaybackCaptureConfiguration
+                            .Builder(mediaProjection)
+                            .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
+                            .addMatchingUsage(AudioAttributes.USAGE_GAME)
+                            .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
+                            .build()
                     Log.d(TAG, "AudioPlaybackCaptureConfiguration built OK")
-                    logAnalyticsEvent("capture_config_created", mapOf(
-                        "api"   to Build.VERSION.SDK_INT.toString(),
-                        "brand" to Build.BRAND,
-                        "model" to Build.MODEL,
-                    ))
-                    val fmt = AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(audioSampleRate)
-                        .setChannelMask(chanMask)
-                        .build()
-                    internalRecord = AudioRecord.Builder()
-                        .setAudioFormat(fmt)
-                        .setBufferSizeInBytes(minBuf * 2)
-                        .setAudioPlaybackCaptureConfig(capture)
-                        .build()
+                    logAnalyticsEvent(
+                        "capture_config_created",
+                        mapOf(
+                            "api" to Build.VERSION.SDK_INT.toString(),
+                            "brand" to Build.BRAND,
+                            "model" to Build.MODEL,
+                        ),
+                    )
+                    val fmt =
+                        AudioFormat
+                            .Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(audioSampleRate)
+                            .setChannelMask(chanMask)
+                            .build()
+                    internalRecord =
+                        AudioRecord
+                            .Builder()
+                            .setAudioFormat(fmt)
+                            .setBufferSizeInBytes(minBuf * 2)
+                            .setAudioPlaybackCaptureConfig(capture)
+                            .build()
                     val state = internalRecord?.state
-                    Log.d(TAG, "Internal AudioRecord state=$state " +
+                    Log.d(
+                        TAG,
+                        "Internal AudioRecord state=$state " +
                             "(INITIALIZED=${AudioRecord.STATE_INITIALIZED}) " +
                             "channelCount=${internalRecord?.channelCount} " +
-                            "sampleRate=${internalRecord?.sampleRate}")
+                            "sampleRate=${internalRecord?.sampleRate}",
+                    )
                     if (state != AudioRecord.STATE_INITIALIZED) {
                         throw IllegalStateException("Internal AudioRecord not initialized (state=$state)")
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Internal audio init failed: ${e.javaClass.simpleName}: ${e.message}", e)
                     AppLogger.e(TAG, "Buffer internal audio init failed: ${e.message}")
-                    logAnalyticsEvent("capture_denied_or_unsupported", mapOf(
-                        "reason" to (e.message?.take(80) ?: "unknown"),
-                        "api"    to Build.VERSION.SDK_INT.toString(),
-                        "brand"  to Build.BRAND,
-                        "model"  to Build.MODEL,
-                    ))
+                    logAnalyticsEvent(
+                        "capture_denied_or_unsupported",
+                        mapOf(
+                            "reason" to (e.message?.take(80) ?: "unknown"),
+                            "api" to Build.VERSION.SDK_INT.toString(),
+                            "brand" to Build.BRAND,
+                            "model" to Build.MODEL,
+                        ),
+                    )
                     internalRecord = null
                     if (mAudioMode == AudioMode.INTERNAL) mAudioMode = AudioMode.MIC
                 }
             }
 
             if (mAudioMode == AudioMode.MIC || mAudioMode == AudioMode.MIXED) {
-                fun tryMic(mask: Int): AudioRecord? = try {
-                    val b = AudioRecord.getMinBufferSize(audioSampleRate, mask, AudioFormat.ENCODING_PCM_16BIT)
-                        .coerceAtLeast(4096)
-                    AudioRecord(MediaRecorder.AudioSource.MIC, audioSampleRate, mask,
-                        AudioFormat.ENCODING_PCM_16BIT, b).also {
-                        if (it.state != AudioRecord.STATE_INITIALIZED) { it.release(); return null }
+                fun tryMic(mask: Int): AudioRecord? =
+                    try {
+                        val b =
+                            AudioRecord
+                                .getMinBufferSize(audioSampleRate, mask, AudioFormat.ENCODING_PCM_16BIT)
+                                .coerceAtLeast(4096)
+                        AudioRecord(
+                            MediaRecorder.AudioSource.MIC,
+                            audioSampleRate,
+                            mask,
+                            AudioFormat.ENCODING_PCM_16BIT,
+                            b,
+                        ).also {
+                            if (it.state != AudioRecord.STATE_INITIALIZED) {
+                                it.release()
+                                return null
+                            }
+                        }
+                    } catch (_: Exception) {
+                        null
                     }
-                } catch (_: Exception) { null }
-                micRecord = if (wantStereo) tryMic(stereoMask) ?: tryMic(monoMask)
-                            else             tryMic(monoMask)
+                micRecord =
+                    if (wantStereo) {
+                        tryMic(stereoMask) ?: tryMic(monoMask)
+                    } else {
+                        tryMic(monoMask)
+                    }
                 Log.d(TAG, "Mic AudioRecord: ${if (micRecord != null) "OK (ch=${micRecord!!.channelCount})" else "FAILED"}")
             }
 
             if (internalRecord == null && micRecord == null) {
                 Log.e(TAG, "No audio sources available. Disabling audio.")
                 AppLogger.e(TAG, "Buffer: no audio sources available")
-                mAudioMode = AudioMode.NONE; return
+                mAudioMode = AudioMode.NONE
+                return
             }
 
-            val resolvedCh = if (wantStereo && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                maxOf(micRecord?.channelCount ?: 0, internalRecord?.channelCount ?: 0).coerceIn(1, 2)
-            } else if (wantStereo) {
-                val cfg = micRecord?.channelConfiguration ?: internalRecord?.channelConfiguration
-                if (cfg == AudioFormat.CHANNEL_IN_STEREO) 2 else 1
-            } else 1
+            val resolvedCh =
+                if (wantStereo && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    maxOf(micRecord?.channelCount ?: 0, internalRecord?.channelCount ?: 0).coerceIn(1, 2)
+                } else if (wantStereo) {
+                    val cfg = micRecord?.channelConfiguration ?: internalRecord?.channelConfiguration
+                    if (cfg == AudioFormat.CHANNEL_IN_STEREO) 2 else 1
+                } else {
+                    1
+                }
             effectiveChannelCount.set(resolvedCh)
 
-            val aacProfile = when (audioEncoderType) {
-                "AAC-HE"    -> MediaCodecInfo.CodecProfileLevel.AACObjectHE
-                "AAC-HE v2" -> MediaCodecInfo.CodecProfileLevel.AACObjectHE_PS
-                "AAC-ELD"   -> MediaCodecInfo.CodecProfileLevel.AACObjectELD
-                else        -> MediaCodecInfo.CodecProfileLevel.AACObjectLC
-            }
-            val fmt = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, audioSampleRate, resolvedCh).apply {
-                setInteger(MediaFormat.KEY_AAC_PROFILE, aacProfile)
-                setInteger(MediaFormat.KEY_BIT_RATE, audioBitrate)
-                setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16384)
-                setInteger(MediaFormat.KEY_BITRATE_MODE,
-                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
-            }
+            val aacProfile =
+                when (audioEncoderType) {
+                    "AAC-HE" -> MediaCodecInfo.CodecProfileLevel.AACObjectHE
+                    "AAC-HE v2" -> MediaCodecInfo.CodecProfileLevel.AACObjectHE_PS
+                    "AAC-ELD" -> MediaCodecInfo.CodecProfileLevel.AACObjectELD
+                    else -> MediaCodecInfo.CodecProfileLevel.AACObjectLC
+                }
+            val fmt =
+                MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, audioSampleRate, resolvedCh).apply {
+                    setInteger(MediaFormat.KEY_AAC_PROFILE, aacProfile)
+                    setInteger(MediaFormat.KEY_BIT_RATE, audioBitrate)
+                    setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16384)
+                    setInteger(
+                        MediaFormat.KEY_BITRATE_MODE,
+                        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR,
+                    )
+                }
             audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
             audioEncoder?.configure(fmt, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-
         } catch (e: Exception) {
             Log.e(TAG, "Audio init error: ${e.message}")
             mAudioMode = AudioMode.NONE
-            micRecord?.release();      micRecord = null
-            internalRecord?.release(); internalRecord = null
-            audioEncoder?.release();   audioEncoder = null
+            micRecord?.release()
+            micRecord = null
+            internalRecord?.release()
+            internalRecord = null
+            audioEncoder?.release()
+            audioEncoder = null
         }
     }
 }

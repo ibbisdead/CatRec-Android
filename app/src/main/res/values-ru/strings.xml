@@ -1,33 +1,101 @@
 <resources>
+    <!-- App -->
     <string name="app_name">CatRec - Запись экрана</string>
-    <string name="tab_recording">Запись</string>
+
+    <string name="brand_catrect">CatRect</string>
+    <string name="faq_content_description">Помощь и поддержка</string>
+    <string name="capture_mode_recording">Запись</string>
+    <string name="capture_mode_clipper">Клипер</string>
+    <string name="capture_mode_gif">Запись GIF</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">Часто задаваемые вопросы</string>
+    <string name="faq_intro">Найдите ответы по категориям. Нажмите на вопрос, чтобы раскрыть его. Если вам все еще нужна помощь, используйте «Свяжитесь с нами» ниже.</string>
+    <string name="faq_contact_us">Связаться с нами</string>
+    <string name="feedback_title">Отправить отзыв</string>
+    <string name="feedback_issue_section_title">Что пошло не так?</string>
+    <string name="feedback_description_title">Подробности</string>
+    <string name="feedback_description_hint">Пожалуйста, опишите, что произошло, когда это началось и что вы уже пробовали (например, снизили разрешение, перезагрузили телефон). Более подробная информация поможет нам исправить проблему быстрее.</string>
+    <string name="feedback_screenshots_title">Скриншоты</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">Добавьте до 5 изображений (сообщения об ошибках, экраны настроек, страница батареи и т. д.).</string>
+    <string name="feedback_add_screenshots">Добавить изображения</string>
+    <string name="feedback_send">Отправлять</string>
+    <string name="feedback_send_note">Открывает приложение электронной почты с сообщением для %1$s — нажмите «Отправить туда», чтобы доставить.</string>
+    <string name="feedback_send_chooser_title">Отправить письмо</string>
+    <string name="feedback_no_email_app">Приложение электронной почты не найдено. Установите Gmail или Outlook или скопируйте данные со следующего экрана, если они показаны.</string>
+    <string name="feedback_select_issue">Пожалуйста, выберите тип проблемы.</string>
+    <string name="feedback_description_too_short">Пожалуйста, добавьте немного больше подробностей (хотя бы одно предложение), чтобы мы могли помочь.</string>
+    <string name="feedback_issue_recording_stopped">Запись остановлена ​​случайно</string>
+    <string name="feedback_issue_crash">Приложение вылетело</string>
+    <string name="feedback_issue_no_sound">Нет проблем со звуком/аудио</string>
+    <string name="feedback_issue_video_black">Черный экран/зависшее видео</string>
+    <string name="feedback_issue_cant_start">Не могу начать запись</string>
+    <string name="feedback_issue_overlay">Плавающие элементы управления/наложение</string>
+    <string name="feedback_issue_gif_export">Экспорт GIF или файла</string>
+    <string name="feedback_issue_battery_oem">Батарея/фон (Xiaomi и т.п.)</string>
+    <string name="feedback_issue_storage">Хранилище/не могу найти файлы</string>
+    <string name="feedback_issue_quality">Качество/лаги/зависания</string>
+    <string name="feedback_issue_other">Другой</string>
+
+    <!-- Bottom Nav Tabs -->
     <string name="tab_screenshots">Скриншоты</string>
     <string name="tab_recordings">Записи</string>
     <string name="tab_settings">Настройки</string>
     <string name="tab_support">Поддержка</string>
     <string name="tab_tools">Инструменты</string>
-    <string name="action_ok">ОК</string>
+    <string name="tab_editor">Редактор</string>
+    <string name="fab_start_recording">Записывать</string>
+    <string name="storage_indicator_format">%1$s использовано · %2$s бесплатно</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">Качество записи</string>
+    <string name="settings_open_audio_menu">Настройки звука</string>
+    <string name="settings_open_audio_menu_sub">Микрофон, внутренний звук, битрейт, каналы…</string>
+    <string name="settings_open_video_menu">Настройки видео и GIF</string>
+    <string name="settings_open_video_menu_sub">Предустановки GIF, разрешение, частота кадров, битрейт, кодировщик…</string>
+
+    <string name="support_section_help">Помощь</string>
+    <string name="support_send_feedback">Отправить отзыв</string>
+    <string name="support_send_feedback_desc">То же, что и «Свяжитесь с нами» в разделе «Часто задаваемые вопросы» — сообщайте об ошибках или предложениях.</string>
+
+    <!-- Common Actions -->
     <string name="action_cancel">Отмена</string>
     <string name="action_close">Закрыть</string>
     <string name="action_save">Сохранить</string>
     <string name="action_delete">Удалить</string>
     <string name="action_share">Поделиться</string>
     <string name="action_open">Открыть</string>
-    <string name="action_confirm">Подтвердить</string>
+    <string name="consent_analytics_title">Аналитика использования</string>
+    <string name="consent_analytics_message">Помогите нам улучшить CatRec, разрешив дополнительное использование и анализ сбоев. Персонализированная реклама контролируется отдельно в Настройках (по умолчанию включена). Вы можете изменить это в любое время в настройках.</string>
+    <string name="setting_usage_analytics">Аналитика использования</string>
+    <string name="setting_usage_analytics_desc">Статистика сбоев и использования для улучшения приложения</string>
+    <string name="setting_personalized_ads">Персонализированная реклама</string>
+    <string name="setting_personalized_ads_on_desc">AdMob может использовать ваш рекламный ID для релевантных объявлений</string>
+    <string name="setting_personalized_ads_off_desc">Только неперсонализированная реклама</string>
+    <string name="consent_accept">Позволять</string>
+    <string name="consent_decline">Отклонить</string>
     <string name="action_apply">Применить</string>
-    <string name="action_reset">Сбросить</string>
-    <string name="action_start">Начать</string>
-    <string name="action_stop">Остановить</string>
     <string name="action_pause">Пауза</string>
     <string name="action_resume">Продолжить</string>
+
+    <!-- Recording Screen -->
     <string name="recording_start">Начать запись</string>
-    <string name="recording_stop">Остановить запись</string>
-    <string name="recording_countdown">Начало через…</string>
-    <string name="recording_in_progress">Запись идёт</string>
-    <string name="recording_paused">Запись на паузе</string>
+
+    <!-- Settings Screen - Section Headers -->
     <string name="settings_title">Настройки</string>
     <string name="settings_section_controls">Управление</string>
+    <string name="setting_allow_background_title">Без ограничений расхода батареи</string>
+    <string name="setting_allow_background_desc">Снижает риск остановки записи, подготовленного захвата или оверлея при выходе из приложения. Открывает системные настройки батареи.</string>
+    <string name="toast_battery_settings_failed">Не удалось открыть настройки батареи. Попробуйте «Батарея» → CatRec в настройках системы.</string>
     <string name="settings_section_video">Видео</string>
+    <string name="settings_section_gif_recorder">GIF-рекордер</string>
+    <string name="settings_gif_recorder_desc">Режим GIF сначала записывает видео, а затем конвертирует его. Качество и продолжительность соответствуют настройкам ниже; слайдеры видео сохраняются до тех пор, пока вы не переключитесь обратно в режим записи.</string>
+    <string name="setting_gif_preset">Предустановка качества GIF</string>
+    <string name="video_locked_by_gif_preset">Параметры видео контролируются предустановкой GIF, когда выбран режим GIF.</string>
+    <string name="gif_preset_small">Маленький (быстрее, файл меньшего размера)</string>
+    <string name="gif_preset_medium">Середина</string>
+    <string name="gif_preset_hd">HD (файл большего размера)</string>
     <string name="settings_section_audio">Аудио</string>
     <string name="settings_section_overlay">Оверлей</string>
     <string name="settings_section_screenshots">Скриншоты</string>
@@ -35,11 +103,12 @@
     <string name="settings_section_language">Язык</string>
     <string name="settings_section_storage">Хранилище</string>
     <string name="settings_section_general">Общие</string>
+
+    <!-- Video Settings -->
     <string name="setting_resolution">Разрешение</string>
     <string name="setting_resolution_native">Нативное</string>
     <string name="setting_resolution_custom">Пользовательское разрешение…</string>
     <string name="setting_resolution_custom_hint">напр. 1920x1080</string>
-    <string name="setting_resolution_custom_error">Введите корректное разрешение (напр. 1920x1080)</string>
     <string name="setting_fps">Частота кадров (FPS)</string>
     <string name="setting_bitrate">Битрейт видео</string>
     <string name="setting_video_encoder">Видеокодек</string>
@@ -47,6 +116,8 @@
     <string name="setting_orientation_auto">Авто</string>
     <string name="setting_orientation_portrait">Портрет</string>
     <string name="setting_orientation_landscape">Альбом</string>
+
+    <!-- Audio Settings -->
     <string name="setting_microphone">Микрофон</string>
     <string name="setting_internal_audio">Внутренний звук</string>
     <string name="setting_audio_bitrate">Битрейт аудио</string>
@@ -57,14 +128,53 @@
     <string name="setting_audio_encoder">Аудиокодек</string>
     <string name="setting_separate_mic">Отдельная дорожка микрофона</string>
     <string name="setting_separate_mic_desc">Сохранять микрофон в отдельный аудиофайл</string>
+
+    <!-- Overlay Settings -->
     <string name="setting_floating_controls">Плавающее управление</string>
-    <string name="setting_show_touches">Показывать касания</string>
+    <string name="setting_brush_overlay">Щетка</string>
+    <string name="settings_brush_overlay_desc">Отображение инструмента «Кисть» на плавающем наложении для рисования на экране.</string>
+    <string name="setting_hide_floating_while_recording">Скрыть плавающий значок во время записи</string>
+    <string name="settings_hide_floating_while_recording_desc">Скрыть плавающий пузырь элементов управления во время записи.</string>
+    <string name="setting_post_screenshot_options">Параметры пост-скриншота</string>
+    <string name="settings_post_screenshot_options_desc">После снимка экрана показывать варианты публикации или редактирования.</string>
+    <string name="setting_record_single_app">Запишите одно приложение</string>
+    <string name="settings_record_single_app_desc">На Android 14 и более поздних версиях при разрешении захвата экрана выберите одно окно приложения или полноэкранный режим.</string>
+    <string name="screenshot_post_edit">Редактировать</string>
+    <string name="screenshot_post_action_failed">Не удалось открыть общий доступ</string>
+    <string name="screenshot_post_tap_outside">Нажмите снаружи, чтобы закрыть</string>
+    <string name="image_editor_title">Редактировать изображение</string>
+    <string name="image_editor_panel_rotate">Поворот</string>
+    <string name="image_editor_panel_crop">Обрезать</string>
+    <string name="image_editor_panel_draw">Рисовать</string>
+    <string name="image_editor_rotate_ccw">Повернуть влево</string>
+    <string name="image_editor_rotate_cw">Повернуть вправо</string>
+    <string name="image_editor_saved">Изображение сохранено в папке Pictures/CatRec/Screenshots.</string>
+    <string name="image_editor_save_failed">Не удалось сохранить изображение</string>
+    <string name="image_editor_load_failed">Не удалось загрузить изображение</string>
+    <string name="tool_edit_image">Редактировать изображение</string>
+    <string name="brush_line_width">Ширина линии</string>
+    <string name="brush_color_picker_hint">Выберите цвет, отрегулируйте толщину, затем нажмите «Применить».</string>
+    <string name="brush_color_back">Назад</string>
+    <string name="brush_apply">Применять</string>
+    <string name="brush_tool_pen">Рисовать</string>
+    <string name="brush_tool_eraser">Ластик</string>
+    <string name="brush_tool_undo">Отменить последний штрих</string>
+    <string name="brush_tool_square">Прямоугольник</string>
+    <string name="brush_tool_circle">Эллипс</string>
+    <string name="brush_tool_arrow">Стрелка</string>
+    <string name="brush_tool_mosaic">Пикселировать область</string>
+    <string name="brush_tool_colors">Цвет и толщина линии</string>
+    <string name="brush_panel_title">Гладить</string>
     <string name="setting_camera_settings">Настройки камеры</string>
     <string name="setting_watermark">Водяной знак CatRec</string>
+    <string name="setting_watermark_size">Размер водяного знака</string>
+    <string name="setting_watermark_opacity">Прозрачность водяного знака</string>
+
+    <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
     <string name="camera_enable">Включить камеру</string>
+    <string name="camera_enable_desc">Показывать оверлей камеры во время записи</string>
     <string name="camera_lock_position">Заблокировать положение</string>
-    <string name="camera_lock_position_desc">Запретить перемещение и изменение размера оверлея камеры</string>
     <string name="camera_facing">Камера</string>
     <string name="camera_facing_front">Фронтальная</string>
     <string name="camera_facing_rear">Основная</string>
@@ -72,80 +182,107 @@
     <string name="camera_orientation">Ориентация</string>
     <string name="camera_size">Размер</string>
     <string name="camera_opacity">Прозрачность</string>
-    <string name="camera_preview">Предпросмотр</string>
+
+    <!-- Screenshot Settings -->
     <string name="setting_screenshot_format">Формат</string>
     <string name="setting_screenshot_quality">Качество</string>
+
+    <!-- Theme Settings -->
     <string name="setting_theme">Тема приложения</string>
     <string name="theme_system">Системная</string>
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
+
+    <!-- Language Settings -->
     <string name="setting_language">Язык приложения</string>
     <string name="language_system">Системный</string>
+    <string name="language_english">Английский</string>
+    <string name="language_arabic">عربية</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁體）</string>
+    <string name="language_french">Франсэ</string>
+    <string name="language_german">немецкий</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Бахаса Индонезия</string>
+    <string name="language_italian">Итальяно</string>
+    <string name="language_japanese">日本語</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_portuguese">Португальский</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">испанский</string>
+    <string name="language_turkish">Тюркче</string>
+    <string name="language_vietnamese">Тианг Вьет</string>
+
+    <!-- Storage Settings -->
     <string name="setting_save_location">Место сохранения</string>
+    <string name="setting_save_location_default">По умолчанию (Movies/CatRec)</string>
+    <string name="setting_filename_pattern">Шаблон имени файла</string>
+
+    <!-- General Settings -->
     <string name="setting_countdown">Обратный отсчёт</string>
-    <string name="screenshots_title">Скриншоты</string>
+    <string name="setting_stop_behavior">Действие при остановке</string>
+
+    <!-- Screenshots Screen -->
     <string name="screenshots_empty_title">Скриншотов пока нет</string>
     <string name="screenshots_empty_desc">Нажмите кнопку скриншота в оверлее записи, чтобы сделать снимок экрана</string>
-    <string name="screenshots_delete_confirm">Удалить этот скриншот?</string>
-    <string name="screenshots_delete_confirm_desc">Это действие нельзя отменить.</string>
-    <string name="recordings_title">Записи</string>
+
+    <!-- Recordings Screen -->
     <string name="recordings_empty_title">Записей пока нет</string>
     <string name="recordings_empty_desc">Начните запись, чтобы видео появились здесь</string>
-    <string name="support_title">Поддержка</string>
+
+    <!-- Support Screen -->
+    <string name="support_subscribe_youtube">Подписаться на YouTube</string>
+    <string name="support_subscribe_youtube_desc">Следите за обновлениями @ibbie</string>
     <string name="support_remove_ads">Убрать рекламу — $1</string>
     <string name="support_remove_ads_desc">Разовая покупка, навсегда без рекламы</string>
+    <string name="support_restore_purchases">Восстановление покупок</string>
+    <string name="support_restore_purchases_desc">Синхронизация удаления рекламы и других покупок из Google Play.</string>
+    <string name="support_restore_purchases_toast">Проверка покупок в Google Play…</string>
+    <string name="support_play_promo_title">Активировать промокод Google Play</string>
+    <string name="support_play_promo_desc">Если у вас есть код Google Play для удаления рекламы: активируйте его в Play, затем нажмите «Восстановить покупки здесь», чтобы приложение обновилось.</string>
+    <string name="support_toast_promo_browser">Не удалось открыть браузер</string>
     <string name="support_ads_removed">Реклама удалена — Спасибо!</string>
+    <string name="support_ads_removed_desc">Премиум-опции остаются разблокированными — никакой рекламы для просмотра.</string>
+    <string name="support_watch_ad">Посмотреть рекламу</string>
     <string name="support_donate">Угостить кофе ($1)</string>
+    <string name="support_donate_desc">Единоразовое пожертвование — поддерживает CatRec</string>
+    <string name="support_share">Поделитесь ссылкой на CatRec</string>
+    <string name="support_share_desc">Расскажите о нас своим друзьям</string>
     <string name="support_changelog">История изменений</string>
-    <string name="support_thank_you_title">Отлично!</string>
-    <string name="support_thank_you_body">Ваша поддержка помогает CatRec жить. Большое спасибо!</string>
-    <string name="support_you_are_welcome">Пожалуйста!</string>
-    <string name="notif_recording_title">CatRec записывает</string>
-    <string name="notif_done_title">Запись сохранена</string>
+    <string name="support_changelog_desc">Посмотрите, что нового в этой версии</string>
+
+    <!-- Notifications -->
     <string name="notif_screenshot_saved">Скриншот сохранён</string>
+
+    <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Сначала начните запись для создания скриншотов</string>
+    <string name="error_screenshot_capture_failed">Не удалось сделать скриншот. Попробуйте еще раз.</string>
     <string name="toast_recording_restarted">Запись перезапущена из-за изменения ориентации</string>
-    <string name="home_version">v%1$s</string>
-    <string name="support_version_label">Версия %1$s</string>
-    <string name="changelog_version_template">v%1$s</string>
-    <string name="label_active">Активно</string>
-    <string name="toast_screen_capture_denied">Разрешение на запись экрана не предоставлено</string>
-    <string name="toast_no_email_app">Приложение для почты не найдено</string>
-    <string name="share_screenshot_chooser_title">Поделиться скриншотом</string>
-    <string name="recordings_header_format">БИБЛИОТЕКА · %1$d</string>
-    <string name="screenshots_header_format">СКРИНШОТЫ · %1$d</string>
-    <string name="overlay_clip_button">✂ CLIP</string>
-    <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Откройте CatRec и сначала нажмите «Разрешить запись поверх других окон»</string>
-    <string name="countdown_subtitle">Запись начинается…</string>
-    <string name="toast_recorder_start_failed">Не удалось запустить запись: %1$s</string>
-    <string name="format_jpeg">JPEG</string>
-    <string name="format_png">PNG</string>
-    <string name="format_webp">WebP</string>
-    <string name="content_desc_more_options">Дополнительные параметры</string>
-    <string name="content_desc_rewind_10">Назад на 10 секунд</string>
-    <string name="content_desc_forward_10">Вперёд на 10 секунд</string>
-    <string name="beta_feedback_email_subject">Отзыв о бета-версии CatRec</string>
-    <string name="list_bullet">•</string>
+    <string name="toast_share_app">Попробуйте CatRec — крутейший рекордер экрана!</string>
 
-    <string name="rec_save_clip_sub">Сохраняет последние %1$d мин.</string>
-    <string name="setting_clipper_duration">Длина буфера Clipper</string>
-    <string name="dialog_clipper_duration_title">Длина буфера Clipper</string>
-    <string name="clipper_duration_1m">1 мин</string>
-    <string name="clipper_duration_2m">2 мин</string>
-    <string name="clipper_duration_3m">3 мин</string>
-    <string name="clipper_duration_4m">4 мин</string>
-    <string name="clipper_duration_5m">5 мин</string>
-
-    <!-- Settings additions (localization patch) -->
+    <!-- Actions (extra) -->
     <string name="action_done">Готово</string>
-    <string name="action_change">Изменить</string>
+    <string name="action_grant_now">Грант сейчас</string>
+    <string name="action_not_now">Не сейчас</string>
+    <string name="action_rename">Переименовать</string>
+    <string name="action_trim">Подрезать</string>
+    <string name="action_open_external">Открыть снаружи</string>
     <string name="action_loading">Загрузка…</string>
     <string name="action_watch_ad">Смотреть рекламу</string>
     <string name="action_unlock">Разблокировать</string>
+    <string name="action_got_it">Понятно</string>
+    <string name="action_leave_feedback">Оставить отзыв</string>
+    <string name="action_change">Изменить</string>
     <string name="action_enable_anyway">Всё равно включить</string>
     <string name="action_keep_performance_mode">Сохранить режим производительности</string>
-    <string name="settings_section_privacy">Конфиденциальность</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">Уведомление</string>
+    <string name="stop_behavior_shake">Встряхнуть устройство</string>
+    <string name="stop_behavior_screen_off">Выключить экран</string>
+    <string name="stop_behavior_pause_on_screen_off">Пауза при выключении экрана</string>
+
+    <!-- Settings extras -->
     <string name="settings_floating_controls_desc">Постоянно видимый пузырь — запись и скриншоты из любого приложения</string>
     <string name="settings_show_touches">Показывать касания</string>
     <string name="settings_show_touches_desc">Включить в параметрах разработчика</string>
@@ -154,48 +291,10 @@
     <string name="setting_countdown_off">Выкл.</string>
     <string name="setting_countdown_seconds">%1$d секунд</string>
     <string name="setting_internal_audio_note">Только Android 10+</string>
-    <string name="setting_stop_behavior">Действие при остановке</string>
-    <string name="setting_filename_pattern">Шаблон имени файла</string>
-    <string name="stop_behavior_notification">Уведомление</string>
-    <string name="stop_behavior_shake">Встряхнуть устройство</string>
-    <string name="stop_behavior_screen_off">Выключить экран</string>
-    <string name="stop_behavior_pause_on_screen_off">Пауза при выключении экрана</string>
     <string name="gate_feature_separate_mic">Отдельная дорожка микрофона</string>
     <string name="gate_feature_camera_overlay">Настройки оверлея камеры</string>
     <string name="camera_status_enabled">Активна — %1$s • %2$s</string>
     <string name="state_disabled">Отключено</string>
-    <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_enable_desc">Показывать оверлей камеры во время записи</string>
-    <string name="camera_drag_hint">Перетащите круг камеры для изменения положения</string>
-    <string name="camera_lock_desc_short">Предотвратить случайное перемещение</string>
-    <string name="dialog_camera_orientation">Ориентация камеры</string>
-    <string name="dialog_fps_title">Частота кадров (FPS)</string>
-    <string name="dialog_bitrate_title">Битрейт</string>
-    <string name="dialog_video_encoder">Видеокодек</string>
-    <string name="dialog_audio_bitrate">Битрейт аудио</string>
-    <string name="dialog_sample_rate">Частота дискретизации</string>
-    <string name="dialog_audio_encoder">Аудиокодек</string>
-    <string name="dialog_countdown_timer">Таймер обратного отсчёта</string>
-    <string name="dialog_theme_title">Тема приложения</string>
-    <string name="dialog_language_title">Язык приложения</string>
-    <string name="dialog_screenshot_format">Формат скриншота</string>
-    <string name="dialog_filename_pattern">Шаблон имени файла</string>
-    <string name="dialog_custom_resolution_title">Пользовательское разрешение</string>
-    <string name="dialog_custom_resolution_hint">Введите разрешение как ШИРИНА×ВЫСОТА (напр. 1920×1080)</string>
-    <string name="dialog_resolution_title">Разрешение</string>
-    <string name="error_resolution_format">Формат должен быть Ш×В (напр. 1920×1080)</string>
-    <string name="error_resolution_min">Минимальное разрешение 100×100</string>
-    <string name="error_resolution_max">Максимальное разрешение 7680 по любой стороне</string>
-    <string name="resolution_group_16_9">16:9</string>
-    <string name="resolution_group_20_9">20:9 (высокий экран)</string>
-    <string name="resolution_group_18_9">18:9 (2:1)</string>
-    <string name="resolution_group_21_9">21:9 (ультраширокий)</string>
-    <string name="resolution_group_4_3">4:3</string>
-    <string name="resolution_group_9_16">9:16 (портрет)</string>
-    <string name="countdown_none">Нет</string>
-    <string name="countdown_3s">3 с</string>
-    <string name="countdown_5s">5 с</string>
-    <string name="countdown_10s">10 с</string>
     <string name="watermark_preview_active">Живой предпросмотр активен — перетащите водяной знак для изменения положения</string>
     <string name="watermark_preview_recording">Предпросмотр недоступен во время записи</string>
     <string name="watermark_preview_need_overlay">Предоставьте разрешение на оверлей для живого предпросмотра</string>
@@ -208,28 +307,17 @@
     <string name="watermark_image_custom">Установлено пользовательское изображение</string>
     <string name="watermark_image_default">По умолчанию (иконка приложения)</string>
     <string name="watermark_reset_icon">Сбросить до иконки по умолчанию</string>
-    <string name="setting_watermark_size">Размер водяного знака</string>
-    <string name="setting_watermark_opacity">Прозрачность водяного знака</string>
-    <string name="watermark_position_top_left">Вверху слева</string>
-    <string name="watermark_position_top_right">Вверху справа</string>
-    <string name="watermark_position_bottom_left">Внизу слева</string>
-    <string name="watermark_position_bottom_right">Внизу справа</string>
-    <string name="watermark_position_center">По центру</string>
-    <string name="shape_square">Квадрат</string>
-    <string name="shape_circle">Круг</string>
-    <string name="ratio_16_9">16:9</string>
-    <string name="ratio_4_3">4:3</string>
-    <string name="setting_save_location_default">По умолчанию (Movies/CatRec)</string>
-    <string name="setting_save_location_custom">Установлена пользовательская папка</string>
-    <string name="setting_auto_delete_title">Авто-удаление старых записей</string>
-    <string name="setting_auto_delete_desc">Хранить последние 50</string>
-    <string name="setting_keep_screen_on_title">Не выключать экран</string>
-    <string name="setting_keep_screen_on_desc">Во время записи</string>
-    <string name="setting_usage_analytics">Аналитика использования</string>
-    <string name="setting_usage_analytics_desc">Статистика сбоев и использования для улучшения приложения</string>
-    <string name="setting_personalized_ads">Персонализированная реклама</string>
-    <string name="setting_personalized_ads_on_desc">AdMob может использовать ваш рекламный ID для релевантных объявлений</string>
-    <string name="setting_personalized_ads_off_desc">Только неперсонализированная реклама</string>
+    <string name="label_dp">%1$ддп</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">кбит/с</string>
+    <string name="label_hz">Гц</string>
+    <string name="perf_auto_low_end">Авто-включён — обнаружено устройство с низкими характеристиками</string>
+    <string name="perf_quality_may_lag">Режим качества (могут быть тормоза на этом устройстве)</string>
+    <string name="perf_static_glass">Статичное стекло — размытие отключено</string>
+    <string name="perf_dynamic_glass">Динамическое стеклянное размытие включено</string>
+    <string name="setting_performance_mode">Режим производительности</string>
+    <string name="performance_warning_title">Предупреждение о производительности</string>
+    <string name="performance_warning_body">Ваше устройство имеет менее 6 ГБ ОЗУ или работает под Android 11 или ниже. Включение эффектов размытия в реальном времени может вызвать задержки интерфейса, особенно во время записи.\n\nВсё равно включить режим качества?</string>
     <string name="accent_color_title">Акцентный цвет</string>
     <string name="accent_gradient_color_2">Цвет градиента 2</string>
     <string name="accent_presets">Пресеты</string>
@@ -239,20 +327,309 @@
     <string name="accent_gradient_desc">Двухцветная светящаяся рамка</string>
     <string name="accent_color_1">Цвет 1</string>
     <string name="accent_color_2">Цвет 2</string>
-    <string name="setting_performance_mode">Режим производительности</string>
-    <string name="perf_auto_low_end">Авто-включён — обнаружено устройство с низкими характеристиками</string>
-    <string name="perf_quality_may_lag">Режим качества (могут быть тормоза на этом устройстве)</string>
-    <string name="perf_static_glass">Статичное стекло — размытие отключено</string>
-    <string name="perf_dynamic_glass">Динамическое стеклянное размытие включено</string>
-    <string name="performance_warning_title">Предупреждение о производительности</string>
-    <string name="performance_warning_body">Ваше устройство имеет менее 6 ГБ ОЗУ или работает под Android 11 или ниже. Включение эффектов размытия в реальном времени может вызвать задержки интерфейса, особенно во время записи.\n\nВсё равно включить режим качества?</string>
+    <string name="setting_save_location_custom">Установлена пользовательская папка</string>
+    <string name="setting_auto_delete_title">Авто-удаление старых записей</string>
+    <string name="setting_auto_delete_desc">Хранить последние 50</string>
+    <string name="setting_keep_screen_on_title">Не выключать экран</string>
+    <string name="setting_keep_screen_on_desc">Во время записи</string>
+    <string name="settings_section_privacy">Конфиденциальность</string>
+    <string name="dialog_custom_resolution_title">Пользовательское разрешение</string>
+    <string name="dialog_custom_resolution_hint">Введите разрешение как ШИРИНА×ВЫСОТА (напр. 1920×1080)</string>
+    <string name="error_resolution_format">Формат должен быть Ш×В (напр. 1920×1080)</string>
+    <string name="error_resolution_min">Минимальное разрешение 100×100</string>
+    <string name="error_resolution_max">Максимальное разрешение 7680 по любой стороне</string>
+    <string name="dialog_resolution_title">Разрешение</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9 (высокий экран)</string>
+    <string name="resolution_group_18_9">18:9 (2:1)</string>
+    <string name="resolution_group_21_9">21:9 (ультраширокий)</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16 (портрет)</string>
+    <string name="dialog_theme_title">Тема приложения</string>
+    <string name="dialog_language_title">Язык приложения</string>
+    <string name="dialog_filename_pattern">Шаблон имени файла</string>
+    <string name="dialog_countdown_timer">Таймер обратного отсчёта</string>
+    <string name="countdown_none">Нет</string>
+    <string name="countdown_3s">3 с</string>
+    <string name="countdown_5s">5 с</string>
+    <string name="countdown_10s">10 с</string>
+    <string name="dialog_video_encoder">Видеокодек</string>
+    <string name="dialog_audio_encoder">Аудиокодек</string>
+    <string name="dialog_audio_bitrate">Битрейт аудио</string>
+    <string name="dialog_sample_rate">Частота дискретизации</string>
+    <string name="dialog_bitrate_title">Битрейт</string>
+    <string name="dialog_fps_title">Частота кадров (FPS)</string>
+    <string name="dialog_screenshot_format">Формат скриншота</string>
+    <string name="dialog_camera_orientation">Ориентация камеры</string>
     <string name="premium_feature_title">Премиум-функция</string>
     <string name="premium_feature_body">%1$s — премиум-функция.</string>
     <string name="premium_feature_watch_ad">Посмотрите короткую рекламу, чтобы разблокировать её на эту сессию.</string>
     <string name="premium_feature_tap_unlock">Нажмите «Разблокировать», чтобы активировать на эту сессию.</string>
-    <string name="label_dp">%1$ddp</string>
-    <string name="label_percent">%1$d%%</string>
-    <string name="label_kbps">кбит/с</string>
-    <string name="label_hz">Гц</string>
+    <string name="gate_high_fps">%1$s кадров в секунду</string>
+    <string name="camera_drag_hint">Перетащите круг камеры для изменения положения</string>
+    <string name="camera_lock_desc_short">Предотвратить случайное перемещение</string>
+    <string name="shape_square">Квадрат</string>
+    <string name="shape_circle">Круг</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">Вверху слева</string>
+    <string name="watermark_position_top_right">Вверху справа</string>
+    <string name="watermark_position_bottom_left">Внизу слева</string>
+    <string name="watermark_position_bottom_right">Внизу справа</string>
+    <string name="watermark_position_center">По центру</string>
 
+    <!-- Recording screen -->
+    <string name="label_fps">ФПС</string>
+    <string name="label_mbps">Мбит/с</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">Длительность Clipper</string>
+    <string name="dialog_clipper_duration_title">Длительность Clipper</string>
+    <string name="clipper_duration_1m">1 мин</string>
+    <string name="clipper_duration_2m">2 мин</string>
+    <string name="clipper_duration_3m">3 мин</string>
+    <string name="clipper_duration_4m">4 мин</string>
+    <string name="clipper_duration_5m">5 мин</string>
+    <string name="perm_rationale_intro">CatRec необходимы следующие разрешения для записи вашего экрана:</string>
+    <string name="perm_dialog_title">Требуются разрешения</string>
+    <string name="beta_title">Вы в раннем доступе</string>
+    <string name="beta_line_1">⚠️ Это бета-версия.</string>
+    <string name="beta_line_2">Вы можете столкнуться с ошибками, сбоями или незавершенными функциями. Ваше устройство и данные в безопасности — записи сохраняются локально и ничего не загружается.</string>
+    <string name="beta_line_3">Ваши отзывы напрямую влияют на это приложение. Если что-то сломалось или показалось неправильным, сообщите об этом — даже короткое сообщение очень поможет.</string>
+    <string name="beta_line_4">Благодарим вас за раннюю попытку попробовать CatRec. 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">Удалить запись?</string>
+    <string name="delete_recording_message">«%1$s» будет удален без возможности восстановления.</string>
+    <string name="delete_screenshot_title">Удалить скриншот?</string>
+    <string name="delete_screenshot_message">«%1$s» будет удален без возможности восстановления.</string>
+    <string name="multiselect_selected_count">%1$d выбрано</string>
+    <string name="multiselect_select_all">Выбрать все</string>
+    <string name="multiselect_deselect_all">Отменить выбор всех</string>
+    <string name="multiselect_delete_title">Удалить %1$d элементов?</string>
+    <string name="multiselect_delete_message">Эти файлы будут удалены без возможности восстановления.</string>
+    <string name="multiselect_share_recordings">Делитесь записями</string>
+    <string name="multiselect_share_screenshots">Поделиться скриншотами</string>
+    <string name="delete_generic_recording">Эта запись будет удалена навсегда.</string>
+    <string name="player_renamed_to">Переименовано в %1$s</string>
+    <string name="player_rename_failed">Не удалось переименовать: %1$s</string>
+    <string name="player_delete_failed">Не удалось удалить: %1$s</string>
+    <string name="player_no_app_video">Не найдено приложение для открытия видео</string>
+    <string name="player_rename_title">Переименовать</string>
+    <string name="player_file_name_label">Имя файла</string>
+    <string name="trim_title">Обрезать видео</string>
+    <string name="trim_set_to_current">Установить на текущий</string>
+    <string name="trim_start_label">Начало: %1$s</string>
+    <string name="trim_end_label">Конец: %1$s</string>
+    <string name="trim_duration_summary">Продолжительность обрезки: %1$s (%2$s → %3$s)</string>
+    <string name="trim_too_short">Диапазон настройки слишком мал (мин. 0,5 с)</string>
+    <string name="trim_saved_success">Обрезка успешно сохранена</string>
+    <string name="trim_failed_retry">Обрезать не удалось. Пожалуйста, попробуйте еще раз.</string>
+    <string name="trim_progress">Обрезка… %1$d%%</string>
+    <string name="trim_save">Обрезать и сохранить</string>
+    <string name="content_desc_back">Назад</string>
+    <string name="content_desc_refresh">Обновить</string>
+    <string name="content_desc_options">Параметры</string>
+    <string name="content_desc_logo">Логотип CatRec</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">Монтаж видео</string>
+    <string name="tools_image_editing">Редактирование изображений</string>
+    <string name="tool_video_trim">Обрезка видео</string>
+    <string name="tool_compress">Сжать видео</string>
+    <string name="tool_video_to_gif">Видео в GIF</string>
+    <string name="tool_merge_clips">Объединение клипов</string>
+    <string name="editor_pick_video_title">Выберите видео</string>
+    <string name="editor_pick_catrec">Записи CatRec</string>
+    <string name="editor_pick_storage">Видео на устройстве</string>
+    <string name="editor_export">Экспорт</string>
+    <string name="editor_saving">Сохранение…</string>
+    <string name="editor_saved_ok">Сохранено в «Фильмы»/CatRec.</string>
+    <string name="editor_failed">Не удалось завершить экспорт. Попробуйте другой файл или качество.</string>
+    <string name="compress_title">Компресс</string>
+    <string name="compress_quality_label">Целевое качество</string>
+    <string name="compress_quality_high">Высокий</string>
+    <string name="compress_quality_medium">Середина</string>
+    <string name="compress_quality_low">Низкий</string>
+    <string name="compress_resolution_label">Целевое разрешение (высота)</string>
+    <string name="compress_original">Исходный размер</string>
+    <string name="compress_estimated">Предполагаемый размер: ~%1$s</string>
+    <string name="compress_source">Источник: %1$dx%2$d</string>
+    <string name="gif_title">Видео в GIF</string>
+    <string name="gif_fps">Частота кадров в секунду: %1$d</string>
+    <string name="gif_quality_label">Качество GIF</string>
+    <string name="gif_quality_small">Меньший файл</string>
+    <string name="gif_quality_balanced">Сбалансированный</string>
+    <string name="gif_quality_sharper">Острее</string>
+    <string name="gif_convert">Создать гифку</string>
+    <string name="merge_title">Объединение клипов</string>
+    <string name="merge_add_catrec">Добавить из CatRec</string>
+    <string name="merge_clear_all">Очистить все</string>
+    <string name="merge_run">Объединить и сохранить</string>
+    <string name="merge_need_two">Добавьте минимум два видео (порядок сохраняется).</string>
+    <string name="merge_clip_label">Клип %1$d</string>
+    <string name="home_app_name">CatRec</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="home_version">v%1$s</string>
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">Устройство записи экрана CatRec</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">Версия %1$s</string>
+    <string name="changelog_version_template">v%1$s</string>
+    <string name="support_section_support_dev">Поддержите разработчика</string>
+    <string name="support_section_legal">Юридический</string>
+    <string name="support_watch_ad_sub_loading">Загрузка объявления…</string>
+    <string name="support_watch_ad_sub">Быстрый способ бесплатной поддержки</string>
+    <string name="support_toast_youtube">Не удалось открыть YouTube</string>
+    <string name="support_toast_ad_failed">Не удалось показать объявление. Повторите попытку позже.</string>
+    <string name="support_toast_thanks_ad">Спасибо за просмотр! 🐱</string>
+    <string name="support_toast_ad_loading">Объявление загружается, подождите…</string>
+    <string name="support_toast_no_ad">На данный момент нет доступных объявлений. Повторите попытку позже.</string>
+    <string name="support_toast_browser">Не удалось открыть браузер</string>
+    <string name="billing_store_not_ready">Play Store еще не готов. Проверьте подключение и повторите попытку.</string>
+    <string name="billing_thanks_support_me">Спасибо за вашу поддержку! 🐱</string>
+    <string name="billing_pending">Покупка находится на рассмотрении. Вы получите доступ, когда она завершится.</string>
+    <string name="dialog_changelog_title">Журнал изменений</string>
+    <string name="label_beta">Бета</string>
+    <string name="support_privacy_policy">политика конфиденциальности</string>
+    <string name="support_privacy_policy_desc">Как CatRec обрабатывает ваши данные</string>
+    <string name="support_terms_of_service">Условия использования</string>
+    <string name="support_terms_of_service_desc">Правила использования и отказ от ответственности</string>
+    <string name="support_permissions_disclosure">Раскрытие разрешений</string>
+    <string name="support_permissions_disclosure_desc">Зачем нужно каждое разрешение</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">Уведомления</string>
+    <string name="perm_rationale_notifications">Требуется для отображения элементов управления записью и статуса прямой трансляции в тени уведомлений во время записи.</string>
+    <string name="perm_name_microphone">Микрофон</string>
+    <string name="perm_rationale_microphone">Требуется для записи звука с микрофона одновременно с записью экрана.</string>
+    <string name="perm_name_camera">Камера</string>
+    <string name="perm_rationale_camera">Требуется для отображения наложения «Камера в изображении» поверх записи экрана.</string>
+    <string name="perm_name_overlay">Отображать поверх других приложений</string>
+    <string name="perm_rationale_overlay">Требуется, чтобы во время записи отображался плавающий пузырь элементов управления и наложение камеры поверх других приложений.</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">Запись экрана</string>
+    <string name="notif_channel_recording_complete">Запись завершена</string>
+    <string name="notif_channel_rolling_buffer">Подвижный буфер</string>
+    <string name="notif_ready_title">CatRec готов</string>
+    <string name="notif_ready_text">Нажмите кнопку наложения ●, чтобы начать запись.</string>
+    <string name="notif_action_revoke">Отозвать</string>
+    <string name="notif_preparing">Подготовка…</string>
+    <string name="notif_recording_starting_in">Запись начинается через %1$d…</string>
+    <string name="notif_recording_paused">Запись приостановлена</string>
+    <string name="notif_recording_muted">Запись (без звука)…</string>
+    <string name="notif_recording_in_progress">Идет запись…</string>
+    <string name="notif_title_short">CatRec</string>
+    <string name="notif_action_stop">Останавливаться</string>
+    <string name="notif_action_pause">Пауза</string>
+    <string name="notif_action_resume">Резюме</string>
+    <string name="notif_action_mute">Немой</string>
+    <string name="notif_action_unmute">Включить звук</string>
+    <string name="notif_action_show_controls">Показать элементы управления</string>
+    <string name="notif_buffer_title">CatRec — Прокатный буфер</string>
+    <string name="notif_buffer_starting">Стартовый буфер…</string>
+    <string name="notif_buffer_buffering">Буферизация за последнюю %1$d секунду…</string>
+    <string name="notif_buffer_save_clip">Сохранить клип</string>
+    <string name="notif_post_title">Запись завершена</string>
+    <string name="notif_post_text">Нажмите, чтобы открыть запись</string>
+    <string name="notif_post_open">Открыть</string>
+    <string name="notif_post_share">Делиться</string>
+    <string name="notif_post_delete">Удалить</string>
+    <string name="share_recording_title">Поделиться записью</string>
+    <string name="toast_recording_stopped_projection">Запись остановлена: захваченное приложение было закрыто или переведено в фоновый режим.</string>
+    <string name="toast_recording_failed_no_video">Запись не удалась: видео не было записано</string>
+    <string name="toast_gif_transcode_failed">Не удалось создать GIF — ваша запись в формате MP4 сохранилась.</string>
+    <string name="toast_gif_saved">GIF сохранен в папке Pictures/CatRec/GIF.</string>
+    <string name="toast_separate_mic_failed">Не удалось создать отдельный аудиофайл — вместо него в видео будет записан микрофон.</string>
+    <string name="toast_internal_audio_silent">Внутренний звук бесшумный — записываемое приложение может не разрешать захват звука. Вместо этого попробуйте записать звук с микрофона.</string>
+    <string name="recording_has_separate_audio">Имеет отдельную звуковую дорожку</string>
+    <string name="toast_buffer_start_failed">Не удалось запустить буфер: %1$s</string>
+    <string name="toast_clip_empty">Клип пуст – продолжайте буферизацию дольше</string>
+    <string name="toast_clip_saved">Клип сохранен!</string>
+    <string name="toast_clip_save_failed">Не удалось сохранить клип: %1$s</string>
+    <string name="notif_overlay_controls_text">Плавающие элементы управления включены.</string>
+    <string name="notif_camera_overlay_text">Наложение камеры CatRec активно — коснитесь, чтобы вернуться в приложение</string>
+    <string name="tile_record_label">CatRec Record</string>
+    <string name="tile_clipper_label">CatRec Машинка для стрижки</string>
+    <string name="notif_channel_overlay">Элементы управления наложением</string>
+    <string name="notif_channel_overlay_desc">Отображается, когда активны плавающие элементы управления наложением.</string>
+    <string name="notif_overlay_active_title">Наложение CatRec активно</string>
+    <string name="notif_overlay_start_recording">Начать запись</string>
+    <string name="notif_overlay_close_overlay">Закрыть наложение</string>
+    <string name="notif_channel_camera_overlay">Наложение камеры</string>
+    <string name="notif_channel_camera_overlay_desc">Отображается, когда активно наложение камеры.</string>
+    <string name="notif_camera_in_use_title">Камера используется</string>
+    <string name="notif_channel_app_controls">Быстрое управление</string>
+    <string name="notif_channel_app_controls_desc">Ярлыки записи, снимков экрана и наложения</string>
+    <string name="notif_app_controls_title">CatRec</string>
+    <string name="notif_app_controls_text_idle">В режиме ожидания — коснитесь действия ниже</string>
+    <string name="notif_action_screenshot">Скриншот</string>
+    <string name="notif_action_overlay_hide">Скрыть наложение</string>
+    <string name="notif_action_overlay_show">Показать наложение</string>
+    <string name="notif_action_overlay_enable_in_settings">Наложение выключено</string>
+    <string name="notif_action_home">Дом</string>
+    <string name="notif_action_exit">Выход</string>
+    <string name="toast_grant_capture_for_screenshot">Разрешить захват экрана — тогда CatRec сможет делать снимки экрана из наложения.</string>
+    <string name="tile_subtitle_recording">Запись…</string>
+    <string name="tile_subtitle_buffering">Буферизация…</string>
+    <string name="tile_subtitle_ready">Готовый</string>
+    <string name="tile_subtitle_tap_open">Нажмите, чтобы открыть приложение</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">Разрешение на запись экрана не предоставлено</string>
+    <string name="toast_no_email_app">Приложение для почты не найдено</string>
+    <string name="share_screenshot_chooser_title">Поделиться скриншотом</string>
+    <string name="recordings_header_format">БИБЛИОТЕКА · %1$d</string>
+    <string name="screenshots_header_format">СКРИНШОТЫ · %1$d</string>
+    <string name="overlay_clip_button">✂ КЛИП</string>
+    <string name="overlay_clipper_label">КЛИППЕР</string>
+    <string name="overlay_toast_authorize_first">Откройте CatRec и сначала нажмите «Разрешить запись поверх других окон»</string>
+    <string name="countdown_subtitle">Запись начинается…</string>
+    <string name="toast_recorder_start_failed">Не удалось запустить запись: %1$s</string>
+    <string name="format_jpeg">JPEG</string>
+    <string name="format_png">PNG</string>
+    <string name="format_webp">ВебП</string>
+    <string name="content_desc_more_options">Дополнительные параметры</string>
+    <string name="content_desc_rewind_10">Назад на 10 секунд</string>
+    <string name="content_desc_forward_10">Вперёд на 10 секунд</string>
+    <string name="beta_feedback_email_subject">Отзыв о бета-версии CatRec</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>Запись экрана с поддержкой кодеков H.264 и H.265 (HEVC).</item>
+        <item>Буфер Rolling Clipper (1–5 минут, настраивается) с бесшовным сшиванием сегментов и быстрыми настройками продолжительности</item>
+        <item>Кнопка «Сохранить клип» во время работы Clipper</item>
+        <item>Широкий выбор разрешения для всех соотношений сторон, а также пользовательский ввод</item>
+        <item>Auto orientation tracking during recording</item>
+        <item>Таймер обратного отсчета перед началом записи</item>
+        <item>Опция включения экрана во время записи</item>
+        <item>Аудио: микрофон, внутренний звук или смешанный; дополнительная отдельная микрофонная дорожка с надежным экспортом</item>
+        <item>Расширенные настройки звука: битрейт, частота дискретизации, каналы, кодер; точное кодирование стерео и CBR</item>
+        <item>Режим записи GIF с предустановками качества</item>
+        <item>Наложение плавающих элементов управления: пауза, остановка, отключение звука, снимок экрана, доступ к клипу.</item>
+        <item>Оверлей доступен в любое время; начать запись или обрезку из наложения</item>
+        <item>Авторизация наложенной записи одним касанием — минимальное количество повторных запросов на разрешение</item>
+        <item>Инструмент «Кисть» на плавающем наложении</item>
+        <item>Наложение камеры с предварительным просмотром с камеры лица в реальном времени</item>
+        <item>Наложение водяных знаков: пользовательские изображения, форма, непрозрачность, положение, привязка к углу; значок приложения по умолчанию соответствует</item>
+        <item>Скриншоты с настройками формата и качества; захват из наложения</item>
+        <item>Процесс обмена/редактирования после скриншота (необязательно)</item>
+        <item>Библиотека записей с миниатюрами; триммер в приложении; объединить клипы; видео в GIF; редактор изображений и инструменты обрезки</item>
+        <item>Видеоплеер в приложении</item>
+        <item>Акцентный цвет: пресеты, градиенты и шестнадцатеричный цвет; динамическая тема в пользовательском интерфейсе</item>
+        <item>Светлые и темные темы с улучшенным контрастом светлых тем.</item>
+        <item>Режим производительности для устройств более низкого уровня</item>
+        <item>Организованные настройки: элементы управления, качество записи, наложение, тема, язык, хранилище и многое другое.</item>
+        <item>Ярлык настроек, позволяющий неограниченное использование батареи для надежной фоновой записи.</item>
+        <item>Более 16 языков с постоянными переводами</item>
+        <item>Переключатель режимов RECORD/CLIPPER с четким индикатором состояния</item>
+        <item>Плитки быстрых настроек: CatRec Record и CatRec Clipper</item>
+        <item>Запись уведомлений с действиями; поддержка сеанса подготовленного захвата</item>
+        <item>Дополнительная аналитика для повышения стабильности</item>
+        <item>Контроль конфиденциальности: переключатели аналитики и персонализации рекламы.</item>
+        <item>Экран поддержки: журнал изменений, юридические ссылки и дополнительная вознаграждаемая поддержка.</item>
+    </string-array>
 </resources>

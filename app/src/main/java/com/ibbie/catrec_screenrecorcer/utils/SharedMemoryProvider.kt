@@ -20,7 +20,7 @@ import java.nio.ByteBuffer
  *    - API < 29: MemoryFile (Ashmem)
  *    - API >= 29: android.os.SharedMemory (ASharedMemory)
  *
- * This fixes crashes on Android 10+ where SharedMemory.create() fails for sizes smaller than 
+ * This fixes crashes on Android 10+ where SharedMemory.create() fails for sizes smaller than
  * the system page size (usually 4KB) or non-aligned sizes.
  */
 class SharedMemoryProvider private constructor(
@@ -28,15 +28,14 @@ class SharedMemoryProvider private constructor(
     val size: Int,
     val fileDescriptor: Int, // -1 if using direct buffer fallback or if FD extraction is blocked
     val byteBuffer: ByteBuffer?, // Always non-null for small buffers; nullable/lazy for large ones
-    private val closeAction: () -> Unit
+    private val closeAction: () -> Unit,
 ) : Closeable {
-
     companion object {
         private const val TAG = "SharedMemProvider"
-        
-        // Threshold for switching strategies. 
+
+        // Threshold for switching strategies.
         // 64KB is a safe bet; avoids system call overhead for small audio/DSP chunks.
-        private const val SMALL_BUFFER_THRESHOLD = 65536 
+        private const val SMALL_BUFFER_THRESHOLD = 65536
 
         /**
          * Creates a shared memory region or a direct buffer.
@@ -45,9 +44,12 @@ class SharedMemoryProvider private constructor(
          * @param size The size in bytes.
          */
         @Throws(IOException::class)
-        fun create(name: String, size: Int): SharedMemoryProvider {
+        fun create(
+            name: String,
+            size: Int,
+        ): SharedMemoryProvider {
             // PATH 1: Small Buffer Optimization
-            // SharedMemory (Android 10+) often crashes or throws for very small sizes 
+            // SharedMemory (Android 10+) often crashes or throws for very small sizes
             // (e.g. < 4KB page size). DirectByteBuffer is faster and safer here.
             if (size <= SMALL_BUFFER_THRESHOLD) {
                 return createDirectBuffer(name, size)
@@ -67,14 +69,17 @@ class SharedMemoryProvider private constructor(
          * Used for small sizes. Does NOT provide a FileDescriptor (-1).
          * Native code must check for fd < 0 and use the pointer/address directly.
          */
-        private fun createDirectBuffer(name: String, size: Int): SharedMemoryProvider {
+        private fun createDirectBuffer(
+            name: String,
+            size: Int,
+        ): SharedMemoryProvider {
             val buffer = ByteBuffer.allocateDirect(size)
             return SharedMemoryProvider(
                 mapName = name,
                 size = size,
                 fileDescriptor = -1, // No FD for direct buffers
                 byteBuffer = buffer,
-                closeAction = { /* No-op, GC handles direct buffers */ }
+                closeAction = { /* No-op, GC handles direct buffers */ },
             )
         }
 
@@ -83,11 +88,14 @@ class SharedMemoryProvider private constructor(
          * Uses android.os.SharedMemory.
          */
         @RequiresApi(Build.VERSION_CODES.Q)
-        private fun createModern(name: String, size: Int): SharedMemoryProvider {
+        private fun createModern(
+            name: String,
+            size: Int,
+        ): SharedMemoryProvider {
             try {
                 val sharedMemory = SharedMemory.create(name, size)
                 val buffer = sharedMemory.mapReadWrite()
-                
+
                 // Extract FD using Parcel to avoid reflection restrictions on API 35+
                 // SharedMemory implements Parcelable and writes the FD to the destination.
                 // We can exploit this to get a legitimate dup() of the FD via public APIs.
@@ -125,7 +133,7 @@ class SharedMemoryProvider private constructor(
                                 Log.w(TAG, "Error closing duped FD: ${e.message}")
                             }
                         }
-                    }
+                    },
                 )
             } catch (e: ErrnoException) {
                 throw IOException("Failed to create SharedMemory (Modern): ${e.message}", e)
@@ -140,7 +148,10 @@ class SharedMemoryProvider private constructor(
          * LEGACY PATH: API 26-28 (Android 8.0 - 9.0)
          * Uses MemoryFile (Ashmem) via reflection.
          */
-        private fun createLegacy(name: String, size: Int): SharedMemoryProvider {
+        private fun createLegacy(
+            name: String,
+            size: Int,
+        ): SharedMemoryProvider {
             val memoryFile = MemoryFile(name, size)
             var rawFd = -1
 
@@ -151,7 +162,6 @@ class SharedMemoryProvider private constructor(
                 val fdField = FileDescriptor::class.java.getDeclaredField("descriptor")
                 fdField.isAccessible = true
                 rawFd = fdField.getInt(fileDescriptorObj)
-
             } catch (e: Exception) {
                 memoryFile.close()
                 throw IOException("Failed to reflect MemoryFile FD: ${e.message}", e)
@@ -164,7 +174,7 @@ class SharedMemoryProvider private constructor(
                 byteBuffer = null, // Legacy path relies on FD mmap in native
                 closeAction = {
                     memoryFile.close()
-                }
+                },
             )
         }
     }

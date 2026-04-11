@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 sealed interface BillingUiEvent {
     /** Consumable [BillingProductIds.SUPPORT_ME] was consumed successfully — show thanks. */
     data object SupportMeConsumed : BillingUiEvent
+
     /** remove_ads is awaiting payment / Play confirmation. */
     data object RemoveAdsPending : BillingUiEvent
 }
@@ -40,81 +41,88 @@ sealed interface BillingUiEvent {
  * Google Play Billing: restore [BillingProductIds.REMOVE_ADS] on connect, persist via [SettingsRepository],
  * consumable [BillingProductIds.SUPPORT_ME] with consume + repeat purchases.
  */
-class CatRecBillingManager(private val application: Application) {
-
+class CatRecBillingManager(
+    private val application: Application,
+) {
     private val repository = SettingsRepository(application.applicationContext)
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    private val _uiEvents = MutableSharedFlow<BillingUiEvent>(
-        extraBufferCapacity = 8,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
+    private val _uiEvents =
+        MutableSharedFlow<BillingUiEvent>(
+            extraBufferCapacity = 8,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
     val uiEvents: SharedFlow<BillingUiEvent> = _uiEvents.asSharedFlow()
 
     private var billingClient: BillingClient? = null
+
     @Volatile
     private var removeAdsProductDetails: ProductDetails? = null
+
     @Volatile
     private var supportMeProductDetails: ProductDetails? = null
 
-    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
-        Log.d(TAG, "onPurchasesUpdated code=${billingResult.responseCode} count=${purchases?.size ?: 0}")
-        when (billingResult.responseCode) {
-            BillingClient.BillingResponseCode.OK -> {
-                if (purchases.isNullOrEmpty()) {
+    private val purchasesUpdatedListener =
+        PurchasesUpdatedListener { billingResult, purchases ->
+            Log.d(TAG, "onPurchasesUpdated code=${billingResult.responseCode} count=${purchases?.size ?: 0}")
+            when (billingResult.responseCode) {
+                BillingClient.BillingResponseCode.OK -> {
+                    if (purchases.isNullOrEmpty()) {
+                        syncInAppPurchases()
+                    } else {
+                        purchases.forEach { handlePurchase(it) }
+                    }
+                }
+                BillingClient.BillingResponseCode.USER_CANCELED -> {
+                    Log.d(TAG, "Purchase canceled by user")
+                }
+                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                    Log.d(TAG, "ITEM_ALREADY_OWNED — syncing entitlements")
+                    syncInAppPurchases()
+                }
+                else -> {
+                    AppLogger.w(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
+                }
+            }
+        }
+
+    private val connectionListener =
+        object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                Log.d(TAG, "onBillingSetupFinished code=${billingResult.responseCode} msg=${billingResult.debugMessage}")
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    loadProductDetails()
                     syncInAppPurchases()
                 } else {
-                    purchases.forEach { handlePurchase(it) }
+                    AppLogger.w(TAG, "Billing setup failed: ${billingResult.debugMessage}")
                 }
             }
-            BillingClient.BillingResponseCode.USER_CANCELED -> {
-                Log.d(TAG, "Purchase canceled by user")
-            }
-            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                Log.d(TAG, "ITEM_ALREADY_OWNED — syncing entitlements")
-                syncInAppPurchases()
-            }
-            else -> {
-                AppLogger.w(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
-            }
-        }
-    }
 
-    private val connectionListener = object : BillingClientStateListener {
-        override fun onBillingSetupFinished(billingResult: BillingResult) {
-            Log.d(TAG, "onBillingSetupFinished code=${billingResult.responseCode} msg=${billingResult.debugMessage}")
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                loadProductDetails()
-                syncInAppPurchases()
-            } else {
-                AppLogger.w(TAG, "Billing setup failed: ${billingResult.debugMessage}")
-            }
-        }
-
-        override fun onBillingServiceDisconnected() {
-            Log.d(TAG, "onBillingServiceDisconnected — scheduling reconnect")
-            mainHandler.postDelayed({
-                try {
-                    val c = billingClient
-                    if (c != null && !c.isReady) {
-                        c.startConnection(this)
+            override fun onBillingServiceDisconnected() {
+                Log.d(TAG, "onBillingServiceDisconnected — scheduling reconnect")
+                mainHandler.postDelayed({
+                    try {
+                        val c = billingClient
+                        if (c != null && !c.isReady) {
+                            c.startConnection(this)
+                        }
+                    } catch (e: Exception) {
+                        AppLogger.w(TAG, "Billing reconnect failed: ${e.message}")
                     }
-                } catch (e: Exception) {
-                    AppLogger.w(TAG, "Billing reconnect failed: ${e.message}")
-                }
-            }, RECONNECT_DELAY_MS)
+                }, RECONNECT_DELAY_MS)
+            }
         }
-    }
 
     fun start() {
         if (billingClient != null) return
-        val client = BillingClient.newBuilder(application)
-            .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases(
-                PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
-            )
-            .build()
+        val client =
+            BillingClient
+                .newBuilder(application)
+                .setListener(purchasesUpdatedListener)
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
+                ).build()
         billingClient = client
         client.startConnection(connectionListener)
     }
@@ -140,15 +148,19 @@ class CatRecBillingManager(private val application: Application) {
             AppLogger.w(TAG, "launchRemoveAdsPurchase blocked ready=${client?.isReady} details=$details")
             return false
         }
-        val params = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            .build()
-        val result = client.launchBillingFlow(
-            activity,
-            BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(listOf(params))
-                .build(),
-        )
+        val params =
+            BillingFlowParams.ProductDetailsParams
+                .newBuilder()
+                .setProductDetails(details)
+                .build()
+        val result =
+            client.launchBillingFlow(
+                activity,
+                BillingFlowParams
+                    .newBuilder()
+                    .setProductDetailsParamsList(listOf(params))
+                    .build(),
+            )
         return when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> true
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
@@ -169,15 +181,19 @@ class CatRecBillingManager(private val application: Application) {
             AppLogger.w(TAG, "launchSupportMePurchase blocked ready=${client?.isReady} details=$details")
             return false
         }
-        val params = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(details)
-            .build()
-        val result = client.launchBillingFlow(
-            activity,
-            BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(listOf(params))
-                .build(),
-        )
+        val params =
+            BillingFlowParams.ProductDetailsParams
+                .newBuilder()
+                .setProductDetails(details)
+                .build()
+        val result =
+            client.launchBillingFlow(
+                activity,
+                BillingFlowParams
+                    .newBuilder()
+                    .setProductDetailsParamsList(listOf(params))
+                    .build(),
+            )
         return when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> true
             else -> {
@@ -189,19 +205,24 @@ class CatRecBillingManager(private val application: Application) {
 
     private fun loadProductDetails() {
         val client = billingClient ?: return
-        val productList = listOf(
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(BillingProductIds.REMOVE_ADS)
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build(),
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(BillingProductIds.SUPPORT_ME)
-                .setProductType(BillingClient.ProductType.INAPP)
-                .build(),
-        )
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(productList)
-            .build()
+        val productList =
+            listOf(
+                QueryProductDetailsParams.Product
+                    .newBuilder()
+                    .setProductId(BillingProductIds.REMOVE_ADS)
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build(),
+                QueryProductDetailsParams.Product
+                    .newBuilder()
+                    .setProductId(BillingProductIds.SUPPORT_ME)
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build(),
+            )
+        val params =
+            QueryProductDetailsParams
+                .newBuilder()
+                .setProductList(productList)
+                .build()
         client.queryProductDetailsAsync(params) { billingResult, detailsResult: QueryProductDetailsResult ->
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                 AppLogger.w(TAG, "queryProductDetails failed: ${billingResult.debugMessage}")
@@ -223,7 +244,8 @@ class CatRecBillingManager(private val application: Application) {
     private fun syncInAppPurchases() {
         val client = billingClient ?: return
         client.queryPurchasesAsync(
-            QueryPurchasesParams.newBuilder()
+            QueryPurchasesParams
+                .newBuilder()
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build(),
         ) { billingResult, purchases ->
@@ -287,9 +309,11 @@ class CatRecBillingManager(private val application: Application) {
     private fun acknowledgeRemoveAdsIfNeeded(purchase: Purchase) {
         if (purchase.isAcknowledged) return
         val client = billingClient ?: return
-        val ackParams = AcknowledgePurchaseParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken)
-            .build()
+        val ackParams =
+            AcknowledgePurchaseParams
+                .newBuilder()
+                .setPurchaseToken(purchase.purchaseToken)
+                .build()
         client.acknowledgePurchase(ackParams) { result ->
             if (result.responseCode != BillingClient.BillingResponseCode.OK) {
                 AppLogger.w(TAG, "acknowledge remove_ads failed: ${result.debugMessage}")
@@ -301,9 +325,11 @@ class CatRecBillingManager(private val application: Application) {
 
     private fun consumeSupportMePurchase(purchase: Purchase) {
         val client = billingClient ?: return
-        val consumeParams = ConsumeParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken)
-            .build()
+        val consumeParams =
+            ConsumeParams
+                .newBuilder()
+                .setPurchaseToken(purchase.purchaseToken)
+                .build()
         client.consumeAsync(consumeParams) { result, token ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                 Log.d(TAG, "support_me consumed token=$token")

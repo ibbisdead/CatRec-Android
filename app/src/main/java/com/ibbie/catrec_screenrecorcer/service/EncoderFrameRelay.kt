@@ -61,12 +61,17 @@ internal class EncoderFrameRelay(
             relayHandler = Handler(thread.looper)
             reader.setOnImageAvailableListener({ onImageAvailable() }, relayHandler)
             try {
-                virtualDisplay = mediaProjection.createVirtualDisplay(
-                    virtualDisplayName,
-                    width, height, dpi,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    reader.surface, null, null,
-                )
+                virtualDisplay =
+                    mediaProjection.createVirtualDisplay(
+                        virtualDisplayName,
+                        width,
+                        height,
+                        dpi,
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                        reader.surface,
+                        null,
+                        null,
+                    )
             } catch (e: SecurityException) {
                 // Android 14+: only one VirtualDisplay per MediaProjection; e.g. screenshot VD still active.
                 Log.e(TAG, "createVirtualDisplay rejected for $virtualDisplayName", e)
@@ -92,14 +97,17 @@ internal class EncoderFrameRelay(
         synchronized(frameLock) {
             try {
                 imageReader?.setOnImageAvailableListener(null, null)
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             try {
                 virtualDisplay?.release()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             virtualDisplay = null
             try {
                 imageReader?.close()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             imageReader = null
             scratchRowBitmap?.recycle()
             scratchRowBitmap = null
@@ -128,18 +136,20 @@ internal class EncoderFrameRelay(
     private fun onImageAvailable() {
         synchronized(frameLock) {
             val reader = imageReader ?: return
-            val image = try {
-                reader.acquireLatestImage()
-            } catch (e: Exception) {
-                Log.e(TAG, "acquireLatestImage failed", e)
-                return
-            } ?: return
+            val image =
+                try {
+                    reader.acquireLatestImage()
+                } catch (e: Exception) {
+                    Log.e(TAG, "acquireLatestImage failed", e)
+                    return
+                } ?: return
 
-            val bitmap = try {
-                imageToBitmap(image)
-            } finally {
-                image.close()
-            }
+            val bitmap =
+                try {
+                    imageToBitmap(image)
+                } finally {
+                    image.close()
+                }
             try {
                 drawBitmapToEncoder(bitmap)
                 deliverScreenshotIfNeeded(bitmap)
@@ -151,13 +161,14 @@ internal class EncoderFrameRelay(
 
     private fun deliverScreenshotIfNeeded(bitmap: Bitmap) {
         val cb = pendingScreenshot.getAndSet(null) ?: return
-        val copy = try {
-            bitmap.copy(Bitmap.Config.ARGB_8888, false)
-        } catch (e: Exception) {
-            Log.e(TAG, "screenshot copy failed", e)
-            cb(null)
-            return
-        }
+        val copy =
+            try {
+                bitmap.copy(Bitmap.Config.ARGB_8888, false)
+            } catch (e: Exception) {
+                Log.e(TAG, "screenshot copy failed", e)
+                cb(null)
+                return
+            }
         cb(copy)
     }
 
@@ -233,8 +244,9 @@ private class EglBitmapBlitter(
         if (!EGL14.eglInitialize(eglDisplay, major, 0, minor, 0)) {
             throw IllegalStateException("eglInitialize failed")
         }
-        val config = chooseConfig(eglDisplay)
-            ?: throw IllegalStateException("eglChooseConfig failed")
+        val config =
+            chooseConfig(eglDisplay)
+                ?: throw IllegalStateException("eglChooseConfig failed")
         val ctxAttrs = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE)
         eglContext = EGL14.eglCreateContext(eglDisplay, config, EGL14.EGL_NO_CONTEXT, ctxAttrs, 0)
         val surfAttrs = intArrayOf(EGL14.EGL_NONE)
@@ -268,12 +280,25 @@ private class EglBitmapBlitter(
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId)
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
         GLES20.glUniform1i(uTexture, 0)
-        val full = floatArrayOf(
-            -1f, -1f, 0f, 1f,
-            1f, -1f, 1f, 1f,
-            -1f, 1f, 0f, 0f,
-            1f, 1f, 1f, 0f,
-        )
+        val full =
+            floatArrayOf(
+                -1f,
+                -1f,
+                0f,
+                1f,
+                1f,
+                -1f,
+                1f,
+                1f,
+                -1f,
+                1f,
+                0f,
+                0f,
+                1f,
+                1f,
+                1f,
+                0f,
+            )
         val fb = ByteBuffer.allocateDirect(full.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
         fb.put(full).position(0)
         GLES20.glEnableVertexAttribArray(aPosition)
@@ -293,38 +318,53 @@ private class EglBitmapBlitter(
                 GLES20.glDeleteTextures(1, intArrayOf(texId), 0)
                 texId = 0
             }
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         try {
             EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         try {
             EGL14.eglDestroySurface(eglDisplay, eglSurface)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         try {
             EGL14.eglDestroyContext(eglDisplay, eglContext)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
         try {
             EGL14.eglTerminate(eglDisplay)
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     private fun chooseConfig(display: EGLDisplay): EGLConfig? {
-        val attrs = intArrayOf(
-            EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-            EGL14.EGL_RED_SIZE, 8,
-            EGL14.EGL_GREEN_SIZE, 8,
-            EGL14.EGL_BLUE_SIZE, 8,
-            EGL14.EGL_ALPHA_SIZE, 8,
-            EGLExt.EGL_RECORDABLE_ANDROID, EGL14.EGL_TRUE,
-            EGL14.EGL_NONE,
-        )
+        val attrs =
+            intArrayOf(
+                EGL14.EGL_RENDERABLE_TYPE,
+                EGL14.EGL_OPENGL_ES2_BIT,
+                EGL14.EGL_RED_SIZE,
+                8,
+                EGL14.EGL_GREEN_SIZE,
+                8,
+                EGL14.EGL_BLUE_SIZE,
+                8,
+                EGL14.EGL_ALPHA_SIZE,
+                8,
+                EGLExt.EGL_RECORDABLE_ANDROID,
+                EGL14.EGL_TRUE,
+                EGL14.EGL_NONE,
+            )
         val configs = arrayOfNulls<EGLConfig>(1)
         val num = IntArray(1)
         if (!EGL14.eglChooseConfig(display, attrs, 0, configs, 0, 1, num, 0)) return null
         return configs[0]
     }
 
-    private fun buildProgram(vs: String, fs: String): Int {
+    private fun buildProgram(
+        vs: String,
+        fs: String,
+    ): Int {
         val v = loadShader(GLES20.GL_VERTEX_SHADER, vs)
         val f = loadShader(GLES20.GL_FRAGMENT_SHADER, fs)
         val p = GLES20.glCreateProgram()
@@ -341,7 +381,10 @@ private class EglBitmapBlitter(
         return p
     }
 
-    private fun loadShader(type: Int, src: String): Int {
+    private fun loadShader(
+        type: Int,
+        src: String,
+    ): Int {
         val s = GLES20.glCreateShader(type)
         GLES20.glShaderSource(s, src)
         GLES20.glCompileShader(s)

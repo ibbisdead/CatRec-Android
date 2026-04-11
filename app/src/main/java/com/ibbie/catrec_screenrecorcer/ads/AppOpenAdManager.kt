@@ -4,10 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.appopen.AppOpenAd
+import java.lang.ref.WeakReference
 import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -16,7 +16,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Loads the next ad after dismiss or failed show.
  */
 object AppOpenAdManager {
-
     private const val TAG = "AppOpenAd"
     private const val MIN_INTERVAL_MS = 5_000L
     private const val MAX_AD_AGE_MS = 4 * 60 * 60 * 1000L
@@ -28,6 +27,8 @@ object AppOpenAdManager {
             if (value) {
                 appOpenAd = null
                 isLoading.set(false)
+                pendingShowActivity = null
+                pendingShowUnitId = null
             }
         }
 
@@ -36,11 +37,34 @@ object AppOpenAdManager {
     private var loadTime: Long = 0
     private var lastShownAt: Long = 0
 
+    /**
+     * When [showIfAvailable] runs before the first ad has finished loading (cold start),
+     * we remember the foreground activity and show as soon as [onAdLoaded] runs.
+     */
+    private var pendingShowActivity: WeakReference<Activity>? = null
+    private var pendingShowUnitId: String? = null
+
     @Volatile
     var isShowingAd: Boolean = false
         private set
 
-    fun load(context: Context, adUnitId: String) {
+    /**
+     * Full-screen ads can leave a focused view that is no longer under the activity decor.
+     * That state triggers [IllegalArgumentException] in ViewRootImpl.scrollToRectOrFocus (Crashlytics 1ceae08e…).
+     */
+    private fun Activity.clearFocusAfterFullscreenOverlay() {
+        val root = window?.decorView ?: return
+        root.post {
+            root.clearFocus()
+            // Move focus to the window root so the next traversal has a valid descendant chain.
+            root.requestFocus()
+        }
+    }
+
+    fun load(
+        context: Context,
+        adUnitId: String,
+    ) {
         if (adsDisabled) return
         if (isLoading.get() || isAdAvailable()) return
         if (!isLoading.compareAndSet(false, true)) return
@@ -48,21 +72,35 @@ object AppOpenAdManager {
         AppOpenAd.load(
             appContext,
             adUnitId,
-            AdRequest.Builder().build(),
+            AdMobAdRequestFactory.build(),
             object : AppOpenAd.AppOpenAdLoadCallback() {
                 override fun onAdLoaded(ad: AppOpenAd) {
                     isLoading.set(false)
                     appOpenAd = ad
                     loadTime = Date().time
                     Log.d(TAG, "onAdLoaded")
+                    tryShowPendingAfterLoad(adUnitId)
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     isLoading.set(false)
+                    pendingShowActivity = null
+                    pendingShowUnitId = null
                     Log.w(TAG, "onAdFailedToLoad: ${error.message} code=${error.code}")
                 }
             },
         )
+    }
+
+    private fun tryShowPendingAfterLoad(loadedUnitId: String) {
+        val id = pendingShowUnitId ?: return
+        if (id != loadedUnitId) return
+        val act = pendingShowActivity?.get()
+        pendingShowActivity = null
+        pendingShowUnitId = null
+        if (act != null && !act.isFinishing && !act.isDestroyed) {
+            showIfAvailable(act, loadedUnitId)
+        }
     }
 
     private fun isAdAvailable(): Boolean {
@@ -78,8 +116,15 @@ object AppOpenAdManager {
     /**
      * Shows a loaded ad if allowed; otherwise requests a load for next time.
      */
-    fun showIfAvailable(activity: Activity, adUnitId: String) {
-        if (adsDisabled) return
+    fun showIfAvailable(
+        activity: Activity,
+        adUnitId: String,
+    ) {
+        if (adsDisabled) {
+            pendingShowActivity = null
+            pendingShowUnitId = null
+            return
+        }
         if (isShowingAd) return
         val now = System.currentTimeMillis()
         if (now - lastShownAt < MIN_INTERVAL_MS && lastShownAt > 0) {
@@ -88,28 +133,34 @@ object AppOpenAdManager {
         }
         val ad = appOpenAd
         if (ad == null || !isAdAvailable()) {
+            // Cold start: ad usually not ready on first ON_START — show when load completes.
+            pendingShowActivity = WeakReference(activity)
+            pendingShowUnitId = adUnitId
             load(activity.applicationContext, adUnitId)
             return
         }
         isShowingAd = true
-        ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-            override fun onAdDismissedFullScreenContent() {
-                appOpenAd = null
-                isShowingAd = false
-                load(activity.applicationContext, adUnitId)
-            }
+        ad.fullScreenContentCallback =
+            object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    activity.clearFocusAfterFullscreenOverlay()
+                    appOpenAd = null
+                    isShowingAd = false
+                    load(activity.applicationContext, adUnitId)
+                }
 
-            override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                Log.w(TAG, "onAdFailedToShow: ${error.message}")
-                appOpenAd = null
-                isShowingAd = false
-                load(activity.applicationContext, adUnitId)
-            }
+                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                    Log.w(TAG, "onAdFailedToShow: ${error.message}")
+                    activity.clearFocusAfterFullscreenOverlay()
+                    appOpenAd = null
+                    isShowingAd = false
+                    load(activity.applicationContext, adUnitId)
+                }
 
-            override fun onAdShowedFullScreenContent() {
-                lastShownAt = System.currentTimeMillis()
+                override fun onAdShowedFullScreenContent() {
+                    lastShownAt = System.currentTimeMillis()
+                }
             }
-        }
         ad.show(activity)
     }
 }

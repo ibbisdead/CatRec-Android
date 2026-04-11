@@ -1,33 +1,101 @@
 <resources>
+    <!-- App -->
     <string name="app_name">CatRec - 화면 녹화</string>
-    <string name="tab_recording">녹화</string>
+
+    <string name="brand_catrect">CatRect</string>
+    <string name="faq_content_description">도움말 및 지원</string>
+    <string name="capture_mode_recording">녹음</string>
+    <string name="capture_mode_clipper">가위</string>
+    <string name="capture_mode_gif">GIF 녹음</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">FAQ</string>
+    <string name="faq_intro">카테고리별로 답변을 찾아보세요. 확장하려면 질문을 탭하세요. 여전히 도움이 필요한 경우 아래 문의처를 이용하세요.</string>
+    <string name="faq_contact_us">문의하기</string>
+    <string name="feedback_title">피드백 보내기</string>
+    <string name="feedback_issue_section_title">무엇이 잘못되었나요?</string>
+    <string name="feedback_description_title">세부</string>
+    <string name="feedback_description_hint">무슨 일이 일어났는지, 언제 시작했는지, 그리고 이미 시도한 것(예: 해상도 낮추기, 휴대전화 다시 시작하기)을 설명해 주세요. 자세한 내용은 문제를 더 빨리 해결하는 데 도움이 됩니다.</string>
+    <string name="feedback_screenshots_title">스크린샷</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">최대 5개의 이미지(오류 메시지, 설정 화면, 배터리 페이지 등)를 추가하세요.</string>
+    <string name="feedback_add_screenshots">이미지 추가</string>
+    <string name="feedback_send">보내다</string>
+    <string name="feedback_send_note">%1$s에게 보내는 메시지가 포함된 이메일 앱을 엽니다. 전달하려면 거기로 보내기를 탭하세요.</string>
+    <string name="feedback_send_chooser_title">이메일 보내기</string>
+    <string name="feedback_no_email_app">이메일 앱을 찾을 수 없습니다. Gmail 또는 Outlook을 설치하거나 다음 화면이 표시되면 세부정보를 복사하세요.</string>
+    <string name="feedback_select_issue">문제 유형을 선택해 주세요.</string>
+    <string name="feedback_description_too_short">도움을 드릴 수 있도록 좀 더 자세한 내용(최소 한 문장)을 추가해 주세요.</string>
+    <string name="feedback_issue_recording_stopped">녹화가 무작위로 중지되었습니다.</string>
+    <string name="feedback_issue_crash">앱이 다운되었습니다</string>
+    <string name="feedback_issue_no_sound">소리가 나지 않음/오디오 문제</string>
+    <string name="feedback_issue_video_black">검은 화면 / 정지된 비디오</string>
+    <string name="feedback_issue_cant_start">녹음을 시작할 수 없습니다</string>
+    <string name="feedback_issue_overlay">플로팅 컨트롤/오버레이</string>
+    <string name="feedback_issue_gif_export">GIF 또는 파일 내보내기</string>
+    <string name="feedback_issue_battery_oem">배터리/배경(샤오미 등)</string>
+    <string name="feedback_issue_storage">저장공간/파일을 찾을 수 없음</string>
+    <string name="feedback_issue_quality">품질/지연/말더듬</string>
+    <string name="feedback_issue_other">다른</string>
+
+    <!-- Bottom Nav Tabs -->
     <string name="tab_screenshots">스크린샷</string>
     <string name="tab_recordings">녹화 목록</string>
     <string name="tab_settings">설정</string>
     <string name="tab_support">지원</string>
     <string name="tab_tools">도구</string>
-    <string name="action_ok">확인</string>
+    <string name="tab_editor">편집자</string>
+    <string name="fab_start_recording">기록</string>
+    <string name="storage_indicator_format">%1$s 사용됨 · %2$s 무료</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">녹음 품질</string>
+    <string name="settings_open_audio_menu">오디오 설정</string>
+    <string name="settings_open_audio_menu_sub">마이크, 내부 오디오, 비트 전송률, 채널...</string>
+    <string name="settings_open_video_menu">비디오 및 GIF 설정</string>
+    <string name="settings_open_video_menu_sub">GIF 사전 설정, 해상도, FPS, 비트 전송률, 인코더…</string>
+
+    <string name="support_section_help">돕다</string>
+    <string name="support_send_feedback">피드백 보내기</string>
+    <string name="support_send_feedback_desc">FAQ의 문의 방법과 동일 - 버그나 제안 사항 보고</string>
+
+    <!-- Common Actions -->
     <string name="action_cancel">취소</string>
     <string name="action_close">닫기</string>
     <string name="action_save">저장</string>
     <string name="action_delete">삭제</string>
     <string name="action_share">공유</string>
     <string name="action_open">열기</string>
-    <string name="action_confirm">확인</string>
+    <string name="consent_analytics_title">사용량 분석</string>
+    <string name="consent_analytics_message">선택적 사용 및 충돌 분석을 허용하여 CatRec 개선에 도움을 주세요. 개인화된 광고는 설정에서 별도로 제어됩니다(기본적으로 켜져 있음). 설정에서 언제든지 변경할 수 있습니다.</string>
+    <string name="setting_usage_analytics">사용 분석</string>
+    <string name="setting_usage_analytics_desc">앱 개선을 위한 충돌 및 사용 통계</string>
+    <string name="setting_personalized_ads">맞춤 광고</string>
+    <string name="setting_personalized_ads_on_desc">AdMob이 관련 광고를 위해 광고 ID를 사용할 수 있습니다</string>
+    <string name="setting_personalized_ads_off_desc">비개인화 광고만</string>
+    <string name="consent_accept">허용하다</string>
+    <string name="consent_decline">감소</string>
     <string name="action_apply">적용</string>
-    <string name="action_reset">초기화</string>
-    <string name="action_start">시작</string>
-    <string name="action_stop">중지</string>
     <string name="action_pause">일시 정지</string>
     <string name="action_resume">재개</string>
+
+    <!-- Recording Screen -->
     <string name="recording_start">녹화 시작</string>
-    <string name="recording_stop">녹화 중지</string>
-    <string name="recording_countdown">시작까지…</string>
-    <string name="recording_in_progress">녹화 중</string>
-    <string name="recording_paused">녹화 일시 정지됨</string>
+
+    <!-- Settings Screen - Section Headers -->
     <string name="settings_title">설정</string>
     <string name="settings_section_controls">컨트롤</string>
+    <string name="setting_allow_background_title">배터리 사용 제한 없음</string>
+    <string name="setting_allow_background_desc">앱을 나갈 때 녹화, 준비된 캡처 세션, 오버레이가 중단될 가능성을 줄입니다. 시스템 배터리 설정을 엽니다.</string>
+    <string name="toast_battery_settings_failed">배터리 설정을 열 수 없습니다. 설정에서 배터리 → CatRec를 시도하세요.</string>
     <string name="settings_section_video">비디오</string>
+    <string name="settings_section_gif_recorder">GIF 레코더</string>
+    <string name="settings_gif_recorder_desc">GIF 모드는 먼저 비디오를 녹화한 다음 변환합니다. 품질과 길이는 아래 사전 설정을 따릅니다. 녹화로 다시 전환해도 비디오 슬라이더는 계속 저장됩니다.</string>
+    <string name="setting_gif_preset">GIF 품질 사전 설정</string>
+    <string name="video_locked_by_gif_preset">비디오 옵션은 GIF 모드가 선택된 동안 GIF 사전 설정으로 제어됩니다.</string>
+    <string name="gif_preset_small">작음(더 빠르고 작은 파일)</string>
+    <string name="gif_preset_medium">중간</string>
+    <string name="gif_preset_hd">HD(더 큰 파일)</string>
     <string name="settings_section_audio">오디오</string>
     <string name="settings_section_overlay">오버레이</string>
     <string name="settings_section_screenshots">스크린샷</string>
@@ -35,11 +103,12 @@
     <string name="settings_section_language">언어</string>
     <string name="settings_section_storage">저장소</string>
     <string name="settings_section_general">일반</string>
+
+    <!-- Video Settings -->
     <string name="setting_resolution">해상도</string>
     <string name="setting_resolution_native">기본</string>
     <string name="setting_resolution_custom">사용자 지정 해상도…</string>
     <string name="setting_resolution_custom_hint">예: 1920x1080</string>
-    <string name="setting_resolution_custom_error">유효한 해상도를 입력하세요 (예: 1920x1080)</string>
     <string name="setting_fps">프레임 레이트 (FPS)</string>
     <string name="setting_bitrate">비디오 비트레이트</string>
     <string name="setting_video_encoder">비디오 인코더</string>
@@ -47,6 +116,8 @@
     <string name="setting_orientation_auto">자동</string>
     <string name="setting_orientation_portrait">세로</string>
     <string name="setting_orientation_landscape">가로</string>
+
+    <!-- Audio Settings -->
     <string name="setting_microphone">마이크</string>
     <string name="setting_internal_audio">내부 오디오</string>
     <string name="setting_audio_bitrate">오디오 비트레이트</string>
@@ -57,14 +128,53 @@
     <string name="setting_audio_encoder">오디오 인코더</string>
     <string name="setting_separate_mic">별도 마이크 트랙</string>
     <string name="setting_separate_mic_desc">마이크를 별도의 오디오 파일로 저장</string>
+
+    <!-- Overlay Settings -->
     <string name="setting_floating_controls">플로팅 컨트롤</string>
-    <string name="setting_show_touches">터치 표시</string>
+    <string name="setting_brush_overlay">브러시</string>
+    <string name="settings_brush_overlay_desc">화면에 그리기 위해 플로팅 오버레이에 브러시 도구 표시</string>
+    <string name="setting_hide_floating_while_recording">녹화 중 플로팅 아이콘 숨기기</string>
+    <string name="settings_hide_floating_while_recording_desc">녹음이 진행되는 동안 플로팅 컨트롤 버블 숨기기</string>
+    <string name="setting_post_screenshot_options">스크린샷 후 옵션</string>
+    <string name="settings_post_screenshot_options_desc">스크린샷을 찍은 후 공유 또는 편집 옵션을 표시하세요.</string>
+    <string name="setting_record_single_app">단일 앱 기록</string>
+    <string name="settings_record_single_app_desc">Android 14 이상에서는 화면 캡처 권한을 부여할 때 하나의 앱 창 또는 전체 화면을 선택하세요.</string>
+    <string name="screenshot_post_edit">편집하다</string>
+    <string name="screenshot_post_action_failed">공유를 열 수 없습니다.</string>
+    <string name="screenshot_post_tap_outside">닫으려면 외부를 탭하세요.</string>
+    <string name="image_editor_title">이미지 편집</string>
+    <string name="image_editor_panel_rotate">회전</string>
+    <string name="image_editor_panel_crop">수확고</string>
+    <string name="image_editor_panel_draw">그리다</string>
+    <string name="image_editor_rotate_ccw">왼쪽으로 회전</string>
+    <string name="image_editor_rotate_cw">오른쪽으로 회전</string>
+    <string name="image_editor_saved">Pictures/CatRec/Screenshots에 저장된 이미지</string>
+    <string name="image_editor_save_failed">이미지를 저장할 수 없습니다.</string>
+    <string name="image_editor_load_failed">이미지를 로드할 수 없습니다.</string>
+    <string name="tool_edit_image">이미지 편집</string>
+    <string name="brush_line_width">선 너비</string>
+    <string name="brush_color_picker_hint">색상을 선택하고 두께를 조정한 후 적용을 탭하세요.</string>
+    <string name="brush_color_back">뒤쪽에</string>
+    <string name="brush_apply">적용하다</string>
+    <string name="brush_tool_pen">그리다</string>
+    <string name="brush_tool_eraser">지우개</string>
+    <string name="brush_tool_undo">마지막 스트로크 실행 취소</string>
+    <string name="brush_tool_square">구형</string>
+    <string name="brush_tool_circle">타원</string>
+    <string name="brush_tool_arrow">화살</string>
+    <string name="brush_tool_mosaic">픽셀화 영역</string>
+    <string name="brush_tool_colors">색상 및 선 너비</string>
+    <string name="brush_panel_title">뇌졸중</string>
     <string name="setting_camera_settings">카메라 설정</string>
     <string name="setting_watermark">CatRec 워터마크</string>
+    <string name="setting_watermark_size">워터마크 크기</string>
+    <string name="setting_watermark_opacity">워터마크 불투명도</string>
+
+    <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
     <string name="camera_enable">카메라 활성화</string>
+    <string name="camera_enable_desc">녹화 중 카메라 오버레이 표시</string>
     <string name="camera_lock_position">위치 잠금</string>
-    <string name="camera_lock_position_desc">카메라 오버레이 이동 또는 크기 조정 방지</string>
     <string name="camera_facing">카메라</string>
     <string name="camera_facing_front">전면</string>
     <string name="camera_facing_rear">후면</string>
@@ -72,80 +182,107 @@
     <string name="camera_orientation">방향</string>
     <string name="camera_size">크기</string>
     <string name="camera_opacity">불투명도</string>
-    <string name="camera_preview">라이브 미리보기</string>
+
+    <!-- Screenshot Settings -->
     <string name="setting_screenshot_format">형식</string>
     <string name="setting_screenshot_quality">품질</string>
+
+    <!-- Theme Settings -->
     <string name="setting_theme">앱 테마</string>
     <string name="theme_system">시스템 기본값</string>
     <string name="theme_light">라이트</string>
     <string name="theme_dark">다크</string>
+
+    <!-- Language Settings -->
     <string name="setting_language">앱 언어</string>
     <string name="language_system">시스템 기본값</string>
+    <string name="language_english">영어</string>
+    <string name="language_arabic">아랍어</string>
+    <string name="language_chinese_simplified">중국어(简体)</string>
+    <string name="language_chinese_traditional">중국어(繁체)</string>
+    <string name="language_french">프랑세즈</string>
+    <string name="language_german">독일어</string>
+    <string name="language_hindi">힌두교</string>
+    <string name="language_indonesian">인도네시아 바하사</string>
+    <string name="language_italian">이탈리아노</string>
+    <string name="language_japanese">일본어</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_portuguese">포르투갈어</string>
+    <string name="language_russian">러시아인</string>
+    <string name="language_spanish">스페인어</string>
+    <string name="language_turkish">터키어</string>
+    <string name="language_vietnamese">티엥 비엣</string>
+
+    <!-- Storage Settings -->
     <string name="setting_save_location">저장 위치</string>
+    <string name="setting_save_location_default">기본값 (Movies/CatRec)</string>
+    <string name="setting_filename_pattern">파일명 패턴</string>
+
+    <!-- General Settings -->
     <string name="setting_countdown">카운트다운</string>
-    <string name="screenshots_title">스크린샷</string>
+    <string name="setting_stop_behavior">중지 동작</string>
+
+    <!-- Screenshots Screen -->
     <string name="screenshots_empty_title">스크린샷이 없습니다</string>
     <string name="screenshots_empty_desc">녹화 오버레이의 스크린샷 버튼을 눌러 화면을 캡처하세요</string>
-    <string name="screenshots_delete_confirm">이 스크린샷을 삭제하시겠습니까?</string>
-    <string name="screenshots_delete_confirm_desc">이 작업은 취소할 수 없습니다.</string>
-    <string name="recordings_title">녹화 목록</string>
+
+    <!-- Recordings Screen -->
     <string name="recordings_empty_title">녹화가 없습니다</string>
     <string name="recordings_empty_desc">녹화를 시작하면 여기에 동영상이 표시됩니다</string>
-    <string name="support_title">지원</string>
+
+    <!-- Support Screen -->
+    <string name="support_subscribe_youtube">YouTube 구독</string>
+    <string name="support_subscribe_youtube_desc">업데이트를 보려면 @ibbie를 팔로우하세요.</string>
     <string name="support_remove_ads">광고 제거 — $1</string>
     <string name="support_remove_ads_desc">일회성 구매, 영구적으로 광고 없음</string>
+    <string name="support_restore_purchases">구매 복원</string>
+    <string name="support_restore_purchases_desc">Google Play에서 광고 제거 및 기타 구매 동기화</string>
+    <string name="support_restore_purchases_toast">Google Play에서 구매 내역을 확인하는 중…</string>
+    <string name="support_play_promo_title">Play 프로모션 코드 사용</string>
+    <string name="support_play_promo_desc">광고 제거를 위한 Google Play 코드가 있는 경우: Play에서 코드를 사용한 다음 여기에서 구매 복원을 탭하여 앱을 업데이트하세요.</string>
+    <string name="support_toast_promo_browser">브라우저를 열 수 없습니다</string>
     <string name="support_ads_removed">광고 제거됨 — 감사합니다!</string>
+    <string name="support_ads_removed_desc">프리미엄 옵션은 잠금 해제 상태로 유지되며 시청할 광고가 없습니다.</string>
+    <string name="support_watch_ad">광고 시청</string>
     <string name="support_donate">커피 사주기 ($1)</string>
+    <string name="support_donate_desc">일회성 기부 - CatRec을 계속 유지합니다.</string>
+    <string name="support_share">CatRec 공유</string>
+    <string name="support_share_desc">친구들에게 우리에 대해 알려주세요</string>
     <string name="support_changelog">변경 내역</string>
-    <string name="support_thank_you_title">감사합니다!</string>
-    <string name="support_thank_you_body">여러분의 지원이 CatRec을 계속 살아있게 합니다. 정말 감사합니다!</string>
-    <string name="support_you_are_welcome">천만에요</string>
-    <string name="notif_recording_title">CatRec이 녹화 중입니다</string>
-    <string name="notif_done_title">녹화가 저장되었습니다</string>
+    <string name="support_changelog_desc">이 버전의 새로운 기능을 확인하세요</string>
+
+    <!-- Notifications -->
     <string name="notif_screenshot_saved">스크린샷이 저장되었습니다</string>
+
+    <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">스크린샷을 찍으려면 먼저 녹화를 시작하세요</string>
+    <string name="error_screenshot_capture_failed">스크린샷을 캡처할 수 없습니다. 다시 시도해 보세요.</string>
     <string name="toast_recording_restarted">화면 방향 변경으로 인해 녹화가 재시작되었습니다</string>
-    <string name="home_version">v%1$s</string>
-    <string name="support_version_label">버전 %1$s</string>
-    <string name="changelog_version_template">v%1$s</string>
-    <string name="label_active">켜짐</string>
-    <string name="toast_screen_capture_denied">화면 녹화 권한이 거부되었습니다</string>
-    <string name="toast_no_email_app">이메일 앱을 찾을 수 없습니다</string>
-    <string name="share_screenshot_chooser_title">스크린샷 공유</string>
-    <string name="recordings_header_format">라이브러리 · %1$d</string>
-    <string name="screenshots_header_format">스크린샷 · %1$d</string>
-    <string name="overlay_clip_button">✂ CLIP</string>
-    <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">CatRec을 연 뒤 먼저 «오버레이 녹화 허용»을 누르세요</string>
-    <string name="countdown_subtitle">녹화 시작 중…</string>
-    <string name="toast_recorder_start_failed">녹화를 시작할 수 없습니다: %1$s</string>
-    <string name="format_jpeg">JPEG</string>
-    <string name="format_png">PNG</string>
-    <string name="format_webp">WebP</string>
-    <string name="content_desc_more_options">추가 옵션</string>
-    <string name="content_desc_rewind_10">10초 되감기</string>
-    <string name="content_desc_forward_10">10초 빨리 감기</string>
-    <string name="beta_feedback_email_subject">CatRec 베타 피드백</string>
-    <string name="list_bullet">•</string>
+    <string name="toast_share_app">가장 멋진 스크린 레코더인 CatRec을 확인해 보세요!</string>
 
-    <string name="rec_save_clip_sub">최근 %1$d분 저장</string>
-    <string name="setting_clipper_duration">클리퍼 버퍼 길이</string>
-    <string name="dialog_clipper_duration_title">클리퍼 버퍼 길이</string>
-    <string name="clipper_duration_1m">1분</string>
-    <string name="clipper_duration_2m">2분</string>
-    <string name="clipper_duration_3m">3분</string>
-    <string name="clipper_duration_4m">4분</string>
-    <string name="clipper_duration_5m">5분</string>
-
-    <!-- Settings additions (localization patch) -->
+    <!-- Actions (extra) -->
     <string name="action_done">완료</string>
-    <string name="action_change">변경</string>
+    <string name="action_grant_now">지금 부여</string>
+    <string name="action_not_now">지금은 아님</string>
+    <string name="action_rename">이름 바꾸기</string>
+    <string name="action_trim">손질</string>
+    <string name="action_open_external">외부에서 열기</string>
     <string name="action_loading">로딩 중…</string>
     <string name="action_watch_ad">광고 보기</string>
     <string name="action_unlock">잠금 해제</string>
+    <string name="action_got_it">알았어요</string>
+    <string name="action_leave_feedback">피드백을 남겨주세요</string>
+    <string name="action_change">변경</string>
     <string name="action_enable_anyway">그래도 활성화</string>
     <string name="action_keep_performance_mode">성능 모드 유지</string>
-    <string name="settings_section_privacy">개인 정보</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">알림</string>
+    <string name="stop_behavior_shake">기기 흔들기</string>
+    <string name="stop_behavior_screen_off">화면 꺼짐</string>
+    <string name="stop_behavior_pause_on_screen_off">화면 꺼질 때 일시 정지</string>
+
+    <!-- Settings extras -->
     <string name="settings_floating_controls_desc">항상 표시되는 버블 — 모든 앱에서 녹화 및 캡처</string>
     <string name="settings_show_touches">터치 표시</string>
     <string name="settings_show_touches_desc">개발자 옵션에서 활성화</string>
@@ -154,48 +291,10 @@
     <string name="setting_countdown_off">끄기</string>
     <string name="setting_countdown_seconds">%1$d초</string>
     <string name="setting_internal_audio_note">Android 10 이상만 지원</string>
-    <string name="setting_stop_behavior">중지 동작</string>
-    <string name="setting_filename_pattern">파일명 패턴</string>
-    <string name="stop_behavior_notification">알림</string>
-    <string name="stop_behavior_shake">기기 흔들기</string>
-    <string name="stop_behavior_screen_off">화면 꺼짐</string>
-    <string name="stop_behavior_pause_on_screen_off">화면 꺼질 때 일시 정지</string>
     <string name="gate_feature_separate_mic">별도 마이크 트랙</string>
     <string name="gate_feature_camera_overlay">카메라 오버레이 설정</string>
     <string name="camera_status_enabled">활성 — %1$s • %2$s</string>
     <string name="state_disabled">비활성화됨</string>
-    <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_enable_desc">녹화 중 카메라 오버레이 표시</string>
-    <string name="camera_drag_hint">카메라 원을 드래그하여 위치 조정</string>
-    <string name="camera_lock_desc_short">실수로 이동하는 것 방지</string>
-    <string name="dialog_camera_orientation">카메라 방향</string>
-    <string name="dialog_fps_title">프레임 레이트 (FPS)</string>
-    <string name="dialog_bitrate_title">비트레이트</string>
-    <string name="dialog_video_encoder">비디오 인코더</string>
-    <string name="dialog_audio_bitrate">오디오 비트레이트</string>
-    <string name="dialog_sample_rate">샘플 레이트</string>
-    <string name="dialog_audio_encoder">오디오 인코더</string>
-    <string name="dialog_countdown_timer">카운트다운 타이머</string>
-    <string name="dialog_theme_title">앱 테마</string>
-    <string name="dialog_language_title">앱 언어</string>
-    <string name="dialog_screenshot_format">스크린샷 형식</string>
-    <string name="dialog_filename_pattern">파일명 패턴</string>
-    <string name="dialog_custom_resolution_title">사용자 지정 해상도</string>
-    <string name="dialog_custom_resolution_hint">해상도를 가로×세로로 입력 (예: 1920×1080)</string>
-    <string name="dialog_resolution_title">해상도</string>
-    <string name="error_resolution_format">형식은 가로×세로여야 합니다 (예: 1920×1080)</string>
-    <string name="error_resolution_min">최소 해상도는 100×100입니다</string>
-    <string name="error_resolution_max">최대 해상도는 어느 쪽이든 7680입니다</string>
-    <string name="resolution_group_16_9">16:9</string>
-    <string name="resolution_group_20_9">20:9 (긴 화면 폰)</string>
-    <string name="resolution_group_18_9">18:9 (2:1)</string>
-    <string name="resolution_group_21_9">21:9 (울트라와이드)</string>
-    <string name="resolution_group_4_3">4:3</string>
-    <string name="resolution_group_9_16">9:16 (세로)</string>
-    <string name="countdown_none">없음</string>
-    <string name="countdown_3s">3초</string>
-    <string name="countdown_5s">5초</string>
-    <string name="countdown_10s">10초</string>
     <string name="watermark_preview_active">라이브 미리보기 활성 — 워터마크를 드래그하여 위치 조정</string>
     <string name="watermark_preview_recording">녹화 중에는 미리보기를 사용할 수 없습니다</string>
     <string name="watermark_preview_need_overlay">라이브 미리보기를 위해 오버레이 권한을 부여하세요</string>
@@ -208,28 +307,17 @@
     <string name="watermark_image_custom">사용자 지정 이미지가 설정되었습니다</string>
     <string name="watermark_image_default">기본값 (앱 아이콘)</string>
     <string name="watermark_reset_icon">기본 아이콘으로 초기화</string>
-    <string name="setting_watermark_size">워터마크 크기</string>
-    <string name="setting_watermark_opacity">워터마크 불투명도</string>
-    <string name="watermark_position_top_left">왼쪽 상단</string>
-    <string name="watermark_position_top_right">오른쪽 상단</string>
-    <string name="watermark_position_bottom_left">왼쪽 하단</string>
-    <string name="watermark_position_bottom_right">오른쪽 하단</string>
-    <string name="watermark_position_center">중앙</string>
-    <string name="shape_square">정사각형</string>
-    <string name="shape_circle">원</string>
-    <string name="ratio_16_9">16:9</string>
-    <string name="ratio_4_3">4:3</string>
-    <string name="setting_save_location_default">기본값 (Movies/CatRec)</string>
-    <string name="setting_save_location_custom">사용자 지정 폴더가 설정되었습니다</string>
-    <string name="setting_auto_delete_title">오래된 녹화 자동 삭제</string>
-    <string name="setting_auto_delete_desc">최근 50개 유지</string>
-    <string name="setting_keep_screen_on_title">화면 켜진 상태 유지</string>
-    <string name="setting_keep_screen_on_desc">녹화 중</string>
-    <string name="setting_usage_analytics">사용 분석</string>
-    <string name="setting_usage_analytics_desc">앱 개선을 위한 충돌 및 사용 통계</string>
-    <string name="setting_personalized_ads">맞춤 광고</string>
-    <string name="setting_personalized_ads_on_desc">AdMob이 관련 광고를 위해 광고 ID를 사용할 수 있습니다</string>
-    <string name="setting_personalized_ads_off_desc">비개인화 광고만</string>
+    <string name="label_dp">%1$ddp</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">kbps</string>
+    <string name="label_hz">헤르츠</string>
+    <string name="perf_auto_low_end">자동 활성화 — 저사양 기기가 감지되었습니다</string>
+    <string name="perf_quality_may_lag">품질 모드 (이 기기에서 렉이 발생할 수 있습니다)</string>
+    <string name="perf_static_glass">정적 글래스 — 블러 비활성화</string>
+    <string name="perf_dynamic_glass">동적 글래스 블러 활성화</string>
+    <string name="setting_performance_mode">성능 모드</string>
+    <string name="performance_warning_title">성능 경고</string>
+    <string name="performance_warning_body">기기의 RAM이 6GB 미만이거나 Android 11 이하를 실행 중입니다. 실시간 유리 블러 효과를 활성화하면 특히 녹화 중에 UI 지연이 발생할 수 있습니다.\n\n그래도 품질 모드를 활성화하시겠습니까?</string>
     <string name="accent_color_title">강조 색상</string>
     <string name="accent_gradient_color_2">그라데이션 색상 2</string>
     <string name="accent_presets">프리셋</string>
@@ -239,20 +327,309 @@
     <string name="accent_gradient_desc">두 가지 색상의 빛나는 테두리</string>
     <string name="accent_color_1">색상 1</string>
     <string name="accent_color_2">색상 2</string>
-    <string name="setting_performance_mode">성능 모드</string>
-    <string name="perf_auto_low_end">자동 활성화 — 저사양 기기가 감지되었습니다</string>
-    <string name="perf_quality_may_lag">품질 모드 (이 기기에서 렉이 발생할 수 있습니다)</string>
-    <string name="perf_static_glass">정적 글래스 — 블러 비활성화</string>
-    <string name="perf_dynamic_glass">동적 글래스 블러 활성화</string>
-    <string name="performance_warning_title">성능 경고</string>
-    <string name="performance_warning_body">기기의 RAM이 6GB 미만이거나 Android 11 이하를 실행 중입니다. 실시간 유리 블러 효과를 활성화하면 특히 녹화 중에 UI 지연이 발생할 수 있습니다.\n\n그래도 품질 모드를 활성화하시겠습니까?</string>
+    <string name="setting_save_location_custom">사용자 지정 폴더가 설정되었습니다</string>
+    <string name="setting_auto_delete_title">오래된 녹화 자동 삭제</string>
+    <string name="setting_auto_delete_desc">최근 50개 유지</string>
+    <string name="setting_keep_screen_on_title">화면 켜진 상태 유지</string>
+    <string name="setting_keep_screen_on_desc">녹화 중</string>
+    <string name="settings_section_privacy">개인 정보</string>
+    <string name="dialog_custom_resolution_title">사용자 지정 해상도</string>
+    <string name="dialog_custom_resolution_hint">해상도를 가로×세로로 입력 (예: 1920×1080)</string>
+    <string name="error_resolution_format">형식은 가로×세로여야 합니다 (예: 1920×1080)</string>
+    <string name="error_resolution_min">최소 해상도는 100×100입니다</string>
+    <string name="error_resolution_max">최대 해상도는 어느 쪽이든 7680입니다</string>
+    <string name="dialog_resolution_title">해상도</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9 (긴 화면 폰)</string>
+    <string name="resolution_group_18_9">18:9 (2:1)</string>
+    <string name="resolution_group_21_9">21:9 (울트라와이드)</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16 (세로)</string>
+    <string name="dialog_theme_title">앱 테마</string>
+    <string name="dialog_language_title">앱 언어</string>
+    <string name="dialog_filename_pattern">파일명 패턴</string>
+    <string name="dialog_countdown_timer">카운트다운 타이머</string>
+    <string name="countdown_none">없음</string>
+    <string name="countdown_3s">3초</string>
+    <string name="countdown_5s">5초</string>
+    <string name="countdown_10s">10초</string>
+    <string name="dialog_video_encoder">비디오 인코더</string>
+    <string name="dialog_audio_encoder">오디오 인코더</string>
+    <string name="dialog_audio_bitrate">오디오 비트레이트</string>
+    <string name="dialog_sample_rate">샘플 레이트</string>
+    <string name="dialog_bitrate_title">비트레이트</string>
+    <string name="dialog_fps_title">프레임 레이트 (FPS)</string>
+    <string name="dialog_screenshot_format">스크린샷 형식</string>
+    <string name="dialog_camera_orientation">카메라 방향</string>
     <string name="premium_feature_title">프리미엄 기능</string>
     <string name="premium_feature_body">%1$s은(는) 프리미엄 기능입니다.</string>
     <string name="premium_feature_watch_ad">짧은 광고를 시청하여 이 세션에서 잠금을 해제하세요.</string>
     <string name="premium_feature_tap_unlock">이 세션에서 활성화하려면 잠금 해제를 탭하세요.</string>
-    <string name="label_dp">%1$ddp</string>
-    <string name="label_percent">%1$d%%</string>
-    <string name="label_kbps">kbps</string>
-    <string name="label_hz">Hz</string>
+    <string name="gate_high_fps">%1$s FPS</string>
+    <string name="camera_drag_hint">카메라 원을 드래그하여 위치 조정</string>
+    <string name="camera_lock_desc_short">실수로 이동하는 것 방지</string>
+    <string name="shape_square">정사각형</string>
+    <string name="shape_circle">원</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">왼쪽 상단</string>
+    <string name="watermark_position_top_right">오른쪽 상단</string>
+    <string name="watermark_position_bottom_left">왼쪽 하단</string>
+    <string name="watermark_position_bottom_right">오른쪽 하단</string>
+    <string name="watermark_position_center">중앙</string>
 
+    <!-- Recording screen -->
+    <string name="label_fps">FPS</string>
+    <string name="label_mbps">Mbps</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">클리퍼 시간</string>
+    <string name="dialog_clipper_duration_title">클리퍼 시간</string>
+    <string name="clipper_duration_1m">1분</string>
+    <string name="clipper_duration_2m">2분</string>
+    <string name="clipper_duration_3m">3분</string>
+    <string name="clipper_duration_4m">4분</string>
+    <string name="clipper_duration_5m">5분</string>
+    <string name="perm_rationale_intro">CatRec은 화면을 녹화하려면 다음 권한이 필요합니다:</string>
+    <string name="perm_dialog_title">필요한 권한</string>
+    <string name="beta_title">앞서 해보기를 진행 중입니다.</string>
+    <string name="beta_line_1">⚠️ 베타 버전입니다.</string>
+    <string name="beta_line_2">버그, 충돌 또는 완료되지 않은 기능이 발생할 수 있습니다. 귀하의 장치와 데이터는 안전합니다. 녹음 내용은 로컬에 저장되며 아무것도 업로드되지 않습니다.</string>
+    <string name="beta_line_3">여러분의 피드백이 이 앱을 직접 형성합니다. 뭔가 고장나거나 기분이 좋지 않으면 신고해 주세요. 짧은 메시지라도 큰 도움이 됩니다.</string>
+    <string name="beta_line_4">CatRec을 일찍 사용해 주셔서 감사합니다. 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">녹음을 삭제하시겠습니까?</string>
+    <string name="delete_recording_message">"%1$s"이(가) 영구적으로 삭제됩니다.</string>
+    <string name="delete_screenshot_title">스크린샷을 삭제하시겠습니까?</string>
+    <string name="delete_screenshot_message">"%1$s"이(가) 영구적으로 삭제됩니다.</string>
+    <string name="multiselect_selected_count">%1$d개 선택됨</string>
+    <string name="multiselect_select_all">모두 선택</string>
+    <string name="multiselect_deselect_all">모두 선택 취소</string>
+    <string name="multiselect_delete_title">%1$d개의 항목을 삭제하시겠습니까?</string>
+    <string name="multiselect_delete_message">해당 파일은 영구적으로 삭제됩니다.</string>
+    <string name="multiselect_share_recordings">녹음 공유</string>
+    <string name="multiselect_share_screenshots">스크린샷 공유</string>
+    <string name="delete_generic_recording">이 녹음은 영구적으로 삭제됩니다.</string>
+    <string name="player_renamed_to">%1$s(으)로 이름이 변경되었습니다.</string>
+    <string name="player_rename_failed">이름 바꾸기 실패: %1$s</string>
+    <string name="player_delete_failed">삭제 실패: %1$s</string>
+    <string name="player_no_app_video">동영상을 열 수 있는 앱을 찾을 수 없습니다.</string>
+    <string name="player_rename_title">이름 바꾸기</string>
+    <string name="player_file_name_label">파일 이름</string>
+    <string name="trim_title">비디오 다듬기</string>
+    <string name="trim_set_to_current">현재로 설정</string>
+    <string name="trim_start_label">시작: %1$s</string>
+    <string name="trim_end_label">끝: %1$s</string>
+    <string name="trim_duration_summary">다듬기 기간: %1$s(%2$s → %3$s)</string>
+    <string name="trim_too_short">트림 범위가 너무 짧음(최소 0.5초)</string>
+    <string name="trim_saved_success">트림이 성공적으로 저장되었습니다</string>
+    <string name="trim_failed_retry">트림에 실패했습니다. 다시 시도해 주세요.</string>
+    <string name="trim_progress">다듬는 중… %1$d%%</string>
+    <string name="trim_save">다듬기 및 저장</string>
+    <string name="content_desc_back">뒤쪽에</string>
+    <string name="content_desc_refresh">새로 고치다</string>
+    <string name="content_desc_options">옵션</string>
+    <string name="content_desc_logo">CatRec 로고</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">비디오 편집</string>
+    <string name="tools_image_editing">이미지 편집</string>
+    <string name="tool_video_trim">비디오 트림</string>
+    <string name="tool_compress">비디오 압축</string>
+    <string name="tool_video_to_gif">비디오를 GIF로</string>
+    <string name="tool_merge_clips">클립 병합</string>
+    <string name="editor_pick_video_title">동영상을 선택하세요</string>
+    <string name="editor_pick_catrec">CatRec 녹음</string>
+    <string name="editor_pick_storage">기기의 동영상</string>
+    <string name="editor_export">내보내다</string>
+    <string name="editor_saving">절약…</string>
+    <string name="editor_saved_ok">영화/CatRec에 저장됨</string>
+    <string name="editor_failed">내보내기를 완료할 수 없습니다. 다른 파일이나 품질을 사용해 보세요.</string>
+    <string name="compress_title">압박 붕대</string>
+    <string name="compress_quality_label">목표 품질</string>
+    <string name="compress_quality_high">높은</string>
+    <string name="compress_quality_medium">중간</string>
+    <string name="compress_quality_low">낮은</string>
+    <string name="compress_resolution_label">타겟 해상도(높이)</string>
+    <string name="compress_original">원본 크기</string>
+    <string name="compress_estimated">예상 크기: ~%1$s</string>
+    <string name="compress_source">출처: %1$dx%2$d</string>
+    <string name="gif_title">비디오를 GIF로</string>
+    <string name="gif_fps">FPS: %1$d</string>
+    <string name="gif_quality_label">GIF 품질</string>
+    <string name="gif_quality_small">더 작은 파일</string>
+    <string name="gif_quality_balanced">균형 잡힌</string>
+    <string name="gif_quality_sharper">사기꾼</string>
+    <string name="gif_convert">GIF 만들기</string>
+    <string name="merge_title">클립 병합</string>
+    <string name="merge_add_catrec">CatRec에서 추가</string>
+    <string name="merge_clear_all">모두 지우기</string>
+    <string name="merge_run">병합 및 저장</string>
+    <string name="merge_need_two">동영상을 2개 이상 추가하세요(순서 유지).</string>
+    <string name="merge_clip_label">클립 %1$d</string>
+    <string name="home_app_name">캣렉</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="home_version">v%1$s</string>
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">CatRec 스크린 레코더</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">버전 %1$s</string>
+    <string name="changelog_version_template">v%1$s</string>
+    <string name="support_section_support_dev">개발자 지원</string>
+    <string name="support_section_legal">합법적인</string>
+    <string name="support_watch_ad_sub_loading">광고 로드 중…</string>
+    <string name="support_watch_ad_sub">무료로 지원하는 빠른 방법</string>
+    <string name="support_toast_youtube">YouTube를 열 수 없습니다.</string>
+    <string name="support_toast_ad_failed">광고를 표시할 수 없습니다. 나중에 다시 시도하세요.</string>
+    <string name="support_toast_thanks_ad">시청해 주셔서 감사합니다! 🐱</string>
+    <string name="support_toast_ad_loading">광고가 로드 중입니다. 잠시 기다려 주십시오…</string>
+    <string name="support_toast_no_ad">현재 사용 가능한 광고가 없습니다. 나중에 다시 시도하세요.</string>
+    <string name="support_toast_browser">브라우저를 열 수 없습니다.</string>
+    <string name="billing_store_not_ready">Play 스토어가 아직 준비되지 않았습니다. 연결을 확인하고 다시 시도하세요.</string>
+    <string name="billing_thanks_support_me">귀하의 지원에 감사드립니다! 🐱</string>
+    <string name="billing_pending">구매가 보류 중입니다. 구매가 완료되면 액세스할 수 있습니다.</string>
+    <string name="dialog_changelog_title">변경 내역</string>
+    <string name="label_beta">베타</string>
+    <string name="support_privacy_policy">개인 정보 보호 정책</string>
+    <string name="support_privacy_policy_desc">CatRec이 데이터를 처리하는 방법</string>
+    <string name="support_terms_of_service">서비스 약관</string>
+    <string name="support_terms_of_service_desc">사용 규칙 및 면책 조항</string>
+    <string name="support_permissions_disclosure">권한 공개</string>
+    <string name="support_permissions_disclosure_desc">각 권한이 필요한 이유</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">알림</string>
+    <string name="perm_rationale_notifications">녹화하는 동안 알림 창에 녹화 제어 및 실시간 상태를 표시하는 데 필요합니다.</string>
+    <string name="perm_name_microphone">마이크로폰</string>
+    <string name="perm_rationale_microphone">화면 녹화와 함께 마이크 오디오를 캡처하는 데 필요합니다.</string>
+    <string name="perm_name_camera">카메라</string>
+    <string name="perm_rationale_camera">화면 녹화 위에 Camera-in-Picture 오버레이를 표시하는 데 필요합니다.</string>
+    <string name="perm_name_overlay">다른 앱 위에 표시</string>
+    <string name="perm_rationale_overlay">녹화 중에 다른 앱 위에 플로팅 컨트롤 버블과 카메라 오버레이를 표시하는 데 필요합니다.</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">화면 녹화</string>
+    <string name="notif_channel_recording_complete">녹음 완료</string>
+    <string name="notif_channel_rolling_buffer">롤링 버퍼</string>
+    <string name="notif_ready_title">CatRec 준비됨</string>
+    <string name="notif_ready_text">녹화를 시작하려면 오버레이 ● 버튼을 탭하세요.</string>
+    <string name="notif_action_revoke">취소</string>
+    <string name="notif_preparing">준비 중…</string>
+    <string name="notif_recording_starting_in">%1$d에 녹화 시작…</string>
+    <string name="notif_recording_paused">녹음이 일시중지되었습니다.</string>
+    <string name="notif_recording_muted">녹음(음소거)…</string>
+    <string name="notif_recording_in_progress">녹음 진행 중…</string>
+    <string name="notif_title_short">캣렉</string>
+    <string name="notif_action_stop">멈추다</string>
+    <string name="notif_action_pause">정지시키다</string>
+    <string name="notif_action_resume">재개하다</string>
+    <string name="notif_action_mute">무음</string>
+    <string name="notif_action_unmute">음소거 해제</string>
+    <string name="notif_action_show_controls">컨트롤 표시</string>
+    <string name="notif_buffer_title">CatRec — 롤링 버퍼</string>
+    <string name="notif_buffer_starting">버퍼 시작 중…</string>
+    <string name="notif_buffer_buffering">지난 %1$d초 버퍼링 중…</string>
+    <string name="notif_buffer_save_clip">클립 저장</string>
+    <string name="notif_post_title">녹음 완료</string>
+    <string name="notif_post_text">녹음을 열려면 탭하세요.</string>
+    <string name="notif_post_open">열려 있는</string>
+    <string name="notif_post_share">공유하다</string>
+    <string name="notif_post_delete">삭제</string>
+    <string name="share_recording_title">녹음 공유</string>
+    <string name="toast_recording_stopped_projection">녹화 중지됨: 캡처된 앱이 닫혔거나 백그라운드로 이동되었습니다.</string>
+    <string name="toast_recording_failed_no_video">녹화 실패: 비디오가 캡처되지 않았습니다.</string>
+    <string name="toast_gif_transcode_failed">GIF를 만들 수 없습니다. MP4 녹음이 보관되었습니다.</string>
+    <string name="toast_gif_saved">Pictures/CatRec/GIF에 저장된 GIF</string>
+    <string name="toast_separate_mic_failed">별도의 오디오 파일을 생성할 수 없습니다. 대신 마이크가 비디오에 녹음됩니다.</string>
+    <string name="toast_internal_audio_silent">내부 오디오는 조용합니다. 녹음 중인 앱이 오디오 캡처를 허용하지 않을 수 있습니다. 대신 마이크 오디오를 녹음해 보세요.</string>
+    <string name="recording_has_separate_audio">별도의 오디오 트랙이 있습니다.</string>
+    <string name="toast_buffer_start_failed">버퍼 시작 실패: %1$s</string>
+    <string name="toast_clip_empty">클립이 비어 있습니다. 버퍼링을 더 오래 유지하세요.</string>
+    <string name="toast_clip_saved">클립이 저장되었습니다!</string>
+    <string name="toast_clip_save_failed">클립 저장 실패: %1$s</string>
+    <string name="notif_overlay_controls_text">플로팅 컨트롤이 활성화되었습니다.</string>
+    <string name="notif_camera_overlay_text">CatRec 카메라 오버레이가 활성화되었습니다. 앱으로 돌아가려면 탭하세요.</string>
+    <string name="tile_record_label">CatRec 레코드</string>
+    <string name="tile_clipper_label">CatRec 클리퍼</string>
+    <string name="notif_channel_overlay">오버레이 컨트롤</string>
+    <string name="notif_channel_overlay_desc">플로팅 오버레이 컨트롤이 활성화된 동안 표시됨</string>
+    <string name="notif_overlay_active_title">CatRec 오버레이 활성화</string>
+    <string name="notif_overlay_start_recording">녹음 시작</string>
+    <string name="notif_overlay_close_overlay">오버레이 닫기</string>
+    <string name="notif_channel_camera_overlay">카메라 오버레이</string>
+    <string name="notif_channel_camera_overlay_desc">카메라 오버레이가 활성화된 동안 표시됩니다.</string>
+    <string name="notif_camera_in_use_title">사용 중인 카메라</string>
+    <string name="notif_channel_app_controls">빠른 제어</string>
+    <string name="notif_channel_app_controls_desc">녹화, 스크린샷, 오버레이 단축키</string>
+    <string name="notif_app_controls_title">캣렉</string>
+    <string name="notif_app_controls_text_idle">유휴 — 아래 작업을 탭하세요.</string>
+    <string name="notif_action_screenshot">스크린샷</string>
+    <string name="notif_action_overlay_hide">오버레이 숨기기</string>
+    <string name="notif_action_overlay_show">오버레이 표시</string>
+    <string name="notif_action_overlay_enable_in_settings">오버레이 꺼짐</string>
+    <string name="notif_action_home">집</string>
+    <string name="notif_action_exit">출구</string>
+    <string name="toast_grant_capture_for_screenshot">화면 캡처를 허용하면 CatRec이 오버레이에서 스크린샷을 찍을 수 있습니다.</string>
+    <string name="tile_subtitle_recording">녹음…</string>
+    <string name="tile_subtitle_buffering">버퍼링 중…</string>
+    <string name="tile_subtitle_ready">준비가 된</string>
+    <string name="tile_subtitle_tap_open">앱을 열려면 탭하세요.</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">화면 녹화 권한이 거부되었습니다</string>
+    <string name="toast_no_email_app">이메일 앱을 찾을 수 없습니다</string>
+    <string name="share_screenshot_chooser_title">스크린샷 공유</string>
+    <string name="recordings_header_format">라이브러리 · %1$d</string>
+    <string name="screenshots_header_format">스크린샷 · %1$d</string>
+    <string name="overlay_clip_button">✂ 클립</string>
+    <string name="overlay_clipper_label">가위</string>
+    <string name="overlay_toast_authorize_first">CatRec을 연 뒤 먼저 «오버레이 녹화 허용»을 누르세요</string>
+    <string name="countdown_subtitle">녹화 시작 중…</string>
+    <string name="toast_recorder_start_failed">녹화를 시작할 수 없습니다: %1$s</string>
+    <string name="format_jpeg">JPEG</string>
+    <string name="format_png">PNG</string>
+    <string name="format_webp">웹P</string>
+    <string name="content_desc_more_options">추가 옵션</string>
+    <string name="content_desc_rewind_10">10초 되감기</string>
+    <string name="content_desc_forward_10">10초 빨리 감기</string>
+    <string name="beta_feedback_email_subject">CatRec 베타 피드백</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>H.264 및 H.265(HEVC) 코덱 지원으로 화면 녹화</item>
+        <item>원활한 세그먼트 스티칭 및 빠른 지속 시간 사전 설정이 포함된 롤링 클리퍼 버퍼(1~5분, 구성 가능)</item>
+        <item>Clipper 실행 중 클립 저장 버튼</item>
+        <item>모든 종횡비에 대한 폭넓은 해상도 선택 및 사용자 정의 입력</item>
+        <item>녹화 중 자동 방향 추적</item>
+        <item>녹화 시작 전 카운트다운 타이머</item>
+        <item>녹화 중 화면 켜짐 유지 옵션</item>
+        <item>오디오: 마이크, 내부 오디오 또는 혼합; 안정적인 내보내기가 가능한 별도의 마이크 트랙(옵션)</item>
+        <item>고급 오디오 설정: 비트 전송률, 샘플 속도, 채널, 인코더; 정확한 스테레오 및 CBR 인코딩</item>
+        <item>품질 사전 설정이 포함된 GIF 녹화 모드</item>
+        <item>플로팅 컨트롤 오버레이: 일시중지, 중지, 음소거, 스크린샷, 클립 액세스</item>
+        <item>오버레이는 언제든지 사용할 수 있습니다. 오버레이에서 녹화 또는 클리핑 시작</item>
+        <item>한 번의 탭으로 오버레이 녹음 승인 — 최소한의 반복되는 권한 메시지</item>
+        <item>부동 오버레이의 브러시 도구</item>
+        <item>실시간 얼굴 캠 미리보기가 포함된 카메라 오버레이</item>
+        <item>워터마크 오버레이: 사용자 정의 이미지, 모양, 불투명도, 위치, 모서리에 맞추기; 기본 일치 앱 아이콘</item>
+        <item>형식 및 품질 설정이 포함된 스크린샷 오버레이에서 캡처</item>
+        <item>스크린샷 후 공유/수정 흐름(선택사항)</item>
+        <item>썸네일이 있는 녹음 라이브러리; 인앱 트리머; 클립 병합; 비디오를 GIF로; 이미지 편집기 및 자르기 도구</item>
+        <item>인앱 비디오 플레이어</item>
+        <item>강조 색상: 사전 설정, 그라디언트 및 16진수; UI 전체의 동적 테마</item>
+        <item>밝은 테마 대비가 향상된 밝은 테마와 어두운 테마</item>
+        <item>저사양 장치를 위한 성능 모드</item>
+        <item>정리된 설정: 컨트롤, 녹음 품질, 오버레이, 테마, 언어, 저장 공간 등</item>
+        <item>안정적인 백그라운드 녹화를 위해 무제한 배터리 사용을 허용하는 설정 바로가기</item>
+        <item>일관된 번역이 가능한 16개 이상의 언어</item>
+        <item>선명한 상태 표시기가 있는 RECORD/CLIPPER 모드 선택기</item>
+        <item>빠른 설정 타일: CatRec Record 및 CatRec Clipper</item>
+        <item>작업을 통한 녹음 알림 준비된 캡처 세션 지원</item>
+        <item>안정성을 향상하기 위한 선택적 옵트인 분석</item>
+        <item>개인정보 보호 제어: 분석 및 광고 개인화 전환</item>
+        <item>지원 화면: 변경 로그, 법적 링크 및 선택적 보상 지원</item>
+    </string-array>
 </resources>

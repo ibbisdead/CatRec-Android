@@ -32,7 +32,10 @@ import kotlin.coroutines.resume
 object EditorVideoTransform {
     private const val TAG = "EditorVideoTransform"
 
-    fun getVideoDisplaySize(context: Context, uri: Uri): Pair<Int, Int> {
+    fun getVideoDisplaySize(
+        context: Context,
+        uri: Uri,
+    ): Pair<Int, Int> {
         val r = MediaMetadataRetriever()
         return try {
             r.setDataSource(context, uri)
@@ -40,7 +43,9 @@ object EditorVideoTransform {
             var h = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toIntOrNull() ?: 0
             val rot = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)?.toIntOrNull() ?: 0
             if (rot == 90 || rot == 270) {
-                val t = w; w = h; h = t
+                val t = w
+                w = h
+                h = t
             }
             Pair(w.coerceAtLeast(1), h.coerceAtLeast(1))
         } finally {
@@ -51,33 +56,46 @@ object EditorVideoTransform {
         }
     }
 
-    fun estimateInputVideoBitrateBps(sizeBytes: Long, durationMs: Long): Long {
+    fun estimateInputVideoBitrateBps(
+        sizeBytes: Long,
+        durationMs: Long,
+    ): Long {
         if (durationMs <= 0) return 2_500_000L
         val total = sizeBytes * 8L * 1000L / durationMs
         val audioGuess = 128_000L
         return (total - audioGuess).coerceIn(200_000L, 80_000_000L)
     }
 
-    fun bitrateCapForHeight(outHeight: Int): Int = when {
-        outHeight >= 1400 -> 10_000_000
-        outHeight >= 1000 -> 6_000_000
-        outHeight >= 700 -> 3_500_000
-        outHeight >= 520 -> 2_000_000
-        else -> 1_200_000
-    }
+    fun bitrateCapForHeight(outHeight: Int): Int =
+        when {
+            outHeight >= 1400 -> 10_000_000
+            outHeight >= 1000 -> 6_000_000
+            outHeight >= 700 -> 3_500_000
+            outHeight >= 520 -> 2_000_000
+            else -> 1_200_000
+        }
 
     /** qualityTier: 0 = low, 1 = medium, 2 = high */
-    fun targetBitrateForQuality(baseBps: Long, qualityTier: Int, outHeight: Int): Int {
+    fun targetBitrateForQuality(
+        baseBps: Long,
+        qualityTier: Int,
+        outHeight: Int,
+    ): Int {
         val cap = bitrateCapForHeight(outHeight)
-        val factor = when (qualityTier) {
-            2 -> 0.88
-            1 -> 0.52
-            else -> 0.30
-        }
+        val factor =
+            when (qualityTier) {
+                2 -> 0.88
+                1 -> 0.52
+                else -> 0.30
+            }
         return (baseBps * factor).toInt().coerceIn(400_000, cap)
     }
 
-    fun estimateOutputBytes(videoBps: Int, durationMs: Long, audioBps: Int = 128_000): Long {
+    fun estimateOutputBytes(
+        videoBps: Int,
+        durationMs: Long,
+        audioBps: Int = 128_000,
+    ): Long {
         val sec = durationMs.coerceAtLeast(1) / 1000.0
         return ((videoBps + audioBps) * sec / 8).toLong()
     }
@@ -90,29 +108,35 @@ object EditorVideoTransform {
         videoBitrate: Int,
     ): Uri? {
         val cacheOut = File(context.cacheDir, "compress_${System.currentTimeMillis()}.mp4")
-        val videoEffects = if (targetHeight != null && targetHeight > 0) {
-            listOf(Presentation.createForHeight(targetHeight))
-        } else {
-            emptyList()
-        }
-        val edited = EditedMediaItem.Builder(MediaItem.fromUri(inputUri))
-            .setEffects(Effects(listOf(), videoEffects))
-            .build()
+        val videoEffects =
+            if (targetHeight != null && targetHeight > 0) {
+                listOf(Presentation.createForHeight(targetHeight))
+            } else {
+                emptyList()
+            }
+        val edited =
+            EditedMediaItem
+                .Builder(MediaItem.fromUri(inputUri))
+                .setEffects(Effects(listOf(), videoEffects))
+                .build()
 
-        val encoderFactory = DefaultEncoderFactory.Builder(context)
-            .setRequestedVideoEncoderSettings(
-                VideoEncoderSettings.Builder()
-                    .setBitrate(videoBitrate)
-                    .build(),
-            )
-            .build()
+        val encoderFactory =
+            DefaultEncoderFactory
+                .Builder(context)
+                .setRequestedVideoEncoderSettings(
+                    VideoEncoderSettings
+                        .Builder()
+                        .setBitrate(videoBitrate)
+                        .build(),
+                ).build()
 
         // Media3 Transformer requires start() on the main application thread.
-        val done = withContext(Dispatchers.Main.immediate) {
-            runTransformer(context, encoderFactory) { transformer ->
-                transformer.start(edited, cacheOut.absolutePath)
+        val done =
+            withContext(Dispatchers.Main.immediate) {
+                runTransformer(context, encoderFactory) { transformer ->
+                    transformer.start(edited, cacheOut.absolutePath)
+                }
             }
-        }
 
         return withContext(Dispatchers.IO) {
             if (!done || !cacheOut.exists() || cacheOut.length() == 0L) {
@@ -130,87 +154,102 @@ object EditorVideoTransform {
         context: Context,
         uris: List<Uri>,
         outputDisplayName: String,
-    ): Uri? = withContext(Dispatchers.IO) {
-        if (uris.size < 2) return@withContext null
-        val cacheInputs = uris.mapIndexed { i, u ->
-            val f = File(context.cacheDir, "merge_in_${i}_${System.nanoTime()}.mp4")
-            if (!copyUriToFile(context, u, f)) return@withContext null
-            f
-        }
-        val outFile = File(context.cacheDir, "merge_out_${System.currentTimeMillis()}.mp4")
-        val merged = try {
-            ClipMerger.merge(cacheInputs, outFile)
-        } finally {
-            cacheInputs.forEach { runCatching { it.delete() } }
-        }
-        if (merged && outFile.exists() && outFile.length() > 0L) {
-            val uri = insertVideoToCatRecMovies(context, outputDisplayName, outFile)
-            outFile.delete()
-            return@withContext uri
-        }
-        outFile.delete()
-
-        val editedItems = uris.map { EditedMediaItem.Builder(MediaItem.fromUri(it)).build() }
-        val sequence = EditedMediaItemSequence.Builder(editedItems).build()
-        val composition: Composition = Composition.Builder(sequence).build()
-        val cacheOut2 = File(context.cacheDir, "merge_tc_${System.currentTimeMillis()}.mp4")
-        val ok = withContext(Dispatchers.Main.immediate) {
-            runTransformer(context, encoderFactory = null) { transformer ->
-                transformer.start(composition, cacheOut2.absolutePath)
+    ): Uri? =
+        withContext(Dispatchers.IO) {
+            if (uris.size < 2) return@withContext null
+            val cacheInputs =
+                uris.mapIndexed { i, u ->
+                    val f = File(context.cacheDir, "merge_in_${i}_${System.nanoTime()}.mp4")
+                    if (!copyUriToFile(context, u, f)) return@withContext null
+                    f
+                }
+            val outFile = File(context.cacheDir, "merge_out_${System.currentTimeMillis()}.mp4")
+            val merged =
+                try {
+                    ClipMerger.merge(cacheInputs, outFile)
+                } finally {
+                    cacheInputs.forEach { runCatching { it.delete() } }
+                }
+            if (merged && outFile.exists() && outFile.length() > 0L) {
+                val uri = insertVideoToCatRecMovies(context, outputDisplayName, outFile)
+                outFile.delete()
+                return@withContext uri
             }
+            outFile.delete()
+
+            val editedItems = uris.map { EditedMediaItem.Builder(MediaItem.fromUri(it)).build() }
+            val sequence = EditedMediaItemSequence.Builder(editedItems).build()
+            val composition: Composition = Composition.Builder(sequence).build()
+            val cacheOut2 = File(context.cacheDir, "merge_tc_${System.currentTimeMillis()}.mp4")
+            val ok =
+                withContext(Dispatchers.Main.immediate) {
+                    runTransformer(context, encoderFactory = null) { transformer ->
+                        transformer.start(composition, cacheOut2.absolutePath)
+                    }
+                }
+            if (!ok || !cacheOut2.exists() || cacheOut2.length() == 0L) {
+                cacheOut2.delete()
+                return@withContext null
+            }
+            insertVideoToCatRecMovies(context, outputDisplayName, cacheOut2)?.also { cacheOut2.delete() }
         }
-        if (!ok || !cacheOut2.exists() || cacheOut2.length() == 0L) {
-            cacheOut2.delete()
-            return@withContext null
-        }
-        insertVideoToCatRecMovies(context, outputDisplayName, cacheOut2)?.also { cacheOut2.delete() }
-    }
 
     private suspend fun runTransformer(
         context: Context,
         encoderFactory: DefaultEncoderFactory?,
         startBlock: (Transformer) -> Unit,
-    ): Boolean = suspendCancellableCoroutine { cont ->
-        val finished = AtomicBoolean(false)
-        fun finish(ok: Boolean) {
-            if (finished.compareAndSet(false, true)) {
-                cont.resume(ok)
+    ): Boolean =
+        suspendCancellableCoroutine { cont ->
+            val finished = AtomicBoolean(false)
+
+            fun finish(ok: Boolean) {
+                if (finished.compareAndSet(false, true)) {
+                    cont.resume(ok)
+                }
+            }
+            val builder =
+                Transformer
+                    .Builder(context)
+                    .setVideoMimeType(MimeTypes.VIDEO_H264)
+                    .setAudioMimeType(MimeTypes.AUDIO_AAC)
+            if (encoderFactory != null) {
+                builder.setEncoderFactory(encoderFactory)
+            }
+            val transformer =
+                builder
+                    .addListener(
+                        object : Transformer.Listener {
+                            override fun onCompleted(
+                                composition: Composition,
+                                exportResult: ExportResult,
+                            ) {
+                                finish(true)
+                            }
+
+                            override fun onError(
+                                composition: Composition,
+                                exportResult: ExportResult,
+                                exportException: ExportException,
+                            ) {
+                                Log.e(TAG, "transformer error", exportException)
+                                finish(false)
+                            }
+                        },
+                    ).build()
+            cont.invokeOnCancellation { runCatching { transformer.cancel() } }
+            try {
+                startBlock(transformer)
+            } catch (e: Exception) {
+                Log.e(TAG, "start failed", e)
+                finish(false)
             }
         }
-        val builder = Transformer.Builder(context)
-            .setVideoMimeType(MimeTypes.VIDEO_H264)
-            .setAudioMimeType(MimeTypes.AUDIO_AAC)
-        if (encoderFactory != null) {
-            builder.setEncoderFactory(encoderFactory)
-        }
-        val transformer = builder
-            .addListener(
-                object : Transformer.Listener {
-                    override fun onCompleted(composition: Composition, exportResult: ExportResult) {
-                        finish(true)
-                    }
 
-                    override fun onError(
-                        composition: Composition,
-                        exportResult: ExportResult,
-                        exportException: ExportException,
-                    ) {
-                        Log.e(TAG, "transformer error", exportException)
-                        finish(false)
-                    }
-                },
-            )
-            .build()
-        cont.invokeOnCancellation { runCatching { transformer.cancel() } }
-        try {
-            startBlock(transformer)
-        } catch (e: Exception) {
-            Log.e(TAG, "start failed", e)
-            finish(false)
-        }
-    }
-
-    private fun copyUriToFile(context: Context, uri: Uri, out: File): Boolean {
+    private fun copyUriToFile(
+        context: Context,
+        uri: Uri,
+        out: File,
+    ): Boolean {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inp ->
                 FileOutputStream(out).use { inp.copyTo(it) }
@@ -222,18 +261,23 @@ object EditorVideoTransform {
         }
     }
 
-    private fun insertVideoToCatRecMovies(context: Context, displayName: String, file: File): Uri? {
-        val cv = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(
-                    MediaStore.Video.Media.RELATIVE_PATH,
-                    Environment.DIRECTORY_MOVIES + File.separator + "CatRec",
-                )
-                put(MediaStore.Video.Media.IS_PENDING, 1)
+    private fun insertVideoToCatRecMovies(
+        context: Context,
+        displayName: String,
+        file: File,
+    ): Uri? {
+        val cv =
+            ContentValues().apply {
+                put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
+                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(
+                        MediaStore.Video.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_MOVIES + File.separator + "CatRec",
+                    )
+                    put(MediaStore.Video.Media.IS_PENDING, 1)
+                }
             }
-        }
         val resolver = context.contentResolver
         val uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, cv) ?: return null
         return try {

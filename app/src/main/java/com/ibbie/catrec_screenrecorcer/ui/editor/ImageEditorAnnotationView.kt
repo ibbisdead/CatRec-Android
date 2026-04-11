@@ -5,12 +5,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
-import android.graphics.DashPathEffect
 import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
@@ -23,19 +23,42 @@ import kotlin.math.sin
 enum class EditorDrawTool { PEN, ERASER, SQUARE, CIRCLE, ARROW, BLUR }
 
 private sealed class EditorBrushAction {
-    data class Stroke(val path: Path, val paint: Paint) : EditorBrushAction()
-    data class RectOutline(val rect: RectF, val paint: Paint) : EditorBrushAction()
-    data class OvalOutline(val rect: RectF, val paint: Paint) : EditorBrushAction()
-    data class ArrowLine(val x1: Float, val y1: Float, val x2: Float, val y2: Float, val paint: Paint) : EditorBrushAction()
-    data class BlurTiles(val rect: RectF, val cell: Int) : EditorBrushAction()
+    data class Stroke(
+        val path: Path,
+        val paint: Paint,
+    ) : EditorBrushAction()
+
+    data class RectOutline(
+        val rect: RectF,
+        val paint: Paint,
+    ) : EditorBrushAction()
+
+    data class OvalOutline(
+        val rect: RectF,
+        val paint: Paint,
+    ) : EditorBrushAction()
+
+    data class ArrowLine(
+        val x1: Float,
+        val y1: Float,
+        val x2: Float,
+        val y2: Float,
+        val paint: Paint,
+    ) : EditorBrushAction()
+
+    data class BlurTiles(
+        val rect: RectF,
+        val cell: Int,
+    ) : EditorBrushAction()
 }
 
 /**
  * Brush / shapes on top of a photo in **bitmap pixel space** (same behavior as overlay brush, mapped from view touches).
  */
 @SuppressLint("ViewConstructor")
-class ImageEditorAnnotationView(context: Context) : View(context) {
-
+class ImageEditorAnnotationView(
+    context: Context,
+) : View(context) {
     private var imageBitmap: Bitmap? = null
     private var annotationBitmap: Bitmap? = null
     private var annotationCanvas: Canvas? = null
@@ -52,22 +75,25 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
 
     private val currentPath = Path()
     private var strokeHadSegment = false
-    private val penPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
-    }
-    private val eraserPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
-        xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-    }
-    private val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
-    }
+    private val penPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+        }
+    private val eraserPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+            xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        }
+    private val shapePaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeJoin = Paint.Join.ROUND
+            strokeCap = Paint.Cap.ROUND
+        }
 
     private var shapeStartX = 0f
     private var shapeStartY = 0f
@@ -158,7 +184,11 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         }
     }
 
-    private fun drawBlurCheckerboard(c: Canvas, rect: RectF, cell: Int) {
+    private fun drawBlurCheckerboard(
+        c: Canvas,
+        rect: RectF,
+        cell: Int,
+    ) {
         var y = rect.top
         var row = 0
         while (y < rect.bottom) {
@@ -167,7 +197,11 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
             val y2 = min(y + cell, rect.bottom)
             while (x < rect.right) {
                 val x2 = min(x + cell, rect.right)
-                val p = Paint().apply { style = Paint.Style.FILL; isAntiAlias = false }
+                val p =
+                    Paint().apply {
+                        style = Paint.Style.FILL
+                        isAntiAlias = false
+                    }
                 p.color = if ((row + col) % 2 == 0) Color.BLACK else Color.WHITE
                 c.drawRect(x, y, x2, y2, p)
                 x += cell
@@ -178,7 +212,14 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         }
     }
 
-    private fun drawArrowOnCanvas(c: Canvas, x1: Float, y1: Float, x2: Float, y2: Float, p: Paint) {
+    private fun drawArrowOnCanvas(
+        c: Canvas,
+        x1: Float,
+        y1: Float,
+        x2: Float,
+        y2: Float,
+        p: Paint,
+    ) {
         c.drawLine(x1, y1, x2, y2, p)
         val ang = atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())
         val head = (strokeWidthImagePx * 3f).coerceIn(12f, 80f)
@@ -189,7 +230,10 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         c.drawLine(x2, y2, (x2 + head * cos(a2)).toFloat(), (y2 + head * sin(a2)).toFloat(), p)
     }
 
-    private fun updateDestRect(w: Int, h: Int) {
+    private fun updateDestRect(
+        w: Int,
+        h: Int,
+    ) {
         val ib = imageBitmap ?: return
         val iw = ib.width.toFloat()
         val ih = ib.height.toFloat()
@@ -206,12 +250,20 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         syncStrokeWidths()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+    override fun onSizeChanged(
+        w: Int,
+        h: Int,
+        oldw: Int,
+        oldh: Int,
+    ) {
         super.onSizeChanged(w, h, oldw, oldh)
         updateDestRect(w, h)
     }
 
-    private fun viewToImage(vx: Float, vy: Float): Pair<Float, Float> {
+    private fun viewToImage(
+        vx: Float,
+        vy: Float,
+    ): Pair<Float, Float> {
         val ib = imageBitmap ?: return vx to vy
         val iw = ib.width.toFloat()
         val ih = ib.height.toFloat()
@@ -236,12 +288,13 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
                 canvas.drawPath(currentPath, penPaint)
             }
             EditorDrawTool.ERASER -> {
-                val preview = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    style = Paint.Style.STROKE
-                    strokeWidth = penPaint.strokeWidth
-                    color = Color.argb(140, 255, 100, 100)
-                    pathEffect = DashPathEffect(floatArrayOf(14f, 10f), 0f)
-                }
+                val preview =
+                    Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        style = Paint.Style.STROKE
+                        strokeWidth = penPaint.strokeWidth
+                        color = Color.argb(140, 255, 100, 100)
+                        pathEffect = DashPathEffect(floatArrayOf(14f, 10f), 0f)
+                    }
                 canvas.drawPath(currentPath, preview)
             }
             EditorDrawTool.SQUARE -> canvas.drawRect(previewRect, shapePaint)
@@ -267,7 +320,12 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         return true
     }
 
-    private fun handleStroke(event: MotionEvent, bc: Canvas, x: Float, y: Float) {
+    private fun handleStroke(
+        event: MotionEvent,
+        bc: Canvas,
+        x: Float,
+        y: Float,
+    ) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 currentPath.reset()
@@ -288,17 +346,18 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
                     return
                 }
                 val committed = Path(currentPath)
-                val p = if (currentTool == EditorDrawTool.ERASER) {
-                    Paint(eraserPaint)
-                } else {
-                    Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE
-                        strokeWidth = strokeWidthImagePx
-                        color = strokeColor
-                        strokeJoin = Paint.Join.ROUND
-                        strokeCap = Paint.Cap.ROUND
+                val p =
+                    if (currentTool == EditorDrawTool.ERASER) {
+                        Paint(eraserPaint)
+                    } else {
+                        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                            style = Paint.Style.STROKE
+                            strokeWidth = strokeWidthImagePx
+                            color = strokeColor
+                            strokeJoin = Paint.Join.ROUND
+                            strokeCap = Paint.Cap.ROUND
+                        }
                     }
-                }
                 actions.add(EditorBrushAction.Stroke(committed, p))
                 bc.drawPath(committed, p)
                 currentPath.reset()
@@ -307,7 +366,12 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         }
     }
 
-    private fun handleRectLike(event: MotionEvent, bc: Canvas, x: Float, y: Float) {
+    private fun handleRectLike(
+        event: MotionEvent,
+        bc: Canvas,
+        x: Float,
+        y: Float,
+    ) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 shapeStartX = x
@@ -317,15 +381,19 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
             }
             MotionEvent.ACTION_MOVE -> {
                 previewRect.set(
-                    min(shapeStartX, x), min(shapeStartY, y),
-                    max(shapeStartX, x), max(shapeStartY, y),
+                    min(shapeStartX, x),
+                    min(shapeStartY, y),
+                    max(shapeStartX, x),
+                    max(shapeStartY, y),
                 )
                 invalidate()
             }
             MotionEvent.ACTION_UP -> {
                 previewRect.set(
-                    min(shapeStartX, x), min(shapeStartY, y),
-                    max(shapeStartX, x), max(shapeStartY, y),
+                    min(shapeStartX, x),
+                    min(shapeStartY, y),
+                    max(shapeStartX, x),
+                    max(shapeStartY, y),
                 )
                 if (previewRect.width() < 4f && previewRect.height() < 4f) {
                     invalidate()
@@ -333,12 +401,20 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
                 }
                 when (currentTool) {
                     EditorDrawTool.SQUARE -> {
-                        val paint = Paint(shapePaint).apply { color = strokeColor; style = Paint.Style.STROKE }
+                        val paint =
+                            Paint(shapePaint).apply {
+                                color = strokeColor
+                                style = Paint.Style.STROKE
+                            }
                         actions.add(EditorBrushAction.RectOutline(RectF(previewRect), Paint(paint)))
                         bc.drawRect(previewRect, paint)
                     }
                     EditorDrawTool.CIRCLE -> {
-                        val paint = Paint(shapePaint).apply { color = strokeColor; style = Paint.Style.STROKE }
+                        val paint =
+                            Paint(shapePaint).apply {
+                                color = strokeColor
+                                style = Paint.Style.STROKE
+                            }
                         actions.add(EditorBrushAction.OvalOutline(RectF(previewRect), Paint(paint)))
                         bc.drawOval(previewRect, paint)
                     }
@@ -355,7 +431,12 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
         }
     }
 
-    private fun handleArrow(event: MotionEvent, bc: Canvas, x: Float, y: Float) {
+    private fun handleArrow(
+        event: MotionEvent,
+        bc: Canvas,
+        x: Float,
+        y: Float,
+    ) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 shapeStartX = x
@@ -372,7 +453,11 @@ class ImageEditorAnnotationView(context: Context) : View(context) {
             MotionEvent.ACTION_UP -> {
                 shapeEndX = x
                 shapeEndY = y
-                val paint = Paint(shapePaint).apply { color = strokeColor; style = Paint.Style.STROKE }
+                val paint =
+                    Paint(shapePaint).apply {
+                        color = strokeColor
+                        style = Paint.Style.STROKE
+                    }
                 actions.add(
                     EditorBrushAction.ArrowLine(shapeStartX, shapeStartY, shapeEndX, shapeEndY, Paint(paint)),
                 )

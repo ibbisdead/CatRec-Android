@@ -13,13 +13,14 @@ object StopBehaviorKeys {
     val ALL = setOf(NOTIFICATION, SHAKE, SCREEN_OFF, PAUSE_ON_SCREEN_OFF)
 
     /** Migrates legacy English labels saved in older app versions. */
-    fun migrateFromLegacy(value: String): String = when (value) {
-        "Notification" -> NOTIFICATION
-        "Shake Device" -> SHAKE
-        "Screen Off" -> SCREEN_OFF
-        "Pause on Screen Off" -> PAUSE_ON_SCREEN_OFF
-        else -> value
-    }
+    fun migrateFromLegacy(value: String): String =
+        when (value) {
+            "Notification" -> NOTIFICATION
+            "Shake Device" -> SHAKE
+            "Screen Off" -> SCREEN_OFF
+            "Pause on Screen Off" -> PAUSE_ON_SCREEN_OFF
+            else -> value
+        }
 
     fun migrateSet(raw: Set<String>?): Set<String> {
         val s = raw ?: emptySet()

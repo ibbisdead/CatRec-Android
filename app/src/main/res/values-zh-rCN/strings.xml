@@ -1,35 +1,101 @@
 <resources>
+    <!-- App -->
     <string name="app_name">CatRec - 屏幕录制</string>
-    <string name="tab_recording">录制</string>
+
+    <string name="brand_catrect">CatRect</string>
+    <string name="faq_content_description">帮助和支持</string>
+    <string name="capture_mode_recording">记录</string>
+    <string name="capture_mode_clipper">快艇</string>
+    <string name="capture_mode_gif">GIF录制</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">常问问题</string>
+    <string name="faq_intro">按类别查找答案。点击问题即可展开。如果您仍需要帮助，请使用下面的“联系我们”。</string>
+    <string name="faq_contact_us">联系我们</string>
+    <string name="feedback_title">发送反馈</string>
+    <string name="feedback_issue_section_title">出了什么问题？</string>
+    <string name="feedback_description_title">细节</string>
+    <string name="feedback_description_hint">请描述发生了什么、何时开始以及您已经尝试过的操作（例如降低分辨率、重新启动手机）。更多细节可以帮助我们更快地解决问题。</string>
+    <string name="feedback_screenshots_title">截图</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">添加最多 5 个图像（错误消息、设置屏幕、电池页面等）。</string>
+    <string name="feedback_add_screenshots">添加图片</string>
+    <string name="feedback_send">发送</string>
+    <string name="feedback_send_note">打开您的电子邮件应用程序，其中包含发送给 %1$s 的消息 - 点击“发送”即可发送。</string>
+    <string name="feedback_send_chooser_title">发送电子邮件</string>
+    <string name="feedback_no_email_app">找不到电子邮件应用程序。安装 Gmail 或 Outlook，或从下一个屏幕（如果显示）复制详细信息。</string>
+    <string name="feedback_select_issue">请选择问题类型。</string>
+    <string name="feedback_description_too_short">请添加更多细节（至少一句话），以便我们提供帮助。</string>
+    <string name="feedback_issue_recording_stopped">录音随机停止</string>
+    <string name="feedback_issue_crash">应用程序崩溃</string>
+    <string name="feedback_issue_no_sound">没有声音/音频问题</string>
+    <string name="feedback_issue_video_black">黑屏/视频冻结</string>
+    <string name="feedback_issue_cant_start">无法开始录音</string>
+    <string name="feedback_issue_overlay">浮动控件/覆盖</string>
+    <string name="feedback_issue_gif_export">GIF 或文件导出</string>
+    <string name="feedback_issue_battery_oem">电池/背景（小米等）</string>
+    <string name="feedback_issue_storage">存储/找不到文件</string>
+    <string name="feedback_issue_quality">质量/滞后/卡顿</string>
+    <string name="feedback_issue_other">其他</string>
+
+    <!-- Bottom Nav Tabs -->
     <string name="tab_screenshots">截图</string>
     <string name="tab_recordings">录像</string>
     <string name="tab_settings">设置</string>
     <string name="tab_support">支持</string>
     <string name="tab_tools">工具</string>
-    <string name="action_ok">确定</string>
+    <string name="tab_editor">编辑</string>
+    <string name="fab_start_recording">记录</string>
+    <string name="storage_indicator_format">已使用 %1$s · 免费 %2$s</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">录音质量</string>
+    <string name="settings_open_audio_menu">音频设置</string>
+    <string name="settings_open_audio_menu_sub">麦克风、内部音频、比特率、频道……</string>
+    <string name="settings_open_video_menu">视频和 GIF 设置</string>
+    <string name="settings_open_video_menu_sub">GIF 预设、分辨率、FPS、比特率、编码器……</string>
+
+    <string name="support_section_help">帮助</string>
+    <string name="support_send_feedback">发送反馈</string>
+    <string name="support_send_feedback_desc">与常见问题解答中的联系我们相同 - 报告错误或建议</string>
+
+    <!-- Common Actions -->
     <string name="action_cancel">取消</string>
     <string name="action_close">关闭</string>
     <string name="action_save">保存</string>
     <string name="action_delete">删除</string>
     <string name="action_share">分享</string>
     <string name="action_open">打开</string>
-    <string name="action_confirm">确认</string>
+    <string name="consent_analytics_title">使用情况分析</string>
+    <string name="consent_analytics_message">通过允许可选的使用和崩溃分析来帮助我们改进 CatRec。个性化广告在“设置”中单独控制（默认情况下处于打开状态）。您可以随时在“设置”中更改此设置。</string>
+    <string name="setting_usage_analytics">使用情况分析</string>
+    <string name="setting_usage_analytics_desc">崩溃和使用统计，用于改善应用</string>
+    <string name="setting_personalized_ads">个性化广告</string>
+    <string name="setting_personalized_ads_on_desc">AdMob 可使用您的广告 ID 投放相关广告</string>
+    <string name="setting_personalized_ads_off_desc">仅显示非个性化广告</string>
+    <string name="consent_accept">允许</string>
+    <string name="consent_decline">衰退</string>
     <string name="action_apply">应用</string>
-    <string name="action_reset">重置</string>
-    <string name="action_start">开始</string>
-    <string name="action_stop">停止</string>
     <string name="action_pause">暂停</string>
     <string name="action_resume">继续</string>
+
+    <!-- Recording Screen -->
     <string name="recording_start">开始录制</string>
-    <string name="recording_stop">停止录制</string>
-    <string name="recording_pause">暂停</string>
-    <string name="recording_resume">继续</string>
-    <string name="recording_countdown">即将开始…</string>
-    <string name="recording_in_progress">录制中</string>
-    <string name="recording_paused">录制已暂停</string>
+
+    <!-- Settings Screen - Section Headers -->
     <string name="settings_title">设置</string>
     <string name="settings_section_controls">控制</string>
+    <string name="setting_allow_background_title">不受限制的电池使用</string>
+    <string name="setting_allow_background_desc">降低离开应用后录制、已准备的捕获会话或悬浮层被系统暂停的几率。将打开系统电池设置。</string>
+    <string name="toast_battery_settings_failed">无法打开电池设置。请在系统设置中尝试 电池 → CatRec。</string>
     <string name="settings_section_video">视频</string>
+    <string name="settings_section_gif_recorder">GIF 录音机</string>
+    <string name="settings_gif_recorder_desc">GIF 模式先录制视频，然后再进行转换。质量和长度遵循以下预设；当您切换回“录制”时，视频滑块会保留下来。</string>
+    <string name="setting_gif_preset">GIF 质量预设</string>
+    <string name="video_locked_by_gif_preset">选择 GIF 模式时，视频选项由 GIF 预设控制。</string>
+    <string name="gif_preset_small">小（更快，文件更小）</string>
+    <string name="gif_preset_medium">中等的</string>
+    <string name="gif_preset_hd">高清（较大文件）</string>
     <string name="settings_section_audio">音频</string>
     <string name="settings_section_overlay">叠加层</string>
     <string name="settings_section_screenshots">截图</string>
@@ -37,11 +103,12 @@
     <string name="settings_section_language">语言</string>
     <string name="settings_section_storage">存储</string>
     <string name="settings_section_general">通用</string>
+
+    <!-- Video Settings -->
     <string name="setting_resolution">分辨率</string>
     <string name="setting_resolution_native">原生</string>
     <string name="setting_resolution_custom">自定义分辨率…</string>
     <string name="setting_resolution_custom_hint">例如：1920x1080</string>
-    <string name="setting_resolution_custom_error">请输入有效分辨率（例如：1920x1080）</string>
     <string name="setting_fps">帧率（FPS）</string>
     <string name="setting_bitrate">视频码率</string>
     <string name="setting_video_encoder">视频编码器</string>
@@ -49,6 +116,8 @@
     <string name="setting_orientation_auto">自动</string>
     <string name="setting_orientation_portrait">竖屏</string>
     <string name="setting_orientation_landscape">横屏</string>
+
+    <!-- Audio Settings -->
     <string name="setting_microphone">麦克风</string>
     <string name="setting_internal_audio">内部音频</string>
     <string name="setting_audio_bitrate">音频码率</string>
@@ -59,14 +128,53 @@
     <string name="setting_audio_encoder">音频编码器</string>
     <string name="setting_separate_mic">独立麦克风轨道</string>
     <string name="setting_separate_mic_desc">将麦克风保存为独立音频文件</string>
+
+    <!-- Overlay Settings -->
     <string name="setting_floating_controls">悬浮控制</string>
-    <string name="setting_show_touches">显示触摸</string>
+    <string name="setting_brush_overlay">刷子</string>
+    <string name="settings_brush_overlay_desc">在浮动覆盖层上显示画笔工具，以便在屏幕上绘图</string>
+    <string name="setting_hide_floating_while_recording">录制时隐藏浮动图标</string>
+    <string name="settings_hide_floating_while_recording_desc">录制过程中隐藏浮动控件气泡</string>
+    <string name="setting_post_screenshot_options">屏幕截图后选项</string>
+    <string name="settings_post_screenshot_options_desc">屏幕截图后，显示用于共享或编辑的选项</string>
+    <string name="setting_record_single_app">录制单个应用程序</string>
+    <string name="settings_record_single_app_desc">在 Android 14 及更高版本上，当您授予屏幕截图时，选择一个应用窗口或全屏</string>
+    <string name="screenshot_post_edit">编辑</string>
+    <string name="screenshot_post_action_failed">无法打开共享</string>
+    <string name="screenshot_post_tap_outside">点击外部即可关闭</string>
+    <string name="image_editor_title">编辑图像</string>
+    <string name="image_editor_panel_rotate">旋转</string>
+    <string name="image_editor_panel_crop">庄稼</string>
+    <string name="image_editor_panel_draw">画</string>
+    <string name="image_editor_rotate_ccw">向左旋转</string>
+    <string name="image_editor_rotate_cw">向右旋转</string>
+    <string name="image_editor_saved">图像保存到图片/CatRec/屏幕截图</string>
+    <string name="image_editor_save_failed">无法保存图像</string>
+    <string name="image_editor_load_failed">无法加载图像</string>
+    <string name="tool_edit_image">编辑图像</string>
+    <string name="brush_line_width">线宽</string>
+    <string name="brush_color_picker_hint">选择颜色，调整厚度，然后点击“应用”。</string>
+    <string name="brush_color_back">后退</string>
+    <string name="brush_apply">申请</string>
+    <string name="brush_tool_pen">画</string>
+    <string name="brush_tool_eraser">橡皮</string>
+    <string name="brush_tool_undo">撤消最后一笔</string>
+    <string name="brush_tool_square">长方形</string>
+    <string name="brush_tool_circle">椭圆</string>
+    <string name="brush_tool_arrow">箭</string>
+    <string name="brush_tool_mosaic">像素化区域</string>
+    <string name="brush_tool_colors">颜色和线宽</string>
+    <string name="brush_panel_title">中风</string>
     <string name="setting_camera_settings">摄像头设置</string>
     <string name="setting_watermark">CatRec 水印</string>
+    <string name="setting_watermark_size">水印大小</string>
+    <string name="setting_watermark_opacity">水印不透明度</string>
+
+    <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
     <string name="camera_enable">启用摄像头</string>
+    <string name="camera_enable_desc">录制时显示摄像头叠加层</string>
     <string name="camera_lock_position">锁定位置</string>
-    <string name="camera_lock_position_desc">防止移动或调整摄像头叠加层大小</string>
     <string name="camera_facing">摄像头</string>
     <string name="camera_facing_front">前置</string>
     <string name="camera_facing_rear">后置</string>
@@ -74,93 +182,107 @@
     <string name="camera_orientation">方向</string>
     <string name="camera_size">大小</string>
     <string name="camera_opacity">不透明度</string>
-    <string name="camera_preview">实时预览</string>
+
+    <!-- Screenshot Settings -->
     <string name="setting_screenshot_format">格式</string>
     <string name="setting_screenshot_quality">质量</string>
+
+    <!-- Theme Settings -->
     <string name="setting_theme">应用主题</string>
     <string name="theme_system">跟随系统</string>
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
+
+    <!-- Language Settings -->
     <string name="setting_language">应用语言</string>
     <string name="language_system">跟随系统</string>
+    <string name="language_english">英语</string>
+    <string name="language_arabic">巴黎</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁体）</string>
+    <string name="language_french">法国人</string>
+    <string name="language_german">德语</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">印度尼西亚语</string>
+    <string name="language_italian">意大利人</string>
+    <string name="language_japanese">日本语</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_portuguese">葡萄牙语</string>
+    <string name="language_russian">俄罗斯</string>
+    <string name="language_spanish">西班牙语</string>
+    <string name="language_turkish">图尔克切</string>
+    <string name="language_vietnamese">越南</string>
+
+    <!-- Storage Settings -->
     <string name="setting_save_location">保存位置</string>
+    <string name="setting_save_location_default">默认（Movies/CatRec）</string>
     <string name="setting_filename_pattern">文件名格式</string>
+
+    <!-- General Settings -->
     <string name="setting_countdown">倒计时</string>
     <string name="setting_stop_behavior">停止行为</string>
-    <string name="screenshots_title">截图</string>
+
+    <!-- Screenshots Screen -->
     <string name="screenshots_empty_title">暂无截图</string>
     <string name="screenshots_empty_desc">点击录制叠加层中的截图按钮来截取屏幕</string>
-    <string name="screenshots_delete_confirm">删除此截图？</string>
-    <string name="screenshots_delete_confirm_desc">此操作无法撤销。</string>
-    <string name="recordings_title">录像</string>
+
+    <!-- Recordings Screen -->
     <string name="recordings_empty_title">暂无录像</string>
     <string name="recordings_empty_desc">开始录制后，视频将显示在这里</string>
-    <string name="support_title">支持</string>
+
+    <!-- Support Screen -->
     <string name="support_subscribe_youtube">订阅 YouTube</string>
     <string name="support_subscribe_youtube_desc">关注 @ibbie 获取更新</string>
     <string name="support_remove_ads">移除广告 — $1</string>
     <string name="support_remove_ads_desc">一次性购买，永久无广告</string>
+    <string name="support_restore_purchases">恢复购买</string>
+    <string name="support_restore_purchases_desc">同步删除广告和 Google Play 中的其他购买项目</string>
+    <string name="support_restore_purchases_toast">正在检查 Google Play 的购买情况...</string>
+    <string name="support_play_promo_title">兑换 Play 促销代码</string>
+    <string name="support_play_promo_desc">如果您有用于“删除广告”的 Google Play 代码：在 Play 上兑换它，然后点按此处的“恢复购买”以便应用程序更新。</string>
+    <string name="support_toast_promo_browser">无法打开浏览器</string>
     <string name="support_ads_removed">广告已移除 — 感谢！</string>
+    <string name="support_ads_removed_desc">高级选项保持解锁状态——没有广告可看。</string>
     <string name="support_watch_ad">观看广告</string>
-    <string name="support_watch_ad_desc">免费支持的快速方式</string>
     <string name="support_donate">请我喝杯咖啡（$1）</string>
     <string name="support_donate_desc">一次性捐赠 — 让 CatRec 持续运营</string>
     <string name="support_share">分享 CatRec</string>
     <string name="support_share_desc">向朋友们介绍我们</string>
     <string name="support_changelog">更新日志</string>
     <string name="support_changelog_desc">查看此版本的新内容</string>
-    <string name="support_thank_you_title">太棒了！</string>
-    <string name="support_thank_you_body">您的支持帮助 CatRec 持续发展。非常感谢！</string>
-    <string name="support_you_are_welcome">不客气</string>
-    <string name="notif_recording_title">CatRec 正在录制</string>
-    <string name="notif_recording_text">点击管理录制</string>
-    <string name="notif_done_title">录像已保存</string>
-    <string name="notif_done_text">点击查看录像</string>
+
+    <!-- Notifications -->
     <string name="notif_screenshot_saved">截图已保存</string>
+
+    <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">请先开始录制再截图</string>
+    <string name="error_screenshot_capture_failed">无法捕获屏幕截图。再试一次。</string>
     <string name="toast_recording_restarted">已因屏幕旋转重新开始录制</string>
     <string name="toast_share_app">试试 CatRec - 最酷的屏幕录制器！</string>
-    <string name="home_version">v%1$s</string>
-    <string name="support_version_label">版本 %1$s</string>
-    <string name="changelog_version_template">v%1$s</string>
-    <string name="label_active">已开启</string>
-    <string name="toast_screen_capture_denied">已拒绝屏幕录制权限</string>
-    <string name="toast_no_email_app">未找到电子邮件应用</string>
-    <string name="share_screenshot_chooser_title">分享截图</string>
-    <string name="recordings_header_format">媒体库 · %1$d</string>
-    <string name="screenshots_header_format">截图 · %1$d</string>
-    <string name="overlay_clip_button">✂ CLIP</string>
-    <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">请先打开 CatRec，并点击「授权叠加层录制」</string>
-    <string name="countdown_subtitle">正在开始录制…</string>
-    <string name="toast_recorder_start_failed">无法开始录制：%1$s</string>
-    <string name="format_jpeg">JPEG</string>
-    <string name="format_png">PNG</string>
-    <string name="format_webp">WebP</string>
-    <string name="content_desc_more_options">更多选项</string>
-    <string name="content_desc_rewind_10">后退 10 秒</string>
-    <string name="content_desc_forward_10">前进 10 秒</string>
-    <string name="beta_feedback_email_subject">CatRec 测试版反馈</string>
-    <string name="list_bullet">•</string>
 
-    <string name="rec_save_clip_sub">保存最近 %1$d 分钟</string>
-    <string name="setting_clipper_duration">剪辑缓冲时长</string>
-    <string name="dialog_clipper_duration_title">剪辑缓冲时长</string>
-    <string name="clipper_duration_1m">1 分钟</string>
-    <string name="clipper_duration_2m">2 分钟</string>
-    <string name="clipper_duration_3m">3 分钟</string>
-    <string name="clipper_duration_4m">4 分钟</string>
-    <string name="clipper_duration_5m">5 分钟</string>
-
-    <!-- Settings additions (localization patch) -->
+    <!-- Actions (extra) -->
     <string name="action_done">完成</string>
-    <string name="action_change">更改</string>
+    <string name="action_grant_now">立即拨款</string>
+    <string name="action_not_now">现在不要</string>
+    <string name="action_rename">重命名</string>
+    <string name="action_trim">修剪</string>
+    <string name="action_open_external">对外开放</string>
     <string name="action_loading">加载中…</string>
     <string name="action_watch_ad">观看广告</string>
     <string name="action_unlock">解锁</string>
+    <string name="action_got_it">知道了</string>
+    <string name="action_leave_feedback">留下反馈</string>
+    <string name="action_change">更改</string>
     <string name="action_enable_anyway">仍然启用</string>
     <string name="action_keep_performance_mode">保留性能模式</string>
-    <string name="settings_section_privacy">隐私</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">通知</string>
+    <string name="stop_behavior_shake">摇晃设备</string>
+    <string name="stop_behavior_screen_off">屏幕熄灭</string>
+    <string name="stop_behavior_pause_on_screen_off">屏幕熄灭时暂停</string>
+
+    <!-- Settings extras -->
     <string name="settings_floating_controls_desc">始终可见的气泡 — 从任何应用录制和截图</string>
     <string name="settings_show_touches">显示触摸</string>
     <string name="settings_show_touches_desc">在开发者选项中启用</string>
@@ -169,46 +291,10 @@
     <string name="setting_countdown_off">关闭</string>
     <string name="setting_countdown_seconds">%1$d 秒</string>
     <string name="setting_internal_audio_note">仅限 Android 10+</string>
-    <string name="stop_behavior_notification">通知</string>
-    <string name="stop_behavior_shake">摇晃设备</string>
-    <string name="stop_behavior_screen_off">屏幕熄灭</string>
-    <string name="stop_behavior_pause_on_screen_off">屏幕熄灭时暂停</string>
     <string name="gate_feature_separate_mic">独立麦克风轨道</string>
     <string name="gate_feature_camera_overlay">摄像头叠加层设置</string>
     <string name="camera_status_enabled">已启用 — %1$s • %2$s</string>
     <string name="state_disabled">已禁用</string>
-    <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_enable_desc">录制时显示摄像头叠加层</string>
-    <string name="camera_drag_hint">拖动摄像头圆圈重新定位</string>
-    <string name="camera_lock_desc_short">防止意外移动</string>
-    <string name="dialog_camera_orientation">摄像头方向</string>
-    <string name="dialog_fps_title">帧率（FPS）</string>
-    <string name="dialog_bitrate_title">码率</string>
-    <string name="dialog_video_encoder">视频编码器</string>
-    <string name="dialog_audio_bitrate">音频码率</string>
-    <string name="dialog_sample_rate">采样率</string>
-    <string name="dialog_audio_encoder">音频编码器</string>
-    <string name="dialog_countdown_timer">倒计时</string>
-    <string name="dialog_theme_title">应用主题</string>
-    <string name="dialog_language_title">应用语言</string>
-    <string name="dialog_screenshot_format">截图格式</string>
-    <string name="dialog_filename_pattern">文件名格式</string>
-    <string name="dialog_custom_resolution_title">自定义分辨率</string>
-    <string name="dialog_custom_resolution_hint">以宽度×高度格式输入（例如：1920×1080）</string>
-    <string name="dialog_resolution_title">分辨率</string>
-    <string name="error_resolution_format">格式必须为宽×高（例如：1920×1080）</string>
-    <string name="error_resolution_min">最小分辨率为 100×100</string>
-    <string name="error_resolution_max">任意方向最大分辨率为 7680</string>
-    <string name="resolution_group_16_9">16:9</string>
-    <string name="resolution_group_20_9">20:9（超长手机）</string>
-    <string name="resolution_group_18_9">18:9（2:1）</string>
-    <string name="resolution_group_21_9">21:9（超宽屏）</string>
-    <string name="resolution_group_4_3">4:3</string>
-    <string name="resolution_group_9_16">9:16（竖屏）</string>
-    <string name="countdown_none">无</string>
-    <string name="countdown_3s">3 秒</string>
-    <string name="countdown_5s">5 秒</string>
-    <string name="countdown_10s">10 秒</string>
     <string name="watermark_preview_active">实时预览已激活 — 拖动水印重新定位</string>
     <string name="watermark_preview_recording">录制时无法预览</string>
     <string name="watermark_preview_need_overlay">授予悬浮窗权限以使用实时预览</string>
@@ -221,28 +307,17 @@
     <string name="watermark_image_custom">已设置自定义图片</string>
     <string name="watermark_image_default">默认（应用图标）</string>
     <string name="watermark_reset_icon">重置为默认图标</string>
-    <string name="setting_watermark_size">水印大小</string>
-    <string name="setting_watermark_opacity">水印不透明度</string>
-    <string name="watermark_position_top_left">左上</string>
-    <string name="watermark_position_top_right">右上</string>
-    <string name="watermark_position_bottom_left">左下</string>
-    <string name="watermark_position_bottom_right">右下</string>
-    <string name="watermark_position_center">居中</string>
-    <string name="shape_square">正方形</string>
-    <string name="shape_circle">圆形</string>
-    <string name="ratio_16_9">16:9</string>
-    <string name="ratio_4_3">4:3</string>
-    <string name="setting_save_location_default">默认（Movies/CatRec）</string>
-    <string name="setting_save_location_custom">已设置自定义文件夹</string>
-    <string name="setting_auto_delete_title">自动删除旧录像</string>
-    <string name="setting_auto_delete_desc">保留最近 50 个</string>
-    <string name="setting_keep_screen_on_title">保持屏幕常亮</string>
-    <string name="setting_keep_screen_on_desc">录制期间</string>
-    <string name="setting_usage_analytics">使用情况分析</string>
-    <string name="setting_usage_analytics_desc">崩溃和使用统计，用于改善应用</string>
-    <string name="setting_personalized_ads">个性化广告</string>
-    <string name="setting_personalized_ads_on_desc">AdMob 可使用您的广告 ID 投放相关广告</string>
-    <string name="setting_personalized_ads_off_desc">仅显示非个性化广告</string>
+    <string name="label_dp">%1$ddp</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">千比特/秒</string>
+    <string name="label_hz">赫兹</string>
+    <string name="perf_auto_low_end">已自动开启 — 检测到低端设备</string>
+    <string name="perf_quality_may_lag">质量模式（此设备上可能卡顿）</string>
+    <string name="perf_static_glass">静态玻璃 — 模糊已禁用</string>
+    <string name="perf_dynamic_glass">动态玻璃模糊已启用</string>
+    <string name="setting_performance_mode">性能模式</string>
+    <string name="performance_warning_title">性能警告</string>
+    <string name="performance_warning_body">您的设备 RAM 不足 6 GB 或运行 Android 11 及以下版本。启用实时玻璃模糊效果可能导致界面卡顿，尤其是在录制期间。\n\n仍要启用质量模式吗？</string>
     <string name="accent_color_title">强调色</string>
     <string name="accent_gradient_color_2">渐变色 2</string>
     <string name="accent_presets">预设</string>
@@ -252,20 +327,309 @@
     <string name="accent_gradient_desc">双色发光边框</string>
     <string name="accent_color_1">颜色 1</string>
     <string name="accent_color_2">颜色 2</string>
-    <string name="setting_performance_mode">性能模式</string>
-    <string name="perf_auto_low_end">已自动开启 — 检测到低端设备</string>
-    <string name="perf_quality_may_lag">质量模式（此设备上可能卡顿）</string>
-    <string name="perf_static_glass">静态玻璃 — 模糊已禁用</string>
-    <string name="perf_dynamic_glass">动态玻璃模糊已启用</string>
-    <string name="performance_warning_title">性能警告</string>
-    <string name="performance_warning_body">您的设备 RAM 不足 6 GB 或运行 Android 11 及以下版本。启用实时玻璃模糊效果可能导致界面卡顿，尤其是在录制期间。\n\n仍要启用质量模式吗？</string>
+    <string name="setting_save_location_custom">已设置自定义文件夹</string>
+    <string name="setting_auto_delete_title">自动删除旧录像</string>
+    <string name="setting_auto_delete_desc">保留最近 50 个</string>
+    <string name="setting_keep_screen_on_title">保持屏幕常亮</string>
+    <string name="setting_keep_screen_on_desc">录制期间</string>
+    <string name="settings_section_privacy">隐私</string>
+    <string name="dialog_custom_resolution_title">自定义分辨率</string>
+    <string name="dialog_custom_resolution_hint">以宽度×高度格式输入（例如：1920×1080）</string>
+    <string name="error_resolution_format">格式必须为宽×高（例如：1920×1080）</string>
+    <string name="error_resolution_min">最小分辨率为 100×100</string>
+    <string name="error_resolution_max">任意方向最大分辨率为 7680</string>
+    <string name="dialog_resolution_title">分辨率</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9（超长手机）</string>
+    <string name="resolution_group_18_9">18:9（2:1）</string>
+    <string name="resolution_group_21_9">21:9（超宽屏）</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16（竖屏）</string>
+    <string name="dialog_theme_title">应用主题</string>
+    <string name="dialog_language_title">应用语言</string>
+    <string name="dialog_filename_pattern">文件名格式</string>
+    <string name="dialog_countdown_timer">倒计时</string>
+    <string name="countdown_none">无</string>
+    <string name="countdown_3s">3 秒</string>
+    <string name="countdown_5s">5 秒</string>
+    <string name="countdown_10s">10 秒</string>
+    <string name="dialog_video_encoder">视频编码器</string>
+    <string name="dialog_audio_encoder">音频编码器</string>
+    <string name="dialog_audio_bitrate">音频码率</string>
+    <string name="dialog_sample_rate">采样率</string>
+    <string name="dialog_bitrate_title">码率</string>
+    <string name="dialog_fps_title">帧率（FPS）</string>
+    <string name="dialog_screenshot_format">截图格式</string>
+    <string name="dialog_camera_orientation">摄像头方向</string>
     <string name="premium_feature_title">高级功能</string>
     <string name="premium_feature_body">%1$s 是高级功能。</string>
     <string name="premium_feature_watch_ad">观看一段短广告以在本次会话中解锁。</string>
     <string name="premium_feature_tap_unlock">点击解锁以在本次会话中激活。</string>
-    <string name="label_dp">%1$ddp</string>
-    <string name="label_percent">%1$d%%</string>
-    <string name="label_kbps">kbps</string>
-    <string name="label_hz">Hz</string>
+    <string name="gate_high_fps">%1$s FPS</string>
+    <string name="camera_drag_hint">拖动摄像头圆圈重新定位</string>
+    <string name="camera_lock_desc_short">防止意外移动</string>
+    <string name="shape_square">正方形</string>
+    <string name="shape_circle">圆形</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">左上</string>
+    <string name="watermark_position_top_right">右上</string>
+    <string name="watermark_position_bottom_left">左下</string>
+    <string name="watermark_position_bottom_right">右下</string>
+    <string name="watermark_position_center">居中</string>
 
+    <!-- Recording screen -->
+    <string name="label_fps">FPS</string>
+    <string name="label_mbps">Mbps</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">剪辑时长</string>
+    <string name="dialog_clipper_duration_title">剪辑时长</string>
+    <string name="clipper_duration_1m">1 分钟</string>
+    <string name="clipper_duration_2m">2 分钟</string>
+    <string name="clipper_duration_3m">3 分钟</string>
+    <string name="clipper_duration_4m">4 分钟</string>
+    <string name="clipper_duration_5m">5 分钟</string>
+    <string name="perm_rationale_intro">CatRec 需要以下权限来录制您的屏幕：</string>
+    <string name="perm_dialog_title">所需权限</string>
+    <string name="beta_title">您正处于抢先体验阶段</string>
+    <string name="beta_line_1">⚠️ 这是测试版。</string>
+    <string name="beta_line_2">您可能会遇到错误、崩溃或未完成的功能。您的设备和数据是安全的——录音保存在本地，不会上传任何内容。</string>
+    <string name="beta_line_3">您的反馈直接塑造了这个应用程序。如果出现问题或感觉不对劲，请报告 - 即使是一条短信也会有很大帮助。</string>
+    <string name="beta_line_4">感谢您尽早尝试 CatRec。 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">删除录音？</string>
+    <string name="delete_recording_message">“%1$s”将被永久删除。</string>
+    <string name="delete_screenshot_title">删除截图？</string>
+    <string name="delete_screenshot_message">“%1$s”将被永久删除。</string>
+    <string name="multiselect_selected_count">%1$d 已选择</string>
+    <string name="multiselect_select_all">选择全部</string>
+    <string name="multiselect_deselect_all">取消全选</string>
+    <string name="multiselect_delete_title">删除 %1$d 项吗？</string>
+    <string name="multiselect_delete_message">这些文件将被永久删除。</string>
+    <string name="multiselect_share_recordings">分享录音</string>
+    <string name="multiselect_share_screenshots">分享截图</string>
+    <string name="delete_generic_recording">该录音将被永久删除。</string>
+    <string name="player_renamed_to">重命名为%1$s</string>
+    <string name="player_rename_failed">重命名失败：%1$s</string>
+    <string name="player_delete_failed">删除失败：%1$s</string>
+    <string name="player_no_app_video">找不到可以打开视频的应用</string>
+    <string name="player_rename_title">重命名</string>
+    <string name="player_file_name_label">文件名</string>
+    <string name="trim_title">修剪视频</string>
+    <string name="trim_set_to_current">设置为当前</string>
+    <string name="trim_start_label">开始：%1$s</string>
+    <string name="trim_end_label">结束：%1$s</string>
+    <string name="trim_duration_summary">修剪持续时间：%1$s（%2$s → %3$s）</string>
+    <string name="trim_too_short">调整范围太短（最小 0.5 秒）</string>
+    <string name="trim_saved_success">修剪保存成功</string>
+    <string name="trim_failed_retry">修剪失败。请再试一次。</string>
+    <string name="trim_progress">正在修剪…%1$d%%</string>
+    <string name="trim_save">修剪并保存</string>
+    <string name="content_desc_back">后退</string>
+    <string name="content_desc_refresh">刷新</string>
+    <string name="content_desc_options">选项</string>
+    <string name="content_desc_logo">猫Rec标志</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">视频编辑</string>
+    <string name="tools_image_editing">图像编辑</string>
+    <string name="tool_video_trim">视频修剪</string>
+    <string name="tool_compress">压缩视频</string>
+    <string name="tool_video_to_gif">视频转GIF</string>
+    <string name="tool_merge_clips">合并剪辑</string>
+    <string name="editor_pick_video_title">选择视频</string>
+    <string name="editor_pick_catrec">CatRec 录音</string>
+    <string name="editor_pick_storage">设备上的视频</string>
+    <string name="editor_export">出口</string>
+    <string name="editor_saving">保存…</string>
+    <string name="editor_saved_ok">保存到电影/CatRec</string>
+    <string name="editor_failed">无法完成导出。尝试其他文件或质量。</string>
+    <string name="compress_title">压缩</string>
+    <string name="compress_quality_label">目标品质</string>
+    <string name="compress_quality_high">高的</string>
+    <string name="compress_quality_medium">中等的</string>
+    <string name="compress_quality_low">低的</string>
+    <string name="compress_resolution_label">目标分辨率（高度）</string>
+    <string name="compress_original">原始尺寸</string>
+    <string name="compress_estimated">估计大小：~%1$s</string>
+    <string name="compress_source">来源：%1$dx%2$d</string>
+    <string name="gif_title">视频转GIF</string>
+    <string name="gif_fps">FPS：%1$d</string>
+    <string name="gif_quality_label">GIF 质量</string>
+    <string name="gif_quality_small">文件较小</string>
+    <string name="gif_quality_balanced">均衡</string>
+    <string name="gif_quality_sharper">夏普</string>
+    <string name="gif_convert">创建 GIF</string>
+    <string name="merge_title">合并剪辑</string>
+    <string name="merge_add_catrec">从 CatRec 添加</string>
+    <string name="merge_clear_all">全部清除</string>
+    <string name="merge_run">合并并保存</string>
+    <string name="merge_need_two">添加至少两个视频（保持顺序）。</string>
+    <string name="merge_clip_label">剪辑%1$d</string>
+    <string name="home_app_name">猫记录</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="home_version">v%1$s</string>
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">CatRec 屏幕录像机</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">版本 %1$s</string>
+    <string name="changelog_version_template">v%1$s</string>
+    <string name="support_section_support_dev">支持开发商</string>
+    <string name="support_section_legal">合法的</string>
+    <string name="support_watch_ad_sub_loading">正在加载广告...</string>
+    <string name="support_watch_ad_sub">快速获得免费支持的方法</string>
+    <string name="support_toast_youtube">无法打开 YouTube</string>
+    <string name="support_toast_ad_failed">无法展示广告。稍后再试。</string>
+    <string name="support_toast_thanks_ad">感谢您的观看！ 🐱</string>
+    <string name="support_toast_ad_loading">广告正在加载，请稍候...</string>
+    <string name="support_toast_no_ad">目前没有广告。稍后再试。</string>
+    <string name="support_toast_browser">无法打开浏览器</string>
+    <string name="billing_store_not_ready">Play 商店尚未准备就绪。检查您的连接并重试。</string>
+    <string name="billing_thanks_support_me">感谢您的支持！ 🐱</string>
+    <string name="billing_pending">购买正在等待 - 完成后您将获得访问权限。</string>
+    <string name="dialog_changelog_title">变更日志</string>
+    <string name="label_beta">贝塔</string>
+    <string name="support_privacy_policy">隐私政策</string>
+    <string name="support_privacy_policy_desc">CatRec 如何处理您的数据</string>
+    <string name="support_terms_of_service">服务条款</string>
+    <string name="support_terms_of_service_desc">使用规则和免责声明</string>
+    <string name="support_permissions_disclosure">权限披露</string>
+    <string name="support_permissions_disclosure_desc">为什么需要每个权限</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">通知</string>
+    <string name="perm_rationale_notifications">需要在录制时在通知栏中显示录制控件和实时状态。</string>
+    <string name="perm_name_microphone">麦克风</string>
+    <string name="perm_rationale_microphone">需要在屏幕录制的同时捕获麦克风音频。</string>
+    <string name="perm_name_camera">相机</string>
+    <string name="perm_rationale_camera">需要在屏幕录制的顶部显示相机画中画叠加层。</string>
+    <string name="perm_name_overlay">显示在其他应用之上</string>
+    <string name="perm_rationale_overlay">需要在录制期间在其他应用程序之上显示浮动控件气泡和相机覆盖。</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">屏幕录制</string>
+    <string name="notif_channel_recording_complete">录音完成</string>
+    <string name="notif_channel_rolling_buffer">滚动缓冲器</string>
+    <string name="notif_ready_title">CatRec 准备就绪</string>
+    <string name="notif_ready_text">点击叠加按钮开始录制</string>
+    <string name="notif_action_revoke">撤销</string>
+    <string name="notif_preparing">正在准备……</string>
+    <string name="notif_recording_starting_in">录制于 %1$d 开始...</string>
+    <string name="notif_recording_paused">录音暂停</string>
+    <string name="notif_recording_muted">录音（静音）...</string>
+    <string name="notif_recording_in_progress">录音正在进行中…</string>
+    <string name="notif_title_short">猫记录</string>
+    <string name="notif_action_stop">停止</string>
+    <string name="notif_action_pause">暂停</string>
+    <string name="notif_action_resume">恢复</string>
+    <string name="notif_action_mute">沉默的</string>
+    <string name="notif_action_unmute">取消静音</string>
+    <string name="notif_action_show_controls">显示控件</string>
+    <string name="notif_buffer_title">CatRec — 滚动缓冲区</string>
+    <string name="notif_buffer_starting">启动缓冲区...</string>
+    <string name="notif_buffer_buffering">正在缓冲最后 %1$d 秒…</string>
+    <string name="notif_buffer_save_clip">保存剪辑</string>
+    <string name="notif_post_title">录音完成</string>
+    <string name="notif_post_text">点击即可打开录音</string>
+    <string name="notif_post_open">打开</string>
+    <string name="notif_post_share">分享</string>
+    <string name="notif_post_delete">删除</string>
+    <string name="share_recording_title">分享录音</string>
+    <string name="toast_recording_stopped_projection">录制停止：捕获的应用程序已关闭或移至后台</string>
+    <string name="toast_recording_failed_no_video">录制失败：未捕获视频</string>
+    <string name="toast_gif_transcode_failed">无法创建 GIF — 您的 MP4 录音已保留。</string>
+    <string name="toast_gif_saved">GIF 保存到 Pictures/CatRec/GIF</string>
+    <string name="toast_separate_mic_failed">无法创建单独的音频文件 - 麦克风将录制在视频中</string>
+    <string name="toast_internal_audio_silent">内部音频无声 - 正在录制的应用程序可能不允许音频捕获。尝试录制麦克风音频。</string>
+    <string name="recording_has_separate_audio">有独立的音轨</string>
+    <string name="toast_buffer_start_failed">缓冲区启动失败：%1$s</string>
+    <string name="toast_clip_empty">剪辑为空 – 保持缓冲时间更长</string>
+    <string name="toast_clip_saved">剪辑已保存！</string>
+    <string name="toast_clip_save_failed">剪辑保存失败：%1$s</string>
+    <string name="notif_overlay_controls_text">浮动控件已启用</string>
+    <string name="notif_camera_overlay_text">CatRec 相机叠加层处于活动状态 — 点击即可返回应用程序</string>
+    <string name="tile_record_label">猫录记录</string>
+    <string name="tile_clipper_label">CatRec 剪辑器</string>
+    <string name="notif_channel_overlay">叠加控件</string>
+    <string name="notif_channel_overlay_desc">当浮动覆盖控件处于活动状态时显示</string>
+    <string name="notif_overlay_active_title">CatRec 叠加激活</string>
+    <string name="notif_overlay_start_recording">开始录音</string>
+    <string name="notif_overlay_close_overlay">关闭叠加</string>
+    <string name="notif_channel_camera_overlay">相机叠加</string>
+    <string name="notif_channel_camera_overlay_desc">当相机叠加层处于活动状态时显示</string>
+    <string name="notif_camera_in_use_title">相机使用中</string>
+    <string name="notif_channel_app_controls">快速控制</string>
+    <string name="notif_channel_app_controls_desc">录制、屏幕截图和叠加快捷方式</string>
+    <string name="notif_app_controls_title">猫记录</string>
+    <string name="notif_app_controls_text_idle">空闲 — 点击下面的一个操作</string>
+    <string name="notif_action_screenshot">截屏</string>
+    <string name="notif_action_overlay_hide">隐藏叠加层</string>
+    <string name="notif_action_overlay_show">显示叠加层</string>
+    <string name="notif_action_overlay_enable_in_settings">叠加关闭</string>
+    <string name="notif_action_home">家</string>
+    <string name="notif_action_exit">出口</string>
+    <string name="toast_grant_capture_for_screenshot">允许屏幕截图 — 然后 CatRec 可以从叠加层中截取屏幕截图。</string>
+    <string name="tile_subtitle_recording">记录…</string>
+    <string name="tile_subtitle_buffering">缓冲中…</string>
+    <string name="tile_subtitle_ready">准备好</string>
+    <string name="tile_subtitle_tap_open">点击打开应用程序</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">已拒绝屏幕录制权限</string>
+    <string name="toast_no_email_app">未找到电子邮件应用</string>
+    <string name="share_screenshot_chooser_title">分享截图</string>
+    <string name="recordings_header_format">媒体库 · %1$d</string>
+    <string name="screenshots_header_format">截图 · %1$d</string>
+    <string name="overlay_clip_button">✂ 剪辑</string>
+    <string name="overlay_clipper_label">克利珀</string>
+    <string name="overlay_toast_authorize_first">请先打开 CatRec，并点击「授权叠加层录制」</string>
+    <string name="countdown_subtitle">正在开始录制…</string>
+    <string name="toast_recorder_start_failed">无法开始录制：%1$s</string>
+    <string name="format_jpeg">JPEG</string>
+    <string name="format_png">巴布亚新几内亚</string>
+    <string name="format_webp">网络P</string>
+    <string name="content_desc_more_options">更多选项</string>
+    <string name="content_desc_rewind_10">后退 10 秒</string>
+    <string name="content_desc_forward_10">前进 10 秒</string>
+    <string name="beta_feedback_email_subject">CatRec 测试版反馈</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>支持 H.264 和 H.265 (HEVC) 编解码器的屏幕录制</item>
+        <item>滚动剪辑缓冲区（1–5 分钟，可配置），具有无缝片段拼接和快速持续时间预设</item>
+        <item>Clipper 运行时保存剪辑按钮</item>
+        <item>适用于所有宽高比的宽分辨率选择，以及自定义输入</item>
+        <item>录制时自动跟踪方向</item>
+        <item>录音开始前的倒计时器</item>
+        <item>录制期间保持屏幕打开选项</item>
+        <item>音频：麦克风、内部音频或混合；可选独立麦克风轨道，具有可靠的导出功能</item>
+        <item>高级音频设置：比特率、采样率、通道、编码器；准确的立体声和 CBR 编码</item>
+        <item>具有质量预设的 GIF 录制模式</item>
+        <item>浮动控件叠加：暂停、停止、静音、屏幕截图、剪辑访问</item>
+        <item>随时可以叠加；从叠加层开始录制或剪辑</item>
+        <item>一键授权叠加录制——最少的重复权限提示</item>
+        <item>浮动覆盖层上的画笔工具</item>
+        <item>带有实时面部摄像头预览的摄像头覆盖</item>
+        <item>水印叠加：自定义图像、形状、不透明度、位置、对齐角；默认匹配应用程序图标</item>
+        <item>具有格式和质量设置的屏幕截图；从叠加捕获</item>
+        <item>屏幕截图后共享/编辑流程（可选）</item>
+        <item>带缩略图的录音库；应用内修剪器；合并剪辑；视频转GIF；图像编辑器和裁剪工具</item>
+        <item>应用内视频播放器</item>
+        <item>强调色：预设、渐变和十六进制；整个用户界面的动态主题</item>
+        <item>浅色和深色主题以及改进的浅色主题对比度</item>
+        <item>适用于低端设备的性能模式</item>
+        <item>组织设置：控制、录音质量、叠加、主题、语言、存储等</item>
+        <item>设置快捷方式允许不受限制地使用电池以实现可靠的后台录制</item>
+        <item>超过 16 种语言，翻译一致</item>
+        <item>带清晰状态指示器的 RECORD / CLIPPER 模式选择器</item>
+        <item>快速设置图块：CatRec Record 和 CatRec Clipper</item>
+        <item>记录带有操作的通知；准备捕获会话支持</item>
+        <item>可选的选择加入分析以提高稳定性</item>
+        <item>隐私控制：分析和广告个性化切换</item>
+        <item>支持屏幕：变更日志、法律链接和可选的奖励支持</item>
+    </string-array>
 </resources>

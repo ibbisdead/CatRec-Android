@@ -27,11 +27,17 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private data class HeightPreset(val height: Int, val label: String)
+private data class HeightPreset(
+    val height: Int,
+    val label: String,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CompressVideoScreen(encodedUri: String, navController: NavController) {
+fun CompressVideoScreen(
+    encodedUri: String,
+    navController: NavController,
+) {
     val context = LocalContext.current
     val uri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
     val scope = rememberCoroutineScope()
@@ -56,30 +62,34 @@ fun CompressVideoScreen(encodedUri: String, navController: NavController) {
         }
     }
 
-    val inputBr = remember(fileSize, durationMs) {
-        EditorVideoTransform.estimateInputVideoBitrateBps(fileSize, durationMs)
-    }
+    val inputBr =
+        remember(fileSize, durationMs) {
+            EditorVideoTransform.estimateInputVideoBitrateBps(fileSize, durationMs)
+        }
 
-    val presets = remember {
-        listOf(
-            HeightPreset(1440, "1440p"),
-            HeightPreset(1080, "1080p"),
-            HeightPreset(720, "720p"),
-            HeightPreset(540, "540p"),
-            HeightPreset(480, "480p"),
-        )
-    }
+    val presets =
+        remember {
+            listOf(
+                HeightPreset(1440, "1440p"),
+                HeightPreset(1080, "1080p"),
+                HeightPreset(720, "720p"),
+                HeightPreset(540, "540p"),
+                HeightPreset(480, "480p"),
+            )
+        }
 
     var selectedHeight: Int? by remember { mutableStateOf(null) }
     var qualityTier by remember { mutableIntStateOf(1) }
 
     val effectiveOutH = selectedHeight ?: taller
-    val targetBitrate = remember(inputBr, qualityTier, effectiveOutH) {
-        EditorVideoTransform.targetBitrateForQuality(inputBr, qualityTier, effectiveOutH)
-    }
-    val estBytes = remember(targetBitrate, durationMs) {
-        EditorVideoTransform.estimateOutputBytes(targetBitrate, durationMs)
-    }
+    val targetBitrate =
+        remember(inputBr, qualityTier, effectiveOutH) {
+            EditorVideoTransform.targetBitrateForQuality(inputBr, qualityTier, effectiveOutH)
+        }
+    val estBytes =
+        remember(targetBitrate, durationMs) {
+            EditorVideoTransform.estimateOutputBytes(targetBitrate, durationMs)
+        }
 
     var exporting by remember { mutableStateOf(false) }
     val vScroll = rememberScrollState()
@@ -141,9 +151,10 @@ fun CompressVideoScreen(encodedUri: String, navController: NavController) {
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(hScroll),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(hScroll),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 presets.forEach { preset ->
@@ -163,13 +174,14 @@ fun CompressVideoScreen(encodedUri: String, navController: NavController) {
                     scope.launch {
                         val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
                         val name = "Compress_$ts.mp4"
-                        val out = EditorVideoTransform.compressVideo(
-                            context = context,
-                            inputUri = uri,
-                            outputDisplayName = name,
-                            targetHeight = selectedHeight,
-                            videoBitrate = targetBitrate,
-                        )
+                        val out =
+                            EditorVideoTransform.compressVideo(
+                                context = context,
+                                inputUri = uri,
+                                outputDisplayName = name,
+                                targetHeight = selectedHeight,
+                                videoBitrate = targetBitrate,
+                            )
                         exporting = false
                         if (out != null) {
                             Toast.makeText(context, context.getString(R.string.editor_saved_ok), Toast.LENGTH_SHORT).show()

@@ -14,8 +14,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 class CatRecControlReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent?) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent?,
+    ) {
         val app = context.applicationContext
         when (intent?.action) {
             ACTION_RECORD_TOGGLE -> handleRecordToggle(app)
@@ -30,22 +32,27 @@ class CatRecControlReceiver : BroadcastReceiver() {
     private fun handleRecordToggle(app: Context) {
         when {
             RecordingState.isBuffering.value -> {
-                app.startService(Intent(app, ScreenRecordService::class.java).apply {
-                    action = ScreenRecordService.ACTION_STOP_BUFFER
-                })
+                app.startService(
+                    Intent(app, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_STOP_BUFFER
+                    },
+                )
             }
             RecordingState.isRecording.value -> {
-                app.startService(Intent(app, ScreenRecordService::class.java).apply {
-                    action = ScreenRecordService.ACTION_STOP
-                })
+                app.startService(
+                    Intent(app, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_TOGGLE_PAUSE
+                    },
+                )
             }
             RecordingState.isPrepared.value -> {
                 val mode = RecordingState.currentMode.value
-                val action = if (mode == CaptureMode.CLIPPER) {
-                    ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                } else {
-                    ScreenRecordService.ACTION_START_FROM_OVERLAY
-                }
+                val action =
+                    if (mode == CaptureMode.CLIPPER) {
+                        ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
+                    } else {
+                        ScreenRecordService.ACTION_START_FROM_OVERLAY
+                    }
                 app.startService(Intent(app, ScreenRecordService::class.java).apply { this.action = action })
             }
             else -> {
@@ -62,14 +69,18 @@ class CatRecControlReceiver : BroadcastReceiver() {
     private fun handleScreenshotOrPause(app: Context) {
         when {
             RecordingState.isRecording.value -> {
-                app.startService(Intent(app, ScreenRecordService::class.java).apply {
-                    action = ScreenRecordService.ACTION_TOGGLE_PAUSE
-                })
+                app.startService(
+                    Intent(app, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_STOP
+                    },
+                )
             }
             else -> {
-                app.startService(Intent(app, ScreenRecordService::class.java).apply {
-                    action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
-                })
+                app.startService(
+                    Intent(app, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
+                    },
+                )
             }
         }
     }
@@ -93,13 +104,17 @@ class CatRecControlReceiver : BroadcastReceiver() {
             return
         }
         if (OverlayService.idleControlsBubbleVisible) {
-            app.startService(Intent(app, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_CLOSE_OVERLAY
-            })
+            app.startService(
+                Intent(app, OverlayService::class.java).apply {
+                    action = OverlayService.ACTION_CLOSE_OVERLAY
+                },
+            )
         } else {
-            app.startService(Intent(app, OverlayService::class.java).apply {
-                action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
-            })
+            app.startService(
+                Intent(app, OverlayService::class.java).apply {
+                    action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                },
+            )
         }
     }
 

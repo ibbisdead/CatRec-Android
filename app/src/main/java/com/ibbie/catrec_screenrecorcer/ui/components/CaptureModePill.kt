@@ -23,11 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -109,21 +109,23 @@ private fun PillIconCircle(
     val bg = if (selected) segmentTint.copy(alpha = 0.22f) else Color.Transparent
     val tint = if (selected) segmentTint else onSurface
     Box(
-        modifier = Modifier
-            .size(iconButtonSize)
-            .clip(CircleShape)
-            .background(bg)
-            .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.45f),
+        modifier =
+            Modifier
+                .size(iconButtonSize)
+                .clip(CircleShape)
+                .background(bg)
+                .clickable(enabled = enabled, onClick = onClick)
+                .alpha(if (enabled) 1f else 0.45f),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (showStopInstead) Icons.Default.Stop else icon,
-            contentDescription = if (showStopInstead) {
-                stringResource(R.string.notif_action_stop)
-            } else {
-                contentDescription
-            },
+            contentDescription =
+                if (showStopInstead) {
+                    stringResource(R.string.notif_action_stop)
+                } else {
+                    contentDescription
+                },
             tint = tint,
             modifier = Modifier.size(if (showStopInstead) (iconSize + 2.dp) else iconSize),
         )
@@ -143,13 +145,14 @@ private fun PillGifCircle(
     val bg = if (selected) segmentTint.copy(alpha = 0.22f) else Color.Transparent
     val color = if (selected) segmentTint else onSurface
     Box(
-        modifier = Modifier
-            .size(gifButtonSize)
-            .semantics { this.contentDescription = contentDescription }
-            .clip(CircleShape)
-            .background(bg)
-            .clickable(enabled = enabled, onClick = onClick)
-            .alpha(if (enabled) 1f else 0.45f),
+        modifier =
+            Modifier
+                .size(gifButtonSize)
+                .semantics { this.contentDescription = contentDescription }
+                .clip(CircleShape)
+                .background(bg)
+                .clickable(enabled = enabled, onClick = onClick)
+                .alpha(if (enabled) 1f else 0.45f),
         contentAlignment = Alignment.Center,
     ) {
         if (showStopInstead) {
@@ -167,9 +170,10 @@ private fun PillGifCircle(
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 0.6.sp,
                 maxLines = 1,
-                modifier = Modifier
-                    .padding(horizontal = 2.dp)
-                    .clearAndSetSemantics { },
+                modifier =
+                    Modifier
+                        .padding(horizontal = 2.dp)
+                        .clearAndSetSemantics { },
             )
         }
     }

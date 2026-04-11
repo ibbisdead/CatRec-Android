@@ -8,11 +8,12 @@ import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.billing.CatRecBillingManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
+import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
 import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
-import com.ibbie.catrec_screenrecorcer.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -21,7 +22,6 @@ import kotlinx.coroutines.runBlocking
  * in Services, BroadcastReceivers, and other non-Activity code matches the in-app language.
  */
 class CatRecApplication : Application() {
-
     lateinit var billingManager: CatRecBillingManager
         private set
 
@@ -34,6 +34,9 @@ class CatRecApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         val settingsRepository = SettingsRepository(this)
+        runBlocking {
+            applyPersonalizedAdsEnabled(settingsRepository.personalizedAdsEnabled.first())
+        }
         applicationScope.launch {
             settingsRepository.adsDisabled.collect { disabled ->
                 AppOpenAdManager.adsDisabled = disabled
@@ -51,7 +54,8 @@ class CatRecApplication : Application() {
         // MainActivity will later call setCrashlyticsCollectionEnabled(false) if the user
         // previously declined the analytics consent prompt.
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
-        runBlocking {
+        // Avoid blocking process start; MainActivity re-syncs after reading consent/prefs.
+        applicationScope.launch(Dispatchers.IO) {
             syncFirebaseUserIdentity(reportingEnabled = true)
         }
     }

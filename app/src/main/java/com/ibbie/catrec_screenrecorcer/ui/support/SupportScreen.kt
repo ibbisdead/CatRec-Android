@@ -20,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
@@ -31,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
@@ -39,6 +37,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
 import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
@@ -57,9 +56,10 @@ fun SupportScreen(
     val context = LocalContext.current
     val activity = context as? Activity
     val adsDisabled by viewModel.adsDisabled.collectAsState()
-    val billing = remember(context) {
-        (context.applicationContext as CatRecApplication).billingManager
-    }
+    val billing =
+        remember(context) {
+            (context.applicationContext as CatRecApplication).billingManager
+        }
 
     var showChangelogDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -72,17 +72,18 @@ fun SupportScreen(
         RewardedAd.load(
             context,
             "ca-app-pub-7741372232895726/8137302121",
-            AdRequest.Builder().build(),
+            AdMobAdRequestFactory.build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewardedAd = ad
                     isAdLoading = false
                 }
+
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     rewardedAd = null
                     isAdLoading = false
                 }
-            }
+            },
         )
     }
 
@@ -114,12 +115,13 @@ fun SupportScreen(
 
     Scaffold { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(paddingValues)
+                    .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             AndroidView(
                 factory = { ctx ->
@@ -128,7 +130,7 @@ fun SupportScreen(
                         scaleType = ImageView.ScaleType.FIT_CENTER
                     }
                 },
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(120.dp),
             )
 
             Spacer(Modifier.height(16.dp))
@@ -136,14 +138,14 @@ fun SupportScreen(
             Text(
                 stringResource(R.string.support_app_headline),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(R.string.support_version_label, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.width(4.dp))
                 Icon(Icons.Outlined.Pets, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
@@ -156,7 +158,7 @@ fun SupportScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.Start,
             )
 
             SupportActionCard(
@@ -165,7 +167,7 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_send_feedback_desc),
                 onClick = {
                     navController.navigate(Screen.Feedback.route) { launchSingleTop = true }
-                }
+                },
             )
 
             Spacer(Modifier.height(32.dp))
@@ -175,7 +177,7 @@ fun SupportScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.Start,
             )
 
             SupportActionCard(
@@ -188,7 +190,7 @@ fun SupportScreen(
                     } catch (_: Exception) {
                         Toast.makeText(context, context.getString(R.string.support_toast_youtube), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -196,8 +198,12 @@ fun SupportScreen(
             SupportActionCard(
                 icon = Icons.Default.RemoveCircleOutline,
                 title = if (adsDisabled) stringResource(R.string.support_ads_removed) else stringResource(R.string.support_remove_ads),
-                subtitle = if (adsDisabled) stringResource(R.string.support_ads_removed_desc)
-                else stringResource(R.string.support_remove_ads_desc),
+                subtitle =
+                    if (adsDisabled) {
+                        stringResource(R.string.support_ads_removed_desc)
+                    } else {
+                        stringResource(R.string.support_remove_ads_desc)
+                    },
                 highlight = !adsDisabled,
                 onClick = {
                     if (adsDisabled) return@SupportActionCard
@@ -206,7 +212,7 @@ fun SupportScreen(
                         Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
                         billing.refreshPurchasesIfConnected()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -215,34 +221,46 @@ fun SupportScreen(
                 SupportActionCard(
                     icon = Icons.Default.PlayCircle,
                     title = stringResource(R.string.support_watch_ad),
-                    subtitle = if (isAdLoading) stringResource(R.string.support_watch_ad_sub_loading)
-                    else stringResource(R.string.support_watch_ad_sub),
+                    subtitle =
+                        if (isAdLoading) {
+                            stringResource(R.string.support_watch_ad_sub_loading)
+                        } else {
+                            stringResource(R.string.support_watch_ad_sub)
+                        },
                     onClick = {
                         val ad = rewardedAd
                         when {
                             ad != null && activity != null -> {
-                                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                                    override fun onAdDismissedFullScreenContent() {
-                                        rewardedAd = null
-                                        loadRewardedAd()
+                                ad.fullScreenContentCallback =
+                                    object : FullScreenContentCallback() {
+                                        override fun onAdDismissedFullScreenContent() {
+                                            rewardedAd = null
+                                            loadRewardedAd()
+                                        }
+
+                                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                            rewardedAd = null
+                                            loadRewardedAd()
+                                            Toast.makeText(context, context.getString(R.string.support_toast_ad_failed), Toast.LENGTH_SHORT).show()
+                                        }
                                     }
-                                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                                        rewardedAd = null
-                                        loadRewardedAd()
-                                        Toast.makeText(context, context.getString(R.string.support_toast_ad_failed), Toast.LENGTH_SHORT).show()
-                                    }
-                                }
                                 ad.show(activity) {
                                     Toast.makeText(context, context.getString(R.string.support_toast_thanks_ad), Toast.LENGTH_SHORT).show()
                                 }
                             }
-                            isAdLoading -> Toast.makeText(context, context.getString(R.string.support_toast_ad_loading), Toast.LENGTH_SHORT).show()
+                            isAdLoading ->
+                                Toast
+                                    .makeText(
+                                        context,
+                                        context.getString(R.string.support_toast_ad_loading),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                             else -> {
                                 Toast.makeText(context, context.getString(R.string.support_toast_no_ad), Toast.LENGTH_SHORT).show()
                                 loadRewardedAd()
                             }
                         }
-                    }
+                    },
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -258,7 +276,7 @@ fun SupportScreen(
                         Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
                         billing.refreshPurchasesIfConnected()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -273,7 +291,7 @@ fun SupportScreen(
                     } else {
                         Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -285,12 +303,12 @@ fun SupportScreen(
                 onClick = {
                     try {
                         context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/redeem"))
+                            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/redeem")),
                         )
                     } catch (_: Exception) {
                         Toast.makeText(context, context.getString(R.string.support_toast_promo_browser), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -300,13 +318,14 @@ fun SupportScreen(
                 title = stringResource(R.string.support_share),
                 subtitle = stringResource(R.string.support_share_desc),
                 onClick = {
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.toast_share_app))
-                        type = "text/plain"
-                    }
+                    val shareIntent =
+                        Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.toast_share_app))
+                            type = "text/plain"
+                        }
                     context.startActivity(Intent.createChooser(shareIntent, null))
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -315,7 +334,7 @@ fun SupportScreen(
                 icon = Icons.Default.History,
                 title = stringResource(R.string.support_changelog),
                 subtitle = stringResource(R.string.support_changelog_desc),
-                onClick = { showChangelogDialog = true }
+                onClick = { showChangelogDialog = true },
             )
 
             Spacer(Modifier.height(32.dp))
@@ -325,7 +344,7 @@ fun SupportScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                textAlign = TextAlign.Start
+                textAlign = TextAlign.Start,
             )
 
             SupportActionCard(
@@ -338,7 +357,7 @@ fun SupportScreen(
                     } catch (_: Exception) {
                         Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -353,7 +372,7 @@ fun SupportScreen(
                     } catch (_: Exception) {
                         Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(12.dp))
@@ -368,7 +387,7 @@ fun SupportScreen(
                     } catch (_: Exception) {
                         Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
             )
 
             Spacer(Modifier.height(48.dp))
@@ -376,10 +395,7 @@ fun SupportScreen(
     }
 
     if (showChangelogDialog) {
-        val changelog098Items = stringArrayResource(R.array.changelog_v098_items).toList()
-        val changelog096Items = stringArrayResource(R.array.changelog_v096_items).toList()
-        val changelog095Items = stringArrayResource(R.array.changelog_v095_items).toList()
-        val changelog090Items = stringArrayResource(R.array.changelog_v090_items).toList()
+        val changelog100Items = stringArrayResource(R.array.changelog_v100_items).toList()
         AlertDialog(
             onDismissRequest = { showChangelogDialog = false },
             containerColor = MaterialTheme.colorScheme.surface,
@@ -387,30 +403,11 @@ fun SupportScreen(
             icon = { Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
             title = { Text(stringResource(R.string.dialog_changelog_title), fontWeight = FontWeight.Bold) },
             text = {
-                // Newest release at top.
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
                         version = stringResource(R.string.changelog_version_template, BuildConfig.VERSION_NAME),
-                        label = stringResource(R.string.label_beta),
-                        changes = changelog098Items,
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_v096),
-                        label = stringResource(R.string.label_beta),
-                        changes = changelog096Items,
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_v095),
-                        label = stringResource(R.string.label_beta),
-                        changes = changelog095Items,
-                    )
-                    Spacer(Modifier.height(20.dp))
-                    ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_v090),
-                        label = stringResource(R.string.label_beta),
-                        changes = changelog090Items,
+                        label = null,
+                        changes = changelog100Items,
                     )
                 }
             },
@@ -424,19 +421,39 @@ fun SupportScreen(
 }
 
 @Composable
-private fun ChangelogEntry(version: String, label: String, changes: List<String>) {
+private fun ChangelogEntry(
+    version: String,
+    label: String?,
+    changes: List<String>,
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(version, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.width(8.dp))
-            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(4.dp)) {
-                Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+            Text(
+                version,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            if (!label.isNullOrEmpty()) {
+                Spacer(Modifier.width(8.dp))
+                Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(4.dp)) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    )
+                }
             }
         }
         Spacer(Modifier.height(8.dp))
         changes.forEach { change ->
             Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                Text(stringResource(R.string.list_bullet), modifier = Modifier.padding(end = 8.dp, top = 1.dp), color = MaterialTheme.colorScheme.primary)
+                Text(
+                    stringResource(R.string.list_bullet),
+                    modifier = Modifier.padding(end = 8.dp, top = 1.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                )
                 Text(change, style = MaterialTheme.typography.bodySmall)
             }
         }
@@ -449,40 +466,43 @@ fun SupportActionCard(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
-    highlight: Boolean = false
+    highlight: Boolean = false,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val scheme = MaterialTheme.colorScheme
     val light = scheme.isLightTheme()
-    val containerColor = when {
-        highlight && !light -> scheme.primaryContainer
-        highlight && light -> scheme.surfaceVariant
-        else -> scheme.surfaceVariant
-    }
-    val titleColor = when {
-        highlight && !light -> scheme.onPrimaryContainer
-        else -> scheme.onSurface
-    }
-    val subtitleColor = when {
-        highlight && !light -> scheme.onPrimaryContainer.copy(alpha = 0.72f)
-        else -> scheme.onSurfaceVariant
-    }
+    val containerColor =
+        when {
+            highlight && !light -> scheme.primaryContainer
+            highlight && light -> scheme.surfaceVariant
+            else -> scheme.surfaceVariant
+        }
+    val titleColor =
+        when {
+            highlight && !light -> scheme.onPrimaryContainer
+            else -> scheme.onSurface
+        }
+    val subtitleColor =
+        when {
+            highlight && !light -> scheme.onPrimaryContainer.copy(alpha = 0.72f)
+            else -> scheme.onSurfaceVariant
+        }
     val iconTint = scheme.primary
     val shape = RoundedCornerShape(16.dp)
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (highlight && light) {
-                    Modifier.border(1.5.dp, scheme.primary.copy(alpha = 0.42f), shape)
-                } else {
-                    Modifier
-                }
-            )
-            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(
+                    if (highlight && light) {
+                        Modifier.border(1.5.dp, scheme.primary.copy(alpha = 0.42f), shape)
+                    } else {
+                        Modifier
+                    },
+                ).clickable(interactionSource = interactionSource, indication = null, onClick = onClick),
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (light) 0.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (light) 0.dp else 2.dp),
     ) {
         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, modifier = Modifier.size(32.dp), tint = iconTint)

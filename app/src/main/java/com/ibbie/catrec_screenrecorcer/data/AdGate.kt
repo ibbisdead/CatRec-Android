@@ -10,12 +10,14 @@ package com.ibbie.catrec_screenrecorcer.data
 object AdGate {
     private val unlocked = mutableSetOf<String>()
 
-    const val SEPARATE_MIC    = "separate_mic"
+    const val SEPARATE_MIC = "separate_mic"
     const val CAMERA_SETTINGS = "camera_settings"
-    const val HIGH_FPS        = "high_fps"
+    const val HIGH_FPS = "high_fps"
 
-    fun isUnlocked(feature: String, adsDisabled: Boolean): Boolean =
-        adsDisabled || unlocked.contains(feature)
+    fun isUnlocked(
+        feature: String,
+        adsDisabled: Boolean,
+    ): Boolean = adsDisabled || unlocked.contains(feature)
 
     fun unlock(feature: String) {
         unlocked.add(feature)

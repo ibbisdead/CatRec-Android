@@ -15,8 +15,9 @@ import java.util.UUID
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-class SettingsRepository(private val context: Context) {
-
+class SettingsRepository(
+    private val context: Context,
+) {
     companion object {
         // Video
         val FPS = floatPreferencesKey("fps")
@@ -38,20 +39,26 @@ class SettingsRepository(private val context: Context) {
         val FLOATING_CONTROLS = booleanPreferencesKey("floating_controls")
         val TOUCH_OVERLAY = booleanPreferencesKey("touch_overlay")
         val COUNTDOWN = intPreferencesKey("countdown")
-        /** Rolling Clipper buffer length in minutes (1–5). */
+
+        /** Clipper duration in minutes: rolling window length (1–5). */
         val CLIPPER_DURATION_MINUTES = intPreferencesKey("clipper_duration_minutes")
         val STOP_BEHAVIOR = stringSetPreferencesKey("stop_behavior_set")
+
         /** Show Brush tool on floating controls overlay. */
         val BRUSH_OVERLAY_ENABLED = booleanPreferencesKey("brush_overlay_enabled")
+
         /** Hide floating controls bubble while a recording session is active. */
         val HIDE_FLOATING_ICON_WHILE_RECORDING = booleanPreferencesKey("hide_floating_icon_while_recording")
+
         /** After saving a screenshot, show share/edit options. */
         val POST_SCREENSHOT_OPTIONS = booleanPreferencesKey("post_screenshot_options")
+
         /**
          * When true (Android 14+), screen capture intent allows choosing a single app window.
          * When false on API 34+, capture is restricted to the full display.
          */
         val RECORD_SINGLE_APP_ENABLED = booleanPreferencesKey("record_single_app_enabled")
+
         /** [CaptureMode.RECORD], [CaptureMode.CLIPPER], or [CaptureMode.GIF]. */
         val CAPTURE_MODE = stringPreferencesKey("capture_mode")
         val GIF_RECORDER_PRESET_ID = stringPreferencesKey("gif_recorder_preset_id")
@@ -100,10 +107,13 @@ class SettingsRepository(private val context: Context) {
 
         // Privacy
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
+
         /** AdMob: personalized ads (default on); independent of Firebase Analytics. */
         val PERSONALIZED_ADS_ENABLED = booleanPreferencesKey("personalized_ads_enabled")
+
         /** One-time: user completed the first-launch analytics consent dialog. */
         val ANALYTICS_CONSENT_PROMPT_COMPLETED = booleanPreferencesKey("analytics_consent_prompt_completed")
+
         /** Stable anonymous install ID for Firebase Crashlytics / Analytics (no PII). */
         val FIREBASE_ANONYMOUS_USER_ID = stringPreferencesKey("firebase_anonymous_user_id")
 
@@ -117,9 +127,9 @@ class SettingsRepository(private val context: Context) {
         val BETA_NOTICE_SHOWN = booleanPreferencesKey("beta_notice_shown")
 
         // Accent Color
-        val ACCENT_COLOR         = stringPreferencesKey("accent_color")
-        val ACCENT_COLOR_2       = stringPreferencesKey("accent_color_2")
-        val ACCENT_USE_GRADIENT  = booleanPreferencesKey("accent_use_gradient")
+        val ACCENT_COLOR = stringPreferencesKey("accent_color")
+        val ACCENT_COLOR_2 = stringPreferencesKey("accent_color_2")
+        val ACCENT_USE_GRADIENT = booleanPreferencesKey("accent_use_gradient")
     }
 
     // Video
@@ -142,12 +152,14 @@ class SettingsRepository(private val context: Context) {
     val floatingControls: Flow<Boolean> = context.dataStore.data.map { it[FLOATING_CONTROLS] ?: false }
     val touchOverlay: Flow<Boolean> = context.dataStore.data.map { it[TOUCH_OVERLAY] ?: false }
     val countdown: Flow<Int> = context.dataStore.data.map { it[COUNTDOWN] ?: 0 }
-    val clipperDurationMinutes: Flow<Int> = context.dataStore.data.map { prefs ->
-        (prefs[CLIPPER_DURATION_MINUTES] ?: 1).coerceIn(1, 5)
-    }
-    val stopBehavior: Flow<Set<String>> = context.dataStore.data.map { prefs ->
-        StopBehaviorKeys.migrateSet(prefs[STOP_BEHAVIOR])
-    }
+    val clipperDurationMinutes: Flow<Int> =
+        context.dataStore.data.map { prefs ->
+            (prefs[CLIPPER_DURATION_MINUTES] ?: 1).coerceIn(1, 5)
+        }
+    val stopBehavior: Flow<Set<String>> =
+        context.dataStore.data.map { prefs ->
+            StopBehaviorKeys.migrateSet(prefs[STOP_BEHAVIOR])
+        }
     val brushOverlayEnabled: Flow<Boolean> = context.dataStore.data.map { it[BRUSH_OVERLAY_ENABLED] ?: false }
     val hideFloatingIconWhileRecording: Flow<Boolean> =
         context.dataStore.data.map { it[HIDE_FLOATING_ICON_WHILE_RECORDING] ?: false }
@@ -155,13 +167,15 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.data.map { it[POST_SCREENSHOT_OPTIONS] ?: false }
     val recordSingleAppEnabled: Flow<Boolean> =
         context.dataStore.data.map { it[RECORD_SINGLE_APP_ENABLED] ?: false }
-    val captureMode: Flow<String> = context.dataStore.data.map { prefs ->
-        val raw = prefs[CAPTURE_MODE] ?: CaptureMode.RECORD
-        if (CaptureMode.isValid(raw)) raw else CaptureMode.RECORD
-    }
-    val gifRecorderPresetId: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[GIF_RECORDER_PRESET_ID] ?: GifRecordingPresets.default.id
-    }
+    val captureMode: Flow<String> =
+        context.dataStore.data.map { prefs ->
+            val raw = prefs[CAPTURE_MODE] ?: CaptureMode.RECORD
+            if (CaptureMode.isValid(raw)) raw else CaptureMode.RECORD
+        }
+    val gifRecorderPresetId: Flow<String> =
+        context.dataStore.data.map { prefs ->
+            prefs[GIF_RECORDER_PRESET_ID] ?: GifRecordingPresets.default.id
+        }
 
     // Camera Overlay
     val cameraOverlay: Flow<Boolean> = context.dataStore.data.map { it[CAMERA_OVERLAY] ?: false }
@@ -215,104 +229,236 @@ class SettingsRepository(private val context: Context) {
     val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
 
     // Onboarding
-    val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: false }
+    /** Default true for GA (1.0+): skip legacy beta onboarding for new installs. */
+    val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: true }
 
     // Accent Color
-    val accentColor:        Flow<String>  = context.dataStore.data.map { it[ACCENT_COLOR]        ?: "FF0033" }
-    val accentColor2:       Flow<String>  = context.dataStore.data.map { it[ACCENT_COLOR_2]      ?: "FF6600" }
-    val accentUseGradient:  Flow<Boolean> = context.dataStore.data.map { it[ACCENT_USE_GRADIENT] ?: false   }
+    val accentColor: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR] ?: "FF0033" }
+    val accentColor2: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR_2] ?: "FF6600" }
+    val accentUseGradient: Flow<Boolean> = context.dataStore.data.map { it[ACCENT_USE_GRADIENT] ?: false }
 
     // Setters — Video
-    suspend fun setFps(value: Float) { context.dataStore.edit { it[FPS] = value } }
-    suspend fun setBitrate(value: Float) { context.dataStore.edit { it[BITRATE] = value } }
-    suspend fun setVideoEncoder(value: String) { context.dataStore.edit { it[VIDEO_ENCODER] = value } }
-    suspend fun setResolution(value: String) { context.dataStore.edit { it[RESOLUTION] = value } }
-    suspend fun setRecordingOrientation(value: String) { context.dataStore.edit { it[RECORDING_ORIENTATION] = value } }
+    suspend fun setFps(value: Float) {
+        context.dataStore.edit { it[FPS] = value }
+    }
+
+    suspend fun setBitrate(value: Float) {
+        context.dataStore.edit { it[BITRATE] = value }
+    }
+
+    suspend fun setVideoEncoder(value: String) {
+        context.dataStore.edit { it[VIDEO_ENCODER] = value }
+    }
+
+    suspend fun setResolution(value: String) {
+        context.dataStore.edit { it[RESOLUTION] = value }
+    }
+
+    suspend fun setRecordingOrientation(value: String) {
+        context.dataStore.edit { it[RECORDING_ORIENTATION] = value }
+    }
 
     // Setters — Audio
-    suspend fun setRecordAudio(value: Boolean) { context.dataStore.edit { it[RECORD_AUDIO] = value } }
-    suspend fun setInternalAudio(value: Boolean) { context.dataStore.edit { it[INTERNAL_AUDIO] = value } }
-    suspend fun setAudioBitrate(value: Int) { context.dataStore.edit { it[AUDIO_BITRATE] = value } }
-    suspend fun setAudioSampleRate(value: Int) { context.dataStore.edit { it[AUDIO_SAMPLE_RATE] = value } }
-    suspend fun setAudioChannels(value: String) { context.dataStore.edit { it[AUDIO_CHANNELS] = value } }
-    suspend fun setAudioEncoder(value: String) { context.dataStore.edit { it[AUDIO_ENCODER] = value } }
-    suspend fun setSeparateMicRecording(value: Boolean) { context.dataStore.edit { it[SEPARATE_MIC_RECORDING] = value } }
+    suspend fun setRecordAudio(value: Boolean) {
+        context.dataStore.edit { it[RECORD_AUDIO] = value }
+    }
+
+    suspend fun setInternalAudio(value: Boolean) {
+        context.dataStore.edit { it[INTERNAL_AUDIO] = value }
+    }
+
+    suspend fun setAudioBitrate(value: Int) {
+        context.dataStore.edit { it[AUDIO_BITRATE] = value }
+    }
+
+    suspend fun setAudioSampleRate(value: Int) {
+        context.dataStore.edit { it[AUDIO_SAMPLE_RATE] = value }
+    }
+
+    suspend fun setAudioChannels(value: String) {
+        context.dataStore.edit { it[AUDIO_CHANNELS] = value }
+    }
+
+    suspend fun setAudioEncoder(value: String) {
+        context.dataStore.edit { it[AUDIO_ENCODER] = value }
+    }
+
+    suspend fun setSeparateMicRecording(value: Boolean) {
+        context.dataStore.edit { it[SEPARATE_MIC_RECORDING] = value }
+    }
 
     // Setters — Controls
-    suspend fun setFloatingControls(value: Boolean) { context.dataStore.edit { it[FLOATING_CONTROLS] = value } }
-    suspend fun setTouchOverlay(value: Boolean) { context.dataStore.edit { it[TOUCH_OVERLAY] = value } }
-    suspend fun setCountdown(value: Int) { context.dataStore.edit { it[COUNTDOWN] = value } }
+    suspend fun setFloatingControls(value: Boolean) {
+        context.dataStore.edit { it[FLOATING_CONTROLS] = value }
+    }
+
+    suspend fun setTouchOverlay(value: Boolean) {
+        context.dataStore.edit { it[TOUCH_OVERLAY] = value }
+    }
+
+    suspend fun setCountdown(value: Int) {
+        context.dataStore.edit { it[COUNTDOWN] = value }
+    }
+
     suspend fun setClipperDurationMinutes(value: Int) {
         context.dataStore.edit { it[CLIPPER_DURATION_MINUTES] = value.coerceIn(1, 5) }
     }
-    suspend fun setStopBehavior(value: Set<String>) { context.dataStore.edit { it[STOP_BEHAVIOR] = value } }
-    suspend fun setBrushOverlayEnabled(value: Boolean) { context.dataStore.edit { it[BRUSH_OVERLAY_ENABLED] = value } }
+
+    suspend fun setStopBehavior(value: Set<String>) {
+        context.dataStore.edit { it[STOP_BEHAVIOR] = value }
+    }
+
+    suspend fun setBrushOverlayEnabled(value: Boolean) {
+        context.dataStore.edit { it[BRUSH_OVERLAY_ENABLED] = value }
+    }
+
     suspend fun setHideFloatingIconWhileRecording(value: Boolean) {
         context.dataStore.edit { it[HIDE_FLOATING_ICON_WHILE_RECORDING] = value }
     }
+
     suspend fun setPostScreenshotOptions(value: Boolean) {
         context.dataStore.edit { it[POST_SCREENSHOT_OPTIONS] = value }
     }
+
     suspend fun setRecordSingleAppEnabled(value: Boolean) {
         context.dataStore.edit { it[RECORD_SINGLE_APP_ENABLED] = value }
     }
+
     suspend fun setCaptureMode(value: String) {
         val v = if (CaptureMode.isValid(value)) value else CaptureMode.RECORD
         context.dataStore.edit { it[CAPTURE_MODE] = v }
     }
+
     suspend fun setGifRecorderPresetId(value: String) {
         val id = GifRecordingPresets.byId(value).id
         context.dataStore.edit { it[GIF_RECORDER_PRESET_ID] = id }
     }
 
     // Setters — Camera Overlay
-    suspend fun setCameraOverlay(value: Boolean) { context.dataStore.edit { it[CAMERA_OVERLAY] = value } }
-    suspend fun setCameraOverlaySize(value: Int) { context.dataStore.edit { it[CAMERA_OVERLAY_SIZE] = value } }
-    suspend fun setCameraXFraction(value: Float) { context.dataStore.edit { it[CAMERA_X_FRACTION] = value } }
-    suspend fun setCameraYFraction(value: Float) { context.dataStore.edit { it[CAMERA_Y_FRACTION] = value } }
-    suspend fun setCameraLockPosition(value: Boolean) { context.dataStore.edit { it[CAMERA_LOCK_POSITION] = value } }
-    suspend fun setCameraFacing(value: String) { context.dataStore.edit { it[CAMERA_FACING] = value } }
-    suspend fun setCameraAspectRatio(value: String) { context.dataStore.edit { it[CAMERA_ASPECT_RATIO] = value } }
-    suspend fun setCameraOrientation(value: String) { context.dataStore.edit { it[CAMERA_ORIENTATION] = value } }
-    suspend fun setCameraOpacity(value: Int) { context.dataStore.edit { it[CAMERA_OPACITY] = value } }
+    suspend fun setCameraOverlay(value: Boolean) {
+        context.dataStore.edit { it[CAMERA_OVERLAY] = value }
+    }
+
+    suspend fun setCameraOverlaySize(value: Int) {
+        context.dataStore.edit { it[CAMERA_OVERLAY_SIZE] = value }
+    }
+
+    suspend fun setCameraXFraction(value: Float) {
+        context.dataStore.edit { it[CAMERA_X_FRACTION] = value }
+    }
+
+    suspend fun setCameraYFraction(value: Float) {
+        context.dataStore.edit { it[CAMERA_Y_FRACTION] = value }
+    }
+
+    suspend fun setCameraLockPosition(value: Boolean) {
+        context.dataStore.edit { it[CAMERA_LOCK_POSITION] = value }
+    }
+
+    suspend fun setCameraFacing(value: String) {
+        context.dataStore.edit { it[CAMERA_FACING] = value }
+    }
+
+    suspend fun setCameraAspectRatio(value: String) {
+        context.dataStore.edit { it[CAMERA_ASPECT_RATIO] = value }
+    }
+
+    suspend fun setCameraOrientation(value: String) {
+        context.dataStore.edit { it[CAMERA_ORIENTATION] = value }
+    }
+
+    suspend fun setCameraOpacity(value: Int) {
+        context.dataStore.edit { it[CAMERA_OPACITY] = value }
+    }
 
     // Setters — Watermark
-    suspend fun setShowWatermark(value: Boolean) { context.dataStore.edit { it[SHOW_WATERMARK] = value } }
-    suspend fun setWatermarkLocation(value: String) { context.dataStore.edit { it[WATERMARK_LOCATION] = value } }
+    suspend fun setShowWatermark(value: Boolean) {
+        context.dataStore.edit { it[SHOW_WATERMARK] = value }
+    }
+
+    suspend fun setWatermarkLocation(value: String) {
+        context.dataStore.edit { it[WATERMARK_LOCATION] = value }
+    }
+
     suspend fun setWatermarkImageUri(value: String?) {
         context.dataStore.edit {
             if (value == null) it.remove(WATERMARK_IMAGE_URI) else it[WATERMARK_IMAGE_URI] = value
         }
     }
-    suspend fun setWatermarkShape(value: String) { context.dataStore.edit { it[WATERMARK_SHAPE] = value } }
-    suspend fun setWatermarkOpacity(value: Int) { context.dataStore.edit { it[WATERMARK_OPACITY] = value } }
-    suspend fun setWatermarkSize(value: Int) { context.dataStore.edit { it[WATERMARK_SIZE] = value } }
-    suspend fun setWatermarkXFraction(value: Float) { context.dataStore.edit { it[WATERMARK_X_FRACTION] = value } }
-    suspend fun setWatermarkYFraction(value: Float) { context.dataStore.edit { it[WATERMARK_Y_FRACTION] = value } }
+
+    suspend fun setWatermarkShape(value: String) {
+        context.dataStore.edit { it[WATERMARK_SHAPE] = value }
+    }
+
+    suspend fun setWatermarkOpacity(value: Int) {
+        context.dataStore.edit { it[WATERMARK_OPACITY] = value }
+    }
+
+    suspend fun setWatermarkSize(value: Int) {
+        context.dataStore.edit { it[WATERMARK_SIZE] = value }
+    }
+
+    suspend fun setWatermarkXFraction(value: Float) {
+        context.dataStore.edit { it[WATERMARK_X_FRACTION] = value }
+    }
+
+    suspend fun setWatermarkYFraction(value: Float) {
+        context.dataStore.edit { it[WATERMARK_Y_FRACTION] = value }
+    }
 
     // Setters — Screenshots
-    suspend fun setScreenshotFormat(value: String) { context.dataStore.edit { it[SCREENSHOT_FORMAT] = value } }
-    suspend fun setScreenshotQuality(value: Int) { context.dataStore.edit { it[SCREENSHOT_QUALITY] = value } }
+    suspend fun setScreenshotFormat(value: String) {
+        context.dataStore.edit { it[SCREENSHOT_FORMAT] = value }
+    }
+
+    suspend fun setScreenshotQuality(value: Int) {
+        context.dataStore.edit { it[SCREENSHOT_QUALITY] = value }
+    }
 
     // Setters — Theme & Language
-    suspend fun setAppTheme(value: String) { context.dataStore.edit { it[APP_THEME] = value } }
-    suspend fun setAppLanguage(value: String) { context.dataStore.edit { it[APP_LANGUAGE] = value } }
+    suspend fun setAppTheme(value: String) {
+        context.dataStore.edit { it[APP_THEME] = value }
+    }
+
+    suspend fun setAppLanguage(value: String) {
+        context.dataStore.edit { it[APP_LANGUAGE] = value }
+    }
 
     // Setters — Storage
-    suspend fun setFilenamePattern(value: String) { context.dataStore.edit { it[FILENAME_PATTERN] = value } }
-    suspend fun setSaveLocationUri(value: String) { context.dataStore.edit { it[SAVE_LOCATION_URI] = value } }
-    suspend fun setAutoDelete(value: Boolean) { context.dataStore.edit { it[AUTO_DELETE] = value } }
+    suspend fun setFilenamePattern(value: String) {
+        context.dataStore.edit { it[FILENAME_PATTERN] = value }
+    }
+
+    suspend fun setSaveLocationUri(value: String) {
+        context.dataStore.edit { it[SAVE_LOCATION_URI] = value }
+    }
+
+    suspend fun setAutoDelete(value: Boolean) {
+        context.dataStore.edit { it[AUTO_DELETE] = value }
+    }
 
     // Setters — General
-    suspend fun setKeepScreenOn(value: Boolean) { context.dataStore.edit { it[KEEP_SCREEN_ON] = value } }
-    suspend fun setHapticFeedback(value: Boolean) { context.dataStore.edit { it[HAPTIC_FEEDBACK] = value } }
-    suspend fun setSoundFeedback(value: Boolean) { context.dataStore.edit { it[SOUND_FEEDBACK] = value } }
+    suspend fun setKeepScreenOn(value: Boolean) {
+        context.dataStore.edit { it[KEEP_SCREEN_ON] = value }
+    }
+
+    suspend fun setHapticFeedback(value: Boolean) {
+        context.dataStore.edit { it[HAPTIC_FEEDBACK] = value }
+    }
+
+    suspend fun setSoundFeedback(value: Boolean) {
+        context.dataStore.edit { it[SOUND_FEEDBACK] = value }
+    }
 
     // Setters — UI Mode
-    suspend fun setPerformanceMode(value: Boolean) { context.dataStore.edit { it[PERFORMANCE_MODE] = value } }
+    suspend fun setPerformanceMode(value: Boolean) {
+        context.dataStore.edit { it[PERFORMANCE_MODE] = value }
+    }
 
     // Setters — Privacy
-    suspend fun setAnalyticsEnabled(value: Boolean) { context.dataStore.edit { it[ANALYTICS_ENABLED] = value } }
+    suspend fun setAnalyticsEnabled(value: Boolean) {
+        context.dataStore.edit { it[ANALYTICS_ENABLED] = value }
+    }
 
     suspend fun setPersonalizedAdsEnabled(value: Boolean) {
         context.dataStore.edit { it[PERSONALIZED_ADS_ENABLED] = value }
@@ -347,13 +493,25 @@ class SettingsRepository(private val context: Context) {
         context.syncFirebaseUserIdentity(accepted)
     }
 
-    suspend fun setAdsDisabled(value: Boolean) { context.dataStore.edit { it[ADS_DISABLED] = value } }
+    suspend fun setAdsDisabled(value: Boolean) {
+        context.dataStore.edit { it[ADS_DISABLED] = value }
+    }
 
     // Setters — Onboarding
-    suspend fun setBetaNoticeShown(value: Boolean) { context.dataStore.edit { it[BETA_NOTICE_SHOWN] = value } }
+    suspend fun setBetaNoticeShown(value: Boolean) {
+        context.dataStore.edit { it[BETA_NOTICE_SHOWN] = value }
+    }
 
     // Setters — Accent Color
-    suspend fun setAccentColor(value: String)        { context.dataStore.edit { it[ACCENT_COLOR]        = value } }
-    suspend fun setAccentColor2(value: String)       { context.dataStore.edit { it[ACCENT_COLOR_2]      = value } }
-    suspend fun setAccentUseGradient(value: Boolean) { context.dataStore.edit { it[ACCENT_USE_GRADIENT] = value } }
+    suspend fun setAccentColor(value: String) {
+        context.dataStore.edit { it[ACCENT_COLOR] = value }
+    }
+
+    suspend fun setAccentColor2(value: String) {
+        context.dataStore.edit { it[ACCENT_COLOR_2] = value }
+    }
+
+    suspend fun setAccentUseGradient(value: Boolean) {
+        context.dataStore.edit { it[ACCENT_USE_GRADIENT] = value }
+    }
 }

@@ -72,15 +72,22 @@ import com.ibbie.catrec_screenrecorcer.utils.PermissionInfo
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 
 private enum class RecordingFlowPermissionStep {
-    IDLE, NOTIFICATIONS, AUDIO, CAMERA, OVERLAY, COMPLETE
+    IDLE,
+    NOTIFICATIONS,
+    AUDIO,
+    CAMERA,
+    OVERLAY,
+    MEDIA_LIBRARY,
+    COMPLETE,
 }
 
 /**
  * Invoked from the global FAB (and similar): stop if active, otherwise start record / clipper / GIF flow.
  */
-val LocalFabRecordingControl = compositionLocalOf<() -> Unit> {
-    { }
-}
+val LocalFabRecordingControl =
+    compositionLocalOf<() -> Unit> {
+        { }
+    }
 
 @Composable
 fun FabRecordingBridge(
@@ -147,33 +154,44 @@ fun FabRecordingBridge(
         if (allPermissionsGranted) permissionManager.markSetupComplete()
     }
 
-    val overlayPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        permissionManager.saveOverlayGranted(Settings.canDrawOverlays(context))
-        setupStep = RecordingFlowPermissionStep.COMPLETE
-    }
+    val overlayPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+        ) {
+            permissionManager.saveOverlayGranted(Settings.canDrawOverlays(context))
+            setupStep = RecordingFlowPermissionStep.MEDIA_LIBRARY
+        }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        permissionManager.saveCameraGranted(granted)
-        setupStep = RecordingFlowPermissionStep.OVERLAY
-    }
+    val mediaLibraryPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions(),
+        ) {
+            setupStep = RecordingFlowPermissionStep.COMPLETE
+        }
 
-    val audioPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        permissionManager.saveAudioGranted(granted)
-        setupStep = RecordingFlowPermissionStep.CAMERA
-    }
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            permissionManager.saveCameraGranted(granted)
+            setupStep = RecordingFlowPermissionStep.OVERLAY
+        }
 
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        permissionManager.saveNotificationGranted(granted)
-        setupStep = RecordingFlowPermissionStep.AUDIO
-    }
+    val audioPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            permissionManager.saveAudioGranted(granted)
+            setupStep = RecordingFlowPermissionStep.CAMERA
+        }
+
+    val notificationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            permissionManager.saveNotificationGranted(granted)
+            setupStep = RecordingFlowPermissionStep.AUDIO
+        }
 
     LaunchedEffect(setupStep) {
         when (setupStep) {
@@ -205,13 +223,23 @@ fun FabRecordingBridge(
 
             RecordingFlowPermissionStep.OVERLAY -> {
                 if (!permissionManager.isOverlayGranted()) {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:${context.packageName}")
-                    )
+                    val intent =
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            Uri.parse("package:${context.packageName}"),
+                        )
                     overlayPermissionLauncher.launch(intent)
                 } else {
+                    setupStep = RecordingFlowPermissionStep.MEDIA_LIBRARY
+                }
+            }
+
+            RecordingFlowPermissionStep.MEDIA_LIBRARY -> {
+                val mediaPerms = permissionManager.mediaLibraryReadPermissions()
+                if (mediaPerms.isEmpty() || permissionManager.isMediaLibraryReadGranted()) {
                     setupStep = RecordingFlowPermissionStep.COMPLETE
+                } else {
+                    mediaLibraryPermissionLauncher.launch(mediaPerms)
                 }
             }
 
@@ -233,77 +261,85 @@ fun FabRecordingBridge(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                allPermissionsGranted = permissionManager.areAllGranted()
-                missingPermissions = permissionManager.getMissingPermissions()
-                viewModel.updatePermissionsState(allPermissionsGranted)
-                if (allPermissionsGranted) permissionManager.markSetupComplete()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    allPermissionsGranted = permissionManager.areAllGranted()
+                    missingPermissions = permissionManager.getMissingPermissions()
+                    viewModel.updatePermissionsState(allPermissionsGranted)
+                    if (allPermissionsGranted) permissionManager.markSetupComplete()
 
-                val activity = context as? Activity
-                if (activity?.intent?.action == "ACTION_START_RECORDING_FROM_OVERLAY") {
-                    activity.intent.action = null
-                    pendingAutoStart = true
+                    val activity = context as? Activity
+                    if (activity?.intent?.action == "ACTION_START_RECORDING_FROM_OVERLAY") {
+                        activity.intent.action = null
+                        pendingAutoStart = true
+                    }
+                    consumeScreenshotExtra(activity)
                 }
-                consumeScreenshotExtra(activity)
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val mediaProjectionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-            viewModel.startRecordingService(context, result.resultCode, result.data!!)
-            (context as? Activity)?.moveTaskToBack(true)
-        } else {
-            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+    val mediaProjectionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                viewModel.startRecordingService(context, result.resultCode, result.data!!)
+                (context as? Activity)?.moveTaskToBack(true)
+            } else {
+                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+            }
         }
-    }
 
-    val bufferProjectionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-            viewModel.startBufferService(context, result.resultCode, result.data!!)
-            (context as? Activity)?.moveTaskToBack(true)
-        } else {
-            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+    val bufferProjectionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                viewModel.startBufferService(context, result.resultCode, result.data!!)
+                (context as? Activity)?.moveTaskToBack(true)
+            } else {
+                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+            }
         }
-    }
 
-    val screenshotProjectionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-            viewModel.prepareForOverlayRecording(context, result.resultCode, result.data!!)
-            Handler(Looper.getMainLooper()).postDelayed({
-                context.startService(Intent(context, ScreenRecordService::class.java).apply {
-                    action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
-                })
-            }, 450L)
-            (context as? Activity)?.moveTaskToBack(true)
-        } else {
-            Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+    val screenshotProjectionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                viewModel.prepareForOverlayRecording(context, result.resultCode, result.data!!)
+                Handler(Looper.getMainLooper()).postDelayed({
+                    context.startService(
+                        Intent(context, ScreenRecordService::class.java).apply {
+                            action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
+                        },
+                    )
+                }, 450L)
+                (context as? Activity)?.moveTaskToBack(true)
+            } else {
+                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+            }
         }
-    }
 
     fun startBufferFlow() {
         bufferProjectionLauncher.launch(buildScreenCaptureIntent(context, recordSingleAppEnabled))
     }
 
-    val storagePermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) {
-        startMediaProjection(context, mediaProjectionLauncher, recordSingleAppEnabled)
-    }
+    val storagePermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) {
+            startMediaProjection(context, mediaProjectionLauncher, recordSingleAppEnabled)
+        }
 
     fun checkStorageAndProceed() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             if (ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    context,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
                 storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -352,7 +388,7 @@ fun FabRecordingBridge(
                 showPermissionDialog = false
                 setupStep = RecordingFlowPermissionStep.NOTIFICATIONS
             },
-            onDismiss = { showPermissionDialog = false }
+            onDismiss = { showPermissionDialog = false },
         )
     }
 
@@ -367,7 +403,7 @@ fun FabRecordingBridge(
                         Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
                             putExtra(Intent.EXTRA_EMAIL, arrayOf("ibbiedead@gmail.com"))
                             putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.beta_feedback_email_subject))
-                        }
+                        },
                     )
                 } catch (_: Exception) {
                     Toast.makeText(context, context.getString(R.string.toast_no_email_app), Toast.LENGTH_SHORT).show()
@@ -376,7 +412,7 @@ fun FabRecordingBridge(
             onDismiss = {
                 showBetaNotice = false
                 viewModel.setBetaNoticeShown(true)
-            }
+            },
         )
     }
 
@@ -394,14 +430,18 @@ fun FabRecordingBridge(
     }
 }
 
-private fun buildScreenCaptureIntent(context: Context, recordSingleAppEnabled: Boolean): Intent {
+private fun buildScreenCaptureIntent(
+    context: Context,
+    recordSingleAppEnabled: Boolean,
+): Intent {
     val mpm = context.getSystemService(MediaProjectionManager::class.java)
     return if (Build.VERSION.SDK_INT >= 34) {
-        val config = if (recordSingleAppEnabled) {
-            MediaProjectionConfig.createConfigForUserChoice()
-        } else {
-            MediaProjectionConfig.createConfigForDefaultDisplay()
-        }
+        val config =
+            if (recordSingleAppEnabled) {
+                MediaProjectionConfig.createConfigForUserChoice()
+            } else {
+                MediaProjectionConfig.createConfigForDefaultDisplay()
+            }
         mpm.createScreenCaptureIntent(config)
     } else {
         mpm.createScreenCaptureIntent()
@@ -431,33 +471,34 @@ private fun PermissionRationaleDialog(
             Column {
                 Text(
                     text = stringResource(R.string.perm_rationale_intro),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 missingPermissions.forEach { perm ->
                     Row(
                         modifier = Modifier.padding(bottom = 12.dp),
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.Top,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = null,
                             tint = accent,
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(top = 1.dp)
+                            modifier =
+                                Modifier
+                                    .size(18.dp)
+                                    .padding(top = 1.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
                                 text = perm.name,
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                             Text(
                                 text = perm.rationale,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -469,7 +510,7 @@ private fun PermissionRationaleDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_not_now)) }
-        }
+        },
     )
 }
 
@@ -488,7 +529,7 @@ private fun BetaNoticeDialog(
                 Icons.Default.BugReport,
                 contentDescription = null,
                 tint = accent,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
             )
         },
         title = {
@@ -497,34 +538,34 @@ private fun BetaNoticeDialog(
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = Color.White,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
                     stringResource(R.string.beta_line_1),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = accent
+                    color = accent,
                 )
                 Text(
                     stringResource(R.string.beta_line_2),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFCCCCCC)
+                    color = Color(0xFFCCCCCC),
                 )
                 HorizontalDivider(color = Color(0xFF2A2A2A))
                 Text(
                     stringResource(R.string.beta_line_3),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFCCCCCC)
+                    color = Color(0xFFCCCCCC),
                 )
                 Text(
                     stringResource(R.string.beta_line_4),
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF888888)
+                    color = Color(0xFF888888),
                 )
             }
         },
@@ -532,7 +573,7 @@ private fun BetaNoticeDialog(
             Button(
                 onClick = onFeedback,
                 colors = ButtonDefaults.buttonColors(containerColor = accent),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Text(stringResource(R.string.action_leave_feedback), color = Color.Black, fontWeight = FontWeight.Bold)
             }
@@ -541,6 +582,6 @@ private fun BetaNoticeDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_got_it), color = Color(0xFF888888))
             }
-        }
+        },
     )
 }

@@ -64,13 +64,14 @@ object GifTranscodeHelper {
                     val frame = retriever.getFrameAtTime(tUs, MediaMetadataRetriever.OPTION_CLOSEST)
                     if (frame != null) {
                         val h = (sw * frame.height / frame.width.toFloat()).toInt().coerceAtLeast(1)
-                        val bmp = if (frame.width == sw && frame.height == h) {
-                            frame
-                        } else {
-                            val scaled = Bitmap.createScaledBitmap(frame, sw, h, true)
-                            if (scaled != frame) frame.recycle()
-                            scaled
-                        }
+                        val bmp =
+                            if (frame.width == sw && frame.height == h) {
+                                frame
+                            } else {
+                                val scaled = Bitmap.createScaledBitmap(frame, sw, h, true)
+                                if (scaled != frame) frame.recycle()
+                                scaled
+                            }
                         enc.addFrame(bmp)
                         count++
                     }
@@ -87,31 +88,38 @@ object GifTranscodeHelper {
         } finally {
             try {
                 retriever.release()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
             try {
                 outFile.delete()
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
-    private fun saveGifToGallery(context: Context, gifFile: File): Boolean {
+    private fun saveGifToGallery(
+        context: Context,
+        gifFile: File,
+    ): Boolean {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val fileName = "GIF_$timestamp.gif"
-        val cv = ContentValues().apply {
-            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Images.Media.MIME_TYPE, "image/gif")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(
-                    MediaStore.Images.Media.RELATIVE_PATH,
-                    Environment.DIRECTORY_PICTURES + File.separator + "CatRec" + File.separator + "GIFs",
-                )
-                put(MediaStore.Images.Media.IS_PENDING, 1)
+        val cv =
+            ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/gif")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(
+                        MediaStore.Images.Media.RELATIVE_PATH,
+                        Environment.DIRECTORY_PICTURES + File.separator + "CatRec" + File.separator + "GIFs",
+                    )
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
             }
-        }
         return try {
             val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv)
-                ?: return false
+            val uri =
+                resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv)
+                    ?: return false
             resolver.openOutputStream(uri)?.use { out ->
                 FileInputStream(gifFile).use { it.copyTo(out) }
             } ?: return false

@@ -47,11 +47,12 @@ fun MergeVideosScreen(navController: NavController) {
     var showCatRecSheet by remember { mutableStateOf(false) }
     var merging by remember { mutableStateOf(false) }
 
-    val pickMulti = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetMultipleContents(),
-    ) { uris ->
-        uris.forEach { clips.add(it) }
-    }
+    val pickMulti =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.GetMultipleContents(),
+        ) { uris ->
+            uris.forEach { clips.add(it) }
+        }
 
     Scaffold(
         topBar = {
@@ -112,9 +113,10 @@ fun MergeVideosScreen(navController: NavController) {
             ) {
                 itemsIndexed(clips, key = { i, u -> "$i-$u" }) { index, uri ->
                     Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        ),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            ),
                     ) {
                         Row(
                             Modifier
@@ -155,9 +157,10 @@ fun MergeVideosScreen(navController: NavController) {
                     }
                 },
                 enabled = !merging && clips.size >= 2,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
             ) {
                 if (merging) {
                     CircularProgressIndicator(
@@ -184,12 +187,13 @@ fun MergeVideosScreen(navController: NavController) {
                 items(entries, key = { it.uri.toString() }) { entry ->
                     ListItem(
                         headlineContent = { Text(entry.displayName) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                clips.add(entry.uri)
-                                showCatRecSheet = false
-                            },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    clips.add(entry.uri)
+                                    showCatRecSheet = false
+                                },
                         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                     )
                     HorizontalDivider()

@@ -1,5 +1,6 @@
 package com.ibbie.catrec_screenrecorcer.ui.tools
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -9,12 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -27,21 +29,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VideoToGifScreen(encodedUri: String, navController: NavController) {
+fun VideoToGifScreen(
+    encodedUri: String,
+    navController: NavController,
+) {
     val context = LocalContext.current
     val videoUri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
     val scope = rememberCoroutineScope()
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            setMediaItem(MediaItem.fromUri(videoUri))
-            prepare()
-            playWhenReady = false
+    val exoPlayer =
+        remember {
+            ExoPlayer.Builder(context).build().apply {
+                setAudioAttributes(
+                    AudioAttributes
+                        .Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .build(),
+                    true,
+                )
+                setMediaItem(MediaItem.fromUri(videoUri))
+                prepare()
+                playWhenReady = false
+            }
         }
-    }
     DisposableEffect(Unit) { onDispose { exoPlayer.release() } }
 
     var durationMs by remember { mutableLongStateOf(1L) }
@@ -51,20 +64,22 @@ fun VideoToGifScreen(encodedUri: String, navController: NavController) {
     var isWorking by remember { mutableStateOf(false) }
     var fps by remember { mutableIntStateOf(10) }
     var qualityTier by remember { mutableIntStateOf(1) } // 0 small 1 balanced 2 sharp
-    val scaleWidth = when (qualityTier) {
-        0 -> 280
-        1 -> 400
-        else -> 560
-    }
+    val scaleWidth =
+        when (qualityTier) {
+            0 -> 280
+            1 -> 400
+            else -> 560
+        }
 
     DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-                if (state == Player.STATE_READY && durationMs <= 1L) {
-                    durationMs = exoPlayer.duration.coerceAtLeast(1L)
+        val listener =
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_READY && durationMs <= 1L) {
+                        durationMs = exoPlayer.duration.coerceAtLeast(1L)
+                    }
                 }
             }
-        }
         exoPlayer.addListener(listener)
         onDispose { exoPlayer.removeListener(listener) }
     }
@@ -178,16 +193,17 @@ fun VideoToGifScreen(encodedUri: String, navController: NavController) {
                         }
                         isWorking = true
                         scope.launch {
-                            val ok = withContext(Dispatchers.IO) {
-                                GifTranscodeHelper.transcodeMp4ToGif(
-                                    context,
-                                    videoUri,
-                                    scaleWidth,
-                                    fps,
-                                    startMs = startMs,
-                                    endMs = endMs,
-                                )
-                            }
+                            val ok =
+                                withContext(Dispatchers.IO) {
+                                    GifTranscodeHelper.transcodeMp4ToGif(
+                                        context,
+                                        videoUri,
+                                        scaleWidth,
+                                        fps,
+                                        startMs = startMs,
+                                        endMs = endMs,
+                                    )
+                                }
                             isWorking = false
                             if (ok) {
                                 Toast.makeText(context, context.getString(R.string.editor_saved_ok), Toast.LENGTH_SHORT).show()
