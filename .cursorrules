@@ -1,8 +1,0 @@
-# CatRec — project rules
-
-- This is an Android app using Kotlin + Jetpack Compose
-- Never create duplicate files
-- Always reuse existing classes if relevant
-- Follow MVVM architecture
-- Do not modify unrelated files
-- Keep imports correct and minimal

@@ -22,6 +22,7 @@ app/release/
 
 # Local IDE / tooling
 .cursor/
+.cursorrules
 .kotlin/
 
 tmp_count.txt

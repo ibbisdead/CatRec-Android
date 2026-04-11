@@ -3,7 +3,6 @@ package com.ibbie.catrec_screenrecorcer.media
 import android.content.ContentUris
 import android.content.Context
 import android.database.Cursor
-import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -33,7 +32,6 @@ enum class MediaDeleteResult {
  * previous [ScreenshotsScreen] / [loadAppRecordings] behavior; deletion delegates to [trySilentDeleteMediaDetailed].
  */
 object MediaManager {
-
     suspend fun loadScreenshots(context: Context): List<MediaItem> =
         withContext(Dispatchers.IO) {
             Log.d(TAG, "loadScreenshots start")

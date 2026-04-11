@@ -5,14 +5,15 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -21,26 +22,25 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,9 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
@@ -79,6 +76,7 @@ fun ScreenshotsScreen() {
     var screenshots by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var screenshotToDelete by remember { mutableStateOf<MediaItem?>(null) }
+
     /** In-app full-screen preview (full decode size); list uses thumbnails only. */
     var detailItem by remember { mutableStateOf<MediaItem?>(null) }
 
@@ -360,73 +358,73 @@ fun ScreenshotsScreen() {
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                    item(span = { GridItemSpan(columnCount) }) {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 4.dp, start = 4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = stringResource(R.string.screenshots_header_format, screenshots.size),
-                                style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            IconButton(onClick = { manualRefreshKey++ }, modifier = Modifier.size(32.dp)) {
-                                Icon(
-                                    Icons.Default.Refresh,
-                                    contentDescription = stringResource(R.string.content_desc_refresh),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp),
+                        item(span = { GridItemSpan(columnCount) }) {
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 4.dp, start = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.screenshots_header_format, screenshots.size),
+                                    style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 3.sp),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                                IconButton(onClick = { manualRefreshKey++ }, modifier = Modifier.size(32.dp)) {
+                                    Icon(
+                                        Icons.Default.Refresh,
+                                        contentDescription = stringResource(R.string.content_desc_refresh),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    items(screenshots, key = { it.uri.toString() }) { item ->
-                        ScreenshotCard(
-                            item = item,
-                            accent = accent,
-                            thumbnailDecodePx = thumbDecodePx,
-                            isSelectionMode = isSelectionMode,
-                            isSelected = item.uri in selectedUris,
-                            onShare = {
-                                val shareIntent =
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        type = "image/*"
-                                        putExtra(Intent.EXTRA_STREAM, item.uri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        items(screenshots, key = { it.uri.toString() }) { item ->
+                            ScreenshotCard(
+                                item = item,
+                                accent = accent,
+                                thumbnailDecodePx = thumbDecodePx,
+                                isSelectionMode = isSelectionMode,
+                                isSelected = item.uri in selectedUris,
+                                onShare = {
+                                    val shareIntent =
+                                        Intent(Intent.ACTION_SEND).apply {
+                                            type = "image/*"
+                                            putExtra(Intent.EXTRA_STREAM, item.uri)
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        }
+                                    context.startActivity(
+                                        Intent.createChooser(shareIntent, context.getString(R.string.share_screenshot_chooser_title)),
+                                    )
+                                },
+                                onDelete = { screenshotToDelete = item },
+                                onPreviewClick = { detailItem = item },
+                                onOpenExternal = {
+                                    val viewIntent =
+                                        Intent(Intent.ACTION_VIEW).apply {
+                                            setDataAndType(item.uri, "image/*")
+                                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        }
+                                    try {
+                                        context.startActivity(viewIntent)
+                                    } catch (_: Exception) {
                                     }
-                                context.startActivity(
-                                    Intent.createChooser(shareIntent, context.getString(R.string.share_screenshot_chooser_title)),
-                                )
-                            },
-                            onDelete = { screenshotToDelete = item },
-                            onPreviewClick = { detailItem = item },
-                            onOpenExternal = {
-                                val viewIntent =
-                                    Intent(Intent.ACTION_VIEW).apply {
-                                        setDataAndType(item.uri, "image/*")
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                try {
-                                    context.startActivity(viewIntent)
-                                } catch (_: Exception) {
-                                }
-                            },
-                            onLongClick = { selectedUris = setOf(item.uri) },
-                            onToggleSelect = {
-                                selectedUris =
-                                    if (item.uri in selectedUris) {
-                                        selectedUris - item.uri
-                                    } else {
-                                        selectedUris + item.uri
-                                    }
-                            },
-                        )
-                    }
+                                },
+                                onLongClick = { selectedUris = setOf(item.uri) },
+                                onToggleSelect = {
+                                    selectedUris =
+                                        if (item.uri in selectedUris) {
+                                            selectedUris - item.uri
+                                        } else {
+                                            selectedUris + item.uri
+                                        }
+                                },
+                            )
+                        }
                     }
                 }
             }

@@ -228,8 +228,9 @@ class SettingsRepository(
     /** True after remove-ads purchase (or while a pending remove-ads flow completes — Play is source of truth on next sync). */
     val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
 
-    // Onboarding
-    /** Default true for GA (1.0+): skip legacy beta onboarding for new installs. */
+    /**
+     * Default true for GA (1.0+): skip legacy beta onboarding for new installs.
+     */
     val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: true }
 
     // Accent Color

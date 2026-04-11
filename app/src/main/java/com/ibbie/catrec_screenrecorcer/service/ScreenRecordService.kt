@@ -191,7 +191,10 @@ class ScreenRecordService :
     private var pendingScreenshotVirtualDisplay: VirtualDisplay? = null
     private val screenshotVirtualDisplayLock = Any()
     private var isBufferRunning = false
-    /** True after foreground started with [Companion.MAIN_FOREGROUND_NOTIFICATION_ID] until removed. */
+
+    /**
+     * True after foreground started with [Companion.MAIN_FOREGROUND_NOTIFICATION_ID] until removed.
+     */
     private var mainForegroundActive = false
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -889,7 +892,10 @@ class ScreenRecordService :
         val serviceType =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-                if (hasAudioPermission && audioEnabled) type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                // Match rolling-buffer logic: mic capture needs RECORD_AUDIO; internal capture is gated the same way.
+                if (hasAudioPermission && (audioEnabled || internalAudioEnabled)) {
+                    type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
                 type
             } else {
                 0
@@ -897,16 +903,15 @@ class ScreenRecordService :
 
         val notifMgr = getSystemService(NotificationManager::class.java) ?: return
         try {
-            if (mainForegroundActive) {
-                notifMgr.notify(MAIN_FOREGROUND_NOTIFICATION_ID, notification)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Prepared mode calls [startPreparedForeground] with MEDIA_PROJECTION only. If we only
+                // [notify] here, the FGS never gains MICROPHONE — mic stays silent in background until
+                // something else re-binds foreground. Re-post [startForeground] with the full type set.
+                startForeground(MAIN_FOREGROUND_NOTIFICATION_ID, notification, serviceType)
             } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(MAIN_FOREGROUND_NOTIFICATION_ID, notification, serviceType)
-                } else {
-                    startForeground(MAIN_FOREGROUND_NOTIFICATION_ID, notification)
-                }
-                mainForegroundActive = true
+                startForeground(MAIN_FOREGROUND_NOTIFICATION_ID, notification)
             }
+            mainForegroundActive = true
         } catch (e: Exception) {
             Log.e("ScreenRecordService", "Failed to start foreground service", e)
             stopSelf()
@@ -2201,7 +2206,8 @@ class ScreenRecordService :
             )
 
         val style =
-            NotificationCompat.BigPictureStyle()
+            NotificationCompat
+                .BigPictureStyle()
                 .setBigContentTitle(getString(R.string.notif_post_title))
                 .setSummaryText(getString(R.string.notif_ready_text))
         if (thumbnail != null) {

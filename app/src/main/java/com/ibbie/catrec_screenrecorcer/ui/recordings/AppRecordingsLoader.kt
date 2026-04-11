@@ -14,8 +14,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /** Public video collections to query (primary + SD / other volumes where supported). */
-private fun mediaStoreVideoCollections(context: Context): List<Uri> {
-    return when {
+private fun mediaStoreVideoCollections(context: Context): List<Uri> =
+    when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
             MediaStore.getExternalVolumeNames(context).map { vol ->
                 MediaStore.Video.Media.getContentUri(vol)
@@ -26,10 +26,9 @@ private fun mediaStoreVideoCollections(context: Context): List<Uri> {
         }
         else -> listOf(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
     }
-}
 
-private fun mediaStoreAudioCollections(context: Context): List<Uri> {
-    return when {
+private fun mediaStoreAudioCollections(context: Context): List<Uri> =
+    when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
             MediaStore.getExternalVolumeNames(context).map { vol ->
                 MediaStore.Audio.Media.getContentUri(vol)
@@ -40,15 +39,12 @@ private fun mediaStoreAudioCollections(context: Context): List<Uri> {
         }
         else -> listOf(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
     }
-}
 
 /**
+ * Re-scan public CatRec folders so MediaStore picks up files after reinstall or side loads.
  * Files in Movies/CatRec (and screenshot folder) may exist on disk but be missing from MediaStore
  * until scanned. Best-effort scan when the process can see the public dirs (works on many devices;
  * no-op if blocked by scoped storage).
- */
-/**
- * Re-scan public CatRec folders so MediaStore picks up files after reinstall or side loads.
  * Waits (on the calling thread, use IO) for scan callbacks so a follow-up query sees new rows.
  */
 internal fun ensureCatRecMediaIndexed(context: Context) {
@@ -118,8 +114,8 @@ internal fun ensureCatRecMediaIndexed(context: Context) {
     }
 }
 
-private fun videoPrimarySelection(): Pair<String, Array<String>> {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+private fun videoPrimarySelection(): Pair<String, Array<String>> =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         val base = "${Environment.DIRECTORY_MOVIES}/CatRec"
         val sel =
             "(" +
@@ -132,7 +128,6 @@ private fun videoPrimarySelection(): Pair<String, Array<String>> {
     } else {
         "${MediaStore.Video.Media.DATA} LIKE ?" to arrayOf("%/Movies/CatRec/%")
     }
-}
 
 /** Catches rows where path encoding differs but files are still under the CatRec bucket. */
 private fun videoFallbackSelection(): Pair<String, Array<String>>? {

@@ -7,6 +7,9 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,9 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -210,8 +210,7 @@ fun PlayerScreen(
                                     context,
                                     context.getString(R.string.player_delete_failed, ""),
                                     Toast.LENGTH_SHORT,
-                                )
-                                .show()
+                                ).show()
                         }
                     } else {
                         Toast
@@ -219,8 +218,7 @@ fun PlayerScreen(
                                 context,
                                 context.getString(R.string.player_delete_failed, ""),
                                 Toast.LENGTH_SHORT,
-                            )
-                            .show()
+                            ).show()
                     }
                 }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
             },
