@@ -57,6 +57,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
@@ -66,7 +67,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
@@ -117,6 +117,14 @@ class ScreenRecordService :
         const val ACTION_PREPARE = "ACTION_PREPARE"
         const val ACTION_START_FROM_OVERLAY = "ACTION_START_FROM_OVERLAY"
         const val ACTION_START_BUFFER_FROM_OVERLAY = "ACTION_START_BUFFER_FROM_OVERLAY"
+        const val ACTION_EXIT_SERVICE = "ACTION_EXIT_SERVICE"
+
+        /**
+         * After MediaProjection is granted from [OverlayRecordProjectionActivity], applies
+         * settings from the repository and starts recording or rolling buffer.
+         */
+        const val ACTION_START_AFTER_OVERLAY_PROJECTION = "ACTION_START_AFTER_OVERLAY_PROJECTION"
+        const val EXTRA_OVERLAY_SESSION_AS_BUFFER = "EXTRA_OVERLAY_SESSION_AS_BUFFER"
         const val ACTION_REVOKE_PREPARE = "ACTION_REVOKE_PREPARE"
 
         /** Delete the last saved recording from the combined "saved + ready" notification. */
@@ -169,6 +177,12 @@ class ScreenRecordService :
         const val EXTRA_GIF_MAX_DURATION_SEC = "EXTRA_GIF_MAX_DURATION_SEC"
         const val EXTRA_GIF_SCALE_WIDTH = "EXTRA_GIF_SCALE_WIDTH"
         const val EXTRA_GIF_OUTPUT_FPS = "EXTRA_GIF_OUTPUT_FPS"
+
+        /** FFmpeg palettegen max colors (64 / 128 / 256). */
+        const val EXTRA_GIF_MAX_COLORS = "EXTRA_GIF_MAX_COLORS"
+
+        /** Serialized [GifPaletteDither.name] for paletteuse (Bayer light/medium or Floyd–Steinberg). */
+        const val EXTRA_GIF_DITHER_KIND = "EXTRA_GIF_DITHER_KIND"
 
         private const val CHANNEL_ID = "CatRec_Recording_Channel"
         private const val CHANNEL_DONE_ID = "CatRec_Done_Channel"
@@ -248,10 +262,18 @@ class ScreenRecordService :
     private var gifMaxDurationSec: Int = 0
     private var gifScaleWidth: Int = 480
     private var gifOutputFps: Int = 10
+    private var gifMaxColors: Int = 128
+    private var gifPaletteDither: GifPaletteDither = GifPaletteDither.BAYER_MEDIUM
     private val mainHandler = Handler(Looper.getMainLooper())
     private var gifAutoStopRunnable: Runnable? = null
 
+    // Tells the service to revoke projection after the next stop completes
+    private var revokeAfterStop = false
+
     private var isRecorderRunning = false
+    private val isStoppingForCodec = AtomicBoolean(false)
+    private var recordingPerformanceController: RecordingPerformanceController? = null
+    private val preferAvcNextEnginePrepare = AtomicBoolean(false)
     private var isRecordingPaused = false
     private var isRecordingMuted = false
     private var controlsDismissedByUser = false
@@ -279,6 +301,12 @@ class ScreenRecordService :
     private var countdownOverlayView: View? = null
     private var countdownNumberView: TextView? = null
 
+    private val settingsRepository by lazy { SettingsRepository(applicationContext) }
+
+    /** Updated from [SettingsRepository.floatingControls] without blocking notification builders. */
+    @Volatile
+    private var cachedFloatingControlsForNotification: Boolean = false
+
     private val screenOffReceiver =
         object : BroadcastReceiver() {
             override fun onReceive(
@@ -304,6 +332,54 @@ class ScreenRecordService :
         }
     }
 
+    private fun floatingOnForNotification(): Boolean =
+        if (FloatingControlsNotificationCache.initialized) {
+            FloatingControlsNotificationCache.peek()
+        } else {
+            cachedFloatingControlsForNotification
+        }
+
+    /** [ScreenRecorderEngine] / [RollingBufferEngine] invoke from encoder threads; we hop to main. */
+    private fun handleFatalVideoEncodeFromEngine(
+        mode: String,
+        detail: String,
+    ) {
+        mainHandler.post {
+            val shouldStop =
+                when (mode) {
+                    "record" -> isRecorderRunning
+                    "buffer" -> isBufferRunning
+                    else -> false
+                }
+            if (!shouldStop) {
+                Log.w(
+                    "ScreenRecordService",
+                    "VideoEncFatal_stop $mode ignored (inactive) $detail",
+                )
+                return@post
+            }
+            if (!isStoppingForCodec.compareAndSet(false, true)) {
+                Log.d(
+                    "ScreenRecordService",
+                    "VideoEncFatal_stop $mode ignored (already stopping for codec) $detail",
+                )
+                return@post
+            }
+            Log.e("ScreenRecordService", "VideoEncFatal_stop graceful mode=$mode $detail")
+            FirebaseCrashlytics.getInstance().log("graceful_stop_encoder mode=$mode ${detail.take(180)}")
+            Toast
+                .makeText(
+                    this,
+                    getString(R.string.toast_video_encoder_failed),
+                    Toast.LENGTH_LONG,
+                ).show()
+            when (mode) {
+                "record" -> stopRecording()
+                "buffer" -> stopBuffer()
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -315,6 +391,14 @@ class ScreenRecordService :
         displayWidth = w
         displayHeight = h
         createNotificationChannels()
+        lifecycleScope.launch {
+            cachedFloatingControlsForNotification = settingsRepository.floatingControls.first()
+            FloatingControlsNotificationCache.update(cachedFloatingControlsForNotification)
+            settingsRepository.floatingControls.collect {
+                cachedFloatingControlsForNotification = it
+                FloatingControlsNotificationCache.update(it)
+            }
+        }
     }
 
     override fun onStartCommand(
@@ -371,6 +455,8 @@ class ScreenRecordService :
                 cameraOpacity = intent.getIntExtra(EXTRA_CAMERA_OPACITY, 100)
                 showWatermark = intent.getBooleanExtra(EXTRA_SHOW_WATERMARK, false)
                 showFloatingControls = intent.getBooleanExtra(EXTRA_SHOW_FLOATING_CONTROLS, false)
+                cachedFloatingControlsForNotification = showFloatingControls
+                FloatingControlsNotificationCache.update(showFloatingControls)
                 hideFloatingIconWhileRecording = intent.getBooleanExtra(EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING, false)
                 stopBehaviors =
                     intent.getStringArrayListExtra(EXTRA_STOP_BEHAVIOR)?.let {
@@ -394,8 +480,12 @@ class ScreenRecordService :
                 screenshotQuality = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, 90)
                 isGifSession = intent.getBooleanExtra(EXTRA_GIF_SESSION, false)
                 gifMaxDurationSec = intent.getIntExtra(EXTRA_GIF_MAX_DURATION_SEC, 0)
-                gifScaleWidth = intent.getIntExtra(EXTRA_GIF_SCALE_WIDTH, 480).coerceIn(160, 1280)
+                gifScaleWidth = intent.getIntExtra(EXTRA_GIF_SCALE_WIDTH, 480).coerceIn(160, 1920)
                 gifOutputFps = intent.getIntExtra(EXTRA_GIF_OUTPUT_FPS, 10).coerceIn(1, 30)
+                gifMaxColors = intent.getIntExtra(EXTRA_GIF_MAX_COLORS, 128).coerceIn(2, 256)
+                gifPaletteDither =
+                    intent.getStringExtra(EXTRA_GIF_DITHER_KIND)?.let { GifPaletteDither.fromSerialized(it) }
+                        ?: GifPaletteDither.BAYER_MEDIUM
                 if (!isGifSession) {
                     gifMaxDurationSec = 0
                 }
@@ -408,6 +498,27 @@ class ScreenRecordService :
                     }
                 }
             }
+            ACTION_EXIT_SERVICE -> {
+                revokeAfterStop = true
+                if (isRecorderRunning) {
+                    stopRecording()
+                } else if (isBufferRunning) {
+                    stopBuffer()
+                } else {
+                    isPrepared = false
+                    RecordingState.setPrepared(false)
+                    mediaProjection?.stop()
+                    mediaProjection = null
+                    try {
+                        unregisterReceiver(screenOffReceiver)
+                    } catch (_: Exception) {
+                    }
+                    mainForegroundActive = false
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
+            }
+
             ACTION_STOP -> stopRecording()
             ACTION_PAUSE -> pauseRecording()
             ACTION_RESUME -> resumeRecording()
@@ -446,9 +557,9 @@ class ScreenRecordService :
                 controlsDismissedByUser = false
                 if (isRecorderRunning) updateRecordingNotification(isPaused = isRecordingPaused)
             }
-            ACTION_NOTIFICATION_DISMISSED -> {
-                if (isRecorderRunning) updateRecordingNotification(isPaused = isRecordingPaused)
-            }
+            // Recording notification no longer uses setDeleteIntent — avoids notify-on-dismiss
+            // that could reorder foreground / cause full-screen flicker on some devices.
+            ACTION_NOTIFICATION_DISMISSED -> Unit
             ACTION_START_BUFFER -> {
                 if (!isRecorderRunning && !isBufferRunning) {
                     resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
@@ -470,6 +581,7 @@ class ScreenRecordService :
                     resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
                     videoEncoder = intent.getStringExtra(EXTRA_VIDEO_ENCODER) ?: "H.264"
                     clipperDurationMinutes = intent.getIntExtra(EXTRA_CLIPPER_DURATION_MINUTES, 1).coerceIn(1, 5)
+                    countdownValue = intent.getIntExtra(EXTRA_COUNTDOWN, 0).coerceIn(0, 60)
                     if (resultCode != 0 && resultData != null) startBuffer()
                 }
             }
@@ -487,97 +599,102 @@ class ScreenRecordService :
                         intent.getParcelableExtra(EXTRA_DATA)
                     }
                 if (resultCode == 0 || resultData == null) return START_STICKY
+                intent.getStringExtra(EXTRA_SCREENSHOT_FORMAT)?.let { screenshotFormat = it }
+                val q = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, -1)
+                if (q >= 0) screenshotQuality = q.coerceIn(1, 100)
                 startPreparedForeground()
             }
 
             ACTION_START_FROM_OVERLAY -> {
                 if (!isPrepared || isRecorderRunning) return START_STICKY
-                val repo =
-                    com.ibbie.catrec_screenrecorcer.data
-                        .SettingsRepository(applicationContext)
-                runBlocking {
-                    val mode = repo.captureMode.first()
-                    if (mode == com.ibbie.catrec_screenrecorcer.data.CaptureMode.GIF) {
-                        val preset =
-                            com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets.byId(
-                                repo.gifRecorderPresetId.first(),
-                            )
-                        fps = preset.fps
-                        bitrate = preset.bitrateBitsPerSec
-                        resolutionSetting = preset.resolutionSetting
-                        isGifSession = true
-                        gifMaxDurationSec = preset.maxDurationSec
-                        gifScaleWidth = preset.maxWidth
-                        gifOutputFps = preset.fps
-                    } else {
-                        isGifSession = false
-                        gifMaxDurationSec = 0
-                        fps = repo.fps.first().toInt()
-                        bitrate = (repo.bitrate.first() * 1_000_000).toInt()
-                        resolutionSetting = repo.resolution.first()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        applyOverlayRecordingRepoSnapshotToService()
+                        withContext(Dispatchers.Main) {
+                            if (!isPrepared) {
+                                Log.w(
+                                    "ScreenRecordService",
+                                    "stale_overlay_start_ignored recording prepared=false",
+                                )
+                                return@withContext
+                            }
+                            if (isRecorderRunning) {
+                                Log.w(
+                                    "ScreenRecordService",
+                                    "stale_overlay_start_ignored recording rec=true",
+                                )
+                                return@withContext
+                            }
+                            try {
+                                startRecording()
+                            } catch (e: Exception) {
+                                FirebaseCrashlytics.getInstance().recordException(e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
                     }
-                    audioEnabled = repo.recordAudio.first()
-                    internalAudioEnabled = repo.internalAudio.first()
-                    audioBitrate = repo.audioBitrate.first() * 1000
-                    audioSampleRate = repo.audioSampleRate.first()
-                    audioChannels = repo.audioChannels.first()
-                    audioEncoderType = repo.audioEncoder.first()
-                    separateMicRecording = repo.separateMicRecording.first()
-                    showCamera = repo.cameraOverlay.first()
-                    cameraOverlaySize = repo.cameraOverlaySize.first()
-                    cameraXFraction = repo.cameraXFraction.first()
-                    cameraYFraction = repo.cameraYFraction.first()
-                    cameraLockPosition = repo.cameraLockPosition.first()
-                    cameraFacing = repo.cameraFacing.first()
-                    cameraAspectRatio = repo.cameraAspectRatio.first()
-                    cameraOpacity = repo.cameraOpacity.first()
-                    showWatermark = repo.showWatermark.first()
-                    showFloatingControls = repo.floatingControls.first()
-                    hideFloatingIconWhileRecording = repo.hideFloatingIconWhileRecording.first()
-                    stopBehaviors = ArrayList(repo.stopBehavior.first())
-                    saveLocationUri = repo.saveLocationUri.first()
-                    videoEncoder = repo.videoEncoder.first()
-                    filenamePattern = repo.filenamePattern.first()
-                    countdownValue = repo.countdown.first()
-                    keepScreenOn = repo.keepScreenOn.first()
-                    recordingOrientationSetting = repo.recordingOrientation.first()
-                    watermarkLocation = repo.watermarkLocation.first()
-                    watermarkImageUri = repo.watermarkImageUri.first()
-                    watermarkShape = repo.watermarkShape.first()
-                    watermarkOpacity = repo.watermarkOpacity.first()
-                    watermarkSize = repo.watermarkSize.first()
-                    watermarkXFraction = repo.watermarkXFraction.first()
-                    watermarkYFraction = repo.watermarkYFraction.first()
-                    screenshotFormat = repo.screenshotFormat.first()
-                    screenshotQuality = repo.screenshotQuality.first()
-                }
-                try {
-                    startRecording()
-                } catch (e: Exception) {
-                    FirebaseCrashlytics.getInstance().recordException(e)
                 }
             }
 
             ACTION_START_BUFFER_FROM_OVERLAY -> {
                 if (!isPrepared || isBufferRunning || isRecorderRunning) return START_STICKY
-                val repo =
-                    com.ibbie.catrec_screenrecorcer.data
-                        .SettingsRepository(applicationContext)
-                runBlocking {
-                    fps = repo.fps.first().toInt()
-                    bitrate = (repo.bitrate.first() * 1_000_000).toInt()
-                    audioEnabled = repo.recordAudio.first()
-                    internalAudioEnabled = repo.internalAudio.first()
-                    audioBitrate = repo.audioBitrate.first() * 1000
-                    audioSampleRate = repo.audioSampleRate.first()
-                    audioChannels = repo.audioChannels.first()
-                    audioEncoderType = repo.audioEncoder.first()
-                    showFloatingControls = repo.floatingControls.first()
-                    videoEncoder = repo.videoEncoder.first()
-                    resolutionSetting = repo.resolution.first()
-                    clipperDurationMinutes = repo.clipperDurationMinutes.first()
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        applyOverlayBufferRepoSnapshotToService()
+                        withContext(Dispatchers.Main) {
+                            if (!isPrepared || isBufferRunning || isRecorderRunning) {
+                                Log.w(
+                                    "ScreenRecordService",
+                                    "stale_overlay_start_ignored buffer prepared=$isPrepared buf=$isBufferRunning rec=$isRecorderRunning",
+                                )
+                                return@withContext
+                            }
+                            try {
+                                startBuffer()
+                            } catch (e: Exception) {
+                                FirebaseCrashlytics.getInstance().recordException(e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
+                    }
                 }
-                startBuffer()
+            }
+
+            ACTION_START_AFTER_OVERLAY_PROJECTION -> {
+                if (isRecorderRunning || isBufferRunning) return START_STICKY
+                val rc = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
+                val rd =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        intent.getParcelableExtra(EXTRA_DATA)
+                    }
+                if (rc == 0 || rd == null) return START_STICKY
+                val asBuffer = intent.getBooleanExtra(EXTRA_OVERLAY_SESSION_AS_BUFFER, false)
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        if (asBuffer) {
+                            applyOverlayBufferRepoSnapshotToService()
+                        } else {
+                            applyOverlayRecordingRepoSnapshotToService()
+                        }
+                        withContext(Dispatchers.Main) {
+                            if (isRecorderRunning || isBufferRunning) return@withContext
+                            resultCode = rc
+                            resultData = rd
+                            try {
+                                if (asBuffer) startBuffer() else startRecording()
+                            } catch (e: Exception) {
+                                FirebaseCrashlytics.getInstance().recordException(e)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        FirebaseCrashlytics.getInstance().recordException(e)
+                    }
+                }
             }
 
             ACTION_REVOKE_PREPARE -> {
@@ -617,16 +734,24 @@ class ScreenRecordService :
                         takeScreenshot()
                     else -> {
                         Handler(Looper.getMainLooper()).post {
-                            val launch =
-                                packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                                    putExtra(MainActivity.EXTRA_REQUEST_SCREENSHOT_PROJECTION, true)
-                                    addFlags(
-                                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                                            Intent.FLAG_ACTIVITY_SINGLE_TOP,
-                                    )
-                                }
-                            if (launch != null) startActivity(launch)
+                            try {
+                                startActivity(
+                                    Intent(this, OverlayScreenshotProjectionActivity::class.java).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    },
+                                )
+                            } catch (_: Exception) {
+                                val launch =
+                                    packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                                        putExtra(MainActivity.EXTRA_REQUEST_SCREENSHOT_PROJECTION, true)
+                                        addFlags(
+                                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                                Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                                        )
+                                    }
+                                if (launch != null) startActivity(launch)
+                            }
                         }
                     }
                 }
@@ -716,6 +841,23 @@ class ScreenRecordService :
 
         isPrepared = true
         RecordingState.setPrepared(true)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val v = settingsRepository.floatingControls.first()
+                withContext(Dispatchers.Main) {
+                    FloatingControlsNotificationCache.update(v)
+                    cachedFloatingControlsForNotification = v
+                    if (isPrepared) {
+                        getSystemService(NotificationManager::class.java)
+                            ?.notify(MAIN_FOREGROUND_NOTIFICATION_ID, buildReadyNotification())
+                    }
+                    Log.d("ScreenRecordService", "notif_floating_controls_warmed")
+                }
+            } catch (e: Exception) {
+                Log.w("ScreenRecordService", "notif_floating_controls_warm_failed: ${e.message}")
+            }
+        }
     }
 
     private fun bindShadeOverlayExit(
@@ -792,7 +934,7 @@ class ScreenRecordService :
 
     private fun buildReadyNotification(): Notification {
         AppControlNotification.cancel(this)
-        val floatingOn = runBlocking { SettingsRepository(applicationContext).floatingControls.first() }
+        val floatingOn = floatingOnForNotification()
         val overlayVisible = OverlayService.idleControlsBubbleVisible
 
         val tapPI =
@@ -812,12 +954,11 @@ class ScreenRecordService :
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         val exitPi =
-            PendingIntent.getActivity(
+            PendingIntent.getBroadcast(
                 this,
                 2,
-                Intent(this, MainActivity::class.java).apply {
-                    putExtra(MainActivity.EXTRA_EXIT_APP, true)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                Intent(this, CatRecControlReceiver::class.java).apply {
+                    action = CatRecControlReceiver.ACTION_EXIT_APP
                 },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
@@ -880,8 +1021,172 @@ class ScreenRecordService :
             .build()
     }
 
+    /** Reads recording settings from the repository and assigns them on the main thread. */
+    private suspend fun applyOverlayRecordingRepoSnapshotToService() {
+        val repo = settingsRepository
+        withContext(Dispatchers.IO) {
+            val mode = repo.captureMode.first()
+            val gifPreset =
+                if (mode == com.ibbie.catrec_screenrecorcer.data.CaptureMode.GIF) {
+                    com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets.byId(
+                        repo.gifRecorderPresetId.first(),
+                    )
+                } else {
+                    null
+                }
+            val fpsVal: Int
+            val bitrateVal: Int
+            val resVal: String
+            val gifSession: Boolean
+            val gifMaxSec: Int
+            val gifScaleW: Int
+            val gifOutFps: Int
+            val gifColors: Int
+            val gifDith: GifPaletteDither
+            if (mode == com.ibbie.catrec_screenrecorcer.data.CaptureMode.GIF && gifPreset != null) {
+                fpsVal = gifPreset.fps
+                bitrateVal = gifPreset.bitrateBitsPerSec
+                resVal = gifPreset.resolutionSetting
+                gifSession = true
+                gifMaxSec = gifPreset.maxDurationSec
+                gifScaleW = gifPreset.maxWidth
+                gifOutFps = gifPreset.fps
+                gifColors = gifPreset.maxColors
+                gifDith = gifPreset.paletteDither
+            } else {
+                fpsVal = repo.fps.first().toInt()
+                bitrateVal = (repo.bitrate.first() * 1_000_000).toInt()
+                resVal = repo.resolution.first()
+                gifSession = false
+                gifMaxSec = 0
+                gifScaleW = gifScaleWidth
+                gifOutFps = gifOutputFps
+                gifColors = gifMaxColors
+                gifDith = gifPaletteDither
+            }
+            val audioEn = repo.recordAudio.first()
+            val internalEn = repo.internalAudio.first()
+            val audioBr = repo.audioBitrate.first() * 1000
+            val audioSr = repo.audioSampleRate.first()
+            val audioCh = repo.audioChannels.first()
+            val audioEnc = repo.audioEncoder.first()
+            val sepMic = repo.separateMicRecording.first()
+            val cam = repo.cameraOverlay.first()
+            val camSize = repo.cameraOverlaySize.first()
+            val camX = repo.cameraXFraction.first()
+            val camY = repo.cameraYFraction.first()
+            val camLock = repo.cameraLockPosition.first()
+            val camFace = repo.cameraFacing.first()
+            val camAsp = repo.cameraAspectRatio.first()
+            val camOp = repo.cameraOpacity.first()
+            val wm = repo.showWatermark.first()
+            val floatCtl = repo.floatingControls.first()
+            val hideFloat = repo.hideFloatingIconWhileRecording.first()
+            val stopB = ArrayList(repo.stopBehavior.first())
+            val saveLoc = repo.saveLocationUri.first()
+            val vidEnc = repo.videoEncoder.first()
+            val fnPat = repo.filenamePattern.first()
+            val cd = repo.countdown.first()
+            val kso = repo.keepScreenOn.first()
+            val recOr = repo.recordingOrientation.first()
+            val wml = repo.watermarkLocation.first()
+            val wmi = repo.watermarkImageUri.first()
+            val wms = repo.watermarkShape.first()
+            val wmo = repo.watermarkOpacity.first()
+            val wmz = repo.watermarkSize.first()
+            val wmx = repo.watermarkXFraction.first()
+            val wmy = repo.watermarkYFraction.first()
+            val ssFmt = repo.screenshotFormat.first()
+            val ssQ = repo.screenshotQuality.first()
+            withContext(Dispatchers.Main) {
+                fps = fpsVal
+                bitrate = bitrateVal
+                resolutionSetting = resVal
+                isGifSession = gifSession
+                gifMaxDurationSec = gifMaxSec
+                gifScaleWidth = gifScaleW
+                gifOutputFps = gifOutFps
+                gifMaxColors = gifColors
+                gifPaletteDither = gifDith
+                audioEnabled = audioEn
+                internalAudioEnabled = internalEn
+                audioBitrate = audioBr
+                audioSampleRate = audioSr
+                audioChannels = audioCh
+                audioEncoderType = audioEnc
+                separateMicRecording = sepMic
+                showCamera = cam
+                cameraOverlaySize = camSize
+                cameraXFraction = camX
+                cameraYFraction = camY
+                cameraLockPosition = camLock
+                cameraFacing = camFace
+                cameraAspectRatio = camAsp
+                cameraOpacity = camOp
+                showWatermark = wm
+                showFloatingControls = floatCtl
+                cachedFloatingControlsForNotification = floatCtl
+                FloatingControlsNotificationCache.update(floatCtl)
+                hideFloatingIconWhileRecording = hideFloat
+                stopBehaviors = stopB
+                saveLocationUri = saveLoc
+                videoEncoder = vidEnc
+                filenamePattern = fnPat
+                countdownValue = cd
+                keepScreenOn = kso
+                recordingOrientationSetting = recOr
+                watermarkLocation = wml
+                watermarkImageUri = wmi
+                watermarkShape = wms
+                watermarkOpacity = wmo
+                watermarkSize = wmz
+                watermarkXFraction = wmx
+                watermarkYFraction = wmy
+                screenshotFormat = ssFmt
+                screenshotQuality = ssQ
+            }
+        }
+    }
+
+    private suspend fun applyOverlayBufferRepoSnapshotToService() {
+        val repo = settingsRepository
+        withContext(Dispatchers.IO) {
+            val fpsVal = repo.fps.first().toInt()
+            val bitrateVal = (repo.bitrate.first() * 1_000_000).toInt()
+            val audioEn = repo.recordAudio.first()
+            val internalEn = repo.internalAudio.first()
+            val audioBr = repo.audioBitrate.first() * 1000
+            val audioSr = repo.audioSampleRate.first()
+            val audioCh = repo.audioChannels.first()
+            val audioEnc = repo.audioEncoder.first()
+            val floatCtl = repo.floatingControls.first()
+            val vidEnc = repo.videoEncoder.first()
+            val resVal = repo.resolution.first()
+            val clipMin = repo.clipperDurationMinutes.first()
+            val cd = repo.countdown.first()
+            withContext(Dispatchers.Main) {
+                fps = fpsVal
+                bitrate = bitrateVal
+                audioEnabled = audioEn
+                internalAudioEnabled = internalEn
+                audioBitrate = audioBr
+                audioSampleRate = audioSr
+                audioChannels = audioCh
+                audioEncoderType = audioEnc
+                showFloatingControls = floatCtl
+                cachedFloatingControlsForNotification = floatCtl
+                FloatingControlsNotificationCache.update(floatCtl)
+                videoEncoder = vidEnc
+                resolutionSetting = resVal
+                clipperDurationMinutes = clipMin
+                countdownValue = cd.coerceIn(0, 60)
+            }
+        }
+    }
+
     @SuppressLint("WakelockTimeout")
     private fun startRecording() {
+        isStoppingForCodec.set(false)
         val hasAudioPermission =
             ContextCompat.checkSelfPermission(
                 this,
@@ -950,9 +1255,8 @@ class ScreenRecordService :
         // Apply orientation lock before getting display metrics
         applyOrientationLock()
 
-        val showFloatingBubbleWhileRecording =
-            showFloatingControls && !hideFloatingIconWhileRecording
-        if (Settings.canDrawOverlays(this) && (showCamera || showWatermark || showFloatingBubbleWhileRecording)) {
+        val showFloatingControlsOverlayWhileRecording = showFloatingControls
+        if (Settings.canDrawOverlays(this) && (showCamera || showWatermark || showFloatingControlsOverlayWhileRecording)) {
             val overlayIntent =
                 Intent(this, OverlayService::class.java).apply {
                     action = OverlayService.ACTION_SHOW_OVERLAYS
@@ -965,7 +1269,7 @@ class ScreenRecordService :
                     putExtra(OverlayService.EXTRA_CAMERA_ASPECT_RATIO, cameraAspectRatio)
                     putExtra(OverlayService.EXTRA_CAMERA_OPACITY, cameraOpacity)
                     putExtra(OverlayService.EXTRA_SHOW_WATERMARK, showWatermark)
-                    putExtra(OverlayService.EXTRA_SHOW_CONTROLS, showFloatingBubbleWhileRecording)
+                    putExtra(OverlayService.EXTRA_SHOW_CONTROLS, showFloatingControlsOverlayWhileRecording)
                     putExtra(OverlayService.EXTRA_WATERMARK_LOCATION, watermarkLocation)
                     putExtra(OverlayService.EXTRA_WATERMARK_IMAGE_URI, watermarkImageUri)
                     putExtra(OverlayService.EXTRA_WATERMARK_SHAPE, watermarkShape)
@@ -1093,6 +1397,34 @@ class ScreenRecordService :
         val channelCount = if (audioChannels == "Stereo") 2 else 1
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val adaptiveEnabled = settingsRepository.adaptiveRecordingPerformance.first() && !isGifSession
+            if (!adaptiveEnabled) {
+                preferAvcNextEnginePrepare.set(false)
+            }
+            val forceAvc =
+                adaptiveEnabled &&
+                    preferAvcNextEnginePrepare.compareAndSet(true, false) &&
+                    videoEncoder == "H.265 (HEVC)"
+            val perfController =
+                if (adaptiveEnabled) {
+                    RecordingPerformanceController(
+                        sessionBaselineBitrateBps = bitrate,
+                        applyAdaptiveVideoBitrateBps = { bps ->
+                            when {
+                                recorderEngine != null -> recorderEngine!!.applyAdaptiveVideoBitrateBps(bps)
+                                rollingBufferEngine != null -> rollingBufferEngine!!.applyAdaptiveVideoBitrateBps(bps)
+                                else -> false
+                            }
+                        },
+                        setRelaySkipModulo = { modulo ->
+                            recorderEngine?.setAdaptiveSkipModulo(modulo)
+                            rollingBufferEngine?.setAdaptiveSkipModulo(modulo)
+                        },
+                        onPreferAvc = { preferAvcNextEnginePrepare.set(true) },
+                    )
+                } else {
+                    null
+                }
             try {
                 releasePendingScreenshotVirtualDisplay()
                 recorderEngine =
@@ -1112,6 +1444,7 @@ class ScreenRecordService :
                         audioChannelCount = channelCount,
                         audioEncoderType = audioEncoderType,
                         separateMicFileDescriptor = micPfd?.fileDescriptor,
+                        adaptivePreferAvcForPrepare = forceAvc,
                         onInternalAudioSilence = {
                             // Fired on the audio-capture thread after SILENCE_TIMEOUT_MS of all-zero
                             // PCM from internal audio. Show a clear UI message and log for diagnostics.
@@ -1134,14 +1467,28 @@ class ScreenRecordService :
                                 "Internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
                             )
                         },
+                        onFatalVideoEncodeError = { detail ->
+                            handleFatalVideoEncodeFromEngine("record", detail)
+                        },
                     )
+                recordingPerformanceController = perfController
                 recorderEngine?.start()
+                recorderEngine?.attachAdaptivePerformance(perfController, adaptiveEnabled)
+                perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isRecorderRunning = true
                     RecordingState.setRecording(true)
                     RecordingState.setRecordingPaused(false)
                     notifyOverlayRecordingState(isRecording = true)
                     updateRecordingNotification(isPaused = false)
+                    if (forceAvc) {
+                        Toast
+                            .makeText(
+                                this@ScreenRecordService,
+                                getString(R.string.performance_fallback_active),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
                     gifAutoStopRunnable?.let { mainHandler.removeCallbacks(it) }
                     if (isGifSession && gifMaxDurationSec > 0) {
                         val r =
@@ -1157,6 +1504,9 @@ class ScreenRecordService :
                 Log.e("ScreenRecordService", "Recorder start failed", e)
                 FirebaseCrashlytics.getInstance().log(AppLogger.dump())
                 FirebaseCrashlytics.getInstance().recordException(e)
+                recorderEngine?.attachAdaptivePerformance(null, false)
+                perfController?.stopSession()
+                recordingPerformanceController = null
                 withContext(Dispatchers.Main) {
                     Toast
                         .makeText(
@@ -1478,10 +1828,15 @@ class ScreenRecordService :
         val snapshotGifSession = isGifSession
         val snapshotGifScaleW = gifScaleWidth
         val snapshotGifFps = gifOutputFps
+        val snapshotGifMaxColors = gifMaxColors
+        val snapshotGifPaletteDitherKind = gifPaletteDither
         isGifSession = false
         gifMaxDurationSec = 0
 
         lifecycleScope.launch(Dispatchers.IO) {
+            recorderEngine?.attachAdaptivePerformance(null, false)
+            recordingPerformanceController?.stopSession()
+            recordingPerformanceController = null
             val engine = recorderEngine
             // Snapshot before stop(): stop() clears muxer state used by hadOutput().
             val hadOutput =
@@ -1507,6 +1862,7 @@ class ScreenRecordService :
             } catch (_: Exception) {
             }
 
+            var lastSavedRecordingUriForCleanup: Uri? = null
             if (hadOutput) {
                 val tempVid = currentTempRecordingFile
                 if (savedUri != null && tempVid != null) {
@@ -1518,15 +1874,28 @@ class ScreenRecordService :
                 }
                 currentTempRecordingFile = null
                 savedUri?.let { finalizeMediaStoreEntry(it) }
+                if (savedUri != null) {
+                    lastSavedRecordingUriForCleanup = savedUri
+                }
 
                 if (hadOutput && savedUri != null && snapshotGifSession) {
                     val gifOk =
-                        GifTranscodeHelper.transcodeMp4ToGif(
+                        com.ibbie.catrec_screenrecorcer.service.GifExportPipeline.transcodeMp4ToGif(
                             this@ScreenRecordService,
                             savedUri,
                             snapshotGifScaleW,
                             snapshotGifFps,
+                            maxColors = snapshotGifMaxColors,
+                            paletteDither = snapshotGifPaletteDitherKind,
                         )
+                    if (gifOk) {
+                        try {
+                            contentResolver.delete(savedUri, null, null)
+                        } catch (e: Exception) {
+                            Log.w("ScreenRecordService", "GIF session: could not delete intermediate MP4", e)
+                        }
+                        lastSavedRecordingUriForCleanup = null
+                    }
                     withContext(Dispatchers.Main) {
                         Toast
                             .makeText(
@@ -1597,7 +1966,7 @@ class ScreenRecordService :
                                 Toast.LENGTH_LONG,
                             ).show()
                 }
-                cleanup(lastSavedRecordingUri = if (hadOutput && savedUri != null) savedUri else null)
+                cleanup(lastSavedRecordingUri = lastSavedRecordingUriForCleanup)
             }
         }
     }
@@ -1605,6 +1974,7 @@ class ScreenRecordService :
     // ── Rolling Buffer ─────────────────────────────────────────────────────────
 
     private fun startBuffer() {
+        isStoppingForCodec.set(false)
         val hasAudioPermission =
             ContextCompat.checkSelfPermission(
                 this,
@@ -1637,6 +2007,26 @@ class ScreenRecordService :
             return
         }
 
+        val notifMgr = getSystemService(NotificationManager::class.java) ?: return
+
+        lifecycleScope.launch {
+            if (countdownValue > 0) {
+                showCountdownOverlay(countdownValue)
+                for (i in countdownValue downTo 1) {
+                    updateCountdownOverlayNumber(i)
+                    notifMgr.notify(
+                        BUFFER_NOTIFICATION_ID,
+                        buildBufferNotification(getString(R.string.notif_recording_starting_in, i)),
+                    )
+                    delay(1000)
+                }
+                hideCountdownOverlay()
+            }
+            actualStartBuffer()
+        }
+    }
+
+    private fun actualStartBuffer() {
         // In prepared mode the MediaProjection is already held — reuse it instead of
         // consuming the one-time token a second time.
         if (mediaProjection == null) {
@@ -1664,6 +2054,34 @@ class ScreenRecordService :
         val channelCount = if (audioChannels == "Stereo") 2 else 1
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val adaptiveEnabled = settingsRepository.adaptiveRecordingPerformance.first()
+            if (!adaptiveEnabled) {
+                preferAvcNextEnginePrepare.set(false)
+            }
+            val forceAvc =
+                adaptiveEnabled &&
+                    preferAvcNextEnginePrepare.compareAndSet(true, false) &&
+                    videoEncoder == "H.265 (HEVC)"
+            val perfController =
+                if (adaptiveEnabled) {
+                    RecordingPerformanceController(
+                        sessionBaselineBitrateBps = bitrate,
+                        applyAdaptiveVideoBitrateBps = { bps ->
+                            when {
+                                recorderEngine != null -> recorderEngine!!.applyAdaptiveVideoBitrateBps(bps)
+                                rollingBufferEngine != null -> rollingBufferEngine!!.applyAdaptiveVideoBitrateBps(bps)
+                                else -> false
+                            }
+                        },
+                        setRelaySkipModulo = { modulo ->
+                            recorderEngine?.setAdaptiveSkipModulo(modulo)
+                            rollingBufferEngine?.setAdaptiveSkipModulo(modulo)
+                        },
+                        onPreferAvc = { preferAvcNextEnginePrepare.set(true) },
+                    )
+                } else {
+                    null
+                }
             try {
                 releasePendingScreenshotVirtualDisplay()
                 rollingBufferEngine =
@@ -1682,6 +2100,7 @@ class ScreenRecordService :
                         audioChannelCount = channelCount,
                         audioEncoderType = audioEncoderType,
                         maxSegmentsLimit = RollingBufferEngine.maxSegmentsForClipperMinutes(clipperDurationMinutes),
+                        adaptivePreferAvcForPrepare = forceAvc,
                         onInternalAudioSilence = {
                             Handler(Looper.getMainLooper()).post {
                                 Toast
@@ -1700,11 +2119,25 @@ class ScreenRecordService :
                                 "Buffer internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
                             )
                         },
+                        onFatalVideoEncodeError = { detail ->
+                            handleFatalVideoEncodeFromEngine("buffer", detail)
+                        },
                     )
+                recordingPerformanceController = perfController
                 rollingBufferEngine?.start()
+                rollingBufferEngine?.attachAdaptivePerformance(perfController, adaptiveEnabled)
+                perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isBufferRunning = true
                     RecordingState.setBuffering(true)
+                    if (forceAvc) {
+                        Toast
+                            .makeText(
+                                this@ScreenRecordService,
+                                getString(R.string.performance_fallback_active),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
                     getSystemService(NotificationManager::class.java)
                         .notify(BUFFER_NOTIFICATION_ID, buildBufferNotification())
                     startService(
@@ -1716,6 +2149,9 @@ class ScreenRecordService :
                 }
             } catch (e: Exception) {
                 Log.e("ScreenRecordService", "Buffer start failed", e)
+                rollingBufferEngine?.attachAdaptivePerformance(null, false)
+                perfController?.stopSession()
+                recordingPerformanceController = null
                 withContext(Dispatchers.Main) {
                     Toast
                         .makeText(
@@ -1744,6 +2180,9 @@ class ScreenRecordService :
         )
 
         lifecycleScope.launch(Dispatchers.IO) {
+            rollingBufferEngine?.attachAdaptivePerformance(null, false)
+            recordingPerformanceController?.stopSession()
+            recordingPerformanceController = null
             try {
                 rollingBufferEngine?.stop()
             } catch (e: Exception) {
@@ -2057,25 +2496,22 @@ class ScreenRecordService :
         } finally {
             bitmap.recycle()
         }
-        val showPostActions =
-            runBlocking(Dispatchers.IO) {
-                com.ibbie.catrec_screenrecorcer.data
-                    .SettingsRepository(applicationContext)
-                    .postScreenshotOptions
-                    .first()
-            }
-        Handler(Looper.getMainLooper()).post {
-            val u = savedUri
-            if (u != null) {
-                if (showPostActions) {
-                    startActivity(
-                        Intent(this, ScreenshotPostActionActivity::class.java).apply {
-                            putExtra(ScreenshotPostActionActivity.EXTRA_IMAGE_URI, u.toString())
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        },
-                    )
-                } else {
-                    Toast.makeText(this, getString(R.string.notif_screenshot_saved), Toast.LENGTH_SHORT).show()
+        val uriAfterSave = savedUri
+        lifecycleScope.launch(Dispatchers.IO) {
+            val showPostActions = settingsRepository.postScreenshotOptions.first()
+            withContext(Dispatchers.Main) {
+                val u = uriAfterSave
+                if (u != null) {
+                    if (showPostActions) {
+                        startActivity(
+                            Intent(this@ScreenRecordService, ScreenshotPostActionActivity::class.java).apply {
+                                putExtra(ScreenshotPostActionActivity.EXTRA_IMAGE_URI, u.toString())
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                        )
+                    } else {
+                        Toast.makeText(this@ScreenRecordService, getString(R.string.notif_screenshot_saved), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -2308,7 +2744,13 @@ class ScreenRecordService :
             wakeLock = null
         }
 
-        if (isPrepared) {
+        if (revokeAfterStop) {
+            mediaProjection?.stop()
+            mediaProjection = null
+            mainForegroundActive = false
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+        } else if (isPrepared) {
             // Keep the service and MediaProjection alive so the overlay can start
             // another recording without showing the permission dialog again.
             val nm = getSystemService(NotificationManager::class.java)
@@ -2512,7 +2954,7 @@ class ScreenRecordService :
         contentText: String? = null,
     ): Notification {
         AppControlNotification.cancel(this)
-        val floatingOn = runBlocking { SettingsRepository(applicationContext).floatingControls.first() }
+        val floatingOn = floatingOnForNotification()
         val overlayVisible = OverlayService.idleControlsBubbleVisible
 
         val tapPending =
@@ -2527,12 +2969,11 @@ class ScreenRecordService :
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         val exitPi =
-            PendingIntent.getActivity(
+            PendingIntent.getBroadcast(
                 this,
                 2,
-                Intent(this, MainActivity::class.java).apply {
-                    putExtra(MainActivity.EXTRA_EXIT_APP, true)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                Intent(this, CatRecControlReceiver::class.java).apply {
+                    action = CatRecControlReceiver.ACTION_EXIT_APP
                 },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
@@ -2543,13 +2984,6 @@ class ScreenRecordService :
                 Intent(this, CatRecControlReceiver::class.java).apply {
                     action = CatRecControlReceiver.ACTION_OVERLAY_TOGGLE
                 },
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-        val dismissedPI =
-            PendingIntent.getService(
-                this,
-                99,
-                Intent(this, ScreenRecordService::class.java).apply { action = ACTION_NOTIFICATION_DISMISSED },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
         val muteAction = if (isRecordingMuted) ACTION_UNMUTE else ACTION_MUTE
@@ -2649,7 +3083,6 @@ class ScreenRecordService :
                 .setContentText(statusLine)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentIntent(tapPending)
-                .setDeleteIntent(dismissedPI)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)

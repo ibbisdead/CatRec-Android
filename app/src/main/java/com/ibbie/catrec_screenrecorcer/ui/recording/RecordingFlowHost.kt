@@ -5,8 +5,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.projection.MediaProjectionConfig
-import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
@@ -68,6 +66,7 @@ import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
+import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 import com.ibbie.catrec_screenrecorcer.utils.PermissionInfo
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 
@@ -318,14 +317,13 @@ fun FabRecordingBridge(
                         },
                     )
                 }, 450L)
-                (context as? Activity)?.moveTaskToBack(true)
             } else {
                 Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
             }
         }
 
     fun startBufferFlow() {
-        bufferProjectionLauncher.launch(buildScreenCaptureIntent(context, recordSingleAppEnabled))
+        bufferProjectionLauncher.launch(MediaProjectionIntents.createScreenCaptureIntent(context, recordSingleAppEnabled))
     }
 
     val storagePermissionLauncher =
@@ -430,30 +428,12 @@ fun FabRecordingBridge(
     }
 }
 
-private fun buildScreenCaptureIntent(
-    context: Context,
-    recordSingleAppEnabled: Boolean,
-): Intent {
-    val mpm = context.getSystemService(MediaProjectionManager::class.java)
-    return if (Build.VERSION.SDK_INT >= 34) {
-        val config =
-            if (recordSingleAppEnabled) {
-                MediaProjectionConfig.createConfigForUserChoice()
-            } else {
-                MediaProjectionConfig.createConfigForDefaultDisplay()
-            }
-        mpm.createScreenCaptureIntent(config)
-    } else {
-        mpm.createScreenCaptureIntent()
-    }
-}
-
 private fun startMediaProjection(
     context: Context,
     launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
     recordSingleAppEnabled: Boolean,
 ) {
-    launcher.launch(buildScreenCaptureIntent(context, recordSingleAppEnabled))
+    launcher.launch(MediaProjectionIntents.createScreenCaptureIntent(context, recordSingleAppEnabled))
 }
 
 @Composable

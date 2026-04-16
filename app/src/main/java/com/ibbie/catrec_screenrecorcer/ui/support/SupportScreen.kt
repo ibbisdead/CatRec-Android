@@ -38,6 +38,7 @@ import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
+import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
 import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
@@ -234,11 +235,13 @@ fun SupportScreen(
                                 ad.fullScreenContentCallback =
                                     object : FullScreenContentCallback() {
                                         override fun onAdDismissedFullScreenContent() {
+                                            activity.resetWindowFocusAfterFullscreenOverlay()
                                             rewardedAd = null
                                             loadRewardedAd()
                                         }
 
                                         override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                            activity.resetWindowFocusAfterFullscreenOverlay()
                                             rewardedAd = null
                                             loadRewardedAd()
                                             Toast.makeText(context, context.getString(R.string.support_toast_ad_failed), Toast.LENGTH_SHORT).show()

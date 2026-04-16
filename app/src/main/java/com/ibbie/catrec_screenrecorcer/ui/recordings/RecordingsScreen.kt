@@ -69,6 +69,7 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.media.MediaDeleteResult
 import com.ibbie.catrec_screenrecorcer.media.MediaItem
 import com.ibbie.catrec_screenrecorcer.media.MediaManager
+import com.ibbie.catrec_screenrecorcer.media.screenshotDateLabel
 import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
@@ -80,9 +81,6 @@ import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -477,6 +475,7 @@ fun RecordingCard(
         GlassCard(
             modifier = Modifier.fillMaxWidth(),
             cornerRadius = 14.dp,
+            disableBlur = true,
         ) {
             Row(
                 modifier =
@@ -593,11 +592,7 @@ fun RecordingCard(
                             buildString {
                                 append(Formatter.formatShortFileSize(context, item.sizeBytes ?: 0L))
                                 append("  ·  ")
-                                append(
-                                    SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(
-                                        Date(item.dateModifiedMs ?: 0L),
-                                    ),
-                                )
+                                append(item.screenshotDateLabel())
                                 val dur = item.duration ?: 0L
                                 if (dur > 0) {
                                     append("  ·  ")

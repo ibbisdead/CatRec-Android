@@ -64,6 +64,22 @@
             android:taskAffinity="" />
 
         <activity
+            android:name=".service.OverlayRecordProjectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".service.OverlayScreenshotProjectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

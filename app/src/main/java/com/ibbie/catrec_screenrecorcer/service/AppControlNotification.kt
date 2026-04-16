@@ -6,14 +6,19 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Ongoing notification with icon [ImageButton]s (custom [RemoteViews]), shown while the main UI is available.
@@ -22,6 +27,10 @@ import kotlinx.coroutines.runBlocking
 object AppControlNotification {
     const val CHANNEL_ID = "CatRec_App_Controls"
     private const val NOTIFICATION_ID = 9102
+    private const val TAG = "AppControlNotification"
+
+    private val refreshJob = SupervisorJob()
+    private val refreshScope = CoroutineScope(refreshJob + Dispatchers.Main.immediate)
 
     private fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -67,12 +76,32 @@ object AppControlNotification {
             return
         }
 
-        val overlayVisible = OverlayService.idleControlsBubbleVisible
-        val floatingOn =
-            runBlocking {
-                SettingsRepository(app).floatingControls.first()
+        refreshScope.launch(Dispatchers.IO) {
+            try {
+                val floatingOn =
+                    if (FloatingControlsNotificationCache.initialized) {
+                        FloatingControlsNotificationCache.peek()
+                    } else {
+                        Log.d(TAG, "app_control_notif floating: DataStore cold fallback")
+                        val v = SettingsRepository(app).floatingControls.first()
+                        FloatingControlsNotificationCache.update(v)
+                        v
+                    }
+                withContext(Dispatchers.Main) {
+                    val overlayVisible = OverlayService.idleControlsBubbleVisible
+                    postIdleAppControlNotification(app, floatingOn, overlayVisible)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "refresh failed", e)
             }
+        }
+    }
 
+    private fun postIdleAppControlNotification(
+        app: Context,
+        floatingOn: Boolean,
+        overlayVisible: Boolean,
+    ) {
         val homePi =
             PendingIntent.getActivity(
                 app,
@@ -84,12 +113,11 @@ object AppControlNotification {
             )
 
         val exitPi =
-            PendingIntent.getActivity(
+            PendingIntent.getBroadcast(
                 app,
                 2,
-                Intent(app, MainActivity::class.java).apply {
-                    putExtra(MainActivity.EXTRA_EXIT_APP, true)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                Intent(app, CatRecControlReceiver::class.java).apply {
+                    action = CatRecControlReceiver.ACTION_EXIT_APP
                 },
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )

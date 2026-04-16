@@ -128,11 +128,12 @@ fun rememberIsBatterySaver(): Boolean {
 fun GlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 20.dp,
+    disableBlur: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val light = scheme.isLightTheme()
-    val canUseBlur = rememberCanUseBlur()
+    val canUseBlur = rememberCanUseBlur() && !disableBlur
     val rimBrush = LocalAccentBrush.current
     val shape = RoundedCornerShape(cornerRadius)
 

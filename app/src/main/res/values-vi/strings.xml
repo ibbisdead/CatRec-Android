@@ -43,7 +43,6 @@
     <string name="tab_recordings">Bản ghi</string>
     <string name="tab_settings">Cài đặt</string>
     <string name="tab_support">Hỗ trợ</string>
-    <string name="tab_tools">Công cụ</string>
     <string name="tab_editor">Biên tập viên</string>
     <string name="fab_start_recording">Ghi</string>
     <string name="storage_indicator_format">%1$s đã sử dụng · %2$s miễn phí</string>

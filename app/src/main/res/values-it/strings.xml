@@ -43,7 +43,6 @@
     <string name="tab_recordings">Recordings</string>
     <string name="tab_settings">Settings</string>
     <string name="tab_support">Support</string>
-    <string name="tab_tools">Tools</string>
     <string name="tab_editor">Editore</string>
     <string name="fab_start_recording">Documentazione</string>
     <string name="storage_indicator_format">%1$s usato · %2$s gratis</string>

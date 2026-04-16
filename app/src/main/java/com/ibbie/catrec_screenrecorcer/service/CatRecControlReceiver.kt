@@ -6,12 +6,17 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CatRecControlReceiver : BroadcastReceiver() {
     override fun onReceive(
@@ -22,7 +27,47 @@ class CatRecControlReceiver : BroadcastReceiver() {
         when (intent?.action) {
             ACTION_RECORD_TOGGLE -> handleRecordToggle(app)
             ACTION_SCREENSHOT_OR_PAUSE -> handleScreenshotOrPause(app)
-            ACTION_OVERLAY_TOGGLE -> handleOverlayToggle(app)
+            ACTION_OVERLAY_TOGGLE -> {
+                val pending = goAsync()
+                receiverScope.launch {
+                    try {
+                        val floatingOn =
+                            if (FloatingControlsNotificationCache.initialized) {
+                                FloatingControlsNotificationCache.peek()
+                            } else {
+                                Log.d(TAG, "overlay_toggle_floating: DataStore cold fallback")
+                                val v = SettingsRepository(app).floatingControls.first()
+                                FloatingControlsNotificationCache.update(v)
+                                v
+                            }
+                        withContext(Dispatchers.Main) {
+                            try {
+                                handleOverlayToggleOnMain(app, floatingOn)
+                            } finally {
+                                pending.finish()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "overlay_toggle read failed", e)
+                        pending.finish()
+                    }
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        AppControlNotification.refresh(app)
+                    }, 350L)
+                }
+                return
+            }
+            ACTION_EXIT_APP -> {
+                app.stopService(Intent(app, OverlayService::class.java))
+                app.startService(
+                    Intent(app, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_EXIT_SERVICE
+                    },
+                )
+                AppControlNotification.cancel(app)
+                app.sendBroadcast(Intent(MainActivity.ACTION_FINISH_UI))
+                return
+            }
         }
         Handler(Looper.getMainLooper()).postDelayed({
             AppControlNotification.refresh(app)
@@ -56,10 +101,11 @@ class CatRecControlReceiver : BroadcastReceiver() {
                 app.startService(Intent(app, ScreenRecordService::class.java).apply { this.action = action })
             }
             else -> {
+                val asBuffer = RecordingState.currentMode.value == CaptureMode.CLIPPER
                 app.startActivity(
-                    Intent(app, MainActivity::class.java).apply {
-                        action = "ACTION_START_RECORDING_FROM_OVERLAY"
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    Intent(app, OverlayRecordProjectionActivity::class.java).apply {
+                        putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     },
                 )
             }
@@ -85,8 +131,10 @@ class CatRecControlReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleOverlayToggle(app: Context) {
-        val floatingOn = runBlocking { SettingsRepository(app).floatingControls.first() }
+    private fun handleOverlayToggleOnMain(
+        app: Context,
+        floatingOn: Boolean,
+    ) {
         if (!floatingOn) {
             app.startActivity(
                 Intent(app, MainActivity::class.java).apply {
@@ -119,11 +167,18 @@ class CatRecControlReceiver : BroadcastReceiver() {
     }
 
     companion object {
+        private const val TAG = "CatRecControlReceiver"
+
+        private val receiverJob = SupervisorJob()
+        private val receiverScope = CoroutineScope(receiverJob + Dispatchers.IO)
+
         const val ACTION_RECORD_TOGGLE =
             "com.ibbie.catrec_screenrecorcer.CONTROL_RECORD_TOGGLE"
         const val ACTION_SCREENSHOT_OR_PAUSE =
             "com.ibbie.catrec_screenrecorcer.CONTROL_SCREENSHOT_OR_PAUSE"
         const val ACTION_OVERLAY_TOGGLE =
             "com.ibbie.catrec_screenrecorcer.CONTROL_OVERLAY_TOGGLE"
+        const val ACTION_EXIT_APP =
+            "com.ibbie.catrec_screenrecorcer.CONTROL_EXIT_APP"
     }
 }

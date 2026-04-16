@@ -574,6 +574,7 @@ private fun ScreenshotCard(
         GlassCard(
             modifier = Modifier.fillMaxWidth(),
             cornerRadius = 12.dp,
+            disableBlur = true,
         ) {
             Box(
                 modifier =

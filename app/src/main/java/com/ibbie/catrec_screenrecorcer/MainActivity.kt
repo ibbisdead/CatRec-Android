@@ -45,9 +45,7 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
-import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
-import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
@@ -70,11 +68,10 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
             "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
 
-        /** Finishes the task and stops recorder/overlay services. */
-        const val EXTRA_EXIT_APP = "com.ibbie.catrec_screenrecorcer.EXIT_APP"
-
         /** Raw image URI string; [takeQueuedImageEditorUri] consumes it for in-app editor navigation. */
         const val EXTRA_OPEN_IMAGE_EDITOR_URI = "com.ibbie.catrec_screenrecorcer.OPEN_IMAGE_EDITOR_URI"
+
+        const val ACTION_FINISH_UI = "com.ibbie.catrec_screenrecorcer.FINISH_UI"
     }
 
     private val pendingImageEditorLock = Any()
@@ -118,10 +115,28 @@ class MainActivity : ComponentActivity() {
         super.attachBaseContext(LocaleHelper.wrap(newBase))
     }
 
+    private val finishReceiver =
+        object : android.content.BroadcastReceiver() {
+            override fun onReceive(
+                context: Context?,
+                intent: Intent?,
+            ) {
+                if (intent?.action == ACTION_FINISH_UI) {
+                    finishAffinity()
+                }
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (consumeExitIntent(intent)) return
+        androidx.core.content.ContextCompat.registerReceiver(
+            this,
+            finishReceiver,
+            android.content.IntentFilter(ACTION_FINISH_UI),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+
         consumeOpenImageEditorIntent(intent)
 
         val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -240,6 +255,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(finishReceiver)
+        } catch (_: Exception) {
+            // Ignored
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         (application as? CatRecApplication)?.billingManager?.refreshPurchasesIfConnected()
@@ -266,27 +290,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (consumeExitIntent(intent)) return
         consumeOpenImageEditorIntent(intent)
         // Latest action for FabRecordingBridge (ACTION_START_RECORDING_FROM_OVERLAY).
-    }
-
-    private fun consumeExitIntent(intent: Intent?): Boolean {
-        if (intent?.getBooleanExtra(EXTRA_EXIT_APP, false) != true) return false
-        stopService(Intent(this, OverlayService::class.java))
-        startService(
-            Intent(this, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_STOP
-            },
-        )
-        startService(
-            Intent(this, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_STOP_BUFFER
-            },
-        )
-        AppControlNotification.cancel(this)
-        finishAffinity()
-        return true
     }
 
     private fun applyStoredLanguage() {

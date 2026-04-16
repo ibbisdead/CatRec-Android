@@ -48,6 +48,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
+import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
 import com.ibbie.catrec_screenrecorcer.data.AdGate
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
@@ -80,6 +81,7 @@ fun SettingsScreen(
     val videoEncoder by viewModel.videoEncoder.collectAsState()
     val recordingOrientation by viewModel.recordingOrientation.collectAsState()
     val isGifCaptureMode by viewModel.isGifCaptureMode.collectAsState()
+    val adaptivePerformanceEnabled by viewModel.adaptivePerformanceEnabled.collectAsState()
     val gifRecorderPresetId by viewModel.gifRecorderPresetId.collectAsState()
 
     // Audio
@@ -1730,6 +1732,14 @@ fun SettingsScreen(
                     "${bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
                     enabled = !videoLocked,
                 ) { if (!videoLocked) showBitrateDialog = true }
+                SwitchSettingItem(
+                    icon = Icons.Default.Tune,
+                    title = stringResource(R.string.setting_adaptive_recording_performance),
+                    subtitle = stringResource(R.string.setting_adaptive_recording_performance_summary),
+                    checked = adaptivePerformanceEnabled,
+                    enabled = !videoLocked,
+                    onCheckedChange = { viewModel.setAdaptivePerformanceEnabled(it) },
+                )
                 ClickableSettingItem(
                     Icons.Default.AspectRatio,
                     stringResource(R.string.setting_resolution),
@@ -2237,7 +2247,12 @@ private fun AdGateDialog(
                     if (loadedAd != null && activity != null) {
                         loadedAd.fullScreenContentCallback =
                             object : FullScreenContentCallback() {
+                                override fun onAdDismissedFullScreenContent() {
+                                    activity.resetWindowFocusAfterFullscreenOverlay()
+                                }
+
                                 override fun onAdFailedToShowFullScreenContent(e: AdError) {
+                                    activity.resetWindowFocusAfterFullscreenOverlay()
                                     // Ad couldn't show — unlock anyway as fallback
                                     onUnlocked()
                                 }
@@ -2311,6 +2326,7 @@ fun SwitchSettingItem(
     title: String,
     subtitle: String? = null,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val accent = LocalAccentColor.current
@@ -2318,7 +2334,9 @@ fun SwitchSettingItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable { onCheckedChange(!checked) },
+                .clickable(enabled = enabled) {
+                    if (enabled) onCheckedChange(!checked)
+                },
         headlineContent = { Text(title) },
         supportingContent =
             if (subtitle != null) {
@@ -2330,6 +2348,7 @@ fun SwitchSettingItem(
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         trailingContent = {
             Switch(
+                enabled = enabled,
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors =

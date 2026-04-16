@@ -43,7 +43,6 @@
     <string name="tab_recordings">録画一覧</string>
     <string name="tab_settings">設定</string>
     <string name="tab_support">サポート</string>
-    <string name="tab_tools">ツール</string>
     <string name="tab_editor">エディタ</string>
     <string name="fab_start_recording">記録</string>
     <string name="storage_indicator_format">%1$s が使用済み · %2$s が無料</string>

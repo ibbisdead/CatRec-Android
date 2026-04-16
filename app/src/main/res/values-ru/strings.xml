@@ -43,7 +43,6 @@
     <string name="tab_recordings">Записи</string>
     <string name="tab_settings">Настройки</string>
     <string name="tab_support">Поддержка</string>
-    <string name="tab_tools">Инструменты</string>
     <string name="tab_editor">Редактор</string>
     <string name="fab_start_recording">Записывать</string>
     <string name="storage_indicator_format">%1$s использовано · %2$s бесплатно</string>

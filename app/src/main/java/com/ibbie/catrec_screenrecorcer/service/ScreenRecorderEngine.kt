@@ -46,6 +46,10 @@ class ScreenRecorderEngine(
     private val separateMicFileDescriptor: FileDescriptor? = null,
     /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
     private val onInternalAudioSilence: (() -> Unit)? = null,
+    /** Invoked at most once when the video encoder drain path hits a fatal error (encoder thread). */
+    private val onFatalVideoEncodeError: ((String) -> Unit)? = null,
+    /** When true with user HEVC, first [prepareVideoEncoder] uses AVC only (adaptive tier 4 hint). */
+    private val adaptivePreferAvcForPrepare: Boolean = false,
 ) {
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
 
@@ -54,6 +58,9 @@ class ScreenRecorderEngine(
 
         /** Milliseconds of all-zero PCM from internal capture before we fire the fallback. */
         private const val SILENCE_TIMEOUT_MS = 5_000L
+
+        /** Video drain pacing — lower than audio to pull encoded frames sooner (less encoder backpressure). */
+        private const val VIDEO_DRAIN_SLEEP_MS = 2L
     }
 
     private var mAudioMode = audioMode
@@ -69,6 +76,9 @@ class ScreenRecorderEngine(
     private val effectiveChannelCount = AtomicInteger(audioChannelCount.coerceIn(1, 2))
 
     private var videoEncoder: MediaCodec? = null
+
+    /** MIME from [VideoEncoderConfigurator]; used for HEVC→AVC recovery on [MediaCodec.start] failure. */
+    private var configuredVideoMime: String = ""
     private var audioEncoder: MediaCodec? = null
     private var muxer: MediaMuxer? = null
     private var inputSurface: Surface? = null
@@ -107,6 +117,9 @@ class ScreenRecorderEngine(
     private val totalPausedTimeUs = AtomicLong(0)
     private var pauseStartTimeUs = 0L
 
+    /** Ensures [onFatalVideoEncodeError] runs at most once for this engine instance. */
+    private val videoEncodeFatalSignaled = AtomicBoolean(false)
+
     fun start() {
         mAudioMode = audioMode
 
@@ -115,6 +128,46 @@ class ScreenRecorderEngine(
             prepareAudioEncoder()
             if (separateMicFileDescriptor != null) prepareSeparateMicEncoder()
             prepareMuxer()
+
+            // Start encoders before any frame hits the input Surface. Feeding the encoder surface
+            // while the codec is still Configured breaks some OEM stacks (CodecException in start()
+            // or native_start) on newer Android — e.g. Nothing Phone + API 36.
+            try {
+                videoEncoder?.start()
+            } catch (e: Exception) {
+                val wishedHevc =
+                    encoderType == "H.265 (HEVC)" &&
+                        !Build.MODEL.contains("sdk_gphone", ignoreCase = true) &&
+                        !Build.MODEL.contains("google_sdk", ignoreCase = true)
+                if (wishedHevc && configuredVideoMime == MediaFormat.MIMETYPE_VIDEO_HEVC) {
+                    Log.e(
+                        TAG,
+                        "Video encoder start failed on HEVC (${e.javaClass.simpleName}: ${e.message}); " +
+                            "re-preparing with AVC — brand=${Build.BRAND} model=${Build.MODEL}",
+                        e,
+                    )
+                    try {
+                        videoEncoder?.release()
+                    } catch (_: Exception) {
+                    }
+                    try {
+                        inputSurface?.release()
+                    } catch (_: Exception) {
+                    }
+                    videoEncoder = null
+                    inputSurface = null
+                    prepareVideoEncoder(avcOnly = true)
+                    Log.i(TAG, "Retrying video encoder start with AVC after HEVC start failure")
+                    videoEncoder?.start()
+                } else {
+                    throw e
+                }
+            }
+            if (mainMuxAudioMode != AudioMode.NONE) {
+                audioEncoder?.start()
+                queueSilentAudioFrame()
+            }
+            separateMicEncoder?.start()
 
             // Single VirtualDisplay → ImageReader → canvas/GLES → encoder surface (screenshots share this path).
             frameRelay =
@@ -126,13 +179,6 @@ class ScreenRecorderEngine(
                     dpi,
                     "CatRecEngine",
                 ).also { it.start() }
-
-            videoEncoder?.start()
-            if (mainMuxAudioMode != AudioMode.NONE) {
-                audioEncoder?.start()
-                queueSilentAudioFrame()
-            }
-            separateMicEncoder?.start()
 
             isRecording.set(true)
 
@@ -166,7 +212,22 @@ class ScreenRecorderEngine(
     }
 
     fun stop() {
-        if (!isRecording.getAndSet(false)) return
+        val wasRecording = isRecording.getAndSet(false)
+        val hasOpenResources =
+            frameRelay != null ||
+                videoEncoder != null ||
+                audioEncoder != null ||
+                separateMicEncoder != null ||
+                muxer != null ||
+                separateMicMuxer != null ||
+                micRecord != null ||
+                internalRecord != null ||
+                audioThread != null ||
+                videoDrainThread != null ||
+                audioDrainThread != null ||
+                separateMicDrainThread != null
+        // [start] can throw before [isRecording] is set; we must still release muxer/codec/VD.
+        if (!wasRecording && !hasOpenResources) return
         Log.d(TAG, "Stopping recorder…")
 
         try {
@@ -341,6 +402,36 @@ class ScreenRecorderEngine(
         }
     }
 
+    fun applyAdaptiveVideoBitrateBps(targetBps: Int): Boolean {
+        val encoder = videoEncoder ?: return false
+        val baseline = bitrate
+        val floorBps = (baseline * 0.20).toInt().coerceAtLeast(200_000)
+        val capped = targetBps.coerceIn(floorBps, baseline)
+        return try {
+            val b =
+                Bundle().apply {
+                    putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, capped)
+                }
+            encoder.setParameters(b)
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "applyAdaptiveVideoBitrateBps failed: ${e.message}")
+            false
+        }
+    }
+
+    fun setAdaptiveSkipModulo(modulo: Int) {
+        frameRelay?.adaptiveSkipModulo = modulo
+    }
+
+    fun attachAdaptivePerformance(
+        sink: AdaptiveRecordingSignalSink?,
+        signalsEnabled: Boolean,
+    ) {
+        frameRelay?.adaptiveSignalSink = sink
+        frameRelay?.adaptiveSignalsEnabled = signalsEnabled
+    }
+
     private fun signalAudioEOS() {
         val encoder = audioEncoder ?: return
         try {
@@ -381,102 +472,25 @@ class ScreenRecorderEngine(
         }
     }
 
-    private fun prepareVideoEncoder() {
-        val isEmulator =
-            Build.MODEL.contains("sdk_gphone", ignoreCase = true) ||
-                Build.MODEL.contains("google_sdk", ignoreCase = true)
-
-        val mimeType =
-            if (encoderType == "H.265 (HEVC)" && !isEmulator) {
-                MediaFormat.MIMETYPE_VIDEO_HEVC
-            } else {
-                MediaFormat.MIMETYPE_VIDEO_AVC
-            }
-
-        // Encoder selection: shared resolver caches MediaCodecList and avoids bitrate in discovery
-        // (see [VideoEncoderResolver]).
-        val encoderName = VideoEncoderResolver.resolveVideoEncoderName(mimeType, width, height, fps)
-        Log.d(TAG, "Video encoder selected: $encoderName")
-
-        // ── Configuration format ───────────────────────────────────────────────
-        // Build with profile; if the encoder rejects it, retry without profile keys.
-        fun buildConfigFormat(withProfile: Boolean): MediaFormat =
-            MediaFormat.createVideoFormat(mimeType, width, height).apply {
-                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-                setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
-                setInteger(MediaFormat.KEY_PRIORITY, 0)
-                // VBR: the encoder may burst above the target bitrate in complex scenes,
-                // which avoids artefacts. CBR would force quality-damaging bit-stuffing
-                // in simple scenes and bit-starvation in complex ones.
-                setInteger(
-                    MediaFormat.KEY_BITRATE_MODE,
-                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
-                )
-                // On API 31+, explicitly permit the encoder to reach the full bitrate.
-                // Use the raw key string to avoid a compile-time dependency on API 31+.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setInteger("max-bitrate", bitrate)
-                }
-                if (withProfile) {
-                    // High Profile (H.264) / Main Profile (HEVC) = better compression
-                    // efficiency and fewer artefacts vs Baseline/Main defaults.
-                    if (mimeType == MediaFormat.MIMETYPE_VIDEO_AVC) {
-                        setInteger(
-                            MediaFormat.KEY_PROFILE,
-                            MediaCodecInfo.CodecProfileLevel.AVCProfileHigh,
-                        )
-                        setInteger(
-                            MediaFormat.KEY_LEVEL,
-                            MediaCodecInfo.CodecProfileLevel.AVCLevel41,
-                        )
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        setInteger(
-                            MediaFormat.KEY_PROFILE,
-                            MediaCodecInfo.CodecProfileLevel.HEVCProfileMain,
-                        )
-                    }
-                }
-            }
-
-        videoEncoder =
-            try {
-                if (encoderName != null) {
-                    MediaCodec.createByCodecName(encoderName)
-                } else {
-                    MediaCodec.createEncoderByType(mimeType)
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Named encoder create failed, using type fallback: ${e.message}")
-                MediaCodec.createEncoderByType(mimeType)
-            }
-
-        // Try configure with profile; some encoders reject profile hints → fall back cleanly.
-        try {
-            videoEncoder?.configure(
-                buildConfigFormat(withProfile = true),
-                null,
-                null,
-                MediaCodec.CONFIGURE_FLAG_ENCODE,
+    private fun prepareVideoEncoder(avcOnly: Boolean = false) {
+        val forceAvcHint =
+            !avcOnly &&
+                adaptivePreferAvcForPrepare &&
+                encoderType == "H.265 (HEVC)"
+        val result =
+            VideoEncoderConfigurator.configureScreenCaptureVideoEncoder(
+                logTag = TAG,
+                userEncoderType = encoderType,
+                width = width,
+                height = height,
+                fps = fps,
+                bitrate = bitrate,
+                avcOnly = avcOnly || forceAvcHint,
             )
-        } catch (e: Exception) {
-            Log.w(TAG, "Profile configure failed, retrying without: ${e.message}")
-            try {
-                videoEncoder?.configure(
-                    buildConfigFormat(withProfile = false),
-                    null,
-                    null,
-                    MediaCodec.CONFIGURE_FLAG_ENCODE,
-                )
-            } catch (e2: Exception) {
-                Log.e(TAG, "Video encoder configure failed entirely", e2)
-                throw e2
-            }
-        }
-
-        inputSurface = videoEncoder?.createInputSurface()
+        videoEncoder = result.codec
+        inputSurface = result.inputSurface
+        configuredVideoMime = result.mime
+        Log.d(TAG, "Video encoder configured mime=$configuredVideoMime avcOnly=$avcOnly")
     }
 
     @SuppressLint("MissingPermission")
@@ -879,7 +893,12 @@ class ScreenRecorderEngine(
                         val r2 = micRecord!!.read(mixBuffer, 0, bufferSize)
                         when {
                             r1 > 0 && r2 > 0 -> {
-                                mixAudio(mainBuffer, mixBuffer, minOf(r1, r2))
+                                mixAudio(
+                                    mainBuffer,
+                                    mixBuffer,
+                                    minOf(r1, r2),
+                                    effectiveChannelCount.get(),
+                                )
                                 readCount = minOf(r1, r2)
                             }
                             r1 > 0 -> readCount = r1
@@ -1004,17 +1023,26 @@ class ScreenRecorderEngine(
         Log.d(TAG, "captureAudioLoop exited after $loopCount iterations")
     }
 
+    /** Mixes interleaved PCM16; [channelCount] 1 = mono (2 bytes/frame), 2 = stereo (4 bytes/frame). */
     private fun mixAudio(
         base: ByteArray,
         overlay: ByteArray,
-        size: Int,
+        sizeBytes: Int,
+        channelCount: Int,
     ) {
-        for (i in 0 until size step 2) {
-            val s1 = ((base[i].toInt() and 0xFF) or (base[i + 1].toInt() shl 8)).toShort()
-            val s2 = ((overlay[i].toInt() and 0xFF) or (overlay[i + 1].toInt() shl 8)).toShort()
-            val mixed = (s1 + s2).coerceIn(-32768, 32767).toShort().toInt()
-            base[i] = (mixed and 0xFF).toByte()
-            base[i + 1] = ((mixed shr 8) and 0xFF).toByte()
+        val ch = channelCount.coerceIn(1, 2)
+        val frameBytes = 2 * ch
+        var i = 0
+        while (i + frameBytes <= sizeBytes) {
+            for (c in 0 until ch) {
+                val o = i + c * 2
+                val s1 = ((base[o].toInt() and 0xFF) or (base[o + 1].toInt() shl 8)).toShort()
+                val s2 = ((overlay[o].toInt() and 0xFF) or (overlay[o + 1].toInt() shl 8)).toShort()
+                val mixed = (s1.toInt() + s2.toInt()).coerceIn(-32768, 32767)
+                base[o] = (mixed and 0xFF).toByte()
+                base[o + 1] = ((mixed shr 8) and 0xFF).toByte()
+            }
+            i += frameBytes
         }
     }
 
@@ -1053,7 +1081,7 @@ class ScreenRecorderEngine(
         while (isRecording.get()) {
             drainEncoder(videoEncoder, isVideo = true)
             try {
-                Thread.sleep(4)
+                Thread.sleep(VIDEO_DRAIN_SLEEP_MS)
             } catch (_: Exception) {
             }
         }
@@ -1065,7 +1093,7 @@ class ScreenRecorderEngine(
         while (!videoEosReached.get() && System.currentTimeMillis() < deadline) {
             drainEncoder(videoEncoder, isVideo = true)
             try {
-                Thread.sleep(4)
+                Thread.sleep(VIDEO_DRAIN_SLEEP_MS)
             } catch (_: Exception) {
             }
         }
@@ -1105,6 +1133,28 @@ class ScreenRecorderEngine(
             } catch (_: Exception) {
             }
         }
+    }
+
+    private fun reportFatalVideoEncodeIfNeeded(
+        e: Exception,
+        phase: String,
+    ) {
+        if (!videoEncodeFatalSignaled.compareAndSet(false, true)) return
+        val detail =
+            buildString {
+                append(phase)
+                append(" ")
+                append(e.javaClass.simpleName)
+                append(": ")
+                append(e.message)
+            }
+        Log.e(
+            TAG,
+            "VideoEncFatal mime=$configuredVideoMime encoder=$encoderType singleShot detail=$detail",
+            e,
+        )
+        FirebaseCrashlytics.getInstance().log("VideoEncFatal record $detail mime=$configuredVideoMime")
+        onFatalVideoEncodeError?.invoke(detail)
     }
 
     private fun drainEncoder(
@@ -1172,7 +1222,10 @@ class ScreenRecorderEngine(
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Drain error (video=$isVideo): ${e.message}")
+                Log.e(TAG, "Drain error (video=$isVideo): ${e.message}", e)
+                if (isVideo) {
+                    reportFatalVideoEncodeIfNeeded(e, phase = "dequeue_or_output")
+                }
                 break
             }
         }

@@ -48,19 +48,6 @@ object AppOpenAdManager {
     var isShowingAd: Boolean = false
         private set
 
-    /**
-     * Full-screen ads can leave a focused view that is no longer under the activity decor.
-     * That state triggers [IllegalArgumentException] in ViewRootImpl.scrollToRectOrFocus (Crashlytics 1ceae08e…).
-     */
-    private fun Activity.clearFocusAfterFullscreenOverlay() {
-        val root = window?.decorView ?: return
-        root.post {
-            root.clearFocus()
-            // Move focus to the window root so the next traversal has a valid descendant chain.
-            root.requestFocus()
-        }
-    }
-
     fun load(
         context: Context,
         adUnitId: String,
@@ -143,7 +130,7 @@ object AppOpenAdManager {
         ad.fullScreenContentCallback =
             object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
-                    activity.clearFocusAfterFullscreenOverlay()
+                    activity.resetWindowFocusAfterFullscreenOverlay()
                     appOpenAd = null
                     isShowingAd = false
                     load(activity.applicationContext, adUnitId)
@@ -151,7 +138,7 @@ object AppOpenAdManager {
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
                     Log.w(TAG, "onAdFailedToShow: ${error.message}")
-                    activity.clearFocusAfterFullscreenOverlay()
+                    activity.resetWindowFocusAfterFullscreenOverlay()
                     appOpenAd = null
                     isShowingAd = false
                     load(activity.applicationContext, adUnitId)

@@ -144,6 +144,10 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
 
+    // FFmpeg (LGPL): GIF export uses palettegen + paletteuse. Official arthenica binaries were
+    // retired; this fork ships 16KB page-size libs for current Play / API 35 targets.
+    implementation("com.moizhassan.ffmpeg:ffmpeg-kit-16kb:6.1.1")
+
     // Media3 / ExoPlayer
     implementation("androidx.media3:media3-exoplayer:1.5.0")
     implementation("androidx.media3:media3-ui:1.5.0")

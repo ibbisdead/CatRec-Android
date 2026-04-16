@@ -4,8 +4,13 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -13,16 +18,39 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.setPadding
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 
 /**
- * Lightweight chip after a screenshot: preview top-end + share / edit, without blocking the whole screen.
+ * After a screenshot: compact preview at the top-end with share and edit actions
+ * (similar to quick-share thumbnails in common screen recorders).
  */
 class ScreenshotPostActionActivity : AppCompatActivity() {
+    private val dismissHandler = Handler(Looper.getMainLooper())
+    private val autoDismissRunnable = Runnable { if (!isFinishing) finish() }
+
+    private fun cancelAutoDismiss() {
+        dismissHandler.removeCallbacks(autoDismissRunnable)
+    }
+
+    private fun scheduleAutoDismiss() {
+        cancelAutoDismiss()
+        dismissHandler.postDelayed(autoDismissRunnable, AUTO_DISMISS_MS)
+    }
+
+    override fun onDestroy() {
+        cancelAutoDismiss()
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         val uriStr = intent.getStringExtra(EXTRA_IMAGE_URI)
         if (uriStr.isNullOrEmpty()) {
             finish()
@@ -31,7 +59,7 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
         val uri = Uri.parse(uriStr)
 
         val margin = dp(12)
-        val statusInset = statusBarHeight() + dp(8)
+        val statusFallback = statusBarHeight() + dp(8)
 
         val root =
             FrameLayout(this).apply {
@@ -40,8 +68,11 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                     )
-                setBackgroundColor(0x55000000)
-                setOnClickListener { finish() }
+                setBackgroundColor(0x99000000.toInt())
+                setOnClickListener {
+                    cancelAutoDismiss()
+                    finish()
+                }
             }
 
         val chip =
@@ -49,13 +80,19 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER_HORIZONTAL
                 isClickable = true
-                setOnClickListener { /* consume; do not finish */ }
+                setOnClickListener { /* consume taps; do not close */ }
+                setOnTouchListener { _, event ->
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        scheduleAutoDismiss()
+                    }
+                    false
+                }
             }
 
         val preview =
             ImageView(this).apply {
                 layoutParams =
-                    LinearLayout.LayoutParams(dp(132), dp(176)).apply {
+                    LinearLayout.LayoutParams(dp(120), dp(160)).apply {
                         bottomMargin = dp(10)
                     }
                 scaleType = ImageView.ScaleType.CENTER_CROP
@@ -80,15 +117,15 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
         val hint =
             TextView(this).apply {
                 text = getString(R.string.screenshot_post_tap_outside)
-                setTextColor(0xCCFFFFFF.toInt())
-                textSize = 11f
+                setTextColor(0xD0FFFFFF.toInt())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                 gravity = Gravity.CENTER
                 layoutParams =
                     LinearLayout
                         .LayoutParams(
                             ViewGroup.LayoutParams.WRAP_CONTENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ).apply { bottomMargin = dp(8) }
+                        ).apply { bottomMargin = dp(10) }
             }
 
         val row =
@@ -111,7 +148,7 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                         this@ScreenshotPostActionActivity,
                         R.drawable.bg_post_action_pill,
                     )
-                val padH = dp(16)
+                val padH = dp(14)
                 val padV = dp(10)
                 setPadding(padH, padV, padH, padV)
                 layoutParams =
@@ -127,17 +164,21 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                 val icon =
                     ImageView(this@ScreenshotPostActionActivity).apply {
                         layoutParams = LinearLayout.LayoutParams(dp(22), dp(22))
-                        setImageResource(iconRes)
-                        imageTintList =
-                            android.content.res.ColorStateList
-                                .valueOf(0xFFFFFFFF.toInt())
                         scaleType = ImageView.ScaleType.FIT_CENTER
+                        setImageDrawable(
+                            AppCompatResources.getDrawable(
+                                this@ScreenshotPostActionActivity,
+                                iconRes,
+                            ),
+                        )
+                        imageTintList =
+                            android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
                     }
                 val label =
                     TextView(this@ScreenshotPostActionActivity).apply {
                         text = getString(labelRes)
                         setTextColor(0xFFFFFFFF.toInt())
-                        textSize = 13f
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                         layoutParams =
                             LinearLayout
                                 .LayoutParams(
@@ -151,13 +192,23 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
             }
 
         row.addView(
-            pillAction(android.R.drawable.ic_menu_share, R.string.action_share, marginEndDp = 10) {
+            pillAction(
+                android.R.drawable.ic_menu_share,
+                R.string.action_share,
+                marginEndDp = 8,
+            ) {
+                cancelAutoDismiss()
                 shareImage(uri)
                 finish()
             },
         )
         row.addView(
-            pillAction(R.drawable.ic_brush_auto_fix, R.string.screenshot_post_edit, marginEndDp = 0) {
+            pillAction(
+                R.drawable.ic_post_action_edit,
+                R.string.screenshot_post_edit,
+                marginEndDp = 0,
+            ) {
+                cancelAutoDismiss()
                 openNativeEditor(uri)
                 finish()
             },
@@ -167,18 +218,56 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
         chip.addView(hint)
         chip.addView(row)
 
-        val lp =
+        preview.elevation = dp(3).toFloat()
+
+        chip.alpha = 0f
+        chip.scaleX = 0.92f
+        chip.scaleY = 0.92f
+        chip.translationX = dp(36).toFloat()
+        chip.translationY = -dp(6).toFloat()
+
+        val chipLp =
             FrameLayout
                 .LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.END
-                    topMargin = statusInset
+                    topMargin = statusFallback
                     marginEnd = margin
                 }
-        root.addView(chip, lp)
+        root.addView(chip, chipLp)
         setContentView(root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val bars =
+                insets.getInsets(
+                    WindowInsetsCompat.Type.statusBars() or
+                        WindowInsetsCompat.Type.displayCutout(),
+                )
+            (chip.layoutParams as FrameLayout.LayoutParams).apply {
+                topMargin = bars.top + dp(8)
+                marginEnd = margin + bars.right
+            }
+            chip.requestLayout()
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
+
+        chip.post {
+            chip
+                .animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .translationX(0f)
+                .translationY(0f)
+                .setDuration(260L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+
+        scheduleAutoDismiss()
     }
 
     private fun shareImage(uri: Uri) {
@@ -218,5 +307,6 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_IMAGE_URI = "EXTRA_IMAGE_URI"
+        private const val AUTO_DISMISS_MS = 6000L
     }
 }

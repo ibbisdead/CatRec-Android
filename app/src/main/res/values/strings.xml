@@ -43,7 +43,6 @@
     <string name="tab_recordings">Recordings</string>
     <string name="tab_settings">Settings</string>
     <string name="tab_support">Support</string>
-    <string name="tab_tools">Tools</string>
     <string name="tab_editor">Editor</string>
     <string name="fab_start_recording">Record</string>
     <string name="storage_indicator_format">%1$s used · %2$s free</string>
@@ -318,6 +317,9 @@
     <string name="perf_static_glass">Static glass — blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
+    <string name="setting_adaptive_recording_performance">Adaptive recording performance</string>
+    <string name="setting_adaptive_recording_performance_summary">Automatically reduce load if the device struggles while recording</string>
+    <string name="performance_fallback_active">Switched to a lighter recording profile for stability</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
     <string name="accent_color_title">Accent color</string>
@@ -541,6 +543,7 @@
     <string name="notif_post_share">Share</string>
     <string name="notif_post_delete">Delete</string>
     <string name="share_recording_title">Share recording</string>
+    <string name="toast_video_encoder_failed">Could not start the video encoder. Try a lower resolution or a different encoder in Settings.</string>
     <string name="toast_recording_stopped_projection">Recording stopped: the captured app was closed or moved to the background</string>
     <string name="toast_recording_failed_no_video">Recording failed: no video was captured</string>
     <string name="toast_gif_transcode_failed">Could not create GIF — your MP4 recording was kept.</string>

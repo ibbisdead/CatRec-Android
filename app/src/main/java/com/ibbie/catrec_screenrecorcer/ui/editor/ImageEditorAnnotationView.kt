@@ -71,7 +71,12 @@ class ImageEditorAnnotationView(
     private val destRect = RectF()
     private val imageToViewMatrix = Matrix()
 
-    private val filterPaint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+    /** Used for base + annotation bitmaps scaled into [destRect] (fit-center); filtering avoids crunchy scaling after rotate. */
+    private val filterPaint =
+        Paint().apply {
+            isAntiAlias = true
+            isFilterBitmap = true
+        }
 
     private val currentPath = Path()
     private var strokeHadSegment = false
@@ -112,8 +117,13 @@ class ImageEditorAnnotationView(
         currentPath.reset()
         strokeHadSegment = false
         previewRect.setEmpty()
-        syncStrokeWidths()
         requestLayout()
+        // Bitmap aspect can change (e.g. 90°/270° rotate) without view size changing — onSizeChanged
+        // would not run; recompute fit-center destRect so drawBitmap is not stretched into stale bounds.
+        if (width > 0 && height > 0) {
+            updateDestRect(width, height)
+        }
+        syncStrokeWidths()
         invalidate()
     }
 
@@ -230,6 +240,7 @@ class ImageEditorAnnotationView(
         c.drawLine(x2, y2, (x2 + head * cos(a2)).toFloat(), (y2 + head * sin(a2)).toFloat(), p)
     }
 
+    /** Fit-center: same scale for width and height so aspect ratio is preserved (including after 90°/270° bitmap swaps). */
     private fun updateDestRect(
         w: Int,
         h: Int,
@@ -258,6 +269,21 @@ class ImageEditorAnnotationView(
     ) {
         super.onSizeChanged(w, h, oldw, oldh)
         updateDestRect(w, h)
+    }
+
+    override fun onLayout(
+        changed: Boolean,
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+    ) {
+        super.onLayout(changed, left, top, right, bottom)
+        val w = right - left
+        val h = bottom - top
+        if (w > 0 && h > 0) {
+            updateDestRect(w, h)
+        }
     }
 
     private fun viewToImage(

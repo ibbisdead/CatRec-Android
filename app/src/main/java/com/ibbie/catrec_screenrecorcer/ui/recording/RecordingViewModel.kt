@@ -157,6 +157,8 @@ class RecordingViewModel(
 
     // UI Mode
     val performanceMode: StateFlow<Boolean> = repository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val adaptivePerformanceEnabled: StateFlow<Boolean> =
+        repository.adaptiveRecordingPerformance.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     /** Remove-ads entitlement: disables all rewarded-ad gating when true ([com.ibbie.catrec_screenrecorcer.data.AdGate]). */
     val adsDisabled: StateFlow<Boolean> =
@@ -333,6 +335,8 @@ class RecordingViewModel(
     // Setters — UI Mode
     fun setPerformanceMode(value: Boolean) = viewModelScope.launch { repository.setPerformanceMode(value) }
 
+    fun setAdaptivePerformanceEnabled(value: Boolean) = viewModelScope.launch { repository.setAdaptiveRecordingPerformance(value) }
+
     // Setters — Privacy
     fun setAnalyticsEnabled(value: Boolean) =
         viewModelScope.launch {
@@ -421,6 +425,8 @@ class RecordingViewModel(
                     putExtra(ScreenRecordService.EXTRA_GIF_MAX_DURATION_SEC, gifPreset.maxDurationSec)
                     putExtra(ScreenRecordService.EXTRA_GIF_SCALE_WIDTH, gifPreset.maxWidth)
                     putExtra(ScreenRecordService.EXTRA_GIF_OUTPUT_FPS, gifPreset.fps)
+                    putExtra(ScreenRecordService.EXTRA_GIF_MAX_COLORS, gifPreset.maxColors)
+                    putExtra(ScreenRecordService.EXTRA_GIF_DITHER_KIND, gifPreset.paletteDither.name)
                 }
             }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -460,6 +466,7 @@ class RecordingViewModel(
                 putExtra(ScreenRecordService.EXTRA_RESOLUTION, resolution.value)
                 putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, videoEncoder.value)
                 putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, clipperDurationMinutes.value)
+                putExtra(ScreenRecordService.EXTRA_COUNTDOWN, countdown.value)
             }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             context.startForegroundService(intent)

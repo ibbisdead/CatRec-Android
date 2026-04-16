@@ -43,7 +43,6 @@
     <string name="tab_recordings">녹화 목록</string>
     <string name="tab_settings">설정</string>
     <string name="tab_support">지원</string>
-    <string name="tab_tools">도구</string>
     <string name="tab_editor">편집자</string>
     <string name="fab_start_recording">기록</string>
     <string name="storage_indicator_format">%1$s 사용됨 · %2$s 무료</string>

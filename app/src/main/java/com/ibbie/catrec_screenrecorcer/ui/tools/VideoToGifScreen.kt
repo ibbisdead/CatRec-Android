@@ -23,7 +23,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
-import com.ibbie.catrec_screenrecorcer.service.GifTranscodeHelper
+import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
+import com.ibbie.catrec_screenrecorcer.service.GifExportPipeline
 import com.ibbie.catrec_screenrecorcer.utils.formatElapsedMinutesSecondsMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -62,14 +63,15 @@ fun VideoToGifScreen(
     var endFraction by remember { mutableFloatStateOf(1f) }
     var currentPositionMs by remember { mutableLongStateOf(0L) }
     var isWorking by remember { mutableStateOf(false) }
-    var fps by remember { mutableIntStateOf(10) }
-    var qualityTier by remember { mutableIntStateOf(1) } // 0 small 1 balanced 2 sharp
-    val scaleWidth =
-        when (qualityTier) {
-            0 -> 280
-            1 -> 400
-            else -> 560
-        }
+    var qualityTier by remember { mutableIntStateOf(1) } // 0 = Low, 1 = Medium, 2 = High — same tiers as [GifRecordingPresets]
+    val exportPreset = remember(qualityTier) { GifRecordingPresets.forVideoToGifTier(qualityTier) }
+    var fps by remember { mutableIntStateOf(GifRecordingPresets.forVideoToGifTier(1).fps) }
+    val fpsSliderMax = exportPreset.gifFpsSliderMax
+    val fpsSliderMin = 3
+
+    LaunchedEffect(qualityTier) {
+        fps = exportPreset.fps
+    }
 
     DisposableEffect(exoPlayer) {
         val listener =
@@ -136,9 +138,9 @@ fun VideoToGifScreen(
                 Text(stringResource(R.string.gif_fps, fps), style = MaterialTheme.typography.bodyMedium)
                 Slider(
                     value = fps.toFloat(),
-                    onValueChange = { fps = it.toInt().coerceIn(5, 20) },
-                    valueRange = 5f..20f,
-                    steps = 14,
+                    onValueChange = { v -> fps = v.toInt().coerceIn(fpsSliderMin, fpsSliderMax) },
+                    valueRange = fpsSliderMin.toFloat()..fpsSliderMax.toFloat(),
+                    steps = (fpsSliderMax - fpsSliderMin - 1).coerceAtLeast(0),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Text(stringResource(R.string.gif_quality_label), style = MaterialTheme.typography.titleSmall)
@@ -195,13 +197,15 @@ fun VideoToGifScreen(
                         scope.launch {
                             val ok =
                                 withContext(Dispatchers.IO) {
-                                    GifTranscodeHelper.transcodeMp4ToGif(
+                                    GifExportPipeline.transcodeMp4ToGif(
                                         context,
                                         videoUri,
-                                        scaleWidth,
+                                        exportPreset.maxWidth,
                                         fps,
                                         startMs = startMs,
                                         endMs = endMs,
+                                        maxColors = exportPreset.maxColors,
+                                        paletteDither = exportPreset.paletteDither,
                                     )
                                 }
                             isWorking = false

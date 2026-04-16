@@ -206,10 +206,15 @@ private fun queryScreenshots(context: Context): List<MediaItem> {
     return byUri.values.sortedByDescending { it.name ?: "" }
 }
 
+private val screenshotDateFormatter =
+    object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue(): SimpleDateFormat = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+    }
+
 /** Formatted date label for screenshot grid (same pattern as before MediaManager). */
 fun MediaItem.screenshotDateLabel(): String {
     val ms = dateModifiedMs ?: return ""
-    return SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault()).format(Date(ms))
+    return screenshotDateFormatter.get()!!.format(Date(ms))
 }
 
 fun MediaItem.screenshotSizeKb(): Long = (sizeBytes ?: 0L) / 1024L

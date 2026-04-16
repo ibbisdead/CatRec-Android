@@ -1,7 +1,9 @@
 package com.ibbie.catrec_screenrecorcer.service
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.Image
@@ -15,13 +17,17 @@ import android.opengl.EGLExt
 import android.opengl.EGLSurface
 import android.opengl.GLES20
 import android.opengl.GLUtils
+import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.FloatBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -43,23 +49,65 @@ internal class EncoderFrameRelay(
     private var relayHandler: Handler? = null
 
     private var scratchRowBitmap: Bitmap? = null
+
+    /** Tight WxH copy when [ImageReader] row stride has padding; filled from [scratchRowBitmap]. */
+    private var reuseCropBitmap: Bitmap? = null
+    private var reuseCropCanvas: Canvas? = null
+    private val bitmapSrcRect = Rect()
+    private val bitmapDstRect = Rect()
     private var eglBlitter: EglBitmapBlitter? = null
     private var useCanvas: Boolean? = null
 
     private val pendingScreenshot = AtomicReference<((Bitmap?) -> Unit)?>(null)
 
-    /** Serializes frame processing on the relay thread with [stop] so [scratchRowBitmap] is never recycled mid-frame. */
+    /**
+     * Coalesces burst [ImageReader] notifications into one [Handler] job so we do not queue
+     * many full encode passes; paired with [acquireLatestImage] for latest-frame-first behavior.
+     */
+    private val processLatestFrameRunnable = Runnable { processLatestFrame() }
+
+    /** Single encode pass in flight (defensive; relay looper is already single-threaded). */
+    private val framePipelineBusy = AtomicBoolean(false)
+
+    /**
+     * Set when [scheduleProcessLatestFrame] runs while [framePipelineBusy] is true so we reschedule
+     * one drain after the current pass (avoids dropping notifications when skipping redundant posts).
+     */
+    private val pendingWhileBusy = AtomicBoolean(false)
+
+    @Volatile
+    var adaptiveSignalSink: AdaptiveRecordingSignalSink? = null
+
+    @Volatile
+    var adaptiveSignalsEnabled: Boolean = false
+
+    /** When >1, only every Nth relay pass encodes (effective FPS reduction). */
+    @Volatile
+    var adaptiveSkipModulo: Int = 1
+        get() = field.coerceIn(1, 10)
+        set(value) {
+            field = value.coerceIn(1, 10)
+        }
+
+    private var adaptiveFrameOrdinal = 0
+    private var lastSlowSignalWallMs = 0L
+
+    /**
+     * Guards [ImageReader] / [VirtualDisplay] lifecycle and CPU bitmap buffers only.
+     * [drawBitmapToEncoder] runs outside this lock so [stop] can tear down the reader/VD while
+     * a slow encoder surface completes; bitmaps/EGL are released only after [relayThread] joins.
+     */
     private val frameLock = Any()
 
     fun start() {
         synchronized(frameLock) {
             if (virtualDisplay != null) return
-            val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 3)
+            val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, FRAME_READER_MAX_IMAGES)
             imageReader = reader
             val thread = HandlerThread("CatRec-FrameRelay").also { it.start() }
             relayThread = thread
             relayHandler = Handler(thread.looper)
-            reader.setOnImageAvailableListener({ onImageAvailable() }, relayHandler)
+            reader.setOnImageAvailableListener({ scheduleProcessLatestFrame() }, relayHandler)
             try {
                 virtualDisplay =
                     mediaProjection.createVirtualDisplay(
@@ -94,29 +142,48 @@ internal class EncoderFrameRelay(
     }
 
     fun stop() {
+        val threadToJoin =
+            synchronized(frameLock) {
+                try {
+                    imageReader?.setOnImageAvailableListener(null, null)
+                } catch (_: Exception) {
+                }
+                try {
+                    virtualDisplay?.release()
+                } catch (_: Exception) {
+                }
+                virtualDisplay = null
+                try {
+                    imageReader?.close()
+                } catch (_: Exception) {
+                }
+                imageReader = null
+                relayThread
+            }
+        relayHandler?.removeCallbacks(processLatestFrameRunnable)
+        framePipelineBusy.set(false)
+        pendingWhileBusy.set(false)
+        adaptiveSignalSink = null
+        adaptiveSignalsEnabled = false
+        adaptiveSkipModulo = 1
+        adaptiveFrameOrdinal = 0
+        lastSlowSignalWallMs = 0L
+        threadToJoin?.quitSafely()
+        try {
+            threadToJoin?.join(5000)
+        } catch (_: Exception) {
+        }
         synchronized(frameLock) {
-            try {
-                imageReader?.setOnImageAvailableListener(null, null)
-            } catch (_: Exception) {
-            }
-            try {
-                virtualDisplay?.release()
-            } catch (_: Exception) {
-            }
-            virtualDisplay = null
-            try {
-                imageReader?.close()
-            } catch (_: Exception) {
-            }
-            imageReader = null
             scratchRowBitmap?.recycle()
             scratchRowBitmap = null
+            reuseCropBitmap?.recycle()
+            reuseCropBitmap = null
+            reuseCropCanvas = null
             eglBlitter?.release()
             eglBlitter = null
             useCanvas = null
             pendingScreenshot.set(null)
         }
-        relayThread?.quitSafely()
         relayThread = null
         relayHandler = null
     }
@@ -133,30 +200,93 @@ internal class EncoderFrameRelay(
         pendingScreenshot.set(callback)
     }
 
-    private fun onImageAvailable() {
-        synchronized(frameLock) {
-            val reader = imageReader ?: return
-            val image =
-                try {
-                    reader.acquireLatestImage()
-                } catch (e: Exception) {
-                    Log.e(TAG, "acquireLatestImage failed", e)
-                    return
-                } ?: return
+    private fun scheduleProcessLatestFrame() {
+        val h = relayHandler ?: return
+        if (framePipelineBusy.get()) {
+            pendingWhileBusy.set(true)
+            if (adaptiveSignalsEnabled) {
+                adaptiveSignalSink?.onRelayBackpressure()
+            }
+            return
+        }
+        h.removeCallbacks(processLatestFrameRunnable)
+        h.post(processLatestFrameRunnable)
+    }
 
-            val bitmap =
-                try {
-                    imageToBitmap(image)
-                } finally {
-                    image.close()
+    private fun processLatestFrame() {
+        if (!framePipelineBusy.compareAndSet(false, true)) {
+            return
+        }
+        val adaptiveOn = adaptiveSignalsEnabled && adaptiveSignalSink != null
+        val sink = adaptiveSignalSink
+        val t0 = if (adaptiveOn) SystemClock.elapsedRealtime() else 0L
+        try {
+            val m = adaptiveSkipModulo
+            if (adaptiveOn && m > 1) {
+                val n = adaptiveFrameOrdinal++
+                if (n % m != 0) {
+                    return
                 }
-            try {
-                drawBitmapToEncoder(bitmap)
-                deliverScreenshotIfNeeded(bitmap)
-            } finally {
-                if (bitmap !== scratchRowBitmap) bitmap.recycle()
+            }
+            val bitmap: Bitmap? =
+                synchronized(frameLock) {
+                    val reader = imageReader ?: return@synchronized null
+                    val image: Image =
+                        try {
+                            reader.acquireLatestImage()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "acquireLatestImage failed", e)
+                            return@synchronized null
+                        } ?: return@synchronized null
+
+                    try {
+                        if (shouldDropStaleImage(image)) {
+                            return@synchronized null
+                        }
+                        imageToBitmap(image)
+                    } finally {
+                        try {
+                            image.close()
+                        } catch (_: Exception) {
+                        }
+                    }
+                }
+            if (bitmap == null) {
+                return
+            }
+            drawBitmapToEncoder(bitmap)
+            if (adaptiveOn && sink != null) {
+                val elapsed = SystemClock.elapsedRealtime() - t0
+                if (elapsed > SLOW_FRAME_MS) {
+                    val now = SystemClock.elapsedRealtime()
+                    if (now - lastSlowSignalWallMs >= SLOW_SIGNAL_MIN_INTERVAL_MS) {
+                        lastSlowSignalWallMs = now
+                        sink.onSlowFrame()
+                    }
+                }
+            }
+            deliverScreenshotIfNeeded(bitmap)
+        } finally {
+            framePipelineBusy.set(false)
+            if (pendingWhileBusy.compareAndSet(true, false)) {
+                scheduleProcessLatestFrame()
             }
         }
+    }
+
+    private fun shouldDropStaleImage(image: Image): Boolean {
+        if (!DROP_STALE_FRAMES) {
+            return false
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return false
+        }
+        val ts = image.timestamp
+        if (ts == 0L) {
+            return false
+        }
+        val ageNs = SystemClock.elapsedRealtimeNanos() - ts
+        return ageNs > MAX_CAPTURE_LATENCY_NS
     }
 
     private fun deliverScreenshotIfNeeded(bitmap: Bitmap) {
@@ -209,15 +339,53 @@ internal class EncoderFrameRelay(
         }
         buffer.rewind()
         scratchRowBitmap!!.copyPixelsFromBuffer(buffer)
-        return if (rowPadding == 0) {
-            scratchRowBitmap!!
-        } else {
-            Bitmap.createBitmap(scratchRowBitmap!!, 0, 0, w, h)
+        if (rowPadding == 0) {
+            return scratchRowBitmap!!
         }
+        val crop = ensureReuseCropBitmap(w, h)
+        val c = reuseCropCanvas!!
+        bitmapSrcRect.set(0, 0, w, h)
+        bitmapDstRect.set(0, 0, w, h)
+        c.drawBitmap(scratchRowBitmap!!, bitmapSrcRect, bitmapDstRect, null)
+        return crop
+    }
+
+    private fun ensureReuseCropBitmap(
+        w: Int,
+        h: Int,
+    ): Bitmap {
+        val existing = reuseCropBitmap
+        if (existing != null && existing.width == w && existing.height == h) {
+            return existing
+        }
+        existing?.recycle()
+        val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        reuseCropBitmap = b
+        reuseCropCanvas = Canvas(b)
+        return b
     }
 
     private companion object {
         const val TAG = "EncoderFrameRelay"
+
+        /**
+         * Smallest practical depth for [ImageReader] + [ImageReader.acquireLatestImage].
+         * Increase to 3 if QA finds producer underruns on specific OEMs.
+         */
+        private const val FRAME_READER_MAX_IMAGES = 2
+
+        /**
+         * Drop acquired frames older than this (nanoseconds, [SystemClock.elapsedRealtimeNanos]
+         * vs [Image.getTimestamp]) when [DROP_STALE_FRAMES] is true. ~100ms caps backlog at ~3
+         * frames at 30fps without fps plumbing.
+         */
+        private const val MAX_CAPTURE_LATENCY_NS = 100_000_000L
+
+        /** Set true to skip encoding when [Image.getTimestamp] shows excessive capture latency (API 29+). */
+        private const val DROP_STALE_FRAMES = false
+
+        private const val SLOW_FRAME_MS = 90L
+        private const val SLOW_SIGNAL_MIN_INTERVAL_MS = 1000L
     }
 }
 
@@ -237,6 +405,9 @@ private class EglBitmapBlitter(
     private val aTexCoord: Int
     private val uTexture: Int
     private var texId: Int = 0
+
+    /** Interleaved position.xy + texCoord.xy for TRIANGLE_STRIP quad; reused every [draw]. */
+    private val fullScreenQuad: FloatBuffer
 
     init {
         val major = IntArray(1)
@@ -269,6 +440,30 @@ private class EglBitmapBlitter(
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        fullScreenQuad =
+            ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
+                put(
+                    floatArrayOf(
+                        -1f,
+                        -1f,
+                        0f,
+                        1f,
+                        1f,
+                        -1f,
+                        1f,
+                        1f,
+                        -1f,
+                        1f,
+                        0f,
+                        0f,
+                        1f,
+                        1f,
+                        1f,
+                        0f,
+                    ),
+                )
+                position(0)
+            }
     }
 
     fun draw(bitmap: Bitmap) {
@@ -280,32 +475,12 @@ private class EglBitmapBlitter(
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId)
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
         GLES20.glUniform1i(uTexture, 0)
-        val full =
-            floatArrayOf(
-                -1f,
-                -1f,
-                0f,
-                1f,
-                1f,
-                -1f,
-                1f,
-                1f,
-                -1f,
-                1f,
-                0f,
-                0f,
-                1f,
-                1f,
-                1f,
-                0f,
-            )
-        val fb = ByteBuffer.allocateDirect(full.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer()
-        fb.put(full).position(0)
+        fullScreenQuad.position(0)
         GLES20.glEnableVertexAttribArray(aPosition)
-        GLES20.glVertexAttribPointer(aPosition, 2, GLES20.GL_FLOAT, false, 16, fb)
-        fb.position(2)
+        GLES20.glVertexAttribPointer(aPosition, 2, GLES20.GL_FLOAT, false, 16, fullScreenQuad)
+        fullScreenQuad.position(2)
         GLES20.glEnableVertexAttribArray(aTexCoord)
-        GLES20.glVertexAttribPointer(aTexCoord, 2, GLES20.GL_FLOAT, false, 16, fb)
+        GLES20.glVertexAttribPointer(aTexCoord, 2, GLES20.GL_FLOAT, false, 16, fullScreenQuad)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
         GLES20.glDisableVertexAttribArray(aPosition)
         GLES20.glDisableVertexAttribArray(aTexCoord)

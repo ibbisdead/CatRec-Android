@@ -43,7 +43,6 @@
     <string name="tab_recordings">التسجيلات</string>
     <string name="tab_settings">الإعدادات</string>
     <string name="tab_support">الدعم</string>
-    <string name="tab_tools">الأدوات</string>
     <string name="tab_editor">محرر</string>
     <string name="fab_start_recording">سِجِلّ</string>
     <string name="storage_indicator_format">تم استخدام %1$s · %2$s مجانًا</string>

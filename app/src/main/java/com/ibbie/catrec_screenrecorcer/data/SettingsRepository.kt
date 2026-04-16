@@ -105,6 +105,9 @@ class SettingsRepository(
         // UI Mode
         val PERFORMANCE_MODE = booleanPreferencesKey("performance_mode")
 
+        /** Opt-in: reduce encoder load under backpressure while recording (not GIF). */
+        val ADAPTIVE_RECORDING_PERFORMANCE = booleanPreferencesKey("adaptive_recording_performance")
+
         // Privacy
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
 
@@ -218,6 +221,10 @@ class SettingsRepository(
 
     // UI Mode
     val performanceMode: Flow<Boolean> = context.dataStore.data.map { it[PERFORMANCE_MODE] ?: false }
+
+    /** When true, recording/buffer sessions may lower bitrate and decimate relay frames under stress. */
+    val adaptiveRecordingPerformance: Flow<Boolean> =
+        context.dataStore.data.map { it[ADAPTIVE_RECORDING_PERFORMANCE] ?: false }
 
     // Privacy — analytics default off; personalized ads default on (independent toggles)
     val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: false }
@@ -454,6 +461,10 @@ class SettingsRepository(
     // Setters — UI Mode
     suspend fun setPerformanceMode(value: Boolean) {
         context.dataStore.edit { it[PERFORMANCE_MODE] = value }
+    }
+
+    suspend fun setAdaptiveRecordingPerformance(value: Boolean) {
+        context.dataStore.edit { it[ADAPTIVE_RECORDING_PERFORMANCE] = value }
     }
 
     // Setters — Privacy

@@ -43,7 +43,6 @@
     <string name="tab_recordings">錄影</string>
     <string name="tab_settings">設定</string>
     <string name="tab_support">支援</string>
-    <string name="tab_tools">工具</string>
     <string name="tab_editor">編輯</string>
     <string name="fab_start_recording">記錄</string>
     <string name="storage_indicator_format">已使用 %1$s · 免費 %2$s</string>

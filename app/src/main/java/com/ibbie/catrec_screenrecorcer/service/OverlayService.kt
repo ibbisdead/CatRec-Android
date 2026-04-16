@@ -46,14 +46,21 @@ import androidx.camera.view.PreviewView
 import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
 
@@ -174,6 +181,9 @@ class OverlayService : LifecycleService() {
     private val settingsRepo by lazy { SettingsRepository(applicationContext) }
     private var brushOverlayEnabled = false
 
+    /** Mirrors DataStore hide-while-recording; applied when recording or buffering bubble is visible. */
+    private var hideFloatingIconWhileRecordingPref: Boolean = false
+
     /** Floating bubble was hidden while the brush overlay is open. */
     private var floatingChromeHiddenForBrushSession = false
 
@@ -202,6 +212,14 @@ class OverlayService : LifecycleService() {
         instance = this
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createCameraChannel()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                settingsRepo.hideFloatingIconWhileRecording.collect { hide ->
+                    hideFloatingIconWhileRecordingPref = hide
+                    applyRecordingBubbleVisibilityFromPreference()
+                }
+            }
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -324,6 +342,7 @@ class OverlayService : LifecycleService() {
                     } else {
                         showControlsOverlay()
                     }
+                    applyRecordingBubbleVisibilityFromPreference()
                 } else {
                     hideControlsOverlay(userDismissed = false)
                 }
@@ -345,6 +364,7 @@ class OverlayService : LifecycleService() {
                         showControlsOverlay()
                         cancelOverlayNotification()
                     }
+                    applyRecordingBubbleVisibilityFromPreference()
                 } else {
                     hideControlsOverlay(userDismissed = false)
                     stopSelf()
@@ -360,6 +380,7 @@ class OverlayService : LifecycleService() {
                     showControlsOverlay()
                 }
                 cancelOverlayNotification()
+                applyRecordingBubbleVisibilityFromPreference()
             }
 
             ACTION_REBUILD_CONTROLS_CARD -> {
@@ -413,6 +434,7 @@ class OverlayService : LifecycleService() {
                         showControlsCard()
                     }
                 }
+                applyRecordingBubbleVisibilityFromPreference()
             }
 
             ACTION_UPDATE_BUFFERING_STATE -> {
@@ -425,6 +447,7 @@ class OverlayService : LifecycleService() {
                         showControlsCard()
                     }
                 }
+                applyRecordingBubbleVisibilityFromPreference()
             }
 
             ACTION_SHOW_CAMERA_PREVIEW -> {
@@ -820,6 +843,7 @@ class OverlayService : LifecycleService() {
             windowManager?.addView(bubble, params)
             idleControlsBubbleVisible = true
             crashlyticsLog("Overlay: controls bubble started")
+            applyRecordingBubbleVisibilityFromPreference()
         } catch (e: Exception) {
             Log.e("OverlayService", "Controls bubble add failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: controls bubble add failed")
@@ -1374,20 +1398,14 @@ class OverlayService : LifecycleService() {
                     )
                 } else {
                     try {
-                        val launchIntent =
-                            packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                            }
-                        if (launchIntent != null) startActivity(launchIntent)
+                        val asBuffer = RecordingState.currentMode.value == CaptureMode.CLIPPER
+                        startActivity(
+                            Intent(this@OverlayService, OverlayRecordProjectionActivity::class.java).apply {
+                                putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                        )
                     } catch (_: Exception) {
-                    }
-                    android.os.Handler(android.os.Looper.getMainLooper()).post {
-                        android.widget.Toast
-                            .makeText(
-                                this@OverlayService,
-                                getString(R.string.overlay_toast_authorize_first),
-                                android.widget.Toast.LENGTH_LONG,
-                            ).show()
                     }
                 }
             }
@@ -1515,6 +1533,30 @@ class OverlayService : LifecycleService() {
             settingsRepo.floatingControls.first()
         }
 
+    /**
+     * Reflects [hideFloatingIconWhileRecordingPref] on the bubble and expanded card while a
+     * capture session is active; restores the bubble when idle. Skipped while brush/screenshot
+     * flows temporarily hide chrome (they restore then re-apply).
+     */
+    private fun applyRecordingBubbleVisibilityFromPreference() {
+        val bubble = controlsBubbleView ?: return
+        val wm = windowManager ?: return
+        if (floatingChromeHiddenForScreenshot || floatingChromeHiddenForBrushSession) return
+        val params = controlsBubbleParams ?: return
+        val sessionActive = controlsIsRecording || controlsIsBuffering
+        val hideChrome = sessionActive && hideFloatingIconWhileRecordingPref
+        if (hideChrome) {
+            if (controlsCardExpanded || controlsCardView != null) hideControlsCard()
+            bubble.visibility = View.GONE
+        } else {
+            bubble.visibility = View.VISIBLE
+        }
+        try {
+            wm.updateViewLayout(bubble, params)
+        } catch (_: Exception) {
+        }
+    }
+
     private fun hideFloatingChromeForBrushSession() {
         if (floatingChromeHiddenForBrushSession) return
         floatingChromeHiddenForBrushSession = true
@@ -1527,6 +1569,7 @@ class OverlayService : LifecycleService() {
         if (!floatingChromeHiddenForBrushSession) return
         floatingChromeHiddenForBrushSession = false
         controlsBubbleView?.visibility = View.VISIBLE
+        applyRecordingBubbleVisibilityFromPreference()
     }
 
     private fun hideFloatingChromeForScreenshotOnly() {
@@ -1542,6 +1585,7 @@ class OverlayService : LifecycleService() {
         if (!floatingChromeHiddenForScreenshot) return
         floatingChromeHiddenForScreenshot = false
         controlsBubbleView?.visibility = View.VISIBLE
+        applyRecordingBubbleVisibilityFromPreference()
         if (controlsCardWasExpandedBeforeScreenshot) {
             controlsCardExpanded = true
             showControlsCard()

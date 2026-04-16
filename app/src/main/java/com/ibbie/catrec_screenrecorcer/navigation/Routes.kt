@@ -19,12 +19,8 @@ sealed class Screen(
 
     object Feedback : Screen("feedback", R.string.feedback_title)
 
-    object Tools : Screen("tools", R.string.tab_tools)
-
     /** Video tools / editor hub (trim, GIF, etc.). */
     object Editor : Screen("editor", R.string.tab_editor)
-
-    object Home : Screen("home", R.string.app_name)
 
     object Crop : Screen("crop/{imageUri}", R.string.app_name)
 

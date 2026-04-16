@@ -43,7 +43,6 @@
     <string name="tab_recordings">Rekaman</string>
     <string name="tab_settings">Pengaturan</string>
     <string name="tab_support">Dukungan</string>
-    <string name="tab_tools">Alat</string>
     <string name="tab_editor">Editor</string>
     <string name="fab_start_recording">Catatan</string>
     <string name="storage_indicator_format">%1$s terpakai · %2$s gratis</string>

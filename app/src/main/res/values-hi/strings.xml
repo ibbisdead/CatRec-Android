@@ -43,7 +43,6 @@
     <string name="tab_recordings">रिकॉर्डिंग्स</string>
     <string name="tab_settings">सेटिंग्स</string>
     <string name="tab_support">सहायता</string>
-    <string name="tab_tools">टूल्स</string>
     <string name="tab_editor">संपादक</string>
     <string name="fab_start_recording">अभिलेख</string>
     <string name="storage_indicator_format">%1$s का उपयोग किया गया · %2$s निःशुल्क</string>

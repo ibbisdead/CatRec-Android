@@ -60,6 +60,9 @@ class RollingBufferEngine(
     maxSegmentsLimit: Int = maxSegmentsForClipperMinutes(1),
     /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
     private val onInternalAudioSilence: (() -> Unit)? = null,
+    /** Invoked at most once when the video encoder drain path hits a fatal error (encoder thread). */
+    private val onFatalVideoEncodeError: ((String) -> Unit)? = null,
+    private val adaptivePreferAvcForPrepare: Boolean = false,
 ) {
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
 
@@ -69,6 +72,9 @@ class RollingBufferEngine(
         private const val TAG = "RollingBufferEngine"
         const val SEGMENT_DURATION_MS = 10_000L
         private const val SILENCE_TIMEOUT_MS = 5_000L
+
+        /** Video drain pacing — see [ScreenRecorderEngine] companion. */
+        private const val VIDEO_DRAIN_SLEEP_MS = 2L
 
         /** Default rolling window (1 min at 10 s/segment). */
         const val MAX_SEGMENTS_DEFAULT = 6
@@ -81,6 +87,7 @@ class RollingBufferEngine(
 
     // ── Encoder objects ────────────────────────────────────────────────────────
     private var videoEncoder: MediaCodec? = null
+    private var configuredVideoMime: String = ""
     private var audioEncoder: MediaCodec? = null
     private var inputSurface: Surface? = null
     private var frameRelay: EncoderFrameRelay? = null
@@ -88,6 +95,12 @@ class RollingBufferEngine(
 
     // ── Muxer state (guarded by muxerLock) ────────────────────────────────────
     private val muxerLock = Object()
+
+    /** Reused for [MediaMuxer.writeSampleData] on the video drain thread only. */
+    private val muxerVideoSampleInfo = MediaCodec.BufferInfo()
+
+    /** Reused for [MediaMuxer.writeSampleData] on the audio drain thread only. */
+    private val muxerAudioSampleInfo = MediaCodec.BufferInfo()
     private var currentMuxer: MediaMuxer? = null
     private var currentSegFile: File? = null // file currently being written
     private var muxerVideoTrack = -1
@@ -106,6 +119,7 @@ class RollingBufferEngine(
     // ── Control flags ──────────────────────────────────────────────────────────
     private val isRunning = AtomicBoolean(false)
     private val pendingRotate = AtomicBoolean(false)
+    private val videoEncodeFatalSignaled = AtomicBoolean(false)
 
     // ── Audio ──────────────────────────────────────────────────────────────────
     private var micRecord: AudioRecord? = null
@@ -129,7 +143,44 @@ class RollingBufferEngine(
         prepareAudioEncoder()
         openNewSegment() // prepare the first muxer before we start encoding
 
-        videoEncoder?.start()
+        try {
+            videoEncoder?.start()
+        } catch (e: Exception) {
+            val wishedHevc =
+                encoderType == "H.265 (HEVC)" &&
+                    !Build.MODEL.contains("sdk_gphone", ignoreCase = true) &&
+                    !Build.MODEL.contains("google_sdk", ignoreCase = true)
+            if (wishedHevc && configuredVideoMime == MediaFormat.MIMETYPE_VIDEO_HEVC) {
+                Log.e(
+                    TAG,
+                    "Buffer video encoder start failed on HEVC (${e.javaClass.simpleName}: ${e.message}); " +
+                        "re-preparing with AVC — brand=${Build.BRAND} model=${Build.MODEL}",
+                    e,
+                )
+                try {
+                    videoEncoder?.release()
+                } catch (_: Exception) {
+                }
+                try {
+                    inputSurface?.release()
+                } catch (_: Exception) {
+                }
+                videoEncoder = null
+                inputSurface = null
+                synchronized(muxerLock) {
+                    finalizeMuxer()
+                    currentSegFile?.delete()
+                    currentSegFile = null
+                }
+                storedVideoFmt = null
+                prepareVideoEncoder(avcOnly = true)
+                openNewSegment()
+                Log.i(TAG, "Retrying buffer video encoder start with AVC after HEVC start failure")
+                videoEncoder?.start()
+            } else {
+                throw e
+            }
+        }
         if (mAudioMode != AudioMode.NONE) audioEncoder?.start()
 
         frameRelay =
@@ -267,6 +318,36 @@ class RollingBufferEngine(
         }
     }
 
+    fun applyAdaptiveVideoBitrateBps(targetBps: Int): Boolean {
+        val encoder = videoEncoder ?: return false
+        val baseline = bitrate
+        val floorBps = (baseline * 0.20).toInt().coerceAtLeast(200_000)
+        val capped = targetBps.coerceIn(floorBps, baseline)
+        return try {
+            val b =
+                Bundle().apply {
+                    putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, capped)
+                }
+            encoder.setParameters(b)
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "applyAdaptiveVideoBitrateBps failed: ${e.message}")
+            false
+        }
+    }
+
+    fun setAdaptiveSkipModulo(modulo: Int) {
+        frameRelay?.adaptiveSkipModulo = modulo
+    }
+
+    fun attachAdaptivePerformance(
+        sink: AdaptiveRecordingSignalSink?,
+        signalsEnabled: Boolean,
+    ) {
+        frameRelay?.adaptiveSignalSink = sink
+        frameRelay?.adaptiveSignalsEnabled = signalsEnabled
+    }
+
     /** Called from the video drain thread at an I-frame boundary. */
     private fun rotateSegment() {
         synchronized(muxerLock) {
@@ -338,7 +419,7 @@ class RollingBufferEngine(
         while (isRunning.get()) {
             drainVideoOnce(info)
             try {
-                Thread.sleep(4)
+                Thread.sleep(VIDEO_DRAIN_SLEEP_MS)
             } catch (_: InterruptedException) {
             }
         }
@@ -346,74 +427,98 @@ class RollingBufferEngine(
         repeat(60) {
             drainVideoOnce(info)
             try {
-                Thread.sleep(4)
+                Thread.sleep(VIDEO_DRAIN_SLEEP_MS)
             } catch (_: InterruptedException) {
             }
         }
     }
 
+    private fun reportFatalVideoEncodeIfNeeded(
+        e: Exception,
+        phase: String,
+    ) {
+        if (!videoEncodeFatalSignaled.compareAndSet(false, true)) return
+        val detail =
+            buildString {
+                append(phase)
+                append(" ")
+                append(e.javaClass.simpleName)
+                append(": ")
+                append(e.message)
+            }
+        Log.e(
+            TAG,
+            "VideoEncFatal buffer mime=$configuredVideoMime encoder=$encoderType singleShot detail=$detail",
+            e,
+        )
+        FirebaseCrashlytics.getInstance().log("VideoEncFatal buffer $detail mime=$configuredVideoMime")
+        onFatalVideoEncodeError?.invoke(detail)
+    }
+
     private fun drainVideoOnce(info: MediaCodec.BufferInfo) {
         val enc = videoEncoder ?: return
         loop@ while (true) {
-            val status =
-                try {
-                    enc.dequeueOutputBuffer(info, 0)
-                } catch (_: Exception) {
-                    break@loop
-                }
-            when {
-                status == MediaCodec.INFO_TRY_AGAIN_LATER -> break@loop
+            try {
+                val status = enc.dequeueOutputBuffer(info, 0)
+                when {
+                    status == MediaCodec.INFO_TRY_AGAIN_LATER -> break@loop
 
-                status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    synchronized(muxerLock) {
-                        storedVideoFmt = enc.outputFormat
-                        if (!isMuxerReady) {
-                            muxerVideoTrack = currentMuxer!!.addTrack(storedVideoFmt!!)
-                            val aFmt = storedAudioFmt
-                            if (aFmt != null && mAudioMode != AudioMode.NONE) {
-                                muxerAudioTrack = currentMuxer!!.addTrack(aFmt)
-                            }
-                            val audioReady = mAudioMode == AudioMode.NONE || muxerAudioTrack >= 0
-                            if (audioReady) {
-                                currentMuxer!!.start()
-                                isMuxerReady = true
-                            }
-                        }
-                    }
-                }
-
-                status >= 0 -> {
-                    val isKey = (info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0
-
-                    // Rotate at the I-frame boundary (seamless, no gap)
-                    if (isKey && pendingRotate.compareAndSet(true, false)) {
-                        rotateSegment()
-                    }
-
-                    val buf = enc.getOutputBuffer(status)
-                    if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 &&
-                        info.size > 0
-                    ) {
+                    status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         synchronized(muxerLock) {
-                            if (isMuxerReady && muxerVideoTrack >= 0) {
-                                // Normalise timestamps so each segment starts at t=0
-                                if (segStartPtsUs.compareAndSet(-1L, info.presentationTimeUs)) {
-                                    // First frame of this segment — offset is now set
+                            storedVideoFmt = enc.outputFormat
+                            if (!isMuxerReady) {
+                                muxerVideoTrack = currentMuxer!!.addTrack(storedVideoFmt!!)
+                                val aFmt = storedAudioFmt
+                                if (aFmt != null && mAudioMode != AudioMode.NONE) {
+                                    muxerAudioTrack = currentMuxer!!.addTrack(aFmt)
                                 }
-                                val adjPts = info.presentationTimeUs - segStartPtsUs.get()
-                                buf.position(info.offset)
-                                buf.limit(info.offset + info.size)
-                                val adjInfo =
-                                    MediaCodec.BufferInfo().apply {
-                                        set(info.offset, info.size, adjPts.coerceAtLeast(0L), info.flags)
-                                    }
-                                currentMuxer?.writeSampleData(muxerVideoTrack, buf, adjInfo)
+                                val audioReady = mAudioMode == AudioMode.NONE || muxerAudioTrack >= 0
+                                if (audioReady) {
+                                    currentMuxer!!.start()
+                                    isMuxerReady = true
+                                }
                             }
                         }
                     }
-                    enc.releaseOutputBuffer(status, false)
-                    if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) return
+
+                    status >= 0 -> {
+                        val isKey = (info.flags and MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0
+
+                        // Rotate at the I-frame boundary (seamless, no gap)
+                        if (isKey && pendingRotate.compareAndSet(true, false)) {
+                            rotateSegment()
+                        }
+
+                        val buf = enc.getOutputBuffer(status)
+                        if (buf != null && (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0 &&
+                            info.size > 0
+                        ) {
+                            synchronized(muxerLock) {
+                                if (isMuxerReady && muxerVideoTrack >= 0) {
+                                    // Normalise timestamps so each segment starts at t=0
+                                    if (segStartPtsUs.compareAndSet(-1L, info.presentationTimeUs)) {
+                                        // First frame of this segment — offset is now set
+                                    }
+                                    val adjPts = info.presentationTimeUs - segStartPtsUs.get()
+                                    buf.position(info.offset)
+                                    buf.limit(info.offset + info.size)
+                                    muxerVideoSampleInfo.set(
+                                        info.offset,
+                                        info.size,
+                                        adjPts.coerceAtLeast(0L),
+                                        info.flags,
+                                    )
+                                    currentMuxer?.writeSampleData(muxerVideoTrack, buf, muxerVideoSampleInfo)
+                                }
+                            }
+                        }
+                        enc.releaseOutputBuffer(status, false)
+                        if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) return
+                    }
                 }
+            } catch (e: Exception) {
+                reportFatalVideoEncodeIfNeeded(e, phase = "buffer_dequeue_or_output")
+                break@loop
             }
         }
     }
@@ -450,7 +555,7 @@ class RollingBufferEngine(
                     val r2 = micRecord!!.read(mix, 0, bufSize)
                     when {
                         r1 > 0 && r2 > 0 -> {
-                            mixPcm(main, mix, minOf(r1, r2))
+                            mixPcm(main, mix, minOf(r1, r2), effectiveChannelCount.get())
                             readCount = minOf(r1, r2)
                         }
                         r1 > 0 -> readCount = r1
@@ -600,11 +705,13 @@ class RollingBufferEngine(
                                 val adjPts = if (base < 0) 0L else (info.presentationTimeUs - base).coerceAtLeast(0L)
                                 buf.position(info.offset)
                                 buf.limit(info.offset + info.size)
-                                val adjInfo =
-                                    MediaCodec.BufferInfo().apply {
-                                        set(info.offset, info.size, adjPts, info.flags)
-                                    }
-                                currentMuxer?.writeSampleData(muxerAudioTrack, buf, adjInfo)
+                                muxerAudioSampleInfo.set(
+                                    info.offset,
+                                    info.size,
+                                    adjPts,
+                                    info.flags,
+                                )
+                                currentMuxer?.writeSampleData(muxerAudioTrack, buf, muxerAudioSampleInfo)
                             }
                         }
                     }
@@ -662,14 +769,22 @@ class RollingBufferEngine(
     private fun mixPcm(
         base: ByteArray,
         overlay: ByteArray,
-        size: Int,
+        sizeBytes: Int,
+        channelCount: Int,
     ) {
-        for (i in 0 until size step 2) {
-            val s1 = ((base[i].toInt() and 0xFF) or (base[i + 1].toInt() shl 8)).toShort()
-            val s2 = ((overlay[i].toInt() and 0xFF) or (overlay[i + 1].toInt() shl 8)).toShort()
-            val mixed = (s1.toInt() + s2.toInt()).coerceIn(-32768, 32767).toShort().toInt()
-            base[i] = (mixed and 0xFF).toByte()
-            base[i + 1] = ((mixed shr 8) and 0xFF).toByte()
+        val ch = channelCount.coerceIn(1, 2)
+        val frameBytes = 2 * ch
+        var i = 0
+        while (i + frameBytes <= sizeBytes) {
+            for (c in 0 until ch) {
+                val o = i + c * 2
+                val s1 = ((base[o].toInt() and 0xFF) or (base[o + 1].toInt() shl 8)).toShort()
+                val s2 = ((overlay[o].toInt() and 0xFF) or (overlay[o + 1].toInt() shl 8)).toShort()
+                val mixed = (s1.toInt() + s2.toInt()).coerceIn(-32768, 32767)
+                base[o] = (mixed and 0xFF).toByte()
+                base[o + 1] = ((mixed shr 8) and 0xFF).toByte()
+            }
+            i += frameBytes
         }
     }
 
@@ -677,49 +792,25 @@ class RollingBufferEngine(
     //  Encoder setup
     // ══════════════════════════════════════════════════════════════════════════
 
-    private fun prepareVideoEncoder() {
-        val isEmulator =
-            Build.MODEL.contains("sdk_gphone", true) ||
-                Build.MODEL.contains("google_sdk", true)
-        val mime =
-            if (encoderType == "H.265 (HEVC)" && !isEmulator) {
-                MediaFormat.MIMETYPE_VIDEO_HEVC
-            } else {
-                MediaFormat.MIMETYPE_VIDEO_AVC
-            }
-
-        val name = VideoEncoderResolver.resolveVideoEncoderName(mime, width, height, fps)
-
-        val configFmt =
-            MediaFormat.createVideoFormat(mime, width, height).apply {
-                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-                setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
-                setInteger(MediaFormat.KEY_PRIORITY, 0)
-                setInteger(
-                    MediaFormat.KEY_BITRATE_MODE,
-                    MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    setInteger("max-bitrate", bitrate)
-                }
-            }
-
-        videoEncoder =
-            try {
-                if (name != null) {
-                    MediaCodec.createByCodecName(name)
-                } else {
-                    MediaCodec.createEncoderByType(mime)
-                }
-            } catch (e: Exception) {
-                Log.w(TAG, "Named encoder create failed, using type fallback: ${e.message}")
-                MediaCodec.createEncoderByType(mime)
-            }
-        videoEncoder?.configure(configFmt, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        inputSurface = videoEncoder?.createInputSurface()
+    private fun prepareVideoEncoder(avcOnly: Boolean = false) {
+        val forceAvcHint =
+            !avcOnly &&
+                adaptivePreferAvcForPrepare &&
+                encoderType == "H.265 (HEVC)"
+        val result =
+            VideoEncoderConfigurator.configureScreenCaptureVideoEncoder(
+                logTag = TAG,
+                userEncoderType = encoderType,
+                width = width,
+                height = height,
+                fps = fps,
+                bitrate = bitrate,
+                avcOnly = avcOnly || forceAvcHint,
+            )
+        videoEncoder = result.codec
+        inputSurface = result.inputSurface
+        configuredVideoMime = result.mime
+        Log.d(TAG, "Buffer video encoder mime=$configuredVideoMime avcOnly=$avcOnly")
     }
 
     @SuppressLint("MissingPermission")
