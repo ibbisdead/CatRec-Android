@@ -35,11 +35,7 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
                             putExtra(ScreenRecordService.EXTRA_DATA, result.data)
                             putExtra(ScreenRecordService.EXTRA_OVERLAY_SESSION_AS_BUFFER, asBuffer)
                         }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(svc)
-                    } else {
-                        startService(svc)
-                    }
+                    startForegroundService(svc)
                     // Tear down this host immediately so a transparent activity cannot sit above
                     // games/apps and steal touch focus (especially rolling-buffer / Clipper).
                     if (asBuffer && isTaskRoot) {

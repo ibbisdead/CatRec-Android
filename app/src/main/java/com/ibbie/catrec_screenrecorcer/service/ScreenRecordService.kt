@@ -59,6 +59,10 @@ import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineEventBus
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
+import com.ibbie.catrec_screenrecorcer.data.recording.SessionConfig
+import com.ibbie.catrec_screenrecorcer.data.recording.toMicAndInternalFlags
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
@@ -133,6 +137,9 @@ class ScreenRecordService :
 
         const val EXTRA_RESULT_CODE = "EXTRA_RESULT_CODE"
         const val EXTRA_DATA = "EXTRA_DATA"
+
+        /** Optional [SessionConfig] from [DefaultRecordingSessionRepository] (projection + core encode params). */
+        const val EXTRA_SESSION_CONFIG = "EXTRA_SESSION_CONFIG"
         const val EXTRA_FPS = "EXTRA_FPS"
         const val EXTRA_BITRATE = "EXTRA_BITRATE"
         const val EXTRA_AUDIO_ENABLED = "EXTRA_AUDIO_ENABLED"
@@ -189,6 +196,10 @@ class ScreenRecordService :
         private const val CHANNEL_BUFFER_ID = "CatRec_Buffer_Channel"
         private const val POST_NOTIFICATION_ID = 2
         private const val BUFFER_NOTIFICATION_ID = 3
+
+        /** Survives process death; cleared in [cleanup] / [cleanupBuffer]. Used for null-[Intent] restarts. */
+        private const val PREFS_CAPTURE_SESSION = "catrec_capture_session"
+        private const val PREF_CAPTURE_ACTIVE = "capture_active"
     }
 
     private var mediaProjectionManager: MediaProjectionManager? = null
@@ -217,6 +228,12 @@ class ScreenRecordService :
     private var screenDensity: Int = 0
     private var displayWidth: Int = 1080
     private var displayHeight: Int = 2400
+
+    /**
+     * When [SessionConfig] supplies non-zero width/height, skip [calculateDimensions] / orientation
+     * resizing so capture matches the repository-computed size (API 35–safe hand-off from UI).
+     */
+    private var captureDimensionsFromSessionConfig: Boolean = false
     private var fps: Int = 30
     private var bitrate: Int = 10_000_000
     private var audioEnabled: Boolean = false
@@ -272,6 +289,7 @@ class ScreenRecordService :
 
     private var isRecorderRunning = false
     private val isStoppingForCodec = AtomicBoolean(false)
+    private var isStopping = false
     private var recordingPerformanceController: RecordingPerformanceController? = null
     private val preferAvcNextEnginePrepare = AtomicBoolean(false)
     private var isRecordingPaused = false
@@ -407,7 +425,9 @@ class ScreenRecordService :
         startId: Int,
     ): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent == null) return START_NOT_STICKY
+        if (intent == null) {
+            return handleNullStartCommandAfterPossibleSystemRestart()
+        }
 
         when (intent.action) {
             ACTION_REFRESH_MAIN_NOTIFICATION -> {
@@ -427,6 +447,7 @@ class ScreenRecordService :
             }
 
             ACTION_START -> {
+                captureDimensionsFromSessionConfig = false
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 resultData =
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -489,6 +510,8 @@ class ScreenRecordService :
                 if (!isGifSession) {
                     gifMaxDurationSec = 0
                 }
+
+                applySessionConfigFromIntent(intent)
 
                 if (resultCode != 0 && resultData != null) {
                     try {
@@ -562,6 +585,7 @@ class ScreenRecordService :
             ACTION_NOTIFICATION_DISMISSED -> Unit
             ACTION_START_BUFFER -> {
                 if (!isRecorderRunning && !isBufferRunning) {
+                    captureDimensionsFromSessionConfig = false
                     resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                     resultData =
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -582,6 +606,7 @@ class ScreenRecordService :
                     videoEncoder = intent.getStringExtra(EXTRA_VIDEO_ENCODER) ?: "H.264"
                     clipperDurationMinutes = intent.getIntExtra(EXTRA_CLIPPER_DURATION_MINUTES, 1).coerceIn(1, 5)
                     countdownValue = intent.getIntExtra(EXTRA_COUNTDOWN, 0).coerceIn(0, 60)
+                    applySessionConfigFromIntent(intent)
                     if (resultCode != 0 && resultData != null) startBuffer()
                 }
             }
@@ -761,6 +786,50 @@ class ScreenRecordService :
     }
 
     /**
+     * After a [START_STICKY] restart the system may deliver a null [Intent]. MediaProjection
+     * cannot be restored from that delivery — tear down and optionally notify the user.
+     */
+    private fun handleNullStartCommandAfterPossibleSystemRestart(): Int {
+        if (wakeLock?.isHeld == true) {
+            try {
+                wakeLock?.release()
+            } catch (_: Exception) {
+            }
+            wakeLock = null
+        }
+        if (consumeCaptureSessionDiskFlag()) {
+            RecordingInterruptionNotifier.ensureChannel(this)
+            val posted = RecordingInterruptionNotifier.notifyInterrupted(this)
+            if (!posted) {
+                RecordingInterruptionNotifier.scheduleRetryAlarm(this)
+            }
+        }
+        try {
+            if (mainForegroundActive) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            }
+        } catch (_: Exception) {
+        }
+        mainForegroundActive = false
+        RecordingState.setRecording(false)
+        RecordingState.setBuffering(false)
+        RecordingState.setPrepared(false)
+        stopSelf()
+        return START_NOT_STICKY
+    }
+
+    private fun setCaptureSessionDiskFlag(active: Boolean) {
+        getSharedPreferences(PREFS_CAPTURE_SESSION, MODE_PRIVATE).edit().putBoolean(PREF_CAPTURE_ACTIVE, active).apply()
+    }
+
+    private fun consumeCaptureSessionDiskFlag(): Boolean {
+        val p = getSharedPreferences(PREFS_CAPTURE_SESSION, MODE_PRIVATE)
+        if (!p.getBoolean(PREF_CAPTURE_ACTIVE, false)) return false
+        p.edit().putBoolean(PREF_CAPTURE_ACTIVE, false).apply()
+        return true
+    }
+
+    /**
      * Consumes the pre-supplied MediaProjection token, keeps it alive in a foreground
      * service, and signals the overlay that it can now trigger recordings without a dialog.
      */
@@ -790,6 +859,7 @@ class ScreenRecordService :
         Log.d("ScreenRecordService", "startPreparedForeground: MediaProjection=$mediaProjection")
         if (mediaProjection == null) {
             Log.e("ScreenRecordService", "startPreparedForeground: getMediaProjection returned null")
+            RecordingEngineEventBus.tryEmit(RecordingError.PermissionDenied("media_projection_null_prepare"))
             logServiceAnalyticsEvent(
                 "capture_denied_or_unsupported",
                 mapOf(
@@ -824,6 +894,9 @@ class ScreenRecordService :
                             "(API=${Build.VERSION.SDK_INT} brand=${Build.BRAND})",
                     )
                     FirebaseCrashlytics.getInstance().log("MediaProjection.onStop in prepared mode")
+                    RecordingEngineEventBus.tryEmit(
+                        RecordingError.ProjectionStopped("prepared_media_projection_on_stop"),
+                    )
                     isPrepared = false
                     RecordingState.setPrepared(false)
                     if (isRecorderRunning) {
@@ -1245,17 +1318,31 @@ class ScreenRecordService :
     private fun actualStartRecording() {
         setupStopBehaviors()
 
+        val showFloatingControlsOverlayWhileRecording = showFloatingControls
+
+        // Keep screen on: prefer FLAG_KEEP_SCREEN_ON on overlay windows (no extra power vs bright wake lock).
+        // If overlays are unavailable, fall back to a time-bounded dim wake lock (much cheaper than SCREEN_BRIGHT).
         if (keepScreenOn) {
-            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-            @Suppress("DEPRECATION")
-            wakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "CatRec:RecordingWakeLock")
-            wakeLock?.acquire()
+            val overlayPathKeepsScreen =
+                Settings.canDrawOverlays(this) &&
+                    (showCamera || showWatermark || showFloatingControlsOverlayWhileRecording)
+            if (!overlayPathKeepsScreen) {
+                val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+                @Suppress("DEPRECATION")
+                wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "CatRec:KeepScreenDim")
+                wakeLock?.setReferenceCounted(false)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    wakeLock?.acquire(6 * 60 * 60 * 1000L)
+                } else {
+                    @Suppress("DEPRECATION")
+                    wakeLock?.acquire()
+                }
+            }
         }
 
         // Apply orientation lock before getting display metrics
         applyOrientationLock()
 
-        val showFloatingControlsOverlayWhileRecording = showFloatingControls
         if (Settings.canDrawOverlays(this) && (showCamera || showWatermark || showFloatingControlsOverlayWhileRecording)) {
             val overlayIntent =
                 Intent(this, OverlayService::class.java).apply {
@@ -1277,6 +1364,7 @@ class ScreenRecordService :
                     putExtra(OverlayService.EXTRA_WATERMARK_SIZE, watermarkSize)
                     putExtra(OverlayService.EXTRA_WATERMARK_X_FRACTION, watermarkXFraction)
                     putExtra(OverlayService.EXTRA_WATERMARK_Y_FRACTION, watermarkYFraction)
+                    putExtra(OverlayService.EXTRA_KEEP_SCREEN_ON, keepScreenOn)
                 }
             startService(overlayIntent)
         }
@@ -1314,6 +1402,7 @@ class ScreenRecordService :
             } else {
                 Log.e("ScreenRecordService", "getMediaProjection returned null — cannot record")
                 FirebaseCrashlytics.getInstance().log("MediaProjection null after getMediaProjection")
+                RecordingEngineEventBus.tryEmit(RecordingError.PermissionDenied("media_projection_null"))
                 logServiceAnalyticsEvent(
                     "capture_denied_or_unsupported",
                     mapOf(
@@ -1336,6 +1425,7 @@ class ScreenRecordService :
                                 "(API=${Build.VERSION.SDK_INT} brand=${Build.BRAND})",
                         )
                         FirebaseCrashlytics.getInstance().log("MediaProjection.onStop — projection revoked")
+                        RecordingEngineEventBus.tryEmit(RecordingError.ProjectionStopped())
                         projectionStoppedRecording = true
                         stopRecording()
                     }
@@ -1355,6 +1445,11 @@ class ScreenRecordService :
                     "model" to Build.MODEL,
                 ),
             )
+        }
+
+        if (mediaProjection == null) {
+            stopRecording()
+            return
         }
 
         calculateDimensions()
@@ -1468,6 +1563,9 @@ class ScreenRecordService :
                             )
                         },
                         onFatalVideoEncodeError = { detail ->
+                            RecordingEngineEventBus.tryEmit(
+                                RecordingError.HardwareEncoder(source = "record", detail = detail),
+                            )
                             handleFatalVideoEncodeFromEngine("record", detail)
                         },
                     )
@@ -1477,6 +1575,7 @@ class ScreenRecordService :
                 perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isRecorderRunning = true
+                    setCaptureSessionDiskFlag(true)
                     RecordingState.setRecording(true)
                     RecordingState.setRecordingPaused(false)
                     notifyOverlayRecordingState(isRecording = true)
@@ -1521,6 +1620,10 @@ class ScreenRecordService :
     }
 
     private fun applyOrientationLock() {
+        if (captureDimensionsFromSessionConfig) {
+            lastRecordingIsPortrait = displayHeight >= displayWidth
+            return
+        }
         val (nativeW, nativeH) = currentDisplaySizePx()
 
         when (recordingOrientationSetting) {
@@ -1542,6 +1645,7 @@ class ScreenRecordService :
     }
 
     private fun calculateDimensions() {
+        if (captureDimensionsFromSessionConfig) return
         val (nativeWidth, nativeHeight) = currentDisplaySizePx()
 
         // Respect orientation lock
@@ -1584,6 +1688,38 @@ class ScreenRecordService :
                 }
             }
         }
+    }
+
+    private fun readSessionConfigExtra(intent: Intent): SessionConfig? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(EXTRA_SESSION_CONFIG, SessionConfig::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(EXTRA_SESSION_CONFIG)
+        }
+
+    /**
+     * Merges [EXTRA_SESSION_CONFIG] over intent extras: projection token, fps, bitrate, audio flags,
+     * and optional frozen capture size from [DefaultRecordingSessionRepository].
+     */
+    private fun applySessionConfigFromIntent(intent: Intent): Boolean {
+        val session = readSessionConfigExtra(intent) ?: return false
+        resultCode = session.mediaProjectionResultCode
+        resultData = Intent(session.mediaProjectionGrantIntent)
+        fps = session.frameRate
+        bitrate = session.bitrateBitsPerSecond
+        val (mic, internal) = session.audioSource.toMicAndInternalFlags()
+        audioEnabled = mic
+        internalAudioEnabled = internal
+        val freeze =
+            session.widthPx > SessionConfig.USE_SERVICE_DEFAULT_DIMENSIONS &&
+                session.heightPx > SessionConfig.USE_SERVICE_DEFAULT_DIMENSIONS
+        captureDimensionsFromSessionConfig = freeze
+        if (freeze) {
+            displayWidth = session.widthPx
+            displayHeight = session.heightPx
+        }
+        return true
     }
 
     /**
@@ -1804,6 +1940,9 @@ class ScreenRecordService :
     }
 
     private fun stopRecording() {
+        if (isStopping) return
+        isStopping = true
+
         gifAutoStopRunnable?.let { mainHandler.removeCallbacks(it) }
         gifAutoStopRunnable = null
 
@@ -1821,7 +1960,11 @@ class ScreenRecordService :
         isRecorderRunning = false
         RecordingState.setRecording(false)
         RecordingState.setRecordingPaused(false)
+        RecordingState.setSaving(true)
         notifyOverlayRecordingState(isRecording = false)
+        
+        val nm = getSystemService(NotificationManager::class.java)
+        nm?.notify(MAIN_FOREGROUND_NOTIFICATION_ID, buildRecordingNotification(isPaused = false, contentText = getString(R.string.editor_saving)))
 
         val savedUri = currentFileUri
         val savedMicUri = currentMicDestUri
@@ -2031,10 +2174,19 @@ class ScreenRecordService :
         // consuming the one-time token a second time.
         if (mediaProjection == null) {
             mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            if (mediaProjection == null) {
+                Log.e("ScreenRecordService", "getMediaProjection returned null — cannot start buffer")
+                RecordingEngineEventBus.tryEmit(RecordingError.PermissionDenied("media_projection_null_buffer"))
+                stopBuffer()
+                return
+            }
             mediaProjection?.registerCallback(
                 object : MediaProjection.Callback() {
                     override fun onStop() {
                         super.onStop()
+                        RecordingEngineEventBus.tryEmit(
+                            RecordingError.ProjectionStopped("buffer_media_projection_on_stop"),
+                        )
                         stopBuffer()
                     }
                 },
@@ -2120,6 +2272,9 @@ class ScreenRecordService :
                             )
                         },
                         onFatalVideoEncodeError = { detail ->
+                            RecordingEngineEventBus.tryEmit(
+                                RecordingError.HardwareEncoder(source = "buffer", detail = detail),
+                            )
                             handleFatalVideoEncodeFromEngine("buffer", detail)
                         },
                     )
@@ -2129,6 +2284,7 @@ class ScreenRecordService :
                 perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isBufferRunning = true
+                    setCaptureSessionDiskFlag(true)
                     RecordingState.setBuffering(true)
                     if (forceAvc) {
                         Toast
@@ -2263,6 +2419,8 @@ class ScreenRecordService :
     }
 
     private fun cleanupBuffer() {
+        captureDimensionsFromSessionConfig = false
+        setCaptureSessionDiskFlag(false)
         if (isPrepared) {
             // Keep the service and MediaProjection alive so the overlay can start again.
             mainForegroundActive = false
@@ -2298,7 +2456,7 @@ class ScreenRecordService :
             .Builder(this, CHANNEL_BUFFER_ID)
             .setContentTitle(getString(R.string.notif_buffer_title))
             .setContentText(
-                statusText ?: getString(R.string.notif_buffer_buffering, bufferSecs.toInt()),
+                statusText ?: getString(R.string.notif_buffer_buffering, bufferSecs),
             ).setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(tapPI)
             .setOngoing(true)
@@ -2728,11 +2886,15 @@ class ScreenRecordService :
     }
 
     private fun cleanup(lastSavedRecordingUri: Uri? = null) {
+        captureDimensionsFromSessionConfig = false
+        setCaptureSessionDiskFlag(false)
         hideCountdownOverlay()
         isRecordingPaused = false
         RecordingState.setRecordingPaused(false)
         isRecordingMuted = false
         controlsDismissedByUser = false
+        isStopping = false
+        RecordingState.setSaving(false)
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_HIDE_OVERLAYS })
         try {
             unregisterReceiver(screenOffReceiver)
@@ -2779,11 +2941,7 @@ class ScreenRecordService :
 
         @Suppress("DEPRECATION")
         val layoutFlag =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                WindowManager.LayoutParams.TYPE_PHONE
-            }
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
         val params =
             WindowManager.LayoutParams(
@@ -2927,26 +3085,24 @@ class ScreenRecordService :
     // ── Notifications ──────────────────────────────────────────────────────────
 
     private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mgr = getSystemService(NotificationManager::class.java)
-            mgr.createNotificationChannel(
-                NotificationChannel(CHANNEL_ID, getString(R.string.notif_channel_screen_recording), NotificationManager.IMPORTANCE_LOW),
-            )
-            mgr.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_DONE_ID,
-                    getString(R.string.notif_channel_recording_complete),
-                    NotificationManager.IMPORTANCE_DEFAULT,
-                ),
-            )
-            mgr.createNotificationChannel(
-                NotificationChannel(
-                    CHANNEL_BUFFER_ID,
-                    getString(R.string.notif_channel_rolling_buffer),
-                    NotificationManager.IMPORTANCE_LOW,
-                ),
-            )
-        }
+        val mgr = getSystemService(NotificationManager::class.java)
+        mgr.createNotificationChannel(
+            NotificationChannel(CHANNEL_ID, getString(R.string.notif_channel_screen_recording), NotificationManager.IMPORTANCE_LOW),
+        )
+        mgr.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_DONE_ID,
+                getString(R.string.notif_channel_recording_complete),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
+        )
+        mgr.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_BUFFER_ID,
+                getString(R.string.notif_channel_rolling_buffer),
+                NotificationManager.IMPORTANCE_LOW,
+            ),
+        )
     }
 
     private fun buildRecordingNotification(

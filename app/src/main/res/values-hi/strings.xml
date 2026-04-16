@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">YouTube सब्सक्राइब करें</string>
-    <string name="support_subscribe_youtube_desc">अपडेट के लिए @ibbie को फ़ॉलो करें</string>
+    <string name="support_subscribe_youtube_desc">अपडेट के लिए \@ibbie को फ़ॉलो करें</string>
     <string name="support_remove_ads">विज्ञापन हटाएं — $1</string>
     <string name="support_remove_ads_desc">एकमुश्त खरीद, हमेशा के लिए विज्ञापन-मुक्त</string>
     <string name="support_restore_purchases">खरीदारी वापस लौटाएं</string>
     <string name="support_restore_purchases_desc">Google Play से विज्ञापन और अन्य खरीदारी को सिंक करें</string>
     <string name="support_restore_purchases_toast">आपकी खरीदारी के लिए Google Play की जाँच की जा रही है...</string>
-    <string name="support_play_promo_title">प्ले प्रोमो कोड रिडीम करें</string>
-    <string name="support_play_promo_desc">यदि आपके पास विज्ञापन हटाने के लिए Google Play कोड है: इसे Play पर रिडीम करें, फिर यहां खरीदारी पुनर्स्थापित करें पर टैप करें ताकि ऐप अपडेट हो जाए।</string>
+    <string name="support_play_promo_title">प्रोमो कोड (विज्ञापन हटाएँ)</string>
+    <string name="support_play_promo_desc">विज्ञापन हटाने के लिए Google Play खरीद स्क्रीन खोलता है। भुगतान विधि → कोड रिडीम करें पर टैप करें, कोड डालें और पूरा करें। विज्ञापन रहें तो नीचे खरीदारी पुनर्स्थापित करें।</string>
     <string name="support_toast_promo_browser">ब्राउज़र नहीं खुल सका</string>
     <string name="support_ads_removed">विज्ञापन हटा दिए — धन्यवाद!</string>
     <string name="support_ads_removed_desc">प्रीमियम विकल्प अनलॉक रहेंगे - देखने के लिए कोई विज्ञापन नहीं।</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">स्क्रीनशॉट लेने के लिए पहले रिकॉर्डिंग शुरू करें</string>
     <string name="error_screenshot_capture_failed">स्क्रीनशॉट कैप्चर नहीं किया जा सका. पुनः प्रयास करें।</string>
-    <string name="toast_recording_restarted">ओरिएंटेशन बदलने के कारण रिकॉर्डिंग पुनः शुरू हुई</string>
     <string name="toast_share_app">CatRec देखें - सबसे बढ़िया स्क्रीन रिकॉर्डर!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">कस्टम छवि सेट है</string>
     <string name="watermark_image_default">डिफ़ॉल्ट (ऐप आइकन)</string>
     <string name="watermark_reset_icon">डिफ़ॉल्ट आइकन पर रीसेट करें</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">केबीपीएस</string>
     <string name="label_hz">हर्ट्ज</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">स्थैतिक ग्लास — ब्लर अक्षम</string>
     <string name="perf_dynamic_glass">डायनामिक ग्लास ब्लर सक्षम</string>
     <string name="setting_performance_mode">परफॉर्मेंस मोड</string>
+    <string name="setting_adaptive_recording_performance">अनुकूल रिकॉर्डिंग प्रदर्शन</string>
+    <string name="setting_adaptive_recording_performance_summary">रिकॉर्डिंग के दौरान यदि डिवाइस पर दबाव हो तो स्वचालित रूप से लोड कम करें</string>
+    <string name="performance_fallback_active">स्थिरता के लिए हल्की रिकॉर्डिंग प्रोफ़ाइल पर स्विच किया गया</string>
     <string name="performance_warning_title">प्रदर्शन चेतावनी</string>
     <string name="performance_warning_body">आपके डिवाइस में 6 GB से कम RAM है या Android 11 या इससे पुराना संस्करण चल रहा है। रियल-टाइम ग्लास ब्लर प्रभाव सक्षम करने से UI में देरी हो सकती है, विशेषकर रिकॉर्डिंग के दौरान।\n\nफिर भी गुणवत्ता मोड सक्षम करें?</string>
     <string name="accent_color_title">एक्सेंट रंग</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">आपके समर्थन के लिए धन्यवाद! 🐱</string>
     <string name="billing_pending">खरीदारी लंबित है - इसके पूरा होने पर आपको पहुंच मिल जाएगी।</string>
     <string name="dialog_changelog_title">बदलाव का</string>
-    <string name="label_beta">बीटा</string>
     <string name="support_privacy_policy">गोपनीयता नीति</string>
     <string name="support_privacy_policy_desc">CatRec आपके डेटा को कैसे प्रबंधित करता है</string>
     <string name="support_terms_of_service">सेवा की शर्तें</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">शेयर करना</string>
     <string name="notif_post_delete">मिटाना</string>
     <string name="share_recording_title">रिकॉर्डिंग साझा करें</string>
+    <string name="toast_video_encoder_failed">वीडियो एन्कोडर शुरू नहीं किया जा सका। सेटिंग्स में कम रिज़ॉल्यूशन या दूसरा एन्कोडर आज़माएं।</string>
     <string name="toast_recording_stopped_projection">रिकॉर्डिंग बंद हो गई: कैप्चर किया गया ऐप बंद हो गया या पृष्ठभूमि में चला गया</string>
     <string name="toast_recording_failed_no_video">रिकॉर्डिंग विफल: कोई वीडियो कैप्चर नहीं किया गया</string>
     <string name="toast_gif_transcode_failed">GIF नहीं बनाया जा सका - आपकी MP4 रिकॉर्डिंग रखी गई थी।</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">क्लिप खाली है - अधिक समय तक बफरिंग करते रहें</string>
     <string name="toast_clip_saved">क्लिप सहेजी गई!</string>
     <string name="toast_clip_save_failed">क्लिप सहेजना विफल: %1$s</string>
-    <string name="notif_overlay_controls_text">फ़्लोटिंग नियंत्रण सक्षम हैं</string>
     <string name="notif_camera_overlay_text">कैटरेक कैमरा ओवरले सक्रिय है - ऐप पर लौटने के लिए टैप करें</string>
     <string name="tile_record_label">कैटरेक रिकॉर्ड</string>
     <string name="tile_clipper_label">कैटरेक क्लिपर</string>
-    <string name="notif_channel_overlay">ओवरले नियंत्रण</string>
-    <string name="notif_channel_overlay_desc">फ़्लोटिंग ओवरले नियंत्रण सक्रिय होने पर दिखाया गया है</string>
-    <string name="notif_overlay_active_title">कैटरेक ओवरले सक्रिय</string>
-    <string name="notif_overlay_start_recording">रिकॉर्डिंग प्रारंभ करें</string>
-    <string name="notif_overlay_close_overlay">ओवरले बंद करें</string>
     <string name="notif_channel_camera_overlay">कैमरा ओवरले</string>
     <string name="notif_channel_camera_overlay_desc">कैमरा ओवरले सक्रिय होने पर दिखाता है</string>
     <string name="notif_camera_in_use_title">कैमरा उपयोग में है</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">आवरण छुपाएं</string>
     <string name="notif_action_overlay_show">ओवरले दिखाएँ</string>
     <string name="notif_action_overlay_enable_in_settings">ओवरले बंद</string>
-    <string name="notif_action_home">घर</string>
-    <string name="notif_action_exit">बाहर निकलना</string>
-    <string name="toast_grant_capture_for_screenshot">स्क्रीन कैप्चर की अनुमति दें - फिर CatRec ओवरले से स्क्रीनशॉट ले सकता है।</string>
     <string name="tile_subtitle_recording">रिकॉर्डिंग...</string>
     <string name="tile_subtitle_buffering">बफ़रिंग...</string>
     <string name="tile_subtitle_ready">तैयार</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">स्क्रीनशॉट · %1$d</string>
     <string name="overlay_clip_button">✂ क्लिप</string>
     <string name="overlay_clipper_label">काटनेवाला</string>
-    <string name="overlay_toast_authorize_first">पहले CatRec खोलें और «ओवरले रिकॉर्डिंग अधिकृत करें» पर टैप करें</string>
     <string name="countdown_subtitle">रिकॉर्डिंग शुरू हो रही है…</string>
     <string name="toast_recorder_start_failed">रिकॉर्डर शुरू नहीं हो सका: %1$s</string>
     <string name="format_jpeg">जेपीईजी</string>

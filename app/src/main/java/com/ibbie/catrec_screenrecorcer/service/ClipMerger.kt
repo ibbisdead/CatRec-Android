@@ -4,6 +4,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import android.os.Build
 import android.util.Log
 import java.io.File
 import java.nio.ByteBuffer
@@ -26,6 +27,30 @@ import java.nio.ByteBuffer
 object ClipMerger {
     private const val TAG = "ClipMerger"
     private const val BUFFER_SIZE = 1 * 1024 * 1024 // 1 MB read buffer
+
+    /**
+     * [MediaExtractor.getSampleFlags] uses [MediaExtractor] constants; [MediaMuxer.writeSampleData]
+     * expects [MediaCodec.BufferInfo] flags. Map the overlapping semantics only.
+     */
+    internal fun sampleFlagsForMuxer(sampleFlags: Int): Int {
+        var out = 0
+        if (sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) {
+            out =
+                out or
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        MediaCodec.BUFFER_FLAG_KEY_FRAME
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaCodec.BUFFER_FLAG_SYNC_FRAME
+                    }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            sampleFlags and MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME != 0
+        ) {
+            out = out or MediaCodec.BUFFER_FLAG_PARTIAL_FRAME
+        }
+        return out
+    }
 
     /**
      * Merges [inputFiles] into [outputFile].
@@ -111,7 +136,7 @@ object ClipMerger {
                     val rawPts = extractor.sampleTime
                     bufferInfo.presentationTimeUs = rawPts + globalPtsOffsetUs
                     bufferInfo.offset = 0
-                    bufferInfo.flags = extractor.sampleFlags
+                    bufferInfo.flags = sampleFlagsForMuxer(extractor.sampleFlags)
 
                     readBuffer.position(0)
                     readBuffer.limit(bufferInfo.size)

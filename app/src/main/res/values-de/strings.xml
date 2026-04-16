@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">YouTube abonnieren</string>
-    <string name="support_subscribe_youtube_desc">@ibbie für Updates folgen</string>
+    <string name="support_subscribe_youtube_desc">\@ibbie für Updates folgen</string>
     <string name="support_remove_ads">Werbung entfernen — 1 $</string>
     <string name="support_remove_ads_desc">Einmaliger Kauf, dauerhaft werbefrei</string>
     <string name="support_restore_purchases">Einkäufe wiederherstellen</string>
     <string name="support_restore_purchases_desc">Synchronisieren. Entfernen Sie Werbung und andere Käufe von Google Play</string>
     <string name="support_restore_purchases_toast">Suchen Sie bei Google Play nach Ihren Einkäufen …</string>
-    <string name="support_play_promo_title">Lösen Sie den Play-Gutscheincode ein</string>
-    <string name="support_play_promo_desc">Wenn Sie einen Google Play-Code zum Entfernen von Werbung haben: Lösen Sie ihn bei Play ein und tippen Sie dann auf „Käufe hier wiederherstellen“, damit die App aktualisiert wird.</string>
+    <string name="support_play_promo_title">Promo-Code (Werbung entfernen)</string>
+    <string name="support_play_promo_desc">Öffnet den Google Play-Kauf für „Werbung entfernen“. Zahlungsmethode antippen → Code einlösen, Code eingeben und abschließen. Falls weiterhin Werbung erscheint: Unten „Käufe wiederherstellen“ antippen.</string>
     <string name="support_toast_promo_browser">Der Browser konnte nicht geöffnet werden</string>
     <string name="support_ads_removed">Werbung entfernt — Danke!</string>
     <string name="support_ads_removed_desc">Premium-Optionen bleiben freigeschaltet – es gibt keine Werbung zum Ansehen.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Starte zuerst eine Aufnahme, um Screenshots zu machen</string>
     <string name="error_screenshot_capture_failed">Screenshot konnte nicht aufgenommen werden. Versuchen Sie es erneut.</string>
-    <string name="toast_recording_restarted">Aufnahme wegen Orientierungsänderung neu gestartet</string>
     <string name="toast_share_app">Schauen Sie sich CatRec an – den coolsten Bildschirmrekorder!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Benutzerdefiniertes Bild gesetzt</string>
     <string name="watermark_image_default">Standard (App-Symbol)</string>
     <string name="watermark_reset_icon">Auf Standard-Symbol zurücksetzen</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbit/s</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Statisches Glas — Unschärfe deaktiviert</string>
     <string name="perf_dynamic_glass">Dynamische Glas-Unschärfe aktiviert</string>
     <string name="setting_performance_mode">Leistungsmodus</string>
+    <string name="setting_adaptive_recording_performance">Adaptive Aufnahmeleistung</string>
+    <string name="setting_adaptive_recording_performance_summary">Reduziert die Last automatisch, wenn das Gerät während der Aufnahme Probleme hat</string>
+    <string name="performance_fallback_active">Für mehr Stabilität wurde ein leichteres Aufnahmeprofil aktiviert</string>
     <string name="performance_warning_title">Leistungswarnung</string>
     <string name="performance_warning_body">Dein Gerät hat weniger als 6 GB RAM oder läuft unter Android 11 oder niedriger. Das Aktivieren von Echtzeit-Glasunschärfe-Effekten kann zu UI-Verzögerungen führen, besonders während der Aufnahme.\n\nMöchtest du den Qualitätsmodus trotzdem aktivieren?</string>
     <string name="accent_color_title">Akzentfarbe</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Vielen Dank für Ihre Unterstützung! 🐱</string>
     <string name="billing_pending">Der Kauf steht noch aus – Sie erhalten Zugriff, sobald der Kauf abgeschlossen ist.</string>
     <string name="dialog_changelog_title">Änderungsprotokoll</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">Datenschutzrichtlinie</string>
     <string name="support_privacy_policy_desc">Wie CatRec mit Ihren Daten umgeht</string>
     <string name="support_terms_of_service">Nutzungsbedingungen</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Aktie</string>
     <string name="notif_post_delete">Löschen</string>
     <string name="share_recording_title">Aufzeichnung teilen</string>
+    <string name="toast_video_encoder_failed">Der Video-Encoder konnte nicht gestartet werden. Versuchen Sie eine niedrigere Auflösung oder einen anderen Encoder in den Einstellungen.</string>
     <string name="toast_recording_stopped_projection">Aufnahme gestoppt: Die aufgenommene App wurde geschlossen oder in den Hintergrund verschoben</string>
     <string name="toast_recording_failed_no_video">Aufnahme fehlgeschlagen: Es wurde kein Video aufgenommen</string>
     <string name="toast_gif_transcode_failed">GIF konnte nicht erstellt werden – Ihre MP4-Aufnahme wurde beibehalten.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Der Clip ist leer – länger puffern</string>
     <string name="toast_clip_saved">Clip gespeichert!</string>
     <string name="toast_clip_save_failed">Clip-Speicherung fehlgeschlagen: %1$s</string>
-    <string name="notif_overlay_controls_text">Schwebende Steuerelemente sind aktiviert</string>
     <string name="notif_camera_overlay_text">CatRec-Kamera-Overlay ist aktiv – tippen Sie, um zur App zurückzukehren</string>
     <string name="tile_record_label">CatRec-Datensatz</string>
     <string name="tile_clipper_label">CatRec Clipper</string>
-    <string name="notif_channel_overlay">Overlay-Steuerelemente</string>
-    <string name="notif_channel_overlay_desc">Wird angezeigt, während schwebende Overlay-Steuerelemente aktiv sind</string>
-    <string name="notif_overlay_active_title">CatRec-Overlay aktiv</string>
-    <string name="notif_overlay_start_recording">Starten Sie die Aufnahme</string>
-    <string name="notif_overlay_close_overlay">Overlay schließen</string>
     <string name="notif_channel_camera_overlay">Kamera-Overlay</string>
     <string name="notif_channel_camera_overlay_desc">Wird angezeigt, während das Kamera-Overlay aktiv ist</string>
     <string name="notif_camera_in_use_title">Kamera im Einsatz</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Overlay ausblenden</string>
     <string name="notif_action_overlay_show">Overlay anzeigen</string>
     <string name="notif_action_overlay_enable_in_settings">Overlay aus</string>
-    <string name="notif_action_home">Heim</string>
-    <string name="notif_action_exit">Ausfahrt</string>
-    <string name="toast_grant_capture_for_screenshot">Bildschirmaufnahme zulassen – dann kann CatRec Screenshots vom Overlay machen.</string>
     <string name="tile_subtitle_recording">Aufnahme…</string>
     <string name="tile_subtitle_buffering">Pufferung…</string>
     <string name="tile_subtitle_ready">Bereit</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="overlay_clip_button">✂ CLIP</string>
     <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Öffne CatRec und tippe zuerst auf „Overlay-Aufnahme autorisieren“</string>
     <string name="countdown_subtitle">Aufnahme startet…</string>
     <string name="toast_recorder_start_failed">Aufnahme konnte nicht gestartet werden: %1$s</string>
     <string name="format_jpeg">JPEG</string>

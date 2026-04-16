@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -67,9 +68,14 @@ import com.ibbie.catrec_screenrecorcer.ui.theme.rememberScreenBackgroundBrush
 import com.ibbie.catrec_screenrecorcer.utils.createDeleteRequestPendingIntent
 import kotlinx.coroutines.launch
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ScreenshotsScreen() {
+fun ScreenshotsScreen(
+    viewModel: RecordingViewModel = viewModel(),
+) {
     val context = LocalContext.current
     val accent = LocalAccentColor.current
 
@@ -111,8 +117,11 @@ fun ScreenshotsScreen() {
         onDispose { suppressRecordFab.value = false }
     }
 
-    // Reload when returning to this tab, after manual refresh, or when the key changes.
-    LifecycleResumeEffect(manualRefreshKey) {
+    // Reload when returning to this tab, after manual refresh, or when a recording stops.
+    val lifecycleState by viewModel.sessionLifecycleState.collectAsState()
+    val isIdle = lifecycleState is com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState.Idle
+
+    LifecycleResumeEffect(manualRefreshKey, isIdle) {
         isLoading = true
         val job =
             scope.launch {
@@ -330,6 +339,12 @@ fun ScreenshotsScreen() {
             else -> {
                 val density = LocalDensity.current
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    if (constraints.maxWidth == Constraints.Infinity ||
+                        constraints.maxHeight == Constraints.Infinity
+                    ) {
+                        Box(Modifier.fillMaxSize())
+                        return@BoxWithConstraints
+                    }
                     val columnCount =
                         when {
                             maxWidth >= 900.dp -> 4
@@ -340,14 +355,18 @@ fun ScreenshotsScreen() {
                     val gridSpacing = 10.dp * (columnCount - 1).coerceAtLeast(0)
                     val thumbDecodePx =
                         with(density) {
-                            ((maxWidth - gridPaddingH - gridSpacing) / columnCount)
-                                .toPx()
-                                .toInt()
-                                .coerceIn(96, 520)
+                            val padPx = gridPaddingH.roundToPx()
+                            val gapPx = gridSpacing.roundToPx()
+                            val cellW =
+                                (constraints.maxWidth - padPx - gapPx) / columnCount.coerceAtLeast(1)
+                            cellW.coerceIn(96, 520)
                         }
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(columnCount),
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .requiredSizeIn(maxWidth = maxWidth, maxHeight = maxHeight),
                         contentPadding =
                             PaddingValues(
                                 start = 16.dp,

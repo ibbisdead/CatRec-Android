@@ -2,9 +2,9 @@ import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.parcelize)
     // Must be applied (no apply false) so google-services.json is processed and Firebase SDKs initialize.
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
@@ -20,8 +20,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.0.0"
+        versionCode = 16
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -49,8 +49,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -68,8 +68,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
-        freeCompilerArgs.add("-opt-in=androidx.media3.common.util.UnstableApi")
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -80,7 +79,7 @@ detekt {
 }
 
 tasks.withType<Detekt>().configureEach {
-    jvmTarget = "11"
+    jvmTarget = "17"
 }
 
 tasks.named("check") {
@@ -157,6 +156,8 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

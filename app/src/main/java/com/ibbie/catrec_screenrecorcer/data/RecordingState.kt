@@ -34,6 +34,10 @@ object RecordingState {
     private val _isRecordingPaused = MutableStateFlow(false)
     val isRecordingPaused: StateFlow<Boolean> = _isRecordingPaused.asStateFlow()
 
+    /** True when a recording or buffer is stopped and actively being muxed/written to disk. */
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
     fun setRecording(recording: Boolean) {
         _isRecording.value = recording
     }
@@ -56,5 +60,9 @@ object RecordingState {
 
     fun setRecordingPaused(paused: Boolean) {
         _isRecordingPaused.value = paused
+    }
+
+    fun setSaving(saving: Boolean) {
+        _isSaving.value = saving
     }
 }

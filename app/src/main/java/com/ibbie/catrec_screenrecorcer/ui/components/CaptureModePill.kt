@@ -1,6 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,14 +15,15 @@ import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -33,11 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 import com.ibbie.catrec_screenrecorcer.ui.theme.CaptureModeColors
+import com.ibbie.catrec_screenrecorcer.ui.theme.CrimsonRed
+import androidx.compose.material3.MaterialTheme
 
 private val iconButtonSize = 40.dp
 private val gifButtonSize = 46.dp
 private val iconSize = 22.dp
+private val glassShape = RoundedCornerShape(24.dp)
 
 @Composable
 fun CaptureModePill(
@@ -49,23 +55,39 @@ fun CaptureModePill(
     captureMode: String = CaptureMode.RECORD,
     modifier: Modifier = Modifier,
 ) {
-    val surface = MaterialTheme.colorScheme.surfaceVariant
-    val onSurface = MaterialTheme.colorScheme.onSurfaceVariant
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        color = surface.copy(alpha = 0.85f),
-        tonalElevation = 1.dp,
+    val isDark = !MaterialTheme.colorScheme.isLightTheme()
+    val onGlass = remember(isDark) { if (isDark) Color.White.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.75f) }
+    
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val bgColor = remember(surfaceColor) {
+        surfaceColor.copy(alpha = 0.85f)
+    }
+    
+    val borderColor = remember(isDark) {
+        if (isDark) Color.White.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.08f)
+    }
+
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = 6.dp,
+                shape = glassShape,
+                ambientColor = Color.Black.copy(alpha = 0.05f),
+                spotColor = Color.Black.copy(alpha = 0.1f),
+            )
+            .clip(glassShape)
+            .background(bgColor)
+            .border(width = 1.dp, color = borderColor, shape = glassShape),
     ) {
         Row(
-            modifier = Modifier.padding(4.dp),
+            modifier = Modifier.padding(6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             PillIconCircle(
                 selected = selectedMode == CaptureMode.RECORD,
                 segmentTint = CaptureModeColors.RecordingRed,
-                onSurface = onSurface,
+                onSurface = onGlass,
                 enabled = enabled,
                 onClick = { onModeSelected(CaptureMode.RECORD) },
                 contentDescription = stringResource(R.string.capture_mode_recording),
@@ -75,7 +97,7 @@ fun CaptureModePill(
             PillIconCircle(
                 selected = selectedMode == CaptureMode.CLIPPER,
                 segmentTint = CaptureModeColors.ClipperYellow,
-                onSurface = onSurface,
+                onSurface = onGlass,
                 enabled = enabled,
                 onClick = { onModeSelected(CaptureMode.CLIPPER) },
                 contentDescription = stringResource(R.string.capture_mode_clipper),
@@ -85,7 +107,7 @@ fun CaptureModePill(
             PillGifCircle(
                 selected = selectedMode == CaptureMode.GIF,
                 segmentTint = CaptureModeColors.GifBlue,
-                onSurface = onSurface,
+                onSurface = onGlass,
                 enabled = enabled,
                 onClick = { onModeSelected(CaptureMode.GIF) },
                 contentDescription = stringResource(R.string.capture_mode_gif),

@@ -48,6 +48,29 @@ private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Andr
 private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
 private const val PERMISSIONS_DISCLOSURE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md"
 
+private enum class CreditLinkKind {
+    None,
+    Youtube,
+    TikTok,
+}
+
+private data class TesterCredit(
+    val name: String,
+    val url: String?,
+    val linkKind: CreditLinkKind = CreditLinkKind.None,
+)
+
+/** Early testers & creators — Support → Credits. */
+private val testerCredits =
+    listOf(
+        TesterCredit("Dr8ppy", "https://www.youtube.com/@dr8ppy", CreditLinkKind.Youtube),
+        TesterCredit("Rogue", "https://www.youtube.com/@rogue-n6b", CreditLinkKind.Youtube),
+        TesterCredit("MK", "https://www.youtube.com/@MKRV2626", CreditLinkKind.Youtube),
+        TesterCredit("Pusher", "https://www.tiktok.com/@pusherisdead", CreditLinkKind.TikTok),
+        TesterCredit("Metsuki", null, CreditLinkKind.None),
+        TesterCredit("Catz", null, CreditLinkKind.None),
+    )
+
 @Composable
 fun SupportScreen(
     viewModel: RecordingViewModel,
@@ -63,6 +86,7 @@ fun SupportScreen(
         }
 
     var showChangelogDialog by rememberSaveable { mutableStateOf(false) }
+    var showCreditsDialog by rememberSaveable { mutableStateOf(false) }
 
     var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
     var isAdLoading by remember { mutableStateOf(false) }
@@ -304,12 +328,13 @@ fun SupportScreen(
                 title = stringResource(R.string.support_play_promo_title),
                 subtitle = stringResource(R.string.support_play_promo_desc),
                 onClick = {
-                    try {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/redeem")),
-                        )
-                    } catch (_: Exception) {
-                        Toast.makeText(context, context.getString(R.string.support_toast_promo_browser), Toast.LENGTH_SHORT).show()
+                    if (adsDisabled) return@SupportActionCard
+                    if (activity == null) return@SupportActionCard
+                    // App-specific Play codes must be redeemed inside Google Play’s purchase UI (payment method → Redeem),
+                    // not on play.google.com/redeem — same entry point as Remove ads.
+                    if (!billing.launchRemoveAdsPurchase(activity)) {
+                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        billing.refreshPurchasesIfConnected()
                     }
                 },
             )
@@ -338,6 +363,15 @@ fun SupportScreen(
                 title = stringResource(R.string.support_changelog),
                 subtitle = stringResource(R.string.support_changelog_desc),
                 onClick = { showChangelogDialog = true },
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            SupportActionCard(
+                icon = Icons.Default.Star,
+                title = stringResource(R.string.support_credits),
+                subtitle = stringResource(R.string.support_credits_desc),
+                onClick = { showCreditsDialog = true },
             )
 
             Spacer(Modifier.height(32.dp))
@@ -420,6 +454,91 @@ fun SupportScreen(
                 }
             },
         )
+    }
+
+    if (showCreditsDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreditsDialog = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp,
+            icon = { Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
+            title = { Text(stringResource(R.string.dialog_credits_title), fontWeight = FontWeight.Bold) },
+            text = {
+                val creditsScroll = rememberScrollState()
+                Column(modifier = Modifier.verticalScroll(creditsScroll)) {
+                    Text(
+                        stringResource(R.string.credits_intro),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    testerCredits.forEach { credit ->
+                        CreditsTesterRow(
+                            credit = credit,
+                            onOpenUrl = { url ->
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                } catch (_: Exception) {
+                                    Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCreditsDialog = false }) {
+                    Text(stringResource(R.string.action_close))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun CreditsTesterRow(
+    credit: TesterCredit,
+    onOpenUrl: (String) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    when {
+        credit.url != null -> {
+            val kindLabel =
+                when (credit.linkKind) {
+                    CreditLinkKind.Youtube -> stringResource(R.string.credits_link_youtube)
+                    CreditLinkKind.TikTok -> stringResource(R.string.credits_link_tiktok)
+                    CreditLinkKind.None -> ""
+                }
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenUrl(credit.url) },
+            ) {
+                Text(
+                    credit.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.primary,
+                )
+                if (kindLabel.isNotEmpty()) {
+                    Text(
+                        kindLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        else -> {
+            Text(
+                credit.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = scheme.onSurface,
+            )
+        }
     }
 }
 

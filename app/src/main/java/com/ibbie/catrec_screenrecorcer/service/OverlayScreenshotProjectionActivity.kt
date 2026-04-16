@@ -39,11 +39,7 @@ class OverlayScreenshotProjectionActivity : ComponentActivity() {
                             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, ssFmt)
                             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, ssQ)
                         }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(prepare)
-                    } else {
-                        startService(prepare)
-                    }
+                    startForegroundService(prepare)
                     val appCtx = applicationContext
                     Handler(Looper.getMainLooper()).postDelayed(
                         {

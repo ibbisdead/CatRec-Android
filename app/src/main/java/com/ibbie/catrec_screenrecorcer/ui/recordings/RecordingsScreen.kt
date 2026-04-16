@@ -82,9 +82,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RecordingsScreen(navController: NavController) {
+fun RecordingsScreen(
+    navController: NavController,
+    viewModel: RecordingViewModel = viewModel(),
+) {
     val context = LocalContext.current
     val accent = LocalAccentColor.current
     val repository = remember { SettingsRepository(context) }
@@ -117,8 +123,12 @@ fun RecordingsScreen(navController: NavController) {
         onDispose { suppressRecordFab.value = false }
     }
 
-    // Reload whenever this tab’s lifecycle resumes (switching tabs) or save folder changes.
-    LifecycleResumeEffect(saveLocationUri) {
+    // Reload whenever this tab’s lifecycle resumes (switching tabs), save folder changes,
+    // or when the recording session stops (so new clips show up immediately).
+    val lifecycleState by viewModel.sessionLifecycleState.collectAsState()
+    val isIdle = lifecycleState is com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState.Idle
+
+    LifecycleResumeEffect(saveLocationUri, isIdle) {
         isLoading = true
         val job =
             scope.launch {

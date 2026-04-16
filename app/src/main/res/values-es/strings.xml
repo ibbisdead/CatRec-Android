@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Suscríbete a youtube</string>
-    <string name="support_subscribe_youtube_desc">Sigue a @ibbie para recibir actualizaciones</string>
+    <string name="support_subscribe_youtube_desc">Sigue a \@ibbie para recibir actualizaciones</string>
     <string name="support_remove_ads">Eliminar Anuncios — $1</string>
     <string name="support_remove_ads_desc">Compra única, sin anuncios para siempre</string>
     <string name="support_restore_purchases">Restaurar compras</string>
     <string name="support_restore_purchases_desc">Sincronizar Quitar anuncios y otras compras de Google Play</string>
     <string name="support_restore_purchases_toast">Buscando en Google Play tus compras…</string>
-    <string name="support_play_promo_title">Canjear código promocional de Play</string>
-    <string name="support_play_promo_desc">Si tiene un código de Google Play para Eliminar anuncios: canjéelo en Play y luego toque Restaurar compras aquí para que la aplicación se actualice.</string>
+    <string name="support_play_promo_title">Código promocional (Eliminar anuncios)</string>
+    <string name="support_play_promo_desc">Abre la compra de Google Play para Eliminar anuncios. Toque el método de pago → Canjear código, introduzca el código y finalice. Si siguen los anuncios, pulse Restaurar compras abajo.</string>
     <string name="support_toast_promo_browser">No se pudo abrir el navegador</string>
     <string name="support_ads_removed">Anuncios Eliminados — ¡Gracias!</string>
     <string name="support_ads_removed_desc">Las opciones premium permanecen desbloqueadas: no hay anuncios para ver.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Inicia la grabación primero para tomar capturas de pantalla</string>
     <string name="error_screenshot_capture_failed">No se pudo realizar la captura de pantalla. Intentar otra vez.</string>
-    <string name="toast_recording_restarted">Grabación reiniciada por cambio de orientación</string>
     <string name="toast_share_app">Echa un vistazo a CatRec, ¡el mejor grabador de pantalla!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Imagen personalizada establecida</string>
     <string name="watermark_image_default">Predeterminada (ícono de la app)</string>
     <string name="watermark_reset_icon">Restablecer ícono predeterminado</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Vidrio estático — desenfoque desactivado</string>
     <string name="perf_dynamic_glass">Desenfoque de vidrio dinámico activado</string>
     <string name="setting_performance_mode">Modo Rendimiento</string>
+    <string name="setting_adaptive_recording_performance">Rendimiento adaptativo de grabación</string>
+    <string name="setting_adaptive_recording_performance_summary">Reduce automáticamente la carga si el dispositivo tiene dificultades durante la grabación</string>
+    <string name="performance_fallback_active">Se cambió a un perfil de grabación más ligero por estabilidad</string>
     <string name="performance_warning_title">Advertencia de rendimiento</string>
     <string name="performance_warning_body">Tu dispositivo tiene menos de 6 GB de RAM o ejecuta Android 11 o inferior. Activar los efectos de desenfoque en tiempo real puede causar retrasos en la UI, especialmente durante la grabación.\n\n¿Deseas activar el Modo Calidad de todas formas?</string>
     <string name="accent_color_title">Color de acento</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">¡Gracias por su apoyo! 🐱</string>
     <string name="billing_pending">La compra está pendiente: obtendrás acceso cuando se complete.</string>
     <string name="dialog_changelog_title">Registro de cambios</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">política de privacidad</string>
     <string name="support_privacy_policy_desc">Cómo CatRec maneja sus datos</string>
     <string name="support_terms_of_service">Términos de servicio</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Compartir</string>
     <string name="notif_post_delete">Borrar</string>
     <string name="share_recording_title">Compartir grabación</string>
+    <string name="toast_video_encoder_failed">No se pudo iniciar el codificador de vídeo. Prueba una resolución menor u otro codificador en Ajustes.</string>
     <string name="toast_recording_stopped_projection">Grabación detenida: la aplicación capturada se cerró o se movió al fondo</string>
     <string name="toast_recording_failed_no_video">Error de grabación: no se capturó ningún vídeo</string>
     <string name="toast_gif_transcode_failed">No se pudo crear GIF: se conservó su grabación MP4.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">El clip está vacío: siga almacenando en búfer por más tiempo</string>
     <string name="toast_clip_saved">¡Clip guardado!</string>
     <string name="toast_clip_save_failed">Error al guardar el clip: %1$s</string>
-    <string name="notif_overlay_controls_text">Los controles flotantes están habilitados.</string>
     <string name="notif_camera_overlay_text">La superposición de cámara CatRec está activa: toque para regresar a la aplicación</string>
     <string name="tile_record_label">Registro CatRec</string>
     <string name="tile_clipper_label">Cortadora CatRec</string>
-    <string name="notif_channel_overlay">Controles de superposición</string>
-    <string name="notif_channel_overlay_desc">Se muestra mientras los controles de superposición flotante están activos</string>
-    <string name="notif_overlay_active_title">Superposición CatRec activa</string>
-    <string name="notif_overlay_start_recording">Empezar a grabar</string>
-    <string name="notif_overlay_close_overlay">Cerrar superposición</string>
     <string name="notif_channel_camera_overlay">Superposición de cámara</string>
     <string name="notif_channel_camera_overlay_desc">Se muestra mientras la superposición de la cámara está activa</string>
     <string name="notif_camera_in_use_title">cámara en uso</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Ocultar superposición</string>
     <string name="notif_action_overlay_show">Mostrar superposición</string>
     <string name="notif_action_overlay_enable_in_settings">Superposición desactivada</string>
-    <string name="notif_action_home">Hogar</string>
-    <string name="notif_action_exit">Salida</string>
-    <string name="toast_grant_capture_for_screenshot">Permitir captura de pantalla: entonces CatRec podrá tomar capturas de pantalla desde la superposición.</string>
     <string name="tile_subtitle_recording">Grabación…</string>
     <string name="tile_subtitle_buffering">Almacenamiento en búfer…</string>
     <string name="tile_subtitle_ready">Listo</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">CAPTURAS · %1$d</string>
     <string name="overlay_clip_button">✂ RECORTAR</string>
     <string name="overlay_clipper_label">CLÍPER</string>
-    <string name="overlay_toast_authorize_first">Abre CatRec y pulsa «Autorizar grabación en superposición» primero</string>
     <string name="countdown_subtitle">Iniciando grabación…</string>
     <string name="toast_recorder_start_failed">No se pudo iniciar la grabación: %1$s</string>
     <string name="format_jpeg">JPEG</string>

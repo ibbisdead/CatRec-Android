@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSizeIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -38,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.ibbie.catrec_screenrecorcer.R
 import kotlin.math.min
@@ -125,6 +127,12 @@ fun EditorFreeformCropContent(
     var dragKind by remember { mutableStateOf(CropDrag.None) }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        if (constraints.maxWidth == Constraints.Infinity ||
+            constraints.maxHeight == Constraints.Infinity
+        ) {
+            Box(Modifier.fillMaxSize())
+            return@BoxWithConstraints
+        }
         val boxW = constraints.maxWidth.toFloat()
         val boxH = constraints.maxHeight.toFloat()
         val bw = bitmap.width.toFloat()
@@ -168,7 +176,11 @@ fun EditorFreeformCropContent(
         val wDp = with(density) { dispW.toDp() }
         val hDp = with(density) { dispH.toDp() }
 
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .requiredSizeIn(maxWidth = maxWidth, maxHeight = maxHeight)
+                .fillMaxSize(),
+        ) {
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = null,

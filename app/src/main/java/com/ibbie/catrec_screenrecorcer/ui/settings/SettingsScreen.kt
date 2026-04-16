@@ -60,7 +60,6 @@ import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
 
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     return pm.isIgnoringBatteryOptimizations(context.packageName)
 }
@@ -849,29 +848,21 @@ fun SettingsScreen(
                 stringResource(R.string.setting_clipper_duration),
                 clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
             ) { showClipperDurationDialog = true }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !batteryOptimizationIgnored) {
+            if (!batteryOptimizationIgnored) {
                 ClickableSettingItem(
                     Icons.Filled.PowerSettingsNew,
                     stringResource(R.string.setting_allow_background_title),
                     stringResource(R.string.setting_allow_background_desc),
                 ) {
                     try {
-                        context.startActivity(
-                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                data = Uri.parse("package:${context.packageName}")
-                            },
-                        )
+                        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                     } catch (_: Exception) {
-                        try {
-                            context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                        } catch (_: Exception) {
-                            Toast
-                                .makeText(
-                                    context,
-                                    context.getString(R.string.toast_battery_settings_failed),
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        }
+                        Toast
+                            .makeText(
+                                context,
+                                context.getString(R.string.toast_battery_settings_failed),
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
             }

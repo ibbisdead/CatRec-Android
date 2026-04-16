@@ -318,7 +318,7 @@
     "format_webp": "WebP",
     "gate_high_fps": "%1$s FPS",
     "home_version": "v%1$s",
-    "label_dp": "%1$gg",
+    "label_dp": "%1$ddp",
     "label_hz": "Hz",
     "label_kbps": "kbps",
     "label_percent": "%1$d%%",

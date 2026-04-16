@@ -33,6 +33,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.service.ClipMerger
 import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -358,7 +359,7 @@ private suspend fun trimVideo(
                 if (info.size < 0) break
 
                 info.presentationTimeUs = (sampleTime - startUs).coerceAtLeast(0L)
-                info.flags = extractor.sampleFlags
+                info.flags = ClipMerger.sampleFlagsForMuxer(extractor.sampleFlags)
 
                 muxer.writeSampleData(muxerTrack, buffer, info)
                 extractor.advance()

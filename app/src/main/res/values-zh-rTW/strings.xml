@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">訂閱 YouTube</string>
-    <string name="support_subscribe_youtube_desc">追蹤 @ibbie 獲取更新</string>
+    <string name="support_subscribe_youtube_desc">追蹤 \@ibbie 獲取更新</string>
     <string name="support_remove_ads">移除廣告 — $1</string>
     <string name="support_remove_ads_desc">一次性購買，永久無廣告</string>
     <string name="support_restore_purchases">恢復購買</string>
     <string name="support_restore_purchases_desc">同步刪除廣告和 Google Play 中的其他購買項目</string>
     <string name="support_restore_purchases_toast">正在檢查 Google Play 的購買情況...</string>
-    <string name="support_play_promo_title">兌換 Play 促銷代碼</string>
-    <string name="support_play_promo_desc">如果您有用於「刪除廣告」的 Google Play 代碼：在 Play 上兌換它，然後點擊此處的「恢復購買」以便應用程式更新。</string>
+    <string name="support_play_promo_title">促銷代碼（移除廣告）</string>
+    <string name="support_play_promo_desc">開啟 Google Play 的「移除廣告」購買畫面。點付款方式 → 兌換代碼，輸入代碼並完成。若仍有廣告，請點下方恢復購買。</string>
     <string name="support_toast_promo_browser">無法開啟瀏覽器</string>
     <string name="support_ads_removed">廣告已移除 — 感謝！</string>
     <string name="support_ads_removed_desc">高級選項保持解鎖狀態－沒有廣告可看。</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">請先開始錄製再截圖</string>
     <string name="error_screenshot_capture_failed">無法擷取螢幕截圖。再試一次。</string>
-    <string name="toast_recording_restarted">已因螢幕旋轉重新開始錄製</string>
     <string name="toast_share_app">看看 CatRec - 最酷的螢幕錄影機！</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">已設定自訂圖片</string>
     <string name="watermark_image_default">預設（應用程式圖示）</string>
     <string name="watermark_reset_icon">重設為預設圖示</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">千比特/秒</string>
     <string name="label_hz">赫茲</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">靜態玻璃 — 模糊已停用</string>
     <string name="perf_dynamic_glass">動態玻璃模糊已啟用</string>
     <string name="setting_performance_mode">效能模式</string>
+    <string name="setting_adaptive_recording_performance">自適應錄製效能</string>
+    <string name="setting_adaptive_recording_performance_summary">錄製時若裝置吃力，會自動降低負載</string>
+    <string name="performance_fallback_active">為了穩定，已切換到較輕量的錄製設定檔</string>
     <string name="performance_warning_title">效能警告</string>
     <string name="performance_warning_body">您的裝置 RAM 不足 6 GB 或執行 Android 11 及以下版本。啟用即時玻璃模糊效果可能導致介面卡頓，尤其是在錄製期間。\n\n仍要啟用品質模式嗎？</string>
     <string name="accent_color_title">強調色</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">感謝您的支持！ 🐱</string>
     <string name="billing_pending">購買正在等待 - 完成後您將獲得存取權限。</string>
     <string name="dialog_changelog_title">變更日誌</string>
-    <string name="label_beta">貝塔</string>
     <string name="support_privacy_policy">隱私權政策</string>
     <string name="support_privacy_policy_desc">CatRec 如何處理您的數據</string>
     <string name="support_terms_of_service">服務條款</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">分享</string>
     <string name="notif_post_delete">刪除</string>
     <string name="share_recording_title">分享錄音</string>
+    <string name="toast_video_encoder_failed">無法啟動視訊編碼器。請在設定中嘗試較低解析度或其他編碼器。</string>
     <string name="toast_recording_stopped_projection">錄製停止：捕獲的應用程式已關閉或移至背景</string>
     <string name="toast_recording_failed_no_video">錄製失敗：未捕獲視頻</string>
     <string name="toast_gif_transcode_failed">無法建立 GIF — 您的 MP4 錄音已保留。</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">剪輯為空 – 保持緩衝時間更長</string>
     <string name="toast_clip_saved">剪輯已儲存！</string>
     <string name="toast_clip_save_failed">剪輯保存失敗：%1$s</string>
-    <string name="notif_overlay_controls_text">浮動控制已啟用</string>
     <string name="notif_camera_overlay_text">CatRec 相機疊加層處於活動狀態 — 點擊即可返回應用程式</string>
     <string name="tile_record_label">貓錄記錄</string>
     <string name="tile_clipper_label">CatRec 剪輯器</string>
-    <string name="notif_channel_overlay">疊加控件</string>
-    <string name="notif_channel_overlay_desc">當浮動覆蓋控制項處於活動狀態時顯示</string>
-    <string name="notif_overlay_active_title">CatRec 疊加激活</string>
-    <string name="notif_overlay_start_recording">開始錄音</string>
-    <string name="notif_overlay_close_overlay">關閉疊加</string>
     <string name="notif_channel_camera_overlay">相機疊加</string>
     <string name="notif_channel_camera_overlay_desc">當相機疊加層處於作用中時顯示</string>
     <string name="notif_camera_in_use_title">相機使用中</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">隱藏疊加層</string>
     <string name="notif_action_overlay_show">顯示疊加層</string>
     <string name="notif_action_overlay_enable_in_settings">疊加關閉</string>
-    <string name="notif_action_home">家</string>
-    <string name="notif_action_exit">出口</string>
-    <string name="toast_grant_capture_for_screenshot">允許螢幕截圖 — 然後 CatRec 可以從疊加層中截取螢幕截圖。</string>
     <string name="tile_subtitle_recording">記錄…</string>
     <string name="tile_subtitle_buffering">緩衝中…</string>
     <string name="tile_subtitle_ready">準備好</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">螢幕截圖 · %1$d</string>
     <string name="overlay_clip_button">✂ 剪輯</string>
     <string name="overlay_clipper_label">快船</string>
-    <string name="overlay_toast_authorize_first">請先開啟 CatRec，並點選「授權疊加層錄製」</string>
     <string name="countdown_subtitle">正在開始錄製…</string>
     <string name="toast_recorder_start_failed">無法開始錄製：%1$s</string>
     <string name="format_jpeg">JPEG</string>

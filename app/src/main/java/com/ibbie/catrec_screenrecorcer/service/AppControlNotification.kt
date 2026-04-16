@@ -33,7 +33,6 @@ object AppControlNotification {
     private val refreshScope = CoroutineScope(refreshJob + Dispatchers.Main.immediate)
 
     private fun ensureChannel(context: Context) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val mgr = context.getSystemService(NotificationManager::class.java) ?: return
         mgr.createNotificationChannel(
             NotificationChannel(
@@ -60,9 +59,11 @@ object AppControlNotification {
         val isRecording = RecordingState.isRecording.value
         val isBuffering = RecordingState.isBuffering.value
         val isPrepared = RecordingState.isPrepared.value
+        val isSaving = RecordingState.isSaving.value
 
         // Single shade entry: ScreenRecordService uses [ScreenRecordService.MAIN_FOREGROUND_NOTIFICATION_ID].
-        if (isBuffering) {
+        // If we are currently saving a video/GIF, suppress the idle notification so it doesn't double up.
+        if (isBuffering || isSaving) {
             cancel(app)
             return
         }

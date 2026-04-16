@@ -84,8 +84,8 @@
     <!-- Settings Screen - Section Headers -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_controls">Controls</string>
-    <string name="setting_allow_background_title">Unrestricted battery use</string>
-    <string name="setting_allow_background_desc">Lets CatRec keep recording, the prepared capture session, and the overlay running reliably when you leave the app. Opens system battery settings.</string>
+    <string name="setting_allow_background_title">Optimize for background recording</string>
+    <string name="setting_allow_background_desc">Optional: granting Unrestricted battery for CatRec in system settings can help prevent very long recordings from being stopped. Tap to open your device battery list and adjust CatRec if you want.</string>
     <string name="toast_battery_settings_failed">Couldn\'t open battery settings. Try Battery → CatRec in system Settings.</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_gif_recorder">GIF Kaydedici</string>
@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">YouTube\'a abone olun</string>
-    <string name="support_subscribe_youtube_desc">Güncellemeler için @ibbie\'yi takip edin</string>
+    <string name="support_subscribe_youtube_desc">Güncellemeler için \@ibbie\'yi takip edin</string>
     <string name="support_remove_ads">Remove Ads — $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
     <string name="support_restore_purchases">Satın alınanları geri yükle</string>
     <string name="support_restore_purchases_desc">Google Play\'den Reklamları ve diğer satın alma işlemlerini senkronize et</string>
     <string name="support_restore_purchases_toast">Satın alma işlemleriniz için Google Play kontrol ediliyor…</string>
-    <string name="support_play_promo_title">Play promosyon kodunu kullanın</string>
-    <string name="support_play_promo_desc">Reklamları Kaldırmak için bir Google Play kodunuz varsa: Play\'de kullanın ve ardından uygulamanın güncellenmesi için Satın alınanları burada geri yükle\'ye dokunun.</string>
+    <string name="support_play_promo_title">Promosyon kodu (Reklamları kaldır)</string>
+    <string name="support_play_promo_desc">Reklamları kaldır için Google Play satın alma ekranını açar. Ödeme yöntemi → Kodu kullan, kodu girin ve tamamlayın. Reklamlar devam ederse alttan Satın alınanları geri yükle\'ye dokunun.</string>
     <string name="support_toast_promo_browser">Tarayıcı açılamadı</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium seçeneklerin kilidi açık kalır; izlenecek reklam yoktur.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Screen capture isn\'t active. Open CatRec and grant capture first.</string>
     <string name="error_screenshot_capture_failed">Ekran görüntüsü alınamadı. Tekrar deneyin.</string>
-    <string name="toast_recording_restarted">Recording restarted for orientation change</string>
     <string name="toast_share_app">En havalı ekran kaydedici CatRec\'e göz atın!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Custom image set</string>
     <string name="watermark_image_default">Default (app icon)</string>
     <string name="watermark_reset_icon">Reset to default icon</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz.</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Static glass — blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
+    <string name="setting_adaptive_recording_performance">Uyarlanabilir kayıt performansı</string>
+    <string name="setting_adaptive_recording_performance_summary">Kayıt sırasında cihaz zorlanırsa yükü otomatik olarak azaltır</string>
+    <string name="performance_fallback_active">Kararlılık için daha hafif bir kayıt profiline geçildi</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
     <string name="accent_color_title">Accent color</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Desteğiniz için teşekkür ederiz! 🐱</string>
     <string name="billing_pending">Satın alma işlemi beklemede; işlem tamamlandığında erişime sahip olacaksınız.</string>
     <string name="dialog_changelog_title">Değişiklik günlüğü</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">Gizlilik Politikası</string>
     <string name="support_privacy_policy_desc">CatRec verilerinizi nasıl işler?</string>
     <string name="support_terms_of_service">Hizmet Şartları</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Paylaşmak</string>
     <string name="notif_post_delete">Silmek</string>
     <string name="share_recording_title">Kaydı paylaş</string>
+    <string name="toast_video_encoder_failed">Video kodlayıcı başlatılamadı. Ayarlarda daha düşük çözünürlük veya farklı bir kodlayıcı deneyin.</string>
     <string name="toast_recording_stopped_projection">Kayıt durduruldu: Yakalanan uygulama kapatıldı veya arka plana taşındı</string>
     <string name="toast_recording_failed_no_video">Kayıt başarısız oldu: video çekilmedi</string>
     <string name="toast_gif_transcode_failed">GIF oluşturulamadı; MP4 kaydınız saklandı.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Klip boş; ara belleğe almaya daha uzun süre devam edin</string>
     <string name="toast_clip_saved">Klip kaydedildi!</string>
     <string name="toast_clip_save_failed">Klip kaydedilemedi: %1$s</string>
-    <string name="notif_overlay_controls_text">Değişken kontroller etkinleştirildi</string>
     <string name="notif_camera_overlay_text">CatRec kamera katmanı etkin; uygulamaya dönmek için dokunun</string>
     <string name="tile_record_label">CatRec Kaydı</string>
     <string name="tile_clipper_label">CatRec Kırpma Makinesi</string>
-    <string name="notif_channel_overlay">Yer paylaşımı kontrolleri</string>
-    <string name="notif_channel_overlay_desc">Kayan katman kontrolleri etkinken gösterilir</string>
-    <string name="notif_overlay_active_title">CatRec katmanı etkin</string>
-    <string name="notif_overlay_start_recording">Kaydı başlat</string>
-    <string name="notif_overlay_close_overlay">Yer paylaşımını kapat</string>
     <string name="notif_channel_camera_overlay">Kamera katmanı</string>
     <string name="notif_channel_camera_overlay_desc">Kamera katmanı etkinken gösterilir</string>
     <string name="notif_camera_in_use_title">Kullanılan kamera</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Kaplamayı gizle</string>
     <string name="notif_action_overlay_show">Yer paylaşımını göster</string>
     <string name="notif_action_overlay_enable_in_settings">Yer paylaşımı kapalı</string>
-    <string name="notif_action_home">Ev</string>
-    <string name="notif_action_exit">Çıkış</string>
-    <string name="toast_grant_capture_for_screenshot">Ekran yakalamaya izin verin - ardından CatRec kaplamadan ekran görüntüleri alabilir.</string>
     <string name="tile_subtitle_recording">Kayıt…</string>
     <string name="tile_subtitle_buffering">Ara belleğe alınıyor…</string>
     <string name="tile_subtitle_ready">Hazır</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="overlay_clip_button">✂ KLİP</string>
     <string name="overlay_clipper_label">KIRPICI</string>
-    <string name="overlay_toast_authorize_first">Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
     <string name="format_jpeg">JPEG</string>

@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Đăng ký YouTube</string>
-    <string name="support_subscribe_youtube_desc">Theo dõi @ibbie để biết thông tin cập nhật</string>
+    <string name="support_subscribe_youtube_desc">Theo dõi \@ibbie để biết thông tin cập nhật</string>
     <string name="support_remove_ads">Xóa quảng cáo — $1</string>
     <string name="support_remove_ads_desc">Mua một lần, không có quảng cáo mãi mãi</string>
     <string name="support_restore_purchases">Khôi phục mua hàng</string>
     <string name="support_restore_purchases_desc">Đồng bộ hóa Xóa quảng cáo và các giao dịch mua khác khỏi Google Play</string>
     <string name="support_restore_purchases_toast">Đang kiểm tra Google Play để biết giao dịch mua của bạn…</string>
-    <string name="support_play_promo_title">Đổi mã khuyến mãi Play</string>
-    <string name="support_play_promo_desc">Nếu bạn có mã Google Play để Xóa quảng cáo: hãy đổi mã đó trên Play, sau đó nhấn Khôi phục giao dịch mua tại đây để ứng dụng cập nhật.</string>
+    <string name="support_play_promo_title">Mã khuyến mãi (Xóa quảng cáo)</string>
+    <string name="support_play_promo_desc">Mở màn hình mua Xóa quảng cáo trên Google Play. Chạm Phương thức thanh toán → Đổi mã, nhập mã rồi hoàn tất. Nếu vẫn còn quảng cáo, chạm Khôi phục giao dịch mua bên dưới.</string>
     <string name="support_toast_promo_browser">Không thể mở trình duyệt</string>
     <string name="support_ads_removed">Đã xóa quảng cáo — Cảm ơn!</string>
     <string name="support_ads_removed_desc">Tùy chọn cao cấp luôn được mở khóa — không có quảng cáo để xem.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Bắt đầu ghi hình trước để chụp ảnh màn hình</string>
     <string name="error_screenshot_capture_failed">Không thể chụp ảnh màn hình. Hãy thử lại.</string>
-    <string name="toast_recording_restarted">Ghi hình khởi động lại do thay đổi hướng</string>
     <string name="toast_share_app">Hãy xem CatRec - trình ghi màn hình thú vị nhất!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Hình ảnh tùy chỉnh đã được đặt</string>
     <string name="watermark_image_default">Mặc định (biểu tượng ứng dụng)</string>
     <string name="watermark_reset_icon">Đặt lại biểu tượng mặc định</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Kính tĩnh — làm mờ đã tắt</string>
     <string name="perf_dynamic_glass">Làm mờ kính động đã bật</string>
     <string name="setting_performance_mode">Chế độ hiệu suất</string>
+    <string name="setting_adaptive_recording_performance">Hiệu suất ghi âm thích ứng</string>
+    <string name="setting_adaptive_recording_performance_summary">Tự động giảm tải nếu thiết bị gặp khó khăn khi đang ghi</string>
+    <string name="performance_fallback_active">Đã chuyển sang hồ sơ ghi nhẹ hơn để ổn định</string>
     <string name="performance_warning_title">Cảnh báo hiệu suất</string>
     <string name="performance_warning_body">Thiết bị của bạn có ít hơn 6 GB RAM hoặc đang chạy Android 11 trở xuống. Bật hiệu ứng làm mờ kính thời gian thực có thể gây trễ giao diện, đặc biệt trong khi ghi hình.\n\nBạn có muốn bật Chế độ Chất lượng không?</string>
     <string name="accent_color_title">Màu nhấn</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Cảm ơn sự hỗ trợ của bạn! 🐱</string>
     <string name="billing_pending">Giao dịch mua đang chờ xử lý — bạn sẽ có quyền truy cập khi quá trình này hoàn tất.</string>
     <string name="dialog_changelog_title">Nhật ký thay đổi</string>
-    <string name="label_beta">bản thử nghiệm</string>
     <string name="support_privacy_policy">Chính sách bảo mật</string>
     <string name="support_privacy_policy_desc">Cách CatRec xử lý dữ liệu của bạn</string>
     <string name="support_terms_of_service">Điều khoản dịch vụ</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Chia sẻ</string>
     <string name="notif_post_delete">Xóa bỏ</string>
     <string name="share_recording_title">Chia sẻ bản ghi</string>
+    <string name="toast_video_encoder_failed">Không thể khởi động bộ mã hóa video. Hãy thử giảm độ phân giải hoặc đổi bộ mã hóa trong Cài đặt.</string>
     <string name="toast_recording_stopped_projection">Đã dừng ghi: ứng dụng đã chụp đã bị đóng hoặc chuyển sang nền</string>
     <string name="toast_recording_failed_no_video">Ghi không thành công: không quay được video</string>
     <string name="toast_gif_transcode_failed">Không thể tạo GIF - bản ghi MP4 của bạn đã được giữ lại.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Clip trống - tiếp tục lưu vào bộ đệm lâu hơn</string>
     <string name="toast_clip_saved">Đã lưu clip!</string>
     <string name="toast_clip_save_failed">Lưu clip không thành công: %1$s</string>
-    <string name="notif_overlay_controls_text">Điều khiển nổi được bật</string>
     <string name="notif_camera_overlay_text">Lớp phủ camera CatRec đang hoạt động - nhấn để quay lại ứng dụng</string>
     <string name="tile_record_label">Bản ghi CatRec</string>
     <string name="tile_clipper_label">Máy cắt CatRec</string>
-    <string name="notif_channel_overlay">Điều khiển lớp phủ</string>
-    <string name="notif_channel_overlay_desc">Hiển thị khi các điều khiển lớp phủ nổi đang hoạt động</string>
-    <string name="notif_overlay_active_title">Lớp phủ CatRec đang hoạt động</string>
-    <string name="notif_overlay_start_recording">Bắt đầu ghi</string>
-    <string name="notif_overlay_close_overlay">Đóng lớp phủ</string>
     <string name="notif_channel_camera_overlay">Lớp phủ camera</string>
     <string name="notif_channel_camera_overlay_desc">Hiển thị khi lớp phủ camera đang hoạt động</string>
     <string name="notif_camera_in_use_title">Máy ảnh đang được sử dụng</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Ẩn lớp phủ</string>
     <string name="notif_action_overlay_show">Hiển thị lớp phủ</string>
     <string name="notif_action_overlay_enable_in_settings">Tắt lớp phủ</string>
-    <string name="notif_action_home">Trang chủ</string>
-    <string name="notif_action_exit">Ra</string>
-    <string name="toast_grant_capture_for_screenshot">Cho phép chụp ảnh màn hình — sau đó CatRec có thể chụp ảnh màn hình từ lớp phủ.</string>
     <string name="tile_subtitle_recording">Đang ghi…</string>
     <string name="tile_subtitle_buffering">Đang lưu vào bộ đệm…</string>
     <string name="tile_subtitle_ready">Sẵn sàng</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">ẢNH CHỤP MÀN HÌNH · %1$d</string>
     <string name="overlay_clip_button">✂ CLIP</string>
     <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Hãy mở CatRec và chạm «Ủy quyền ghi đè lên ứng dụng khác» trước</string>
     <string name="countdown_subtitle">Đang bắt đầu ghi…</string>
     <string name="toast_recorder_start_failed">Không thể bắt đầu ghi: %1$s</string>
     <string name="format_jpeg">JPEG</string>

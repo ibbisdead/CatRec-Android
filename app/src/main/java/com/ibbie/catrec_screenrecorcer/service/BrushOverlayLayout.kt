@@ -754,7 +754,7 @@ internal class BrushOverlayLayout(
                     setColor(c)
                     setStroke(
                         dp(if (selected) 3 else 1),
-                        if (selected) Color.WHITE else 0x66FFFFFF.toInt(),
+                        if (selected) Color.WHITE else 0x66FFFFFF,
                     )
                 }
         }

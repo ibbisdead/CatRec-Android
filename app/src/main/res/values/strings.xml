@@ -86,8 +86,8 @@
     <!-- Settings Screen - Section Headers -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_controls">Controls</string>
-    <string name="setting_allow_background_title">Unrestricted battery use</string>
-    <string name="setting_allow_background_desc">Lets CatRec keep recording, the prepared capture session, and the overlay running reliably when you leave the app. Opens system battery settings.</string>
+    <string name="setting_allow_background_title">Optimize for background recording</string>
+    <string name="setting_allow_background_desc">Optional: granting Unrestricted battery for CatRec in system settings can help prevent very long recordings from being stopped. Tap to open your device battery list and adjust CatRec if you want.</string>
     <string name="toast_battery_settings_failed">Couldn\'t open battery settings. Try Battery → CatRec in system Settings.</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_gif_recorder">GIF Recorder</string>
@@ -233,14 +233,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Subscribe to YouTube</string>
-    <string name="support_subscribe_youtube_desc">Follow @ibbie for updates</string>
+    <string name="support_subscribe_youtube_desc">Follow \@ibbie for updates</string>
     <string name="support_remove_ads">Remove Ads — $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
     <string name="support_restore_purchases">Restore purchases</string>
     <string name="support_restore_purchases_desc">Sync Remove Ads and other purchases from Google Play</string>
     <string name="support_restore_purchases_toast">Checking Google Play for your purchases…</string>
-    <string name="support_play_promo_title">Redeem Play promo code</string>
-    <string name="support_play_promo_desc">If you have a Google Play code for Remove Ads: redeem it on Play, then tap Restore purchases here so the app updates.</string>
+    <string name="support_play_promo_title">Promo code for Remove ads</string>
+    <string name="support_play_promo_desc">Opens the Google Play purchase screen for Remove ads. Tap payment method → Redeem code, enter your code, then finish. If ads are still on, tap Restore purchases below.</string>
     <string name="support_toast_promo_browser">Couldn\'t open the browser</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium options stay unlocked — no ads to watch.</string>
@@ -251,6 +251,12 @@
     <string name="support_share_desc">Tell your friends about us</string>
     <string name="support_changelog">Changelog</string>
     <string name="support_changelog_desc">See what\'s new in this version</string>
+    <string name="support_credits">Credits</string>
+    <string name="support_credits_desc">Testers &amp; creators who helped CatRec</string>
+    <string name="dialog_credits_title">Credits</string>
+    <string name="credits_intro">Thanks to these people for testing and sharing CatRec. Tap a name to open their channel.</string>
+    <string name="credits_link_youtube">YouTube</string>
+    <string name="credits_link_tiktok">TikTok</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Screenshot saved</string>
@@ -258,7 +264,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Screen capture isn\'t active. Open CatRec and grant capture first.</string>
     <string name="error_screenshot_capture_failed">Couldn\'t capture screenshot. Try again.</string>
-    <string name="toast_recording_restarted">Recording restarted for orientation change</string>
     <string name="toast_share_app">Check out CatRec - the coolest screen recorder!</string>
 
     <!-- Actions (extra) -->
@@ -308,7 +313,7 @@
     <string name="watermark_image_custom">Custom image set</string>
     <string name="watermark_image_default">Default (app icon)</string>
     <string name="watermark_reset_icon">Reset to default icon</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -494,7 +499,6 @@
     <string name="billing_thanks_support_me">Thank you for your support! 🐱</string>
     <string name="billing_pending">Purchase is pending — you\'ll get access when it completes.</string>
     <string name="dialog_changelog_title">Changelog</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">Privacy Policy</string>
     <string name="support_privacy_policy_desc">How CatRec handles your data</string>
     <string name="support_terms_of_service">Terms of Service</string>
@@ -513,6 +517,10 @@
     <string name="perm_rationale_overlay">Required to show the floating controls bubble and camera overlay on top of other apps during recording.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Foreground service while you record: screen capture (MediaProjection) with optional microphone audio, with a persistent notification.</string>
+    <string name="service_description_overlay">Foreground service while the floating overlay is shown: camera preview in picture-in-picture, with a persistent notification.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Screen recording</string>
@@ -555,36 +563,31 @@
     <string name="toast_clip_empty">Clip is empty – keep buffering longer</string>
     <string name="toast_clip_saved">Clip saved!</string>
     <string name="toast_clip_save_failed">Clip save failed: %1$s</string>
-    <string name="notif_overlay_controls_text">Floating controls are enabled</string>
     <string name="notif_camera_overlay_text">CatRec camera overlay is active — tap to return to app</string>
     <string name="tile_record_label">CatRec Record</string>
     <string name="tile_clipper_label">CatRec Clipper</string>
-    <string name="notif_channel_overlay">Overlay controls</string>
-    <string name="notif_channel_overlay_desc">Shown while floating overlay controls are active</string>
-    <string name="notif_overlay_active_title">CatRec overlay active</string>
-    <string name="notif_overlay_start_recording">Start recording</string>
-    <string name="notif_overlay_close_overlay">Close overlay</string>
     <string name="notif_channel_camera_overlay">Camera overlay</string>
     <string name="notif_channel_camera_overlay_desc">Shows while the camera overlay is active</string>
     <string name="notif_camera_in_use_title">Camera in use</string>
     <string name="notif_channel_app_controls">Quick controls</string>
     <string name="notif_channel_app_controls_desc">Recording, screenshot, and overlay shortcuts</string>
+    <string name="notif_channel_recording_interrupted">Recording interrupted</string>
+    <string name="notif_channel_recording_interrupted_desc">Shown if the system stopped CatRec during an active capture</string>
+    <string name="notif_recording_interrupted_title">Capture stopped</string>
+    <string name="notif_recording_interrupted_text">CatRec was closed or restarted by the system while recording or clip capture was active. Your last file may be incomplete. Open CatRec to start again.</string>
     <string name="notif_app_controls_title">CatRec</string>
     <string name="notif_app_controls_text_idle">Idle — tap an action below</string>
     <string name="notif_action_screenshot">Screenshot</string>
     <string name="notif_action_overlay_hide">Hide overlay</string>
     <string name="notif_action_overlay_show">Show overlay</string>
     <string name="notif_action_overlay_enable_in_settings">Overlay off</string>
-    <string name="notif_action_home">Home</string>
-    <string name="notif_action_exit">Exit</string>
     <!-- Notification shade control row (short labels) -->
-    <string name="notif_cc_record">Record</string>
-    <string name="notif_cc_shot">Screenshot</string>
-    <string name="notif_cc_float">Overlay</string>
-    <string name="notif_cc_home">Home</string>
-    <string name="notif_cc_close">Exit</string>
-    <string name="notif_cc_stop">Stop</string>
-    <string name="toast_grant_capture_for_screenshot">Allow screen capture — then CatRec can take screenshots from the overlay.</string>
+    <string name="notif_cc_record" translatable="false">Record</string>
+    <string name="notif_cc_shot" translatable="false">Screenshot</string>
+    <string name="notif_cc_float" translatable="false">Overlay</string>
+    <string name="notif_cc_home" translatable="false">Home</string>
+    <string name="notif_cc_close" translatable="false">Exit</string>
+    <string name="notif_cc_stop" translatable="false">Stop</string>
     <string name="tile_subtitle_recording">Recording…</string>
     <string name="tile_subtitle_buffering">Buffering…</string>
     <string name="tile_subtitle_ready">Ready</string>
@@ -598,7 +601,6 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="overlay_clip_button">✂ CLIP</string>
     <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
     <string name="format_jpeg">JPEG</string>
@@ -635,7 +637,7 @@
         <item>Light and dark themes with improved light-theme contrast</item>
         <item>Performance mode for lower-end devices</item>
         <item>Organized settings: Controls, Recording quality, Overlay, Theme, Language, Storage, and more</item>
-        <item>Settings shortcut to allow unrestricted battery use for reliable background recording</item>
+        <item>Settings shortcut to review battery optimization for more reliable background recording</item>
         <item>16+ languages with consistent translations</item>
         <item>RECORD / CLIPPER mode selector with clear status indicator</item>
         <item>Quick Settings tiles: CatRec Record and CatRec Clipper</item>

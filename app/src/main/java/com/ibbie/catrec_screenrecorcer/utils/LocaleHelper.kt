@@ -38,7 +38,7 @@ object LocaleHelper {
             .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY, languageCode)
-            .commit()
+            .apply()
     }
 
     /** Read the saved language code (never null; defaults to "system"). */

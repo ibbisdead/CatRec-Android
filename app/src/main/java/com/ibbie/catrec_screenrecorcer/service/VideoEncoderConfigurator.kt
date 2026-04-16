@@ -69,7 +69,7 @@ internal object VideoEncoderConfigurator {
                         MediaCodecInfo.CodecProfileLevel.AVCLevel41,
                     )
                 } else if (mimeType == MediaFormat.MIMETYPE_VIDEO_HEVC &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                    true
                 ) {
                     setInteger(
                         MediaFormat.KEY_PROFILE,

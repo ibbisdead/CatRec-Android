@@ -57,14 +57,22 @@ class PermissionManager(
 
     /**
      * Read access for Recordings / Screenshots tabs (MediaStore). API 33+: video + images + audio;
-     * older: [READ_EXTERNAL_STORAGE].
+     * API 34+ also [READ_MEDIA_VISUAL_USER_SELECTED] (Selected Photos / partial library; request with other READ_MEDIA_* in one call).
+     * Older: [READ_EXTERNAL_STORAGE].
      */
     fun mediaLibraryReadPermissions(): Array<String> =
         when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                )
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
                 arrayOf(
-                    Manifest.permission.READ_MEDIA_VIDEO,
                     Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_VIDEO,
                     Manifest.permission.READ_MEDIA_AUDIO,
                 )
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ->
@@ -73,6 +81,24 @@ class PermissionManager(
         }
 
     fun isMediaLibraryReadGranted(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val video =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VIDEO) ==
+                    PackageManager.PERMISSION_GRANTED
+            val images =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) ==
+                    PackageManager.PERMISSION_GRANTED
+            val audio =
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_AUDIO) ==
+                    PackageManager.PERMISSION_GRANTED
+            if (video && images && audio) return true
+            val partial =
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                ) == PackageManager.PERMISSION_GRANTED
+            return partial
+        }
         val perms = mediaLibraryReadPermissions()
         if (perms.isEmpty()) return true
         return perms.all {

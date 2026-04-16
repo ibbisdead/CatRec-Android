@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">اشترك في يوتيوب</string>
-    <string name="support_subscribe_youtube_desc">تابع @ibbie للتحديثات</string>
+    <string name="support_subscribe_youtube_desc">تابع \@ibbie للتحديثات</string>
     <string name="support_remove_ads">إزالة الإعلانات — 1$</string>
     <string name="support_remove_ads_desc">شراء لمرة واحدة، بدون إعلانات للأبد</string>
     <string name="support_restore_purchases">استعادة المشتريات</string>
     <string name="support_restore_purchases_desc">مزامنة إزالة الإعلانات والمشتريات الأخرى من Google Play</string>
     <string name="support_restore_purchases_toast">جارٍ التحقق من Google Play بحثًا عن مشترياتك...</string>
-    <string name="support_play_promo_title">استرد رمز Play الترويجي</string>
-    <string name="support_play_promo_desc">إذا كان لديك رمز Google Play لإزالة الإعلانات: استرده على Play، ثم انقر فوق "استعادة المشتريات هنا" حتى يتم تحديث التطبيق.</string>
+    <string name="support_play_promo_title">رمز ترويجي (إزالة الإعلانات)</string>
+    <string name="support_play_promo_desc">يفتح شاشة شراء Google Play لإزالة الإعلانات. انقر طريقة الدفع ← استرداد الرمز، أدخل الرمز ثم أكمل. إذا بقيت الإعلانات، انقر استعادة المشتريات أدناه.</string>
     <string name="support_toast_promo_browser">تعذر فتح المتصفح</string>
     <string name="support_ads_removed">تمت إزالة الإعلانات — شكراً!</string>
     <string name="support_ads_removed_desc">تظل الخيارات المميزة مفتوحة — ولا توجد إعلانات لمشاهدتها.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">ابدأ التسجيل أولاً لالتقاط لقطات الشاشة</string>
     <string name="error_screenshot_capture_failed">تعذر التقاط لقطة الشاشة. حاول ثانية.</string>
-    <string name="toast_recording_restarted">تم إعادة تشغيل التسجيل بسبب تغيير الاتجاه</string>
     <string name="toast_share_app">جرب CatRec - أفضل مسجل شاشة!</string>
 
     <!-- Actions (extra) -->
@@ -306,8 +305,8 @@
     <string name="watermark_image_custom">صورة مخصصة مُعيَّنة</string>
     <string name="watermark_image_default">افتراضية (أيقونة التطبيق)</string>
     <string name="watermark_reset_icon">إعادة تعيين الأيقونة الافتراضية</string>
-    <string name="label_dp">%1$ددب</string>
-    <string name="label_percent">%1$د%%</string>
+    <string name="label_dp">%1$d dp</string>
+    <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">كيلو بايت في الثانية</string>
     <string name="label_hz">هرتز</string>
     <string name="perf_auto_low_end">مُفعَّل تلقائياً — جهاز منخفض الأداء</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">زجاج ثابت — الضبابية معطّلة</string>
     <string name="perf_dynamic_glass">الضبابية الزجاجية الديناميكية مفعّلة</string>
     <string name="setting_performance_mode">وضع الأداء</string>
+    <string name="setting_adaptive_recording_performance">أداء التسجيل التكيفي</string>
+    <string name="setting_adaptive_recording_performance_summary">يقلل الحمل تلقائياً إذا واجه الجهاز صعوبة أثناء التسجيل</string>
+    <string name="performance_fallback_active">تم التبديل إلى ملف تعريف تسجيل أخف لزيادة الاستقرار</string>
     <string name="performance_warning_title">تحذير الأداء</string>
     <string name="performance_warning_body">جهازك يحتوي على أقل من 6 جيجابايت من الذاكرة أو يعمل بنظام Android 11 أو أقل. قد يؤدي تمكين تأثيرات الضبابية الزجاجية في الوقت الفعلي إلى تأخر في الواجهة، خاصةً أثناء التسجيل.\n\nهل تريد تمكين وضع الجودة على أي حال؟</string>
     <string name="accent_color_title">لون التمييز</string>
@@ -454,7 +456,7 @@
     <string name="compress_estimated">الحجم المقدر: ~%1$s</string>
     <string name="compress_source">المصدر: %1$dx%2$d</string>
     <string name="gif_title">فيديو إلى GIF</string>
-    <string name="gif_fps">عدد الإطارات في الثانية: %1$د</string>
+    <string name="gif_fps">عدد الإطارات في الثانية: %1$d</string>
     <string name="gif_quality_label">جودة GIF</string>
     <string name="gif_quality_small">ملف أصغر</string>
     <string name="gif_quality_balanced">متوازن</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">شكرا لدعمكم! 🐱</string>
     <string name="billing_pending">عملية الشراء معلقة — ستتمكن من الوصول إليها عند اكتمالها.</string>
     <string name="dialog_changelog_title">سجل التغييرات</string>
-    <string name="label_beta">تجريبي</string>
     <string name="support_privacy_policy">سياسة الخصوصية</string>
     <string name="support_privacy_policy_desc">كيف تتعامل CatRec مع بياناتك</string>
     <string name="support_terms_of_service">شروط الخدمة</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">مشاركة</string>
     <string name="notif_post_delete">حذف</string>
     <string name="share_recording_title">مشاركة التسجيل</string>
+    <string name="toast_video_encoder_failed">تعذر تشغيل مرمّز الفيديو. جرّب دقة أقل أو مرمّزاً مختلفاً من الإعدادات.</string>
     <string name="toast_recording_stopped_projection">توقف التسجيل: أُغلق التطبيق المُصوَّر أو انتقل إلى الخلفية</string>
     <string name="toast_recording_failed_no_video">فشل التسجيل: لم يُلتقط أي فيديو</string>
     <string name="toast_gif_transcode_failed">تعذر إنشاء ملف GIF — تم الاحتفاظ بتسجيل MP4 الخاص بك.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">المقطع فارغ — استمر في التخزين لفترة أطول</string>
     <string name="toast_clip_saved">تم حفظ المقطع!</string>
     <string name="toast_clip_save_failed">فشل حفظ المقطع: %1$s</string>
-    <string name="notif_overlay_controls_text">عناصر التحكم العائمة مفعّلة</string>
     <string name="notif_camera_overlay_text">تراكب كاميرا CatRec نشط — اضغط للعودة إلى التطبيق</string>
     <string name="tile_record_label">سجل كاتريك</string>
     <string name="tile_clipper_label">كاتريك كليبر</string>
-    <string name="notif_channel_overlay">عناصر تحكم التراكب</string>
-    <string name="notif_channel_overlay_desc">يظهر أثناء نشاط عناصر التحكم العائمة</string>
-    <string name="notif_overlay_active_title">تراكب CatRec نشط</string>
-    <string name="notif_overlay_start_recording">بدء التسجيل</string>
-    <string name="notif_overlay_close_overlay">إغلاق التراكب</string>
     <string name="notif_channel_camera_overlay">تراكب الكاميرا</string>
     <string name="notif_channel_camera_overlay_desc">يظهر أثناء نشاط تراكب الكاميرا</string>
     <string name="notif_camera_in_use_title">الكاميرا قيد الاستخدام</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">إخفاء التراكب</string>
     <string name="notif_action_overlay_show">إظهار التراكب</string>
     <string name="notif_action_overlay_enable_in_settings">تراكب قبالة</string>
-    <string name="notif_action_home">بيت</string>
-    <string name="notif_action_exit">مخرج</string>
-    <string name="toast_grant_capture_for_screenshot">السماح بالتقاط الشاشة - ثم يمكن لـ CatRec التقاط لقطات شاشة من التراكب.</string>
     <string name="tile_subtitle_recording">جارٍ التسجيل…</string>
     <string name="tile_subtitle_buffering">جارٍ التخزين…</string>
     <string name="tile_subtitle_ready">جاهز</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">لقطات الشاشة · %1$d</string>
     <string name="overlay_clip_button">✂ مقطع</string>
     <string name="overlay_clipper_label">مجز</string>
-    <string name="overlay_toast_authorize_first">افتح CatRec ثم اضغط «السماح بالتسجيل فوق التطبيقات» أولاً</string>
     <string name="countdown_subtitle">جارٍ بدء التسجيل…</string>
     <string name="toast_recorder_start_failed">تعذّر بدء التسجيل: %1$s</string>
     <string name="format_jpeg">جبيغ</string>

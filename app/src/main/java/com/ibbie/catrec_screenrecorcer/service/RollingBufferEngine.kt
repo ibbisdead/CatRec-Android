@@ -94,7 +94,7 @@ class RollingBufferEngine(
     private var mAudioMode = audioMode
 
     // ── Muxer state (guarded by muxerLock) ────────────────────────────────────
-    private val muxerLock = Object()
+    private val muxerLock = object {}
 
     /** Reused for [MediaMuxer.writeSampleData] on the video drain thread only. */
     private val muxerVideoSampleInfo = MediaCodec.BufferInfo()
@@ -212,7 +212,7 @@ class RollingBufferEngine(
 
         // Schedule I-frame + rotation every SEGMENT_DURATION_MS
         rotationScheduler = Executors.newSingleThreadScheduledExecutor()
-        rotationScheduler?.scheduleAtFixedRate(
+        rotationScheduler?.scheduleWithFixedDelay(
             { requestRotation() },
             SEGMENT_DURATION_MS,
             SEGMENT_DURATION_MS,
@@ -950,7 +950,7 @@ class RollingBufferEngine(
             }
 
             val resolvedCh =
-                if (wantStereo && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (wantStereo && true) {
                     maxOf(micRecord?.channelCount ?: 0, internalRecord?.channelCount ?: 0).coerceIn(1, 2)
                 } else if (wantStereo) {
                     val cfg = micRecord?.channelConfiguration ?: internalRecord?.channelConfiguration

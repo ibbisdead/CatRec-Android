@@ -93,6 +93,17 @@ class ImageEditorAnnotationView(
             strokeCap = Paint.Cap.ROUND
             xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
         }
+
+    /** Dash intervals for [eraserPreviewDashEffect]; reused so [onDraw] does not allocate. */
+    private val eraserPreviewDashIntervals = floatArrayOf(14f, 10f)
+    private val eraserPreviewDashEffect = DashPathEffect(eraserPreviewDashIntervals, 0f)
+    private val eraserPreviewPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            color = Color.argb(140, 255, 100, 100)
+            pathEffect = eraserPreviewDashEffect
+        }
+
     private val shapePaint =
         Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -155,6 +166,7 @@ class ImageEditorAnnotationView(
         strokeWidthImagePx = (strokeWidthDisplayDp * resources.displayMetrics.density * scaleImgPerPx).coerceIn(2f, 120f)
         penPaint.strokeWidth = strokeWidthImagePx
         eraserPaint.strokeWidth = strokeWidthImagePx * 1.4f
+        eraserPreviewPaint.strokeWidth = penPaint.strokeWidth
         shapePaint.strokeWidth = strokeWidthImagePx
     }
 
@@ -313,16 +325,7 @@ class ImageEditorAnnotationView(
                 penPaint.color = strokeColor
                 canvas.drawPath(currentPath, penPaint)
             }
-            EditorDrawTool.ERASER -> {
-                val preview =
-                    Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        style = Paint.Style.STROKE
-                        strokeWidth = penPaint.strokeWidth
-                        color = Color.argb(140, 255, 100, 100)
-                        pathEffect = DashPathEffect(floatArrayOf(14f, 10f), 0f)
-                    }
-                canvas.drawPath(currentPath, preview)
-            }
+            EditorDrawTool.ERASER -> canvas.drawPath(currentPath, eraserPreviewPaint)
             EditorDrawTool.SQUARE -> canvas.drawRect(previewRect, shapePaint)
             EditorDrawTool.CIRCLE -> canvas.drawOval(previewRect, shapePaint)
             EditorDrawTool.ARROW -> drawArrowOnCanvas(canvas, shapeStartX, shapeStartY, shapeEndX, shapeEndY, shapePaint)

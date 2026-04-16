@@ -8,10 +8,14 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
-import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
@@ -21,6 +25,7 @@ import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -32,13 +37,27 @@ import kotlinx.coroutines.withContext
 class RecordingViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
-    private val repository = SettingsRepository(application)
+    private val settingsRepository = SettingsRepository(application)
+    private val recordingSessionRepository: RecordingSessionRepository =
+        (application as CatRecApplication).recordingSessionRepository
+
+    /** High-level capture lifecycle for Compose (Idle / Preparing / Recording / Paused). */
+    val sessionLifecycleState: StateFlow<RecordingLifecycleState> = recordingSessionRepository.sessionState
+
+    /** Encoder / projection failures — collect in UI for snackbars. */
+    val recordingErrorEvents: SharedFlow<RecordingError> = recordingSessionRepository.errorEvents
+
+    private val _lastRecordingError = MutableStateFlow<RecordingError?>(null)
+    val lastRecordingError: StateFlow<RecordingError?> = _lastRecordingError
 
     init {
         viewModelScope.launch {
-            combine(repository.captureMode, RecordingState.isBuffering) { mode, buffering ->
+            combine(settingsRepository.captureMode, RecordingState.isBuffering) { mode, buffering ->
                 if (buffering) CaptureMode.CLIPPER else mode
             }.collect { RecordingState.setMode(it) }
+        }
+        viewModelScope.launch {
+            recordingSessionRepository.errorEvents.collect { err -> _lastRecordingError.value = err }
         }
     }
 
@@ -47,48 +66,73 @@ class RecordingViewModel(
     val isPrepared: StateFlow<Boolean> = RecordingState.isPrepared
 
     // Video
-    val fps: StateFlow<Float> = repository.fps.stateIn(viewModelScope, SharingStarted.Lazily, 30f)
-    val bitrate: StateFlow<Float> = repository.bitrate.stateIn(viewModelScope, SharingStarted.Lazily, 10f)
-    val videoEncoder: StateFlow<String> = repository.videoEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "H.264")
-    val resolution: StateFlow<String> = repository.resolution.stateIn(viewModelScope, SharingStarted.Lazily, "Native")
-    val recordingOrientation: StateFlow<String> = repository.recordingOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
+    val fps: StateFlow<Float> = settingsRepository.fps.stateIn(viewModelScope, SharingStarted.Lazily, 30f)
+    val bitrate: StateFlow<Float> = settingsRepository.bitrate.stateIn(viewModelScope, SharingStarted.Lazily, 10f)
+    val videoEncoder: StateFlow<String> = settingsRepository.videoEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "H.264")
+    val resolution: StateFlow<String> = settingsRepository.resolution.stateIn(viewModelScope, SharingStarted.Lazily, "Native")
+    val recordingOrientation: StateFlow<String> = settingsRepository.recordingOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
 
     // Audio
-    val recordAudio: StateFlow<Boolean> = repository.recordAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val internalAudio: StateFlow<Boolean> = repository.internalAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val audioBitrate: StateFlow<Int> = repository.audioBitrate.stateIn(viewModelScope, SharingStarted.Lazily, 128)
-    val audioSampleRate: StateFlow<Int> = repository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 48000)
-    val audioChannels: StateFlow<String> = repository.audioChannels.stateIn(viewModelScope, SharingStarted.Lazily, "Mono")
-    val audioEncoder: StateFlow<String> = repository.audioEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "AAC-LC")
-    val separateMicRecording: StateFlow<Boolean> = repository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val recordAudio: StateFlow<Boolean> = settingsRepository.recordAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val internalAudio: StateFlow<Boolean> = settingsRepository.internalAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val audioBitrate: StateFlow<Int> = settingsRepository.audioBitrate.stateIn(viewModelScope, SharingStarted.Lazily, 128)
+    val audioSampleRate: StateFlow<Int> = settingsRepository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 48000)
+    val audioChannels: StateFlow<String> = settingsRepository.audioChannels.stateIn(viewModelScope, SharingStarted.Lazily, "Mono")
+    val audioEncoder: StateFlow<String> = settingsRepository.audioEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "AAC-LC")
+    val separateMicRecording: StateFlow<Boolean> = settingsRepository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // Controls
-    val floatingControls: StateFlow<Boolean> = repository.floatingControls.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val touchOverlay: StateFlow<Boolean> = repository.touchOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val countdown: StateFlow<Int> = repository.countdown.stateIn(viewModelScope, SharingStarted.Lazily, 0)
+    val floatingControls: StateFlow<Boolean> = settingsRepository.floatingControls.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val touchOverlay: StateFlow<Boolean> = settingsRepository.touchOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val countdown: StateFlow<Int> = settingsRepository.countdown.stateIn(viewModelScope, SharingStarted.Lazily, 0)
 
     /** Clipper duration: rolling window (1–5 minutes). */
     val clipperDurationMinutes: StateFlow<Int> =
-        repository.clipperDurationMinutes.stateIn(viewModelScope, SharingStarted.Lazily, 1)
+        settingsRepository.clipperDurationMinutes.stateIn(viewModelScope, SharingStarted.Lazily, 1)
     val stopBehavior: StateFlow<Set<String>> =
-        repository.stopBehavior.stateIn(
+        settingsRepository.stopBehavior.stateIn(
             viewModelScope,
             SharingStarted.Lazily,
             setOf(StopBehaviorKeys.NOTIFICATION),
         )
     val brushOverlayEnabled: StateFlow<Boolean> =
-        repository.brushOverlayEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        settingsRepository.brushOverlayEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val hideFloatingIconWhileRecording: StateFlow<Boolean> =
-        repository.hideFloatingIconWhileRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        settingsRepository.hideFloatingIconWhileRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val postScreenshotOptions: StateFlow<Boolean> =
-        repository.postScreenshotOptions.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        settingsRepository.postScreenshotOptions.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val recordSingleAppEnabled: StateFlow<Boolean> =
-        repository.recordSingleAppEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        settingsRepository.recordSingleAppEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val captureMode: StateFlow<String> =
-        repository.captureMode.stateIn(viewModelScope, SharingStarted.Eagerly, CaptureMode.RECORD)
+        settingsRepository.captureMode.stateIn(viewModelScope, SharingStarted.Eagerly, CaptureMode.RECORD)
+
+    /** One subscription for FAB + top-bar recording UI; reduces duplicate collectors and recompositions. */
+    val recordingUiSnapshot: StateFlow<RecordingUiSnapshot> =
+        combine(
+            combine(isRecording, isBuffering, ::Pair),
+            combine(captureMode, recordAudio, ::Pair),
+            combine(internalAudio, recordSingleAppEnabled, ::Pair),
+            combine(isPrepared, RecordingState.isRecordingPaused, ::Pair),
+        ) { recBuf, modeAudio, internalSingle, prepPaused ->
+            RecordingUiSnapshot(
+                isRecording = recBuf.first,
+                isBuffering = recBuf.second,
+                captureMode = modeAudio.first,
+                recordAudio = modeAudio.second,
+                internalAudio = internalSingle.first,
+                recordSingleAppEnabled = internalSingle.second,
+                isPrepared = prepPaused.first,
+                isRecordingPaused = prepPaused.second,
+            )
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            RecordingUiSnapshot(),
+        )
+
     val gifRecorderPresetId: StateFlow<String> =
-        repository.gifRecorderPresetId.stateIn(
+        settingsRepository.gifRecorderPresetId.stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
             GifRecordingPresets.default.id,
@@ -98,12 +142,12 @@ class RecordingViewModel(
 
     /** Values used when starting a screen recording (GIF uses the selected preset; user video prefs stay unchanged). */
     val effectiveRecordingFps: StateFlow<Int> =
-        combine(captureMode, gifRecorderPresetId, repository.fps) { mode, presetId, userFps ->
+        combine(captureMode, gifRecorderPresetId, settingsRepository.fps) { mode, presetId, userFps ->
             if (mode == CaptureMode.GIF) GifRecordingPresets.byId(presetId).fps else userFps.toInt()
         }.stateIn(viewModelScope, SharingStarted.Eagerly, 30)
 
     val effectiveRecordingBitrateBits: StateFlow<Int> =
-        combine(captureMode, gifRecorderPresetId, repository.bitrate) { mode, presetId, userMbps ->
+        combine(captureMode, gifRecorderPresetId, settingsRepository.bitrate) { mode, presetId, userMbps ->
             if (mode == CaptureMode.GIF) {
                 GifRecordingPresets.byId(presetId).bitrateBitsPerSec
             } else {
@@ -112,74 +156,74 @@ class RecordingViewModel(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, 10_000_000)
 
     val effectiveRecordingResolution: StateFlow<String> =
-        combine(captureMode, gifRecorderPresetId, repository.resolution) { mode, presetId, userRes ->
+        combine(captureMode, gifRecorderPresetId, settingsRepository.resolution) { mode, presetId, userRes ->
             if (mode == CaptureMode.GIF) GifRecordingPresets.byId(presetId).resolutionSetting else userRes
         }.stateIn(viewModelScope, SharingStarted.Eagerly, "Native")
 
     // Camera Overlay
-    val cameraOverlay: StateFlow<Boolean> = repository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val cameraOverlaySize: StateFlow<Int> = repository.cameraOverlaySize.stateIn(viewModelScope, SharingStarted.Lazily, 120)
-    val cameraXFraction: StateFlow<Float> = repository.cameraXFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
-    val cameraYFraction: StateFlow<Float> = repository.cameraYFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.1f)
-    val cameraLockPosition: StateFlow<Boolean> = repository.cameraLockPosition.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val cameraFacing: StateFlow<String> = repository.cameraFacing.stateIn(viewModelScope, SharingStarted.Lazily, "Front")
-    val cameraAspectRatio: StateFlow<String> = repository.cameraAspectRatio.stateIn(viewModelScope, SharingStarted.Lazily, "Circle")
-    val cameraOrientation: StateFlow<String> = repository.cameraOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
-    val cameraOpacity: StateFlow<Int> = repository.cameraOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
+    val cameraOverlay: StateFlow<Boolean> = settingsRepository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val cameraOverlaySize: StateFlow<Int> = settingsRepository.cameraOverlaySize.stateIn(viewModelScope, SharingStarted.Lazily, 120)
+    val cameraXFraction: StateFlow<Float> = settingsRepository.cameraXFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
+    val cameraYFraction: StateFlow<Float> = settingsRepository.cameraYFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.1f)
+    val cameraLockPosition: StateFlow<Boolean> = settingsRepository.cameraLockPosition.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val cameraFacing: StateFlow<String> = settingsRepository.cameraFacing.stateIn(viewModelScope, SharingStarted.Lazily, "Front")
+    val cameraAspectRatio: StateFlow<String> = settingsRepository.cameraAspectRatio.stateIn(viewModelScope, SharingStarted.Lazily, "Circle")
+    val cameraOrientation: StateFlow<String> = settingsRepository.cameraOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
+    val cameraOpacity: StateFlow<Int> = settingsRepository.cameraOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
 
     // Watermark
-    val showWatermark: StateFlow<Boolean> = repository.showWatermark.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val watermarkLocation: StateFlow<String> = repository.watermarkLocation.stateIn(viewModelScope, SharingStarted.Lazily, "Top Left")
-    val watermarkImageUri: StateFlow<String?> = repository.watermarkImageUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
-    val watermarkShape: StateFlow<String> = repository.watermarkShape.stateIn(viewModelScope, SharingStarted.Lazily, "Square")
-    val watermarkOpacity: StateFlow<Int> = repository.watermarkOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
-    val watermarkSize: StateFlow<Int> = repository.watermarkSize.stateIn(viewModelScope, SharingStarted.Lazily, 80)
-    val watermarkXFraction: StateFlow<Float> = repository.watermarkXFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
-    val watermarkYFraction: StateFlow<Float> = repository.watermarkYFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
+    val showWatermark: StateFlow<Boolean> = settingsRepository.showWatermark.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val watermarkLocation: StateFlow<String> = settingsRepository.watermarkLocation.stateIn(viewModelScope, SharingStarted.Lazily, "Top Left")
+    val watermarkImageUri: StateFlow<String?> = settingsRepository.watermarkImageUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val watermarkShape: StateFlow<String> = settingsRepository.watermarkShape.stateIn(viewModelScope, SharingStarted.Lazily, "Square")
+    val watermarkOpacity: StateFlow<Int> = settingsRepository.watermarkOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
+    val watermarkSize: StateFlow<Int> = settingsRepository.watermarkSize.stateIn(viewModelScope, SharingStarted.Lazily, 80)
+    val watermarkXFraction: StateFlow<Float> = settingsRepository.watermarkXFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
+    val watermarkYFraction: StateFlow<Float> = settingsRepository.watermarkYFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
 
     // Screenshots
-    val screenshotFormat: StateFlow<String> = repository.screenshotFormat.stateIn(viewModelScope, SharingStarted.Lazily, "JPEG")
-    val screenshotQuality: StateFlow<Int> = repository.screenshotQuality.stateIn(viewModelScope, SharingStarted.Lazily, 90)
+    val screenshotFormat: StateFlow<String> = settingsRepository.screenshotFormat.stateIn(viewModelScope, SharingStarted.Lazily, "JPEG")
+    val screenshotQuality: StateFlow<Int> = settingsRepository.screenshotQuality.stateIn(viewModelScope, SharingStarted.Lazily, 90)
 
     // Theme & Language
-    val appTheme: StateFlow<String> = repository.appTheme.stateIn(viewModelScope, SharingStarted.Lazily, "System")
-    val appLanguage: StateFlow<String> = repository.appLanguage.stateIn(viewModelScope, SharingStarted.Lazily, "system")
+    val appTheme: StateFlow<String> = settingsRepository.appTheme.stateIn(viewModelScope, SharingStarted.Lazily, "System")
+    val appLanguage: StateFlow<String> = settingsRepository.appLanguage.stateIn(viewModelScope, SharingStarted.Lazily, "system")
 
     // Storage
-    val filenamePattern: StateFlow<String> = repository.filenamePattern.stateIn(viewModelScope, SharingStarted.Lazily, "yyyyMMdd_HHmmss")
-    val saveLocationUri: StateFlow<String?> = repository.saveLocationUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
-    val autoDelete: StateFlow<Boolean> = repository.autoDelete.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val filenamePattern: StateFlow<String> = settingsRepository.filenamePattern.stateIn(viewModelScope, SharingStarted.Lazily, "yyyyMMdd_HHmmss")
+    val saveLocationUri: StateFlow<String?> = settingsRepository.saveLocationUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    val autoDelete: StateFlow<Boolean> = settingsRepository.autoDelete.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // General
-    val keepScreenOn: StateFlow<Boolean> = repository.keepScreenOn.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val hapticFeedback: StateFlow<Boolean> = repository.hapticFeedback.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val soundFeedback: StateFlow<Boolean> = repository.soundFeedback.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val keepScreenOn: StateFlow<Boolean> = settingsRepository.keepScreenOn.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val hapticFeedback: StateFlow<Boolean> = settingsRepository.hapticFeedback.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val soundFeedback: StateFlow<Boolean> = settingsRepository.soundFeedback.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     // UI Mode
-    val performanceMode: StateFlow<Boolean> = repository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val performanceMode: StateFlow<Boolean> = settingsRepository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val adaptivePerformanceEnabled: StateFlow<Boolean> =
-        repository.adaptiveRecordingPerformance.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        settingsRepository.adaptiveRecordingPerformance.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     /** Remove-ads entitlement: disables all rewarded-ad gating when true ([com.ibbie.catrec_screenrecorcer.data.AdGate]). */
     val adsDisabled: StateFlow<Boolean> =
-        repository.adsDisabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+        settingsRepository.adsDisabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Privacy
-    val analyticsEnabled: StateFlow<Boolean> = repository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val analyticsEnabled: StateFlow<Boolean> = settingsRepository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val personalizedAdsEnabled: StateFlow<Boolean> =
-        repository.personalizedAdsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
+        settingsRepository.personalizedAdsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
 
     // Onboarding (StateFlow defaults false before DataStore loads; use [betaNoticePersistedValue] for gating.)
     val betaNoticeShown: StateFlow<Boolean> =
-        repository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+        settingsRepository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /** Reads the persisted flag so the beta dialog is not shown on every cold start (avoids stateIn initial false). */
-    suspend fun betaNoticePersistedValue(): Boolean = repository.betaNoticeShown.first()
+    suspend fun betaNoticePersistedValue(): Boolean = settingsRepository.betaNoticeShown.first()
 
     // Accent Color
-    val accentColor: StateFlow<String> = repository.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, "FF0033")
-    val accentColor2: StateFlow<String> = repository.accentColor2.stateIn(viewModelScope, SharingStarted.Lazily, "FF6600")
-    val accentUseGradient: StateFlow<Boolean> = repository.accentUseGradient.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val accentColor: StateFlow<String> = settingsRepository.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, "FF0033")
+    val accentColor2: StateFlow<String> = settingsRepository.accentColor2.stateIn(viewModelScope, SharingStarted.Lazily, "FF6600")
+    val accentUseGradient: StateFlow<Boolean> = settingsRepository.accentUseGradient.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val showDebugInfo: StateFlow<Boolean> = MutableStateFlow(false)
 
@@ -191,54 +235,54 @@ class RecordingViewModel(
     }
 
     // Setters — Video
-    fun setFps(value: Float) = viewModelScope.launch { repository.setFps(value) }
+    fun setFps(value: Float) = viewModelScope.launch { settingsRepository.setFps(value) }
 
-    fun setBitrate(value: Float) = viewModelScope.launch { repository.setBitrate(value) }
+    fun setBitrate(value: Float) = viewModelScope.launch { settingsRepository.setBitrate(value) }
 
-    fun setVideoEncoder(value: String) = viewModelScope.launch { repository.setVideoEncoder(value) }
+    fun setVideoEncoder(value: String) = viewModelScope.launch { settingsRepository.setVideoEncoder(value) }
 
-    fun setResolution(value: String) = viewModelScope.launch { repository.setResolution(value) }
+    fun setResolution(value: String) = viewModelScope.launch { settingsRepository.setResolution(value) }
 
-    fun setRecordingOrientation(value: String) = viewModelScope.launch { repository.setRecordingOrientation(value) }
+    fun setRecordingOrientation(value: String) = viewModelScope.launch { settingsRepository.setRecordingOrientation(value) }
 
     // Setters — Audio
-    fun setRecordAudio(value: Boolean) = viewModelScope.launch { repository.setRecordAudio(value) }
+    fun setRecordAudio(value: Boolean) = viewModelScope.launch { settingsRepository.setRecordAudio(value) }
 
-    fun setInternalAudio(value: Boolean) = viewModelScope.launch { repository.setInternalAudio(value) }
+    fun setInternalAudio(value: Boolean) = viewModelScope.launch { settingsRepository.setInternalAudio(value) }
 
-    fun setAudioBitrate(value: Int) = viewModelScope.launch { repository.setAudioBitrate(value) }
+    fun setAudioBitrate(value: Int) = viewModelScope.launch { settingsRepository.setAudioBitrate(value) }
 
-    fun setAudioSampleRate(value: Int) = viewModelScope.launch { repository.setAudioSampleRate(value) }
+    fun setAudioSampleRate(value: Int) = viewModelScope.launch { settingsRepository.setAudioSampleRate(value) }
 
-    fun setAudioChannels(value: String) = viewModelScope.launch { repository.setAudioChannels(value) }
+    fun setAudioChannels(value: String) = viewModelScope.launch { settingsRepository.setAudioChannels(value) }
 
-    fun setAudioEncoder(value: String) = viewModelScope.launch { repository.setAudioEncoder(value) }
+    fun setAudioEncoder(value: String) = viewModelScope.launch { settingsRepository.setAudioEncoder(value) }
 
-    fun setSeparateMicRecording(value: Boolean) = viewModelScope.launch { repository.setSeparateMicRecording(value) }
+    fun setSeparateMicRecording(value: Boolean) = viewModelScope.launch { settingsRepository.setSeparateMicRecording(value) }
 
     // Setters — Controls
-    fun setFloatingControls(value: Boolean) = viewModelScope.launch { repository.setFloatingControls(value) }
+    fun setFloatingControls(value: Boolean) = viewModelScope.launch { settingsRepository.setFloatingControls(value) }
 
-    fun setTouchOverlay(value: Boolean) = viewModelScope.launch { repository.setTouchOverlay(value) }
+    fun setTouchOverlay(value: Boolean) = viewModelScope.launch { settingsRepository.setTouchOverlay(value) }
 
-    fun setCountdown(value: Int) = viewModelScope.launch { repository.setCountdown(value) }
+    fun setCountdown(value: Int) = viewModelScope.launch { settingsRepository.setCountdown(value) }
 
-    fun setClipperDurationMinutes(value: Int) = viewModelScope.launch { repository.setClipperDurationMinutes(value) }
+    fun setClipperDurationMinutes(value: Int) = viewModelScope.launch { settingsRepository.setClipperDurationMinutes(value) }
 
-    fun setBrushOverlayEnabled(value: Boolean) = viewModelScope.launch { repository.setBrushOverlayEnabled(value) }
+    fun setBrushOverlayEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setBrushOverlayEnabled(value) }
 
     fun setHideFloatingIconWhileRecording(value: Boolean) =
         viewModelScope.launch {
-            repository.setHideFloatingIconWhileRecording(value)
+            settingsRepository.setHideFloatingIconWhileRecording(value)
         }
 
-    fun setPostScreenshotOptions(value: Boolean) = viewModelScope.launch { repository.setPostScreenshotOptions(value) }
+    fun setPostScreenshotOptions(value: Boolean) = viewModelScope.launch { settingsRepository.setPostScreenshotOptions(value) }
 
-    fun setRecordSingleAppEnabled(value: Boolean) = viewModelScope.launch { repository.setRecordSingleAppEnabled(value) }
+    fun setRecordSingleAppEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setRecordSingleAppEnabled(value) }
 
-    fun setCaptureMode(mode: String) = viewModelScope.launch { repository.setCaptureMode(mode) }
+    fun setCaptureMode(mode: String) = viewModelScope.launch { settingsRepository.setCaptureMode(mode) }
 
-    fun setGifRecorderPresetId(id: String) = viewModelScope.launch { repository.setGifRecorderPresetId(id) }
+    fun setGifRecorderPresetId(id: String) = viewModelScope.launch { settingsRepository.setGifRecorderPresetId(id) }
 
     fun setStopBehavior(newSelection: String) =
         viewModelScope.launch {
@@ -254,54 +298,54 @@ class RecordingViewModel(
                     current.remove(StopBehaviorKeys.SCREEN_OFF)
                 }
             }
-            repository.setStopBehavior(current)
+            settingsRepository.setStopBehavior(current)
         }
 
     // Setters — Camera Overlay
-    fun setCameraOverlay(value: Boolean) = viewModelScope.launch { repository.setCameraOverlay(value) }
+    fun setCameraOverlay(value: Boolean) = viewModelScope.launch { settingsRepository.setCameraOverlay(value) }
 
-    fun setCameraOverlaySize(value: Int) = viewModelScope.launch { repository.setCameraOverlaySize(value) }
+    fun setCameraOverlaySize(value: Int) = viewModelScope.launch { settingsRepository.setCameraOverlaySize(value) }
 
-    fun setCameraXFraction(value: Float) = viewModelScope.launch { repository.setCameraXFraction(value) }
+    fun setCameraXFraction(value: Float) = viewModelScope.launch { settingsRepository.setCameraXFraction(value) }
 
-    fun setCameraYFraction(value: Float) = viewModelScope.launch { repository.setCameraYFraction(value) }
+    fun setCameraYFraction(value: Float) = viewModelScope.launch { settingsRepository.setCameraYFraction(value) }
 
-    fun setCameraLockPosition(value: Boolean) = viewModelScope.launch { repository.setCameraLockPosition(value) }
+    fun setCameraLockPosition(value: Boolean) = viewModelScope.launch { settingsRepository.setCameraLockPosition(value) }
 
-    fun setCameraFacing(value: String) = viewModelScope.launch { repository.setCameraFacing(value) }
+    fun setCameraFacing(value: String) = viewModelScope.launch { settingsRepository.setCameraFacing(value) }
 
-    fun setCameraAspectRatio(value: String) = viewModelScope.launch { repository.setCameraAspectRatio(value) }
+    fun setCameraAspectRatio(value: String) = viewModelScope.launch { settingsRepository.setCameraAspectRatio(value) }
 
-    fun setCameraOrientation(value: String) = viewModelScope.launch { repository.setCameraOrientation(value) }
+    fun setCameraOrientation(value: String) = viewModelScope.launch { settingsRepository.setCameraOrientation(value) }
 
-    fun setCameraOpacity(value: Int) = viewModelScope.launch { repository.setCameraOpacity(value) }
+    fun setCameraOpacity(value: Int) = viewModelScope.launch { settingsRepository.setCameraOpacity(value) }
 
     // Setters — Watermark
-    fun setShowWatermark(value: Boolean) = viewModelScope.launch { repository.setShowWatermark(value) }
+    fun setShowWatermark(value: Boolean) = viewModelScope.launch { settingsRepository.setShowWatermark(value) }
 
-    fun setWatermarkLocation(value: String) = viewModelScope.launch { repository.setWatermarkLocation(value) }
+    fun setWatermarkLocation(value: String) = viewModelScope.launch { settingsRepository.setWatermarkLocation(value) }
 
-    fun setWatermarkImageUri(value: String?) = viewModelScope.launch { repository.setWatermarkImageUri(value) }
+    fun setWatermarkImageUri(value: String?) = viewModelScope.launch { settingsRepository.setWatermarkImageUri(value) }
 
-    fun setWatermarkShape(value: String) = viewModelScope.launch { repository.setWatermarkShape(value) }
+    fun setWatermarkShape(value: String) = viewModelScope.launch { settingsRepository.setWatermarkShape(value) }
 
-    fun setWatermarkOpacity(value: Int) = viewModelScope.launch { repository.setWatermarkOpacity(value) }
+    fun setWatermarkOpacity(value: Int) = viewModelScope.launch { settingsRepository.setWatermarkOpacity(value) }
 
-    fun setWatermarkSize(value: Int) = viewModelScope.launch { repository.setWatermarkSize(value) }
+    fun setWatermarkSize(value: Int) = viewModelScope.launch { settingsRepository.setWatermarkSize(value) }
 
-    fun setWatermarkXFraction(value: Float) = viewModelScope.launch { repository.setWatermarkXFraction(value) }
+    fun setWatermarkXFraction(value: Float) = viewModelScope.launch { settingsRepository.setWatermarkXFraction(value) }
 
-    fun setWatermarkYFraction(value: Float) = viewModelScope.launch { repository.setWatermarkYFraction(value) }
+    fun setWatermarkYFraction(value: Float) = viewModelScope.launch { settingsRepository.setWatermarkYFraction(value) }
 
     // Setters — Screenshots
-    fun setScreenshotFormat(value: String) = viewModelScope.launch { repository.setScreenshotFormat(value) }
+    fun setScreenshotFormat(value: String) = viewModelScope.launch { settingsRepository.setScreenshotFormat(value) }
 
-    fun setScreenshotQuality(value: Int) = viewModelScope.launch { repository.setScreenshotQuality(value) }
+    fun setScreenshotQuality(value: Int) = viewModelScope.launch { settingsRepository.setScreenshotQuality(value) }
 
     // Setters — Theme & Language
-    fun setAppTheme(value: String) = viewModelScope.launch { repository.setAppTheme(value) }
+    fun setAppTheme(value: String) = viewModelScope.launch { settingsRepository.setAppTheme(value) }
 
-    fun setAppLanguage(value: String) = viewModelScope.launch { repository.setAppLanguage(value) }
+    fun setAppLanguage(value: String) = viewModelScope.launch { settingsRepository.setAppLanguage(value) }
 
     /**
      * Persists language to DataStore first, then updates app locale + SharedPreferences and recreates
@@ -311,7 +355,7 @@ class RecordingViewModel(
         context: Context,
         code: String,
     ) = viewModelScope.launch {
-        repository.setAppLanguage(code)
+        settingsRepository.setAppLanguage(code)
         withContext(Dispatchers.Main.immediate) {
             LocaleHelper.apply(context.applicationContext, code)
             (context as? Activity)?.recreate()
@@ -319,129 +363,73 @@ class RecordingViewModel(
     }
 
     // Setters — Storage
-    fun setFilenamePattern(value: String) = viewModelScope.launch { repository.setFilenamePattern(value) }
+    fun setFilenamePattern(value: String) = viewModelScope.launch { settingsRepository.setFilenamePattern(value) }
 
-    fun setSaveLocationUri(value: String) = viewModelScope.launch { repository.setSaveLocationUri(value) }
+    fun setSaveLocationUri(value: String) = viewModelScope.launch { settingsRepository.setSaveLocationUri(value) }
 
-    fun setAutoDelete(value: Boolean) = viewModelScope.launch { repository.setAutoDelete(value) }
+    fun setAutoDelete(value: Boolean) = viewModelScope.launch { settingsRepository.setAutoDelete(value) }
 
     // Setters — General
-    fun setKeepScreenOn(value: Boolean) = viewModelScope.launch { repository.setKeepScreenOn(value) }
+    fun setKeepScreenOn(value: Boolean) = viewModelScope.launch { settingsRepository.setKeepScreenOn(value) }
 
-    fun setHapticFeedback(value: Boolean) = viewModelScope.launch { repository.setHapticFeedback(value) }
+    fun setHapticFeedback(value: Boolean) = viewModelScope.launch { settingsRepository.setHapticFeedback(value) }
 
-    fun setSoundFeedback(value: Boolean) = viewModelScope.launch { repository.setSoundFeedback(value) }
+    fun setSoundFeedback(value: Boolean) = viewModelScope.launch { settingsRepository.setSoundFeedback(value) }
 
     // Setters — UI Mode
-    fun setPerformanceMode(value: Boolean) = viewModelScope.launch { repository.setPerformanceMode(value) }
+    fun setPerformanceMode(value: Boolean) = viewModelScope.launch { settingsRepository.setPerformanceMode(value) }
 
-    fun setAdaptivePerformanceEnabled(value: Boolean) = viewModelScope.launch { repository.setAdaptiveRecordingPerformance(value) }
+    fun setAdaptivePerformanceEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setAdaptiveRecordingPerformance(value) }
 
     // Setters — Privacy
     fun setAnalyticsEnabled(value: Boolean) =
         viewModelScope.launch {
-            repository.setAnalyticsEnabled(value)
+            settingsRepository.setAnalyticsEnabled(value)
             val app = getApplication<Application>()
             app.applyAnalyticsCollectionEnabled(value)
             app.applyCrashlyticsCollectionEnabled(value)
             app.syncFirebaseUserIdentity(value)
             app.refreshCrashlyticsSessionKeys(
-                repository.appLanguage.first(),
-                repository.floatingControls.first(),
+                settingsRepository.appLanguage.first(),
+                settingsRepository.floatingControls.first(),
             )
         }
 
     fun setPersonalizedAdsEnabled(value: Boolean) =
         viewModelScope.launch {
-            repository.setPersonalizedAdsEnabled(value)
+            settingsRepository.setPersonalizedAdsEnabled(value)
             getApplication<Application>().applyPersonalizedAdsEnabled(value)
         }
 
     // Setters — Onboarding
-    fun setBetaNoticeShown(value: Boolean) = viewModelScope.launch { repository.setBetaNoticeShown(value) }
+    fun setBetaNoticeShown(value: Boolean) = viewModelScope.launch { settingsRepository.setBetaNoticeShown(value) }
 
     // Setters — Accent Color
-    fun setAccentColor(value: String) = viewModelScope.launch { repository.setAccentColor(value) }
+    fun setAccentColor(value: String) = viewModelScope.launch { settingsRepository.setAccentColor(value) }
 
-    fun setAccentColor2(value: String) = viewModelScope.launch { repository.setAccentColor2(value) }
+    fun setAccentColor2(value: String) = viewModelScope.launch { settingsRepository.setAccentColor2(value) }
 
-    fun setAccentUseGradient(value: Boolean) = viewModelScope.launch { repository.setAccentUseGradient(value) }
+    fun setAccentUseGradient(value: Boolean) = viewModelScope.launch { settingsRepository.setAccentUseGradient(value) }
 
-    // Service Control
+    // Session control (delegates to [RecordingSessionRepository] → [ScreenRecordService])
     fun startRecordingService(
         context: Context,
         resultCode: Int,
         data: Intent,
     ) {
-        val gif = captureMode.value == CaptureMode.GIF
-        val gifPreset = if (gif) GifRecordingPresets.byId(gifRecorderPresetId.value) else null
-        val intent =
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_START
-                putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
-                putExtra(ScreenRecordService.EXTRA_DATA, data)
-                putExtra(ScreenRecordService.EXTRA_FPS, effectiveRecordingFps.value)
-                putExtra(ScreenRecordService.EXTRA_BITRATE, effectiveRecordingBitrateBits.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, recordAudio.value)
-                putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, internalAudio.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, audioBitrate.value * 1000)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, audioSampleRate.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, audioChannels.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, audioEncoder.value)
-                putExtra(ScreenRecordService.EXTRA_SEPARATE_MIC_RECORDING, separateMicRecording.value)
-                putExtra(ScreenRecordService.EXTRA_SHOW_CAMERA, cameraOverlay.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_SIZE, cameraOverlaySize.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_X_FRACTION, cameraXFraction.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_Y_FRACTION, cameraYFraction.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_LOCK_POSITION, cameraLockPosition.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_FACING, cameraFacing.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_ASPECT_RATIO, cameraAspectRatio.value)
-                putExtra(ScreenRecordService.EXTRA_CAMERA_OPACITY, cameraOpacity.value)
-                putExtra(ScreenRecordService.EXTRA_SHOW_WATERMARK, showWatermark.value)
-                putStringArrayListExtra(ScreenRecordService.EXTRA_STOP_BEHAVIOR, ArrayList(stopBehavior.value))
-                putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, saveLocationUri.value)
-                putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, videoEncoder.value)
-                putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, floatingControls.value)
-                putExtra(
-                    ScreenRecordService.EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING,
-                    hideFloatingIconWhileRecording.value,
+        viewModelScope.launch {
+            val config =
+                recordingSessionRepository.createSessionConfigForFullRecording(
+                    context,
+                    resultCode,
+                    data,
                 )
-                putExtra(ScreenRecordService.EXTRA_RESOLUTION, effectiveRecordingResolution.value)
-                putExtra(ScreenRecordService.EXTRA_FILENAME_PATTERN, filenamePattern.value)
-                putExtra(ScreenRecordService.EXTRA_COUNTDOWN, countdown.value)
-                putExtra(ScreenRecordService.EXTRA_KEEP_SCREEN_ON, keepScreenOn.value)
-                putExtra(ScreenRecordService.EXTRA_RECORDING_ORIENTATION, recordingOrientation.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_LOCATION, watermarkLocation.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_IMAGE_URI, watermarkImageUri.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_SHAPE, watermarkShape.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_OPACITY, watermarkOpacity.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_SIZE, watermarkSize.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_X_FRACTION, watermarkXFraction.value)
-                putExtra(ScreenRecordService.EXTRA_WATERMARK_Y_FRACTION, watermarkYFraction.value)
-                putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, screenshotFormat.value)
-                putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, screenshotQuality.value)
-                putExtra(ScreenRecordService.EXTRA_GIF_SESSION, gif)
-                if (gif && gifPreset != null) {
-                    putExtra(ScreenRecordService.EXTRA_GIF_MAX_DURATION_SEC, gifPreset.maxDurationSec)
-                    putExtra(ScreenRecordService.EXTRA_GIF_SCALE_WIDTH, gifPreset.maxWidth)
-                    putExtra(ScreenRecordService.EXTRA_GIF_OUTPUT_FPS, gifPreset.fps)
-                    putExtra(ScreenRecordService.EXTRA_GIF_MAX_COLORS, gifPreset.maxColors)
-                    putExtra(ScreenRecordService.EXTRA_GIF_DITHER_KIND, gifPreset.paletteDither.name)
-                }
-            }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
+            recordingSessionRepository.startRecording(context, config)
         }
     }
 
     fun stopRecordingService(context: Context) {
-        context.startService(
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_STOP
-            },
-        )
+        recordingSessionRepository.stop(context)
     }
 
     /** Starts the rolling-buffer engine (requires the same MediaProjection grant as recording). */
@@ -450,28 +438,14 @@ class RecordingViewModel(
         resultCode: Int,
         data: Intent,
     ) {
-        val intent =
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_START_BUFFER
-                putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
-                putExtra(ScreenRecordService.EXTRA_DATA, data)
-                putExtra(ScreenRecordService.EXTRA_FPS, fps.value.toInt())
-                putExtra(ScreenRecordService.EXTRA_BITRATE, (bitrate.value * 1_000_000).toInt())
-                putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, recordAudio.value)
-                putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, internalAudio.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, audioBitrate.value * 1000)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, audioSampleRate.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, audioChannels.value)
-                putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, audioEncoder.value)
-                putExtra(ScreenRecordService.EXTRA_RESOLUTION, resolution.value)
-                putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, videoEncoder.value)
-                putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, clipperDurationMinutes.value)
-                putExtra(ScreenRecordService.EXTRA_COUNTDOWN, countdown.value)
-            }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
+        viewModelScope.launch {
+            val config =
+                recordingSessionRepository.createSessionConfigForBuffer(
+                    context,
+                    resultCode,
+                    data,
+                )
+            recordingSessionRepository.startBufferSession(context, config)
         }
     }
 
@@ -484,40 +458,26 @@ class RecordingViewModel(
         resultCode: Int,
         data: Intent,
     ) {
-        val intent =
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_PREPARE
-                putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
-                putExtra(ScreenRecordService.EXTRA_DATA, data)
-            }
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            context.startForegroundService(intent)
-        } else {
-            context.startService(intent)
-        }
+        recordingSessionRepository.prepareOverlaySession(context, resultCode, data)
     }
 
     fun revokeOverlayPreparation(context: Context) {
-        context.startService(
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_REVOKE_PREPARE
-            },
-        )
+        recordingSessionRepository.revokePrepare(context)
     }
 
     fun stopBufferService(context: Context) {
-        context.startService(
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_STOP_BUFFER
-            },
-        )
+        recordingSessionRepository.stop(context)
     }
 
     fun saveClip(context: Context) {
-        context.startService(
-            Intent(context, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_SAVE_CLIP
-            },
-        )
+        recordingSessionRepository.saveClip(context)
+    }
+
+    fun pauseRecordingSession(context: Context) {
+        recordingSessionRepository.pause(context)
+    }
+
+    fun resumeRecordingSession(context: Context) {
+        recordingSessionRepository.resume(context)
     }
 }

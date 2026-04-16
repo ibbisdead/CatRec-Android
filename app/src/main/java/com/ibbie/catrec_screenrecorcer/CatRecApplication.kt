@@ -7,6 +7,8 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.billing.CatRecBillingManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.recording.DefaultRecordingSessionRepository
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
 import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
@@ -24,6 +26,12 @@ import kotlinx.coroutines.runBlocking
 class CatRecApplication : Application() {
     lateinit var billingManager: CatRecBillingManager
         private set
+
+    /** Single recording session facade (foreground service + lifecycle flows). */
+    val recordingSessionRepository: RecordingSessionRepository by lazy {
+        val settings = SettingsRepository(this)
+        DefaultRecordingSessionRepository(this, settings)
+    }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 

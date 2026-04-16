@@ -10,13 +10,10 @@
 -keepattributes InnerClasses
 
 # ── Firebase & Google Play Services ───────────────────────────────────────────
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# Do not use -keep on com.google.firebase.** / com.google.android.gms.** (hundreds of classes).
+# firebase-bom artifacts and play-services-ads ship consumer ProGuard/R8 rules; merge those instead.
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
-
-# Crashlytics needs to inspect exception classes at runtime.
--keep class com.google.firebase.crashlytics.** { *; }
 
 # ── Native / JNI ──────────────────────────────────────────────────────────────
 # Keep all classes that declare native methods so R8 does not remove them before
@@ -35,7 +32,7 @@
 -dontwarn kotlinx.coroutines.**
 
 # ── AndroidX / Compose ────────────────────────────────────────────────────────
--keep class androidx.lifecycle.** { *; }
+# lifecycle-* artifacts include their own consumer rules; avoid -keep androidx.lifecycle.**.
 -dontwarn androidx.compose.**
 
 # ── FFmpeg Kit (GIF transcode JNI) ───────────────────────────────────────────

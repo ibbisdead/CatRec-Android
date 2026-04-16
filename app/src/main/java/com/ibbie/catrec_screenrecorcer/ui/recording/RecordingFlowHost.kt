@@ -44,6 +44,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -62,7 +63,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
-import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
@@ -98,14 +98,7 @@ fun FabRecordingBridge(
     val permissionManager = remember { PermissionManager(context) }
     val accent = LocalAccentColor.current
 
-    val isRecording by viewModel.isRecording.collectAsState()
-    val isBuffering by viewModel.isBuffering.collectAsState()
-    val recordAudio by viewModel.recordAudio.collectAsState()
-    val internalAudio by viewModel.internalAudio.collectAsState()
-    val captureMode by viewModel.captureMode.collectAsState()
-    val recordSingleAppEnabled by viewModel.recordSingleAppEnabled.collectAsState()
-    val isPrepared by viewModel.isPrepared.collectAsState()
-    val isRecordingPaused by RecordingState.isRecordingPaused.collectAsState()
+    val recordingSnapshot by viewModel.recordingUiSnapshot.collectAsState()
 
     var allPermissionsGranted by remember { mutableStateOf(permissionManager.areAllGranted()) }
     var missingPermissions by remember { mutableStateOf(permissionManager.getMissingPermissions()) }
@@ -132,7 +125,12 @@ fun FabRecordingBridge(
         consumeScreenshotExtra(activity)
     }
 
-    LaunchedEffect(isRecording, isBuffering, isPrepared, isRecordingPaused) {
+    LaunchedEffect(
+        recordingSnapshot.isRecording,
+        recordingSnapshot.isBuffering,
+        recordingSnapshot.isPrepared,
+        recordingSnapshot.isRecordingPaused,
+    ) {
         AppControlNotification.refresh(context.applicationContext)
     }
 
@@ -323,14 +321,23 @@ fun FabRecordingBridge(
         }
 
     fun startBufferFlow() {
-        bufferProjectionLauncher.launch(MediaProjectionIntents.createScreenCaptureIntent(context, recordSingleAppEnabled))
+                bufferProjectionLauncher.launch(
+                    MediaProjectionIntents.createScreenCaptureIntent(
+                        context,
+                        viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+                    ),
+                )
     }
 
     val storagePermissionLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
         ) {
-            startMediaProjection(context, mediaProjectionLauncher, recordSingleAppEnabled)
+            startMediaProjection(
+                context,
+                mediaProjectionLauncher,
+                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+            )
         }
 
     fun checkStorageAndProceed() {
@@ -342,15 +349,24 @@ fun FabRecordingBridge(
             ) {
                 storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             } else {
-                startMediaProjection(context, mediaProjectionLauncher, recordSingleAppEnabled)
+                startMediaProjection(
+                context,
+                mediaProjectionLauncher,
+                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+            )
             }
         } else {
-            startMediaProjection(context, mediaProjectionLauncher, recordSingleAppEnabled)
+            startMediaProjection(
+                context,
+                mediaProjectionLauncher,
+                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+            )
         }
     }
 
     fun checkAudioAndProceed() {
-        if ((recordAudio || internalAudio) && !permissionManager.isAudioGranted()) {
+        val audioSnap = viewModel.recordingUiSnapshot.value
+        if ((audioSnap.recordAudio || audioSnap.internalAudio) && !permissionManager.isAudioGranted()) {
             showPermissionDialog = true
         } else {
             checkStorageAndProceed()
@@ -375,7 +391,11 @@ fun FabRecordingBridge(
     LaunchedEffect(pendingScreenshotProjection, allPermissionsGranted, setupStep) {
         if (pendingScreenshotProjection && allPermissionsGranted && setupStep == RecordingFlowPermissionStep.IDLE) {
             pendingScreenshotProjection = false
-            startMediaProjection(context, screenshotProjectionLauncher, recordSingleAppEnabled)
+            startMediaProjection(
+                context,
+                screenshotProjectionLauncher,
+                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+            )
         }
     }
 
@@ -415,10 +435,11 @@ fun FabRecordingBridge(
     }
 
     val fabRecordingControl: () -> Unit = {
+        val s: RecordingUiSnapshot = viewModel.recordingUiSnapshot.value
         when {
-            isRecording -> viewModel.stopRecordingService(context)
-            isBuffering -> viewModel.stopBufferService(context)
-            captureMode == CaptureMode.CLIPPER -> startBufferFlow()
+            s.isRecording -> viewModel.stopRecordingService(context)
+            s.isBuffering -> viewModel.stopBufferService(context)
+            s.captureMode == CaptureMode.CLIPPER -> startBufferFlow()
             else -> startRecordingFlow()
         }
     }

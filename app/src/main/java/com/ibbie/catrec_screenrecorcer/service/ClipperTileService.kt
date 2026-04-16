@@ -11,7 +11,6 @@ import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 
-@RequiresApi(Build.VERSION_CODES.N)
 class ClipperTileService : TileService() {
     override fun onStartListening() {
         super.onStartListening()
@@ -32,19 +31,11 @@ class ClipperTileService : TileService() {
                 )
             }
             isPrepared -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(
-                        Intent(this, ScreenRecordService::class.java).apply {
-                            action = ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                        },
-                    )
-                } else {
-                    startService(
-                        Intent(this, ScreenRecordService::class.java).apply {
-                            action = ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                        },
-                    )
-                }
+                startForegroundService(
+                    Intent(this, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
+                    },
+                )
             }
             else -> {
                 // Not authorized — open the app so the user can grant overlay permission.

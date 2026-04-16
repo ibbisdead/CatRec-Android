@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">YouTube 구독</string>
-    <string name="support_subscribe_youtube_desc">업데이트를 보려면 @ibbie를 팔로우하세요.</string>
+    <string name="support_subscribe_youtube_desc">업데이트를 보려면 \@ibbie를 팔로우하세요.</string>
     <string name="support_remove_ads">광고 제거 — $1</string>
     <string name="support_remove_ads_desc">일회성 구매, 영구적으로 광고 없음</string>
     <string name="support_restore_purchases">구매 복원</string>
     <string name="support_restore_purchases_desc">Google Play에서 광고 제거 및 기타 구매 동기화</string>
     <string name="support_restore_purchases_toast">Google Play에서 구매 내역을 확인하는 중…</string>
-    <string name="support_play_promo_title">Play 프로모션 코드 사용</string>
-    <string name="support_play_promo_desc">광고 제거를 위한 Google Play 코드가 있는 경우: Play에서 코드를 사용한 다음 여기에서 구매 복원을 탭하여 앱을 업데이트하세요.</string>
+    <string name="support_play_promo_title">프로모 코드(광고 제거)</string>
+    <string name="support_play_promo_desc">광고 제거 Google Play 결제 화면을 엽니다. 결제 수단 → 코드 사용, 코드 입력 후 완료하세요. 광고가 남으면 아래 구매 복원을 탭하세요.</string>
     <string name="support_toast_promo_browser">브라우저를 열 수 없습니다</string>
     <string name="support_ads_removed">광고 제거됨 — 감사합니다!</string>
     <string name="support_ads_removed_desc">프리미엄 옵션은 잠금 해제 상태로 유지되며 시청할 광고가 없습니다.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">스크린샷을 찍으려면 먼저 녹화를 시작하세요</string>
     <string name="error_screenshot_capture_failed">스크린샷을 캡처할 수 없습니다. 다시 시도해 보세요.</string>
-    <string name="toast_recording_restarted">화면 방향 변경으로 인해 녹화가 재시작되었습니다</string>
     <string name="toast_share_app">가장 멋진 스크린 레코더인 CatRec을 확인해 보세요!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">사용자 지정 이미지가 설정되었습니다</string>
     <string name="watermark_image_default">기본값 (앱 아이콘)</string>
     <string name="watermark_reset_icon">기본 아이콘으로 초기화</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">헤르츠</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">정적 글래스 — 블러 비활성화</string>
     <string name="perf_dynamic_glass">동적 글래스 블러 활성화</string>
     <string name="setting_performance_mode">성능 모드</string>
+    <string name="setting_adaptive_recording_performance">적응형 녹화 성능</string>
+    <string name="setting_adaptive_recording_performance_summary">녹화 중 기기가 버거우면 부하를 자동으로 줄입니다</string>
+    <string name="performance_fallback_active">안정을 위해 더 가벼운 녹화 프로필로 전환했습니다</string>
     <string name="performance_warning_title">성능 경고</string>
     <string name="performance_warning_body">기기의 RAM이 6GB 미만이거나 Android 11 이하를 실행 중입니다. 실시간 유리 블러 효과를 활성화하면 특히 녹화 중에 UI 지연이 발생할 수 있습니다.\n\n그래도 품질 모드를 활성화하시겠습니까?</string>
     <string name="accent_color_title">강조 색상</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">귀하의 지원에 감사드립니다! 🐱</string>
     <string name="billing_pending">구매가 보류 중입니다. 구매가 완료되면 액세스할 수 있습니다.</string>
     <string name="dialog_changelog_title">변경 내역</string>
-    <string name="label_beta">베타</string>
     <string name="support_privacy_policy">개인 정보 보호 정책</string>
     <string name="support_privacy_policy_desc">CatRec이 데이터를 처리하는 방법</string>
     <string name="support_terms_of_service">서비스 약관</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">공유하다</string>
     <string name="notif_post_delete">삭제</string>
     <string name="share_recording_title">녹음 공유</string>
+    <string name="toast_video_encoder_failed">동영상 인코더를 시작할 수 없습니다. 설정에서 해상도를 낮추거나 다른 인코더를 시도하세요.</string>
     <string name="toast_recording_stopped_projection">녹화 중지됨: 캡처된 앱이 닫혔거나 백그라운드로 이동되었습니다.</string>
     <string name="toast_recording_failed_no_video">녹화 실패: 비디오가 캡처되지 않았습니다.</string>
     <string name="toast_gif_transcode_failed">GIF를 만들 수 없습니다. MP4 녹음이 보관되었습니다.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">클립이 비어 있습니다. 버퍼링을 더 오래 유지하세요.</string>
     <string name="toast_clip_saved">클립이 저장되었습니다!</string>
     <string name="toast_clip_save_failed">클립 저장 실패: %1$s</string>
-    <string name="notif_overlay_controls_text">플로팅 컨트롤이 활성화되었습니다.</string>
     <string name="notif_camera_overlay_text">CatRec 카메라 오버레이가 활성화되었습니다. 앱으로 돌아가려면 탭하세요.</string>
     <string name="tile_record_label">CatRec 레코드</string>
     <string name="tile_clipper_label">CatRec 클리퍼</string>
-    <string name="notif_channel_overlay">오버레이 컨트롤</string>
-    <string name="notif_channel_overlay_desc">플로팅 오버레이 컨트롤이 활성화된 동안 표시됨</string>
-    <string name="notif_overlay_active_title">CatRec 오버레이 활성화</string>
-    <string name="notif_overlay_start_recording">녹음 시작</string>
-    <string name="notif_overlay_close_overlay">오버레이 닫기</string>
     <string name="notif_channel_camera_overlay">카메라 오버레이</string>
     <string name="notif_channel_camera_overlay_desc">카메라 오버레이가 활성화된 동안 표시됩니다.</string>
     <string name="notif_camera_in_use_title">사용 중인 카메라</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">오버레이 숨기기</string>
     <string name="notif_action_overlay_show">오버레이 표시</string>
     <string name="notif_action_overlay_enable_in_settings">오버레이 꺼짐</string>
-    <string name="notif_action_home">집</string>
-    <string name="notif_action_exit">출구</string>
-    <string name="toast_grant_capture_for_screenshot">화면 캡처를 허용하면 CatRec이 오버레이에서 스크린샷을 찍을 수 있습니다.</string>
     <string name="tile_subtitle_recording">녹음…</string>
     <string name="tile_subtitle_buffering">버퍼링 중…</string>
     <string name="tile_subtitle_ready">준비가 된</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">스크린샷 · %1$d</string>
     <string name="overlay_clip_button">✂ 클립</string>
     <string name="overlay_clipper_label">가위</string>
-    <string name="overlay_toast_authorize_first">CatRec을 연 뒤 먼저 «오버레이 녹화 허용»을 누르세요</string>
     <string name="countdown_subtitle">녹화 시작 중…</string>
     <string name="toast_recorder_start_failed">녹화를 시작할 수 없습니다: %1$s</string>
     <string name="format_jpeg">JPEG</string>

@@ -1,6 +1,8 @@
 package com.ibbie.catrec_screenrecorcer.navigation
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,8 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -211,17 +216,24 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                 route == Screen.MergeVideos.route
         } ?: false
 
-    val isRecording by sharedViewModel.isRecording.collectAsState()
-    val isBuffering by sharedViewModel.isBuffering.collectAsState()
-    val captureMode by sharedViewModel.captureMode.collectAsState()
-    val pillSelectedMode =
-        when {
-            isBuffering -> CaptureMode.CLIPPER
-            isRecording && captureMode == CaptureMode.GIF -> CaptureMode.GIF
-            isRecording -> CaptureMode.RECORD
-            else -> captureMode
+    val recordingUi = sharedViewModel.recordingUiSnapshot.collectAsState()
+    val pillSelectedMode by remember {
+        derivedStateOf {
+            val s = recordingUi.value
+            when {
+                s.isBuffering -> CaptureMode.CLIPPER
+                s.isRecording && s.captureMode == CaptureMode.GIF -> CaptureMode.GIF
+                s.isRecording -> CaptureMode.RECORD
+                else -> s.captureMode
+            }
         }
-    val canSwitchCaptureMode = !isRecording && !isBuffering
+    }
+    val canSwitchCaptureMode by remember {
+        derivedStateOf {
+            val s = recordingUi.value
+            !s.isRecording && !s.isBuffering
+        }
+    }
 
     // Immediate tab highlight while NavHost composes the destination (Compose ≠ React;
     // this is the local equivalent of optimistic UI / decoupling indicator from back stack).
@@ -307,9 +319,9 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                         selectedMode = pillSelectedMode,
                                         onModeSelected = { sharedViewModel.setCaptureMode(it) },
                                         enabled = canSwitchCaptureMode,
-                                        isRecording = isRecording,
-                                        isBuffering = isBuffering,
-                                        captureMode = captureMode,
+                                        isRecording = recordingUi.value.isRecording,
+                                        isBuffering = recordingUi.value.isBuffering,
+                                        captureMode = recordingUi.value.captureMode,
                                     )
                                 }
                                 Spacer(Modifier.height(4.dp))
@@ -342,37 +354,36 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                                 }
                                             },
                                             label = {
-                                                Text(
-                                                    stringResource(screen.titleRes),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    style =
-                                                        if (widthCompact) {
-                                                            MaterialTheme.typography.labelMedium
-                                                        } else {
-                                                            MaterialTheme.typography.labelLarge
-                                                        },
-                                                )
+                                                AnimatedVisibility(visible = selected) {
+                                                    Text(
+                                                        stringResource(screen.titleRes),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                        style =
+                                                            if (widthCompact) {
+                                                                MaterialTheme.typography.labelMedium
+                                                            } else {
+                                                                MaterialTheme.typography.labelLarge
+                                                            },
+                                                    )
+                                                }
                                             },
-                                            leadingIcon =
-                                                if (selected) {
-                                                    {
-                                                        val icon =
-                                                            when (screen) {
-                                                                Screen.Screenshots -> Icons.Default.CameraAlt
-                                                                Screen.Recordings -> Icons.Default.VideoLibrary
-                                                                Screen.Editor -> Icons.Default.ContentCut
-                                                                Screen.Settings -> Icons.Default.Settings
-                                                                Screen.Support -> Icons.Outlined.Pets
-                                                                else -> Icons.Default.Videocam
-                                                            }
-                                                        val chipIconSize = if (widthCompact) 16.dp else 18.dp
-                                                        Icon(icon, contentDescription = null, modifier = Modifier.size(chipIconSize))
+                                            leadingIcon = {
+                                                val icon =
+                                                    when (screen) {
+                                                        Screen.Screenshots -> Icons.Default.CameraAlt
+                                                        Screen.Recordings -> Icons.Default.VideoLibrary
+                                                        Screen.Editor -> Icons.Default.ContentCut
+                                                        Screen.Settings -> Icons.Default.Settings
+                                                        Screen.Support -> Icons.Outlined.Pets
+                                                        else -> Icons.Default.Videocam
                                                     }
-                                                } else {
-                                                    null
-                                                },
-                                            modifier = Modifier.padding(start = if (widthCompact) 2.dp else 4.dp),
+                                                val chipIconSize = if (widthCompact) 16.dp else 18.dp
+                                                Icon(icon, contentDescription = null, modifier = Modifier.size(chipIconSize))
+                                            },
+                                            modifier = Modifier
+                                                .padding(start = if (widthCompact) 2.dp else 4.dp)
+                                                .animateContentSize(),
                                         )
                                     }
                                 }
@@ -399,9 +410,10 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                     CaptureMode.GIF -> CaptureModeColors.GifBlue
                                     else -> CaptureModeColors.RecordingRed
                                 }
+                            val rec = recordingUi.value
                             val fabCd =
                                 when {
-                                    isRecording || isBuffering -> stringResource(R.string.notif_action_stop)
+                                    rec.isRecording || rec.isBuffering -> stringResource(R.string.notif_action_stop)
                                     pillSelectedMode == CaptureMode.CLIPPER -> stringResource(R.string.capture_mode_clipper)
                                     pillSelectedMode == CaptureMode.GIF -> stringResource(R.string.capture_mode_gif)
                                     else -> stringResource(R.string.fab_start_recording)
@@ -412,7 +424,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                 contentColor = Color.White,
                                 modifier = Modifier.padding(bottom = 12.dp),
                             ) {
-                                if (isRecording || isBuffering) {
+                                if (rec.isRecording || rec.isBuffering) {
                                     Icon(
                                         Icons.Default.Stop,
                                         contentDescription = fabCd,
@@ -454,10 +466,13 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                         modifier = Modifier.padding(innerPadding),
                     ) {
                         composable(Screen.Screenshots.route) {
-                            ScreenshotsScreen()
+                            ScreenshotsScreen(viewModel = viewModel())
                         }
                         composable(Screen.Recordings.route) {
-                            RecordingsScreen(navController = navController)
+                            RecordingsScreen(
+                                navController = navController,
+                                viewModel = viewModel(),
+                            )
                         }
                         composable(Screen.Settings.route) {
                             SettingsScreen(viewModel = sharedViewModel, navController = navController)

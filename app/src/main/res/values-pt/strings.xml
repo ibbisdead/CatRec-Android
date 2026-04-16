@@ -84,10 +84,10 @@
     <!-- Settings Screen - Section Headers -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_controls">Controls</string>
-    <string name="setting_allow_background_title">Unrestricted battery use</string>
-    <string name="setting_allow_background_desc">Lets CatRec keep recording, the prepared capture session, and the overlay running reliably when you leave the app. Opens system battery settings.</string>
+    <string name="setting_allow_background_title">Optimize for background recording</string>
+    <string name="setting_allow_background_desc">Optional: granting Unrestricted battery for CatRec in system settings can help prevent very long recordings from being stopped. Tap to open your device battery list and adjust CatRec if you want.</string>
     <string name="toast_battery_settings_failed">Couldn\'t open battery settings. Try Battery → CatRec in system Settings.</string>
-    <string name="settings_section_video">Video</string>
+    <string name="settings_section_video">Vídeo</string>
     <string name="settings_section_gif_recorder">Gravador GIF</string>
     <string name="settings_gif_recorder_desc">O modo GIF grava o vídeo primeiro e depois o converte. Qualidade e duração seguem o preset abaixo; os controles deslizantes de vídeo permanecem salvos quando você voltar para a Gravação.</string>
     <string name="setting_gif_preset">Predefinição de qualidade GIF</string>
@@ -109,8 +109,8 @@
     <string name="setting_resolution_custom">Custom resolution…</string>
     <string name="setting_resolution_custom_hint">e.g. 1920x1080</string>
     <string name="setting_fps">Frame Rate (FPS)</string>
-    <string name="setting_bitrate">Video Bitrate</string>
-    <string name="setting_video_encoder">Video Encoder</string>
+    <string name="setting_bitrate">Vídeo Bitrate</string>
+    <string name="setting_video_encoder">Vídeo Encoder</string>
     <string name="setting_orientation">Orientation</string>
     <string name="setting_orientation_auto">Auto</string>
     <string name="setting_orientation_portrait">Portrait</string>
@@ -164,17 +164,17 @@
     <string name="brush_tool_mosaic">Área de pixelização</string>
     <string name="brush_tool_colors">Cor e largura da linha</string>
     <string name="brush_panel_title">AVC</string>
-    <string name="setting_camera_settings">Camera Settings</string>
+    <string name="setting_camera_settings">Câmera Settings</string>
     <string name="setting_watermark">CatRec Watermark</string>
     <string name="setting_watermark_size">Watermark Size</string>
     <string name="setting_watermark_opacity">Watermark Opacity</string>
 
     <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">Enable Camera</string>
-    <string name="camera_enable_desc">Show camera overlay during recording</string>
+    <string name="camera_enable">Enable Câmera</string>
+    <string name="camera_enable_desc">Show câmera overlay during recording</string>
     <string name="camera_lock_position">Lock Position</string>
-    <string name="camera_facing">Camera</string>
+    <string name="camera_facing">Câmera</string>
     <string name="camera_facing_front">Front</string>
     <string name="camera_facing_rear">Rear</string>
     <string name="camera_aspect_ratio">Aspect Ratio</string>
@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Inscreva-se no YouTube</string>
-    <string name="support_subscribe_youtube_desc">Siga @ibbie para atualizações</string>
+    <string name="support_subscribe_youtube_desc">Siga \@ibbie para atualizações</string>
     <string name="support_remove_ads">Remove Ads — $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
     <string name="support_restore_purchases">Restaurar compras</string>
     <string name="support_restore_purchases_desc">Sincronizar, remover anúncios e outras compras do Google Play</string>
     <string name="support_restore_purchases_toast">Verificando suas compras no Google Play…</string>
-    <string name="support_play_promo_title">Resgatar código promocional do Play</string>
-    <string name="support_play_promo_desc">Se você tiver um código do Google Play para remover anúncios: resgate-o no Play e toque em Restaurar compras aqui para que o aplicativo seja atualizado.</string>
+    <string name="support_play_promo_title">Código promocional (Remover anúncios)</string>
+    <string name="support_play_promo_desc">Abre a compra no Google Play para Remover anúncios. Toque em Forma de pagamento → Resgatar código, digite o código e conclua. Se os anúncios continuarem, toque em Restaurar compras abaixo.</string>
     <string name="support_toast_promo_browser">Não foi possível abrir o navegador</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">As opções premium permanecem desbloqueadas – sem anúncios para assistir.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Screen capture isn\'t active. Open CatRec and grant capture first.</string>
     <string name="error_screenshot_capture_failed">Não foi possível capturar a captura de tela. Tente novamente.</string>
-    <string name="toast_recording_restarted">Recording restarted for orientation change</string>
     <string name="toast_share_app">Confira CatRec - o gravador de tela mais legal!</string>
 
     <!-- Actions (extra) -->
@@ -291,7 +290,7 @@
     <string name="setting_countdown_seconds">%1$d seconds</string>
     <string name="setting_internal_audio_note">Android 10+ only</string>
     <string name="gate_feature_separate_mic">Separate Mic Track</string>
-    <string name="gate_feature_camera_overlay">Camera Overlay Settings</string>
+    <string name="gate_feature_camera_overlay">Câmera Overlay Settings</string>
     <string name="camera_status_enabled">Enabled — %1$s • %2$s</string>
     <string name="state_disabled">Disabled</string>
     <string name="watermark_preview_active">Live preview active — drag watermark to reposition</string>
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Custom image set</string>
     <string name="watermark_image_default">Default (app icon)</string>
     <string name="watermark_reset_icon">Reset to default icon</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Static glass — blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
+    <string name="setting_adaptive_recording_performance">Desempenho de gravação adaptativo</string>
+    <string name="setting_adaptive_recording_performance_summary">Reduz a carga automaticamente se o dispositivo tiver dificuldade durante a gravação</string>
+    <string name="performance_fallback_active">Mudou para um perfil de gravação mais leve para estabilidade</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
     <string name="accent_color_title">Accent color</string>
@@ -352,20 +354,20 @@
     <string name="countdown_3s">3s</string>
     <string name="countdown_5s">5s</string>
     <string name="countdown_10s">10s</string>
-    <string name="dialog_video_encoder">Video encoder</string>
+    <string name="dialog_video_encoder">Vídeo encoder</string>
     <string name="dialog_audio_encoder">Audio encoder</string>
     <string name="dialog_audio_bitrate">Audio bitrate</string>
     <string name="dialog_sample_rate">Sample rate</string>
     <string name="dialog_bitrate_title">Bitrate</string>
     <string name="dialog_fps_title">Frame rate (FPS)</string>
     <string name="dialog_screenshot_format">Screenshot format</string>
-    <string name="dialog_camera_orientation">Camera orientation</string>
+    <string name="dialog_camera_orientation">Câmera orientation</string>
     <string name="premium_feature_title">Premium feature</string>
     <string name="premium_feature_body">%1$s is a premium feature.</string>
     <string name="premium_feature_watch_ad">Watch a short ad to unlock it for this session.</string>
     <string name="premium_feature_tap_unlock">Tap Unlock to enable it for this session.</string>
     <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_drag_hint">Drag the camera circle to reposition</string>
+    <string name="camera_drag_hint">Drag the câmera circle to reposition</string>
     <string name="camera_lock_desc_short">Prevent accidental movement</string>
     <string name="shape_square">Square</string>
     <string name="shape_circle">Circle</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Obrigado pelo seu apoio! 🐱</string>
     <string name="billing_pending">A compra está pendente. Você terá acesso quando ela for concluída.</string>
     <string name="dialog_changelog_title">Registro de alterações</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">política de Privacidade</string>
     <string name="support_privacy_policy_desc">Como CatRec lida com seus dados</string>
     <string name="support_terms_of_service">Termos de Serviço</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Compartilhar</string>
     <string name="notif_post_delete">Excluir</string>
     <string name="share_recording_title">Compartilhar gravação</string>
+    <string name="toast_video_encoder_failed">Não foi possível iniciar o codificador de vídeo. Tente uma resolução menor ou outro codificador nas Configurações.</string>
     <string name="toast_recording_stopped_projection">A gravação foi interrompida: o aplicativo capturado foi fechado ou movido para segundo plano</string>
     <string name="toast_recording_failed_no_video">Falha na gravação: nenhum vídeo foi capturado</string>
     <string name="toast_gif_transcode_failed">Não foi possível criar GIF – sua gravação MP4 foi mantida.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">O clipe está vazio – mantenha o buffer por mais tempo</string>
     <string name="toast_clip_saved">Clipe salvo!</string>
     <string name="toast_clip_save_failed">Falha ao salvar clipe: %1$s</string>
-    <string name="notif_overlay_controls_text">Os controles flutuantes estão ativados</string>
     <string name="notif_camera_overlay_text">A sobreposição da câmera CatRec está ativa – toque para retornar ao aplicativo</string>
     <string name="tile_record_label">Registro CatRec</string>
     <string name="tile_clipper_label">Clipper CatRec</string>
-    <string name="notif_channel_overlay">Controles de sobreposição</string>
-    <string name="notif_channel_overlay_desc">Exibido enquanto os controles de sobreposição flutuante estão ativos</string>
-    <string name="notif_overlay_active_title">Sobreposição CatRec ativa</string>
-    <string name="notif_overlay_start_recording">Comece a gravar</string>
-    <string name="notif_overlay_close_overlay">Fechar sobreposição</string>
     <string name="notif_channel_camera_overlay">Sobreposição de câmera</string>
     <string name="notif_channel_camera_overlay_desc">Mostra enquanto a sobreposição da câmera está ativa</string>
     <string name="notif_camera_in_use_title">Câmera em uso</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Ocultar sobreposição</string>
     <string name="notif_action_overlay_show">Mostrar sobreposição</string>
     <string name="notif_action_overlay_enable_in_settings">Sobreposição desativada</string>
-    <string name="notif_action_home">Lar</string>
-    <string name="notif_action_exit">Saída</string>
-    <string name="toast_grant_capture_for_screenshot">Permitir captura de tela – então CatRec pode fazer capturas de tela da sobreposição.</string>
     <string name="tile_subtitle_recording">Gravação…</string>
     <string name="tile_subtitle_buffering">Buffer…</string>
     <string name="tile_subtitle_ready">Preparar</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="overlay_clip_button">✂ CLIPE</string>
     <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
     <string name="format_jpeg">JPEG</string>

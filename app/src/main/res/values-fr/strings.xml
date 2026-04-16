@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">S\'abonner à YouTube</string>
-    <string name="support_subscribe_youtube_desc">Suivre @ibbie pour les mises à jour</string>
+    <string name="support_subscribe_youtube_desc">Suivre \@ibbie pour les mises à jour</string>
     <string name="support_remove_ads">Supprimer les publicités — 1 $</string>
     <string name="support_remove_ads_desc">Achat unique, sans pub pour toujours</string>
     <string name="support_restore_purchases">Restaurer les achats</string>
     <string name="support_restore_purchases_desc">Synchroniser la suppression des annonces et d\'autres achats sur Google Play</string>
     <string name="support_restore_purchases_toast">Vérifier Google Play pour vos achats…</string>
-    <string name="support_play_promo_title">Utiliser le code promotionnel Play</string>
-    <string name="support_play_promo_desc">Si vous disposez d\'un code Google Play pour supprimer les publicités : utilisez-le sur Play, puis appuyez sur Restaurer les achats ici pour que l\'application soit mise à jour.</string>
+    <string name="support_play_promo_title">Code promo (Supprimer les pubs)</string>
+    <string name="support_play_promo_desc">Ouvre l\'achat Google Play pour Supprimer les publicités. Touchez le mode de paiement → Utiliser un code, saisissez le code, puis terminez. Si les pubs restent, touchez Restaurer les achats ci-dessous.</string>
     <string name="support_toast_promo_browser">Impossible d\'ouvrir le navigateur</string>
     <string name="support_ads_removed">Publicités supprimées — Merci !</string>
     <string name="support_ads_removed_desc">Les options Premium restent débloquées – aucune publicité à regarder.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Démarrez l\'enregistrement pour prendre des captures d\'écran</string>
     <string name="error_screenshot_capture_failed">Impossible de capturer une capture d\'écran. Essayer à nouveau.</string>
-    <string name="toast_recording_restarted">Enregistrement redémarré suite à un changement d\'orientation</string>
     <string name="toast_share_app">Découvrez CatRec - le meilleur enregistreur d\'écran !</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Image personnalisée définie</string>
     <string name="watermark_image_default">Par défaut (icône de l\'app)</string>
     <string name="watermark_reset_icon">Réinitialiser l\'icône par défaut</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Verre statique — flou désactivé</string>
     <string name="perf_dynamic_glass">Flou de verre dynamique activé</string>
     <string name="setting_performance_mode">Mode Performance</string>
+    <string name="setting_adaptive_recording_performance">Performance d\'enregistrement adaptative</string>
+    <string name="setting_adaptive_recording_performance_summary">Réduit automatiquement la charge si l\'appareil peine pendant l\'enregistrement</string>
+    <string name="performance_fallback_active">Passage à un profil d\'enregistrement plus léger pour plus de stabilité</string>
     <string name="performance_warning_title">Avertissement de performance</string>
     <string name="performance_warning_body">Votre appareil a moins de 6 Go de RAM ou fonctionne sous Android 11 ou inférieur. Activer les effets de flou en temps réel peut causer des ralentissements, surtout pendant l\'enregistrement.\n\nActiver le Mode Qualité quand même ?</string>
     <string name="accent_color_title">Couleur d\'accentuation</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Merci pour votre soutien ! 🐱</string>
     <string name="billing_pending">L\'achat est en attente : vous y aurez accès une fois terminé.</string>
     <string name="dialog_changelog_title">Journal des modifications</string>
-    <string name="label_beta">Bêta</string>
     <string name="support_privacy_policy">politique de confidentialité</string>
     <string name="support_privacy_policy_desc">Comment CatRec gère vos données</string>
     <string name="support_terms_of_service">Conditions d\'utilisation</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Partager</string>
     <string name="notif_post_delete">Supprimer</string>
     <string name="share_recording_title">Partager l\'enregistrement</string>
+    <string name="toast_video_encoder_failed">Impossible de démarrer l\'encodeur vidéo. Essayez une résolution plus faible ou un autre encodeur dans les paramètres.</string>
     <string name="toast_recording_stopped_projection">Enregistrement arrêté : l\'application capturée a été fermée ou déplacée en arrière-plan</string>
     <string name="toast_recording_failed_no_video">Échec de l\'enregistrement : aucune vidéo n\'a été capturée</string>
     <string name="toast_gif_transcode_failed">Impossible de créer un GIF : votre enregistrement MP4 a été conservé.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Le clip est vide – continuez à le mettre en mémoire tampon plus longtemps</string>
     <string name="toast_clip_saved">Clip enregistré !</string>
     <string name="toast_clip_save_failed">Échec de l\'enregistrement du clip : %1$s</string>
-    <string name="notif_overlay_controls_text">Les contrôles flottants sont activés</string>
     <string name="notif_camera_overlay_text">La superposition de la caméra CatRec est active : appuyez pour revenir à l\'application</string>
     <string name="tile_record_label">Enregistrement CatRec</string>
     <string name="tile_clipper_label">Tondeuse CatRec</string>
-    <string name="notif_channel_overlay">Contrôles de superposition</string>
-    <string name="notif_channel_overlay_desc">Affiché lorsque les contrôles de superposition flottante sont actifs</string>
-    <string name="notif_overlay_active_title">Superposition CatRec active</string>
-    <string name="notif_overlay_start_recording">Commencer l\'enregistrement</string>
-    <string name="notif_overlay_close_overlay">Fermer la superposition</string>
     <string name="notif_channel_camera_overlay">Superposition de caméra</string>
     <string name="notif_channel_camera_overlay_desc">S\'affiche lorsque la superposition de caméra est active</string>
     <string name="notif_camera_in_use_title">Caméra en cours d\'utilisation</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Masquer la superposition</string>
     <string name="notif_action_overlay_show">Afficher la superposition</string>
     <string name="notif_action_overlay_enable_in_settings">Superposition désactivée</string>
-    <string name="notif_action_home">Maison</string>
-    <string name="notif_action_exit">Sortie</string>
-    <string name="toast_grant_capture_for_screenshot">Autoriser la capture d\'écran - CatRec peut alors prendre des captures d\'écran à partir de la superposition.</string>
     <string name="tile_subtitle_recording">Enregistrement…</string>
     <string name="tile_subtitle_buffering">Mise en mémoire tampon…</string>
     <string name="tile_subtitle_ready">Prêt</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">CAPTURES · %1$d</string>
     <string name="overlay_clip_button">✂ CLIPS</string>
     <string name="overlay_clipper_label">TONDEUSE</string>
-    <string name="overlay_toast_authorize_first">Ouvrez CatRec et appuyez d’abord sur « Autoriser l’enregistrement en superposition »</string>
     <string name="countdown_subtitle">Démarrage de l’enregistrement…</string>
     <string name="toast_recorder_start_failed">Échec du démarrage de l’enregistrement : %1$s</string>
     <string name="format_jpeg">JPEG</string>

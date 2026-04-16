@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Berlangganan YouTube</string>
-    <string name="support_subscribe_youtube_desc">Ikuti @ibbie untuk pembaruan</string>
+    <string name="support_subscribe_youtube_desc">Ikuti \@ibbie untuk pembaruan</string>
     <string name="support_remove_ads">Hapus Iklan — $1</string>
     <string name="support_remove_ads_desc">Pembelian sekali, bebas iklan selamanya</string>
     <string name="support_restore_purchases">Pulihkan pembelian</string>
     <string name="support_restore_purchases_desc">Sinkronkan Hapus Iklan dan pembelian lainnya dari Google Play</string>
     <string name="support_restore_purchases_toast">Memeriksa Google Play untuk pembelian Anda…</string>
-    <string name="support_play_promo_title">Tukarkan kode promo Play</string>
-    <string name="support_play_promo_desc">Jika Anda memiliki kode Google Play untuk Hapus Iklan: tukarkan di Play, lalu ketuk Pulihkan pembelian di sini agar aplikasi diperbarui.</string>
+    <string name="support_play_promo_title">Kode promo (Hapus iklan)</string>
+    <string name="support_play_promo_desc">Membuka pembelian Google Play untuk Hapus iklan. Ketuk metode pembayaran → Tukarkan kode, masukkan kode, lalu selesaikan. Jika iklan masih ada, ketuk Pulihkan pembelian di bawah.</string>
     <string name="support_toast_promo_browser">Tidak dapat membuka browser</string>
     <string name="support_ads_removed">Iklan Dihapus — Terima kasih!</string>
     <string name="support_ads_removed_desc">Opsi premium tetap terbuka — tidak ada iklan untuk ditonton.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Mulai perekaman terlebih dahulu untuk mengambil tangkapan layar</string>
     <string name="error_screenshot_capture_failed">Tidak dapat mengambil tangkapan layar. Coba lagi.</string>
-    <string name="toast_recording_restarted">Rekaman dimulai ulang karena perubahan orientasi</string>
     <string name="toast_share_app">Coba CatRec - perekam layar paling keren!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Gambar kustom telah diatur</string>
     <string name="watermark_image_default">Default (ikon aplikasi)</string>
     <string name="watermark_reset_icon">Reset ke ikon default</string>
-    <string name="label_dp">%1$ddp</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Kaca statis — blur dinonaktifkan</string>
     <string name="perf_dynamic_glass">Blur kaca dinamis diaktifkan</string>
     <string name="setting_performance_mode">Mode Performa</string>
+    <string name="setting_adaptive_recording_performance">Kinerja rekaman adaptif</string>
+    <string name="setting_adaptive_recording_performance_summary">Otomatis mengurangi beban jika perangkat kesulitan saat merekam</string>
+    <string name="performance_fallback_active">Beralih ke profil rekaman yang lebih ringan demi stabilitas</string>
     <string name="performance_warning_title">Peringatan performa</string>
     <string name="performance_warning_body">Perangkat Anda memiliki RAM kurang dari 6 GB atau menjalankan Android 11 ke bawah. Mengaktifkan efek blur kaca real-time dapat menyebabkan UI menjadi lambat, terutama saat merekam.\n\nAktifkan Mode Kualitas tetap saja?</string>
     <string name="accent_color_title">Warna aksen</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Terima kasih atas dukungan Anda! 🐱</string>
     <string name="billing_pending">Pembelian tertunda — Anda akan mendapatkan akses setelah pembelian selesai.</string>
     <string name="dialog_changelog_title">log perubahan</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">Kebijakan Privasi</string>
     <string name="support_privacy_policy_desc">Bagaimana CatRec menangani data Anda</string>
     <string name="support_terms_of_service">Ketentuan Layanan</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Membagikan</string>
     <string name="notif_post_delete">Menghapus</string>
     <string name="share_recording_title">Bagikan rekaman</string>
+    <string name="toast_video_encoder_failed">Tidak dapat memulai pengkode video. Coba resolusi lebih rendah atau pengkode lain di Pengaturan.</string>
     <string name="toast_recording_stopped_projection">Perekaman dihentikan: aplikasi yang diambil ditutup atau dipindahkan ke latar belakang</string>
     <string name="toast_recording_failed_no_video">Perekaman gagal: tidak ada video yang diambil</string>
     <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF — rekaman MP4 Anda disimpan.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Klip kosong – simpan buffering lebih lama</string>
     <string name="toast_clip_saved">Klip disimpan!</string>
     <string name="toast_clip_save_failed">Penyimpanan klip gagal: %1$s</string>
-    <string name="notif_overlay_controls_text">Kontrol mengambang diaktifkan</string>
     <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif — ketuk untuk kembali ke aplikasi</string>
     <string name="tile_record_label">Catatan CatRec</string>
     <string name="tile_clipper_label">Pemotong CatRec</string>
-    <string name="notif_channel_overlay">Kontrol hamparan</string>
-    <string name="notif_channel_overlay_desc">Ditampilkan saat kontrol hamparan mengambang aktif</string>
-    <string name="notif_overlay_active_title">Hamparan CatRec aktif</string>
-    <string name="notif_overlay_start_recording">Mulai merekam</string>
-    <string name="notif_overlay_close_overlay">Tutup hamparan</string>
     <string name="notif_channel_camera_overlay">Hamparan kamera</string>
     <string name="notif_channel_camera_overlay_desc">Ditampilkan saat overlay kamera aktif</string>
     <string name="notif_camera_in_use_title">Kamera sedang digunakan</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Sembunyikan hamparan</string>
     <string name="notif_action_overlay_show">Tampilkan hamparan</string>
     <string name="notif_action_overlay_enable_in_settings">Hamparan tidak aktif</string>
-    <string name="notif_action_home">Rumah</string>
-    <string name="notif_action_exit">KELUAR</string>
-    <string name="toast_grant_capture_for_screenshot">Izinkan tangkapan layar — lalu CatRec dapat mengambil tangkapan layar dari hamparan.</string>
     <string name="tile_subtitle_recording">Rekaman…</string>
     <string name="tile_subtitle_buffering">Penyangga…</string>
     <string name="tile_subtitle_ready">Siap</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">TANGKAPAN LAYAR · %1$d</string>
     <string name="overlay_clip_button">✂ KLIP</string>
     <string name="overlay_clipper_label">ALAT PEMOTONG</string>
-    <string name="overlay_toast_authorize_first">Buka CatRec lalu ketuk «Izinkan rekaman overlay» terlebih dahulu</string>
     <string name="countdown_subtitle">Memulai rekaman…</string>
     <string name="toast_recorder_start_failed">Gagal memulai rekaman: %1$s</string>
     <string name="format_jpeg">jpeg</string>

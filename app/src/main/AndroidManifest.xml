@@ -4,20 +4,24 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Android 14+: base FGS permission plus one FOREGROUND_SERVICE_* per type used by our services (see ScreenRecordService, OverlayService). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!-- Recordings / Screenshots / library (MediaStore). Android 14+: READ_MEDIA_VISUAL_USER_SELECTED must be declared
+         directly after READ_MEDIA_IMAGES / READ_MEDIA_VIDEO for Selected Photos Access (partial library). -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission
+        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        android:minSdkVersion="34" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- Overlay Permissions -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -46,7 +50,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:localeConfig="@xml/locale_config"
-        android:theme="@style/Theme.CatRecScreenRecorcer">
+        android:theme="@style/Theme.CatRecScreenRecorcer"
+        tools:targetApi="35">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
@@ -95,12 +100,14 @@
             android:name=".service.ScreenRecordService"
             android:enabled="true"
             android:exported="false"
+            android:description="@string/service_description_screen_record"
             android:foregroundServiceType="mediaProjection|microphone" />
-            
+
         <service
             android:name=".service.OverlayService"
             android:enabled="true"
             android:exported="false"
+            android:description="@string/service_description_overlay"
             android:foregroundServiceType="camera" />
             
         <service
@@ -130,6 +137,14 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="com.ibbie.catrec_screenrecorcer.DELETE_RECORDING" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.RecordingInterruptedRetryReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ibbie.catrec_screenrecorcer.action.RECORDING_INTERRUPT_RETRY" />
             </intent-filter>
         </receiver>
 

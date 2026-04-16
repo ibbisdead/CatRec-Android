@@ -65,7 +65,7 @@ class CatRecControlReceiver : BroadcastReceiver() {
                     },
                 )
                 AppControlNotification.cancel(app)
-                app.sendBroadcast(Intent(MainActivity.ACTION_FINISH_UI))
+                app.sendBroadcast(Intent(MainActivity.ACTION_FINISH_UI).setPackage(app.packageName))
                 return
             }
         }

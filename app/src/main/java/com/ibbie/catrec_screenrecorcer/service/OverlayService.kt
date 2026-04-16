@@ -58,7 +58,6 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -105,6 +104,8 @@ class OverlayService : LifecycleService() {
         const val EXTRA_WATERMARK_SIZE = "EXTRA_WATERMARK_SIZE"
         const val EXTRA_WATERMARK_X_FRACTION = "EXTRA_WATERMARK_X_FRACTION"
         const val EXTRA_WATERMARK_Y_FRACTION = "EXTRA_WATERMARK_Y_FRACTION"
+        /** Mirrors Settings “keep screen on” while overlays are shown (uses [WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON]). */
+        const val EXTRA_KEEP_SCREEN_ON = "EXTRA_KEEP_SCREEN_ON"
 
         private const val CAMERA_CHANNEL_ID = "CatRec_Camera_Channel"
         private const val CAMERA_NOTIFICATION_ID = 42
@@ -183,6 +184,9 @@ class OverlayService : LifecycleService() {
 
     /** Mirrors DataStore hide-while-recording; applied when recording or buffering bubble is visible. */
     private var hideFloatingIconWhileRecordingPref: Boolean = false
+
+    /** From [ScreenRecordService] while recording; adds [WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON] to overlay windows. */
+    private var keepScreenOnForControls: Boolean = false
 
     /** Floating bubble was hidden while the brush overlay is open. */
     private var floatingChromeHiddenForBrushSession = false
@@ -293,6 +297,7 @@ class OverlayService : LifecycleService() {
 
         when (intent.action) {
             ACTION_SHOW_OVERLAYS -> {
+                keepScreenOnForControls = intent.getBooleanExtra(EXTRA_KEEP_SCREEN_ON, false)
                 val showCamera = intent.getBooleanExtra(EXTRA_SHOW_CAMERA, false)
                 val camSize = intent.getIntExtra(EXTRA_CAMERA_SIZE, 120)
                 val camX = intent.getFloatExtra(EXTRA_CAMERA_X_FRACTION, 0.05f)
@@ -320,7 +325,6 @@ class OverlayService : LifecycleService() {
                 if (showCamera) showCameraOverlay(camSize, camX, camY, camLocked, camAspect, camOpacity) else hideCameraOverlay()
                 if (showWatermark) {
                     showWatermarkOverlay(
-                        watermarkLoc,
                         watermarkImg,
                         watermarkShape,
                         watermarkOpacity,
@@ -349,6 +353,7 @@ class OverlayService : LifecycleService() {
             }
 
             ACTION_HIDE_OVERLAYS -> {
+                keepScreenOnForControls = false
                 hideCameraOverlay()
                 hideWatermarkOverlay()
                 hideWatermarkPreview()
@@ -542,6 +547,7 @@ class OverlayService : LifecycleService() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
         if (locked) flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        if (keepScreenOnForControls) flags = flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
 
         val params =
             WindowManager
@@ -762,7 +768,6 @@ class OverlayService : LifecycleService() {
     // ── Watermark Overlay ──────────────────────────────────────────────────────
 
     private fun showWatermarkOverlay(
-        @Suppress("UNUSED_PARAMETER") location: String,
         imageUri: String?,
         shape: String,
         opacity: Int,
@@ -775,13 +780,16 @@ class OverlayService : LifecycleService() {
         val sizePx = dpToPx(sizeDp)
         val screenW = metrics.widthPixels
         val screenH = metrics.heightPixels
+        var wmFlags =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        if (keepScreenOnForControls) wmFlags = wmFlags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         val params =
             WindowManager
                 .LayoutParams(
                     sizePx,
                     sizePx,
                     overlayType(),
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                    wmFlags,
                     PixelFormat.TRANSLUCENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
@@ -820,13 +828,18 @@ class OverlayService : LifecycleService() {
         val bubbleSizePx = dpToPx(52)
         val (screenW, _) = currentScreenSizePx()
 
+        var bubbleFlags =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        if (keepScreenOnForControls) {
+            bubbleFlags = bubbleFlags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        }
         val params =
             WindowManager
                 .LayoutParams(
                     bubbleSizePx,
                     bubbleSizePx,
                     overlayType(),
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    bubbleFlags,
                     PixelFormat.TRANSLUCENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
@@ -1099,13 +1112,16 @@ class OverlayService : LifecycleService() {
                 (bubbleParams.y - estCardH - margin).coerceAtLeast(0)
             }
 
+        var cardFlags =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        if (keepScreenOnForControls) cardFlags = cardFlags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         val cardParams =
             WindowManager
                 .LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     overlayType(),
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+                    cardFlags,
                     PixelFormat.TRANSLUCENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
@@ -1786,7 +1802,7 @@ class OverlayService : LifecycleService() {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT,
             )
-        val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000.toInt()) }
+        val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000) }
         cameraPreviewBgView = bg
         try {
             wm.addView(bg, bgParams)
@@ -1973,7 +1989,7 @@ class OverlayService : LifecycleService() {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT,
             )
-        val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000.toInt()) }
+        val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000) }
         previewBgView = bg
         try {
             wm.addView(bg, bgParams)
@@ -2140,12 +2156,7 @@ class OverlayService : LifecycleService() {
     }
 
     private fun overlayType() =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            @Suppress("DEPRECATION")
-            WindowManager.LayoutParams.TYPE_PHONE
-        }
+        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
     private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density + 0.5f).toInt()
 
@@ -2223,19 +2234,17 @@ class OverlayService : LifecycleService() {
     // ── Camera Notification ────────────────────────────────────────────────────
 
     private fun createCameraChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val mgr = getSystemService(NotificationManager::class.java)
-            mgr.createNotificationChannel(
-                NotificationChannel(
-                    CAMERA_CHANNEL_ID,
-                    getString(R.string.notif_channel_camera_overlay),
-                    NotificationManager.IMPORTANCE_LOW,
-                ).apply {
-                    description = getString(R.string.notif_channel_camera_overlay_desc)
-                    setShowBadge(false)
-                },
-            )
-        }
+        val mgr = getSystemService(NotificationManager::class.java)
+        mgr.createNotificationChannel(
+            NotificationChannel(
+                CAMERA_CHANNEL_ID,
+                getString(R.string.notif_channel_camera_overlay),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.notif_channel_camera_overlay_desc)
+                setShowBadge(false)
+            },
+        )
     }
 
     private fun buildCameraNotification(): Notification {

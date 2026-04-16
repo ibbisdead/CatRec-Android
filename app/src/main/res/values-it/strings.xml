@@ -84,8 +84,8 @@
     <!-- Settings Screen - Section Headers -->
     <string name="settings_title">Settings</string>
     <string name="settings_section_controls">Controls</string>
-    <string name="setting_allow_background_title">Unrestricted battery use</string>
-    <string name="setting_allow_background_desc">Lets CatRec keep recording, the prepared capture session, and the overlay running reliably when you leave the app. Opens system battery settings.</string>
+    <string name="setting_allow_background_title">Optimize for background recording</string>
+    <string name="setting_allow_background_desc">Optional: granting Unrestricted battery for CatRec in system settings can help prevent very long recordings from being stopped. Tap to open your device battery list and adjust CatRec if you want.</string>
     <string name="toast_battery_settings_failed">Couldn\'t open battery settings. Try Battery → CatRec in system Settings.</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_gif_recorder">Registratore GIF</string>
@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Iscriviti a YouTube</string>
-    <string name="support_subscribe_youtube_desc">Segui @ibbie per gli aggiornamenti</string>
+    <string name="support_subscribe_youtube_desc">Segui \@ibbie per gli aggiornamenti</string>
     <string name="support_remove_ads">Remove Ads — $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
     <string name="support_restore_purchases">Ripristina gli acquisti</string>
     <string name="support_restore_purchases_desc">Sincronizza Rimuovi pubblicità e altri acquisti da Google Play</string>
     <string name="support_restore_purchases_toast">Controllo su Google Play per i tuoi acquisti…</string>
-    <string name="support_play_promo_title">Riscatta il codice promozionale Play</string>
-    <string name="support_play_promo_desc">Se disponi di un codice Google Play per Rimuovi annunci: riscattalo su Play, quindi tocca Ripristina acquisti qui in modo che l\'app si aggiorni.</string>
+    <string name="support_play_promo_title">Codice promo (Rimuovi annunci)</string>
+    <string name="support_play_promo_desc">Apre l\'acquisto Google Play per Rimuovi annunci. Tocca Metodo di pagamento → Riscatta codice, inserisci il codice e completa. Se gli annunci restano, tocca Ripristina acquisti sotto.</string>
     <string name="support_toast_promo_browser">Impossibile aprire il browser</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Le opzioni premium rimangono sbloccate: nessuna pubblicità da guardare.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Screen capture isn\'t active. Open CatRec and grant capture first.</string>
     <string name="error_screenshot_capture_failed">Impossibile acquisire lo screenshot. Riprova.</string>
-    <string name="toast_recording_restarted">Recording restarted for orientation change</string>
     <string name="toast_share_app">Dai un\'occhiata a CatRec, il registratore dello schermo più bello!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Custom image set</string>
     <string name="watermark_image_default">Default (app icon)</string>
     <string name="watermark_reset_icon">Reset to default icon</string>
-    <string name="label_dp">%1$gg</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Static glass — blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
+    <string name="setting_adaptive_recording_performance">Prestazioni di registrazione adattive</string>
+    <string name="setting_adaptive_recording_performance_summary">Riduce automaticamente il carico se il dispositivo fa fatica durante la registrazione</string>
+    <string name="performance_fallback_active">Passaggio a un profilo di registrazione più leggero per maggiore stabilità</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
     <string name="accent_color_title">Accent color</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Grazie per il vostro supporto! 🐱</string>
     <string name="billing_pending">L\'acquisto è in sospeso: avrai accesso una volta completato.</string>
     <string name="dialog_changelog_title">Registro delle modifiche</string>
-    <string name="label_beta">Beta</string>
     <string name="support_privacy_policy">politica sulla riservatezza</string>
     <string name="support_privacy_policy_desc">Come CatRec gestisce i tuoi dati</string>
     <string name="support_terms_of_service">Termini di servizio</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Condividere</string>
     <string name="notif_post_delete">Eliminare</string>
     <string name="share_recording_title">Condividi la registrazione</string>
+    <string name="toast_video_encoder_failed">Impossibile avviare il codificatore video. Prova una risoluzione inferiore o un altro codificatore in Impostazioni.</string>
     <string name="toast_recording_stopped_projection">Registrazione interrotta: l\'app catturata è stata chiusa o spostata in background</string>
     <string name="toast_recording_failed_no_video">Registrazione non riuscita: nessun video è stato catturato</string>
     <string name="toast_gif_transcode_failed">Impossibile creare la GIF: la tua registrazione MP4 è stata conservata.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">La clip è vuota: mantieni il buffering più a lungo</string>
     <string name="toast_clip_saved">Clip salvata!</string>
     <string name="toast_clip_save_failed">Salvataggio clip non riuscito: %1$s</string>
-    <string name="notif_overlay_controls_text">I controlli mobili sono abilitati</string>
     <string name="notif_camera_overlay_text">L\'overlay della fotocamera CatRec è attivo: tocca per tornare all\'app</string>
     <string name="tile_record_label">Registrazione CatRec</string>
     <string name="tile_clipper_label">CatRec Clipper</string>
-    <string name="notif_channel_overlay">Controlli sovrapposti</string>
-    <string name="notif_channel_overlay_desc">Visualizzato mentre i controlli in sovrapposizione mobile sono attivi</string>
-    <string name="notif_overlay_active_title">Sovrapposizione CatRec attiva</string>
-    <string name="notif_overlay_start_recording">Inizia a registrare</string>
-    <string name="notif_overlay_close_overlay">Chiudi sovrapposizione</string>
     <string name="notif_channel_camera_overlay">Sovrapposizione della fotocamera</string>
     <string name="notif_channel_camera_overlay_desc">Viene visualizzato mentre la sovrapposizione della fotocamera è attiva</string>
     <string name="notif_camera_in_use_title">Fotocamera in uso</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Nascondi sovrapposizione</string>
     <string name="notif_action_overlay_show">Mostra sovrapposizione</string>
     <string name="notif_action_overlay_enable_in_settings">Sovrapposizione disattivata</string>
-    <string name="notif_action_home">Casa</string>
-    <string name="notif_action_exit">Uscita</string>
-    <string name="toast_grant_capture_for_screenshot">Consenti l\'acquisizione dello schermo: CatRec potrà acquisire screenshot dall\'overlay.</string>
     <string name="tile_subtitle_recording">Registrazione…</string>
     <string name="tile_subtitle_buffering">Bufferizzazione...</string>
     <string name="tile_subtitle_ready">Pronto</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="overlay_clip_button">✂ CLIP</string>
     <string name="overlay_clipper_label">CLIPPER</string>
-    <string name="overlay_toast_authorize_first">Open CatRec and tap \u201CAuthorize Overlay Recording\u201D first</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
     <string name="format_jpeg">JPEG</string>

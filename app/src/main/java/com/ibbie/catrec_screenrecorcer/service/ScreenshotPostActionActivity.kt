@@ -81,9 +81,10 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER_HORIZONTAL
                 isClickable = true
                 setOnClickListener { /* consume taps; do not close */ }
-                setOnTouchListener { _, event ->
-                    if (event.action == MotionEvent.ACTION_DOWN) {
-                        scheduleAutoDismiss()
+                setOnTouchListener { v, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> scheduleAutoDismiss()
+                        MotionEvent.ACTION_UP -> v.performClick()
                     }
                     false
                 }
@@ -204,7 +205,7 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
         )
         row.addView(
             pillAction(
-                R.drawable.ic_post_action_edit,
+                android.R.drawable.ic_menu_edit,
                 R.string.screenshot_post_edit,
                 marginEndDp = 0,
             ) {

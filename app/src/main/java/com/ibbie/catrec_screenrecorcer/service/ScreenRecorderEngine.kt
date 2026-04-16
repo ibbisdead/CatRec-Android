@@ -87,14 +87,14 @@ class ScreenRecorderEngine(
     private var videoTrackIndex = -1
     private var audioTrackIndex = -1
     private var isMuxerStarted = false
-    private val muxerLock = Object()
+    private val muxerLock = object {}
 
     // Separate mic muxer/encoder
     private var separateMicEncoder: MediaCodec? = null
     private var separateMicMuxer: MediaMuxer? = null
     private var separateMicTrackIndex = -1
     private var isSeparateMicMuxerStarted = false
-    private val separateMicLock = Object()
+    private val separateMicLock = object {}
 
     private val isRecording = AtomicBoolean(false)
 
@@ -750,7 +750,7 @@ class ScreenRecorderEngine(
             AudioMode.INTERNAL -> (internal?.channelCount ?: 1).coerceIn(1, 2)
             AudioMode.MIC -> (mic?.channelCount ?: 1).coerceIn(1, 2)
             AudioMode.MIXED -> {
-                if (wantStereo && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                if (wantStereo && true) {
                     maxOf(internal?.channelCount ?: 0, mic?.channelCount ?: 0).coerceIn(1, 2)
                 } else if (wantStereo) {
                     val cfg = mic?.channelConfiguration ?: internal?.channelConfiguration
@@ -801,9 +801,7 @@ class ScreenRecorderEngine(
             separateMicEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
             separateMicEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                separateMicMuxer = MediaMuxer(pfd, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            }
+            separateMicMuxer = MediaMuxer(pfd, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         } catch (e: Exception) {
             Log.e(TAG, "Separate mic encoder init failed", e)
             separateMicEncoder?.release()
@@ -822,9 +820,7 @@ class ScreenRecorderEngine(
         }
 
     private fun prepareMuxer() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            muxer = MediaMuxer(outputFileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-        }
+        muxer = MediaMuxer(outputFileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     }
 
     // ── Audio Capture ──────────────────────────────────────────────────────────

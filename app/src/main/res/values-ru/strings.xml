@@ -231,14 +231,14 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Подписаться на YouTube</string>
-    <string name="support_subscribe_youtube_desc">Следите за обновлениями @ibbie</string>
+    <string name="support_subscribe_youtube_desc">Следите за обновлениями \@ibbie</string>
     <string name="support_remove_ads">Убрать рекламу — $1</string>
     <string name="support_remove_ads_desc">Разовая покупка, навсегда без рекламы</string>
     <string name="support_restore_purchases">Восстановление покупок</string>
     <string name="support_restore_purchases_desc">Синхронизация удаления рекламы и других покупок из Google Play.</string>
     <string name="support_restore_purchases_toast">Проверка покупок в Google Play…</string>
-    <string name="support_play_promo_title">Активировать промокод Google Play</string>
-    <string name="support_play_promo_desc">Если у вас есть код Google Play для удаления рекламы: активируйте его в Play, затем нажмите «Восстановить покупки здесь», чтобы приложение обновилось.</string>
+    <string name="support_play_promo_title">Промокод (Удаление рекламы)</string>
+    <string name="support_play_promo_desc">Открывает покупку в Google Play для «Удаления рекламы». Способ оплаты → Активировать код, введите код и завершите. Если реклама осталась, нажмите «Восстановить покупки» ниже.</string>
     <string name="support_toast_promo_browser">Не удалось открыть браузер</string>
     <string name="support_ads_removed">Реклама удалена — Спасибо!</string>
     <string name="support_ads_removed_desc">Премиум-опции остаются разблокированными — никакой рекламы для просмотра.</string>
@@ -256,7 +256,6 @@
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Сначала начните запись для создания скриншотов</string>
     <string name="error_screenshot_capture_failed">Не удалось сделать скриншот. Попробуйте еще раз.</string>
-    <string name="toast_recording_restarted">Запись перезапущена из-за изменения ориентации</string>
     <string name="toast_share_app">Попробуйте CatRec — крутейший рекордер экрана!</string>
 
     <!-- Actions (extra) -->
@@ -306,7 +305,7 @@
     <string name="watermark_image_custom">Установлено пользовательское изображение</string>
     <string name="watermark_image_default">По умолчанию (иконка приложения)</string>
     <string name="watermark_reset_icon">Сбросить до иконки по умолчанию</string>
-    <string name="label_dp">%1$ддп</string>
+    <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">кбит/с</string>
     <string name="label_hz">Гц</string>
@@ -315,6 +314,9 @@
     <string name="perf_static_glass">Статичное стекло — размытие отключено</string>
     <string name="perf_dynamic_glass">Динамическое стеклянное размытие включено</string>
     <string name="setting_performance_mode">Режим производительности</string>
+    <string name="setting_adaptive_recording_performance">Адаптивная производительность записи</string>
+    <string name="setting_adaptive_recording_performance_summary">Автоматически снижает нагрузку, если устройству тяжело во время записи</string>
+    <string name="performance_fallback_active">Переключение на более лёгкий профиль записи для стабильности</string>
     <string name="performance_warning_title">Предупреждение о производительности</string>
     <string name="performance_warning_body">Ваше устройство имеет менее 6 ГБ ОЗУ или работает под Android 11 или ниже. Включение эффектов размытия в реальном времени может вызвать задержки интерфейса, особенно во время записи.\n\nВсё равно включить режим качества?</string>
     <string name="accent_color_title">Акцентный цвет</string>
@@ -489,7 +491,6 @@
     <string name="billing_thanks_support_me">Спасибо за вашу поддержку! 🐱</string>
     <string name="billing_pending">Покупка находится на рассмотрении. Вы получите доступ, когда она завершится.</string>
     <string name="dialog_changelog_title">Журнал изменений</string>
-    <string name="label_beta">Бета</string>
     <string name="support_privacy_policy">политика конфиденциальности</string>
     <string name="support_privacy_policy_desc">Как CatRec обрабатывает ваши данные</string>
     <string name="support_terms_of_service">Условия использования</string>
@@ -538,6 +539,7 @@
     <string name="notif_post_share">Делиться</string>
     <string name="notif_post_delete">Удалить</string>
     <string name="share_recording_title">Поделиться записью</string>
+    <string name="toast_video_encoder_failed">Не удалось запустить видеокодер. Попробуйте снизить разрешение или выбрать другой кодек в Настройках.</string>
     <string name="toast_recording_stopped_projection">Запись остановлена: захваченное приложение было закрыто или переведено в фоновый режим.</string>
     <string name="toast_recording_failed_no_video">Запись не удалась: видео не было записано</string>
     <string name="toast_gif_transcode_failed">Не удалось создать GIF — ваша запись в формате MP4 сохранилась.</string>
@@ -549,15 +551,9 @@
     <string name="toast_clip_empty">Клип пуст – продолжайте буферизацию дольше</string>
     <string name="toast_clip_saved">Клип сохранен!</string>
     <string name="toast_clip_save_failed">Не удалось сохранить клип: %1$s</string>
-    <string name="notif_overlay_controls_text">Плавающие элементы управления включены.</string>
     <string name="notif_camera_overlay_text">Наложение камеры CatRec активно — коснитесь, чтобы вернуться в приложение</string>
     <string name="tile_record_label">CatRec Record</string>
     <string name="tile_clipper_label">CatRec Машинка для стрижки</string>
-    <string name="notif_channel_overlay">Элементы управления наложением</string>
-    <string name="notif_channel_overlay_desc">Отображается, когда активны плавающие элементы управления наложением.</string>
-    <string name="notif_overlay_active_title">Наложение CatRec активно</string>
-    <string name="notif_overlay_start_recording">Начать запись</string>
-    <string name="notif_overlay_close_overlay">Закрыть наложение</string>
     <string name="notif_channel_camera_overlay">Наложение камеры</string>
     <string name="notif_channel_camera_overlay_desc">Отображается, когда активно наложение камеры.</string>
     <string name="notif_camera_in_use_title">Камера используется</string>
@@ -569,9 +565,6 @@
     <string name="notif_action_overlay_hide">Скрыть наложение</string>
     <string name="notif_action_overlay_show">Показать наложение</string>
     <string name="notif_action_overlay_enable_in_settings">Наложение выключено</string>
-    <string name="notif_action_home">Дом</string>
-    <string name="notif_action_exit">Выход</string>
-    <string name="toast_grant_capture_for_screenshot">Разрешить захват экрана — тогда CatRec сможет делать снимки экрана из наложения.</string>
     <string name="tile_subtitle_recording">Запись…</string>
     <string name="tile_subtitle_buffering">Буферизация…</string>
     <string name="tile_subtitle_ready">Готовый</string>
@@ -585,7 +578,6 @@
     <string name="screenshots_header_format">СКРИНШОТЫ · %1$d</string>
     <string name="overlay_clip_button">✂ КЛИП</string>
     <string name="overlay_clipper_label">КЛИППЕР</string>
-    <string name="overlay_toast_authorize_first">Откройте CatRec и сначала нажмите «Разрешить запись поверх других окон»</string>
     <string name="countdown_subtitle">Запись начинается…</string>
     <string name="toast_recorder_start_failed">Не удалось запустить запись: %1$s</string>
     <string name="format_jpeg">JPEG</string>
