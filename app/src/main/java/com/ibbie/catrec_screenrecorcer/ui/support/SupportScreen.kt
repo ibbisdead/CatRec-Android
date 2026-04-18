@@ -95,7 +95,7 @@ fun SupportScreen(
         if (adsDisabled || isAdLoading) return
         isAdLoading = true
         RewardedAd.load(
-            context,
+            context.applicationContext,
             "ca-app-pub-7741372232895726/8137302121",
             AdMobAdRequestFactory.build(),
             object : RewardedAdLoadCallback() {
@@ -138,7 +138,10 @@ fun SupportScreen(
         }
     }
 
-    Scaffold { paddingValues ->
+    Scaffold(
+        // Outer NavGraph Scaffold already applies window insets; avoid double safeDrawing padding.
+        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+    ) { paddingValues ->
         Column(
             modifier =
                 Modifier

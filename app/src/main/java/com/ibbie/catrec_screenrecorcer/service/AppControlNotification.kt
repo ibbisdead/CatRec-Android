@@ -5,10 +5,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
@@ -54,6 +54,15 @@ object AppControlNotification {
 
     fun refresh(context: Context) {
         val app = context.applicationContext
+        // API 33+: without POST_NOTIFICATIONS (or if user disabled app notifications in Settings),
+        // the system suppresses posts and logcat shows "Suppressing notification … by user request".
+        if (!NotificationManagerCompat.from(app).areNotificationsEnabled()) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "refresh: notifications disabled — skip until POST_NOTIFICATIONS / Settings")
+            }
+            cancel(app)
+            return
+        }
         ensureChannel(app)
 
         val isRecording = RecordingState.isRecording.value
@@ -61,13 +70,26 @@ object AppControlNotification {
         val isPrepared = RecordingState.isPrepared.value
         val isSaving = RecordingState.isSaving.value
 
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(
+                TAG,
+                "refresh: recording=$isRecording buffering=$isBuffering prepared=$isPrepared saving=$isSaving",
+            )
+        }
+
         // Single shade entry: ScreenRecordService uses [ScreenRecordService.MAIN_FOREGROUND_NOTIFICATION_ID].
         // If we are currently saving a video/GIF, suppress the idle notification so it doesn't double up.
         if (isBuffering || isSaving) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "refresh: cancel idle (buffering or saving)")
+            }
             cancel(app)
             return
         }
         if (isPrepared || isRecording) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "refresh: delegate to ScreenRecordService ACTION_REFRESH_MAIN_NOTIFICATION")
+            }
             cancel(app)
             app.startService(
                 Intent(app, ScreenRecordService::class.java).apply {
@@ -90,6 +112,9 @@ object AppControlNotification {
                     }
                 withContext(Dispatchers.Main) {
                     val overlayVisible = OverlayService.idleControlsBubbleVisible
+                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                        Log.d(TAG, "refresh: post idle app control notification")
+                    }
                     postIdleAppControlNotification(app, floatingOn, overlayVisible)
                 }
             } catch (e: Exception) {

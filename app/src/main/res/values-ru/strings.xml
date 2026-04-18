@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Проверка покупок в Google Play…</string>
     <string name="support_play_promo_title">Промокод (Удаление рекламы)</string>
     <string name="support_play_promo_desc">Открывает покупку в Google Play для «Удаления рекламы». Способ оплаты → Активировать код, введите код и завершите. Если реклама осталась, нажмите «Восстановить покупки» ниже.</string>
-    <string name="support_toast_promo_browser">Не удалось открыть браузер</string>
     <string name="support_ads_removed">Реклама удалена — Спасибо!</string>
     <string name="support_ads_removed_desc">Премиум-опции остаются разблокированными — никакой рекламы для просмотра.</string>
     <string name="support_watch_ad">Посмотреть рекламу</string>

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
@@ -266,7 +265,7 @@ fun SettingsScreen(
         if (adGateLoading || adGateAd != null) return
         adGateLoading = true
         RewardedAd.load(
-            context,
+            context.applicationContext,
             // Replace with a dedicated ad unit ID for feature unlocks once live on Play Store.
             "ca-app-pub-7741372232895726/8137302121",
             AdMobAdRequestFactory.build(),

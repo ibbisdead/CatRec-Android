@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
@@ -74,6 +75,7 @@ import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
+import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
 import com.ibbie.catrec_screenrecorcer.ui.theme.rememberScreenBackgroundBrush
 import com.ibbie.catrec_screenrecorcer.utils.createDeleteRequestPendingIntent
@@ -81,9 +83,6 @@ import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

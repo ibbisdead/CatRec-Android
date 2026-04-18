@@ -104,6 +104,7 @@ class OverlayService : LifecycleService() {
         const val EXTRA_WATERMARK_SIZE = "EXTRA_WATERMARK_SIZE"
         const val EXTRA_WATERMARK_X_FRACTION = "EXTRA_WATERMARK_X_FRACTION"
         const val EXTRA_WATERMARK_Y_FRACTION = "EXTRA_WATERMARK_Y_FRACTION"
+
         /** Mirrors Settings “keep screen on” while overlays are shown (uses [WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON]). */
         const val EXTRA_KEEP_SCREEN_ON = "EXTRA_KEEP_SCREEN_ON"
 
@@ -308,7 +309,6 @@ class OverlayService : LifecycleService() {
                 val camOpacity = intent.getIntExtra(EXTRA_CAMERA_OPACITY, 100)
                 val showWatermark = intent.getBooleanExtra(EXTRA_SHOW_WATERMARK, false)
                 val showControls = intent.getBooleanExtra(EXTRA_SHOW_CONTROLS, false)
-                val watermarkLoc = intent.getStringExtra(EXTRA_WATERMARK_LOCATION) ?: "Top Left"
                 val watermarkImg = intent.getStringExtra(EXTRA_WATERMARK_IMAGE_URI)
                 val watermarkShape = intent.getStringExtra(EXTRA_WATERMARK_SHAPE) ?: "Square"
                 val watermarkOpacity = intent.getIntExtra(EXTRA_WATERMARK_OPACITY, 100)
@@ -2155,8 +2155,7 @@ class OverlayService : LifecycleService() {
         }
     }
 
-    private fun overlayType() =
-        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    private fun overlayType() = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
 
     private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density + 0.5f).toInt()
 

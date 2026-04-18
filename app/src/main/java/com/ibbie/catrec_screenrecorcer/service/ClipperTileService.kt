@@ -6,7 +6,6 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.annotation.RequiresApi
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.RecordingState

@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -28,12 +29,14 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
@@ -205,7 +208,10 @@ class MainActivity : ComponentActivity() {
                         when (consentState) {
                             ConsentUiState.Checking -> {
                                 Box(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .safeDrawingPadding(),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator()
@@ -240,9 +246,18 @@ class MainActivity : ComponentActivity() {
                             }
                             ConsentUiState.Ready -> {
                                 AppOpenAdOnStartEffect(activity = this@MainActivity)
-                                val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
-                                CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
-                                    CatRecNavGraph()
+                                val configuration = LocalConfiguration.current
+                                key(
+                                    configuration.screenWidthDp,
+                                    configuration.screenHeightDp,
+                                    configuration.orientation,
+                                    configuration.screenLayout,
+                                    configuration.uiMode,
+                                ) {
+                                    val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
+                                    CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
+                                        CatRecNavGraph()
+                                    }
                                 }
                             }
                         }

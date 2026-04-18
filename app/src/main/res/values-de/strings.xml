@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Suchen Sie bei Google Play nach Ihren Einkäufen …</string>
     <string name="support_play_promo_title">Promo-Code (Werbung entfernen)</string>
     <string name="support_play_promo_desc">Öffnet den Google Play-Kauf für „Werbung entfernen“. Zahlungsmethode antippen → Code einlösen, Code eingeben und abschließen. Falls weiterhin Werbung erscheint: Unten „Käufe wiederherstellen“ antippen.</string>
-    <string name="support_toast_promo_browser">Der Browser konnte nicht geöffnet werden</string>
     <string name="support_ads_removed">Werbung entfernt — Danke!</string>
     <string name="support_ads_removed_desc">Premium-Optionen bleiben freigeschaltet – es gibt keine Werbung zum Ansehen.</string>
     <string name="support_watch_ad">Werbung ansehen</string>

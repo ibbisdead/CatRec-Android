@@ -6,16 +6,17 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
-import com.ibbie.catrec_screenrecorcer.CatRecApplication
+import com.ibbie.catrec_screenrecorcer.data.PreparedPausedSavingState
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
-import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
@@ -24,8 +25,8 @@ import com.ibbie.catrec_screenrecorcer.utils.refreshCrashlyticsSessionKeys
 import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -113,8 +114,10 @@ class RecordingViewModel(
             combine(isRecording, isBuffering, ::Pair),
             combine(captureMode, recordAudio, ::Pair),
             combine(internalAudio, recordSingleAppEnabled, ::Pair),
-            combine(isPrepared, RecordingState.isRecordingPaused, ::Pair),
-        ) { recBuf, modeAudio, internalSingle, prepPaused ->
+            combine(isPrepared, RecordingState.isRecordingPaused, RecordingState.isSaving) { p, pa, sv ->
+                PreparedPausedSavingState(p, pa, sv)
+            },
+        ) { recBuf, modeAudio, internalSingle, prepPausedSaving ->
             RecordingUiSnapshot(
                 isRecording = recBuf.first,
                 isBuffering = recBuf.second,
@@ -122,8 +125,9 @@ class RecordingViewModel(
                 recordAudio = modeAudio.second,
                 internalAudio = internalSingle.first,
                 recordSingleAppEnabled = internalSingle.second,
-                isPrepared = prepPaused.first,
-                isRecordingPaused = prepPaused.second,
+                isPrepared = prepPausedSaving.isPrepared,
+                isRecordingPaused = prepPausedSaving.isRecordingPaused,
+                isSaving = prepPausedSaving.isSaving,
             )
         }.stateIn(
             viewModelScope,

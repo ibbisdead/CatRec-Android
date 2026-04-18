@@ -122,9 +122,15 @@ class CatRecControlReceiver : BroadcastReceiver() {
                 )
             }
             else -> {
-                app.startService(
-                    Intent(app, ScreenRecordService::class.java).apply {
-                        action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
+                // Bring a transparent activity to the foreground first so the notification shade
+                // collapses; the service captures on the next frame (see ScreenshotAfterShadeActivity).
+                app.startActivity(
+                    Intent(app, ScreenshotAfterShadeActivity::class.java).apply {
+                        addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
+                        )
                     },
                 )
             }

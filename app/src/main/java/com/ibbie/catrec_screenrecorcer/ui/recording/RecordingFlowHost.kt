@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,10 +42,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -63,6 +62,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
@@ -91,14 +91,13 @@ val LocalFabRecordingControl =
 @Composable
 fun FabRecordingBridge(
     viewModel: RecordingViewModel,
+    recordingUiSnapshot: RecordingUiSnapshot,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val permissionManager = remember { PermissionManager(context) }
     val accent = LocalAccentColor.current
-
-    val recordingSnapshot by viewModel.recordingUiSnapshot.collectAsState()
 
     var allPermissionsGranted by remember { mutableStateOf(permissionManager.areAllGranted()) }
     var missingPermissions by remember { mutableStateOf(permissionManager.getMissingPermissions()) }
@@ -125,21 +124,14 @@ fun FabRecordingBridge(
         consumeScreenshotExtra(activity)
     }
 
-    LaunchedEffect(
-        recordingSnapshot.isRecording,
-        recordingSnapshot.isBuffering,
-        recordingSnapshot.isPrepared,
-        recordingSnapshot.isRecordingPaused,
-    ) {
-        AppControlNotification.refresh(context.applicationContext)
-    }
-
     var showBetaNotice by remember { mutableStateOf(false) }
     LaunchedEffect(allPermissionsGranted) {
         if (!allPermissionsGranted) {
             showBetaNotice = false
             return@LaunchedEffect
         }
+        // Idle controls notification: post after POST_NOTIFICATIONS (or Settings) allows it.
+        AppControlNotification.refresh(context.applicationContext)
         val alreadyShown = viewModel.betaNoticePersistedValue()
         showBetaNotice = !alreadyShown
     }
@@ -257,6 +249,24 @@ fun FabRecordingBridge(
         }
     }
 
+    // Run after permission bootstrap so we do not call notify() before POST_NOTIFICATIONS can be granted (API 33+).
+    LaunchedEffect(
+        recordingUiSnapshot.isRecording,
+        recordingUiSnapshot.isBuffering,
+        recordingUiSnapshot.isPrepared,
+        recordingUiSnapshot.isRecordingPaused,
+        recordingUiSnapshot.isSaving,
+    ) {
+        if (Log.isLoggable("RecordingFlowHost", Log.DEBUG)) {
+            Log.d(
+                "RecordingFlowHost",
+                "AppControlNotification.refresh: rec=${recordingUiSnapshot.isRecording} buf=${recordingUiSnapshot.isBuffering} " +
+                    "prep=${recordingUiSnapshot.isPrepared} paused=${recordingUiSnapshot.isRecordingPaused} saving=${recordingUiSnapshot.isSaving}",
+            )
+        }
+        AppControlNotification.refresh(context.applicationContext)
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
@@ -265,6 +275,8 @@ fun FabRecordingBridge(
                     missingPermissions = permissionManager.getMissingPermissions()
                     viewModel.updatePermissionsState(allPermissionsGranted)
                     if (allPermissionsGranted) permissionManager.markSetupComplete()
+                    // Retry after returning from Settings (e.g. user enabled app notifications).
+                    AppControlNotification.refresh(context.applicationContext)
 
                     val activity = context as? Activity
                     if (activity?.intent?.action == "ACTION_START_RECORDING_FROM_OVERLAY") {
@@ -321,12 +333,12 @@ fun FabRecordingBridge(
         }
 
     fun startBufferFlow() {
-                bufferProjectionLauncher.launch(
-                    MediaProjectionIntents.createScreenCaptureIntent(
-                        context,
-                        viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-                    ),
-                )
+        bufferProjectionLauncher.launch(
+            MediaProjectionIntents.createScreenCaptureIntent(
+                context,
+                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+            ),
+        )
     }
 
     val storagePermissionLauncher =
@@ -350,10 +362,10 @@ fun FabRecordingBridge(
                 storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             } else {
                 startMediaProjection(
-                context,
-                mediaProjectionLauncher,
-                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-            )
+                    context,
+                    mediaProjectionLauncher,
+                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+                )
             }
         } else {
             startMediaProjection(
@@ -434,8 +446,9 @@ fun FabRecordingBridge(
         )
     }
 
-    val fabRecordingControl: () -> Unit = {
-        val s: RecordingUiSnapshot = viewModel.recordingUiSnapshot.value
+    val fabRecordingControl: () -> Unit = fab@{
+        val s: RecordingUiSnapshot = recordingUiSnapshot
+        if (s.isSaving) return@fab
         when {
             s.isRecording -> viewModel.stopRecordingService(context)
             s.isBuffering -> viewModel.stopBufferService(context)

@@ -2,7 +2,6 @@ package com.ibbie.catrec_screenrecorcer.navigation
 
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,10 +9,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -58,10 +61,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -216,10 +217,10 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                 route == Screen.MergeVideos.route
         } ?: false
 
-    val recordingUi = sharedViewModel.recordingUiSnapshot.collectAsState()
+    val recordingUi by sharedViewModel.recordingUiSnapshot.collectAsState()
     val pillSelectedMode by remember {
         derivedStateOf {
-            val s = recordingUi.value
+            val s = recordingUi
             when {
                 s.isBuffering -> CaptureMode.CLIPPER
                 s.isRecording && s.captureMode == CaptureMode.GIF -> CaptureMode.GIF
@@ -230,7 +231,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
     }
     val canSwitchCaptureMode by remember {
         derivedStateOf {
-            val s = recordingUi.value
+            val s = recordingUi
             !s.isRecording && !s.isBuffering
         }
     }
@@ -261,10 +262,14 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                 if (widthCompact) parentTypography.scaledForCompactWidth() else parentTypography
             }
         MaterialTheme(colorScheme = dynamicScheme, typography = navTypography) {
-            FabRecordingBridge(viewModel = sharedViewModel) {
+            FabRecordingBridge(
+                viewModel = sharedViewModel,
+                recordingUiSnapshot = recordingUi,
+            ) {
                 val barScheme = MaterialTheme.colorScheme
                 Scaffold(
                     containerColor = barScheme.background,
+                    contentWindowInsets = WindowInsets.safeDrawing,
                     topBar = {
                         if (!hideChrome) {
                             val chipScroll = rememberScrollState()
@@ -272,7 +277,11 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .statusBarsPadding()
+                                        .windowInsetsPadding(
+                                            WindowInsets.safeDrawing.only(
+                                                WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                                            ),
+                                        )
                                         .padding(
                                             horizontal = if (widthCompact) 6.dp else 8.dp,
                                             vertical = if (widthCompact) 2.dp else 4.dp,
@@ -319,9 +328,9 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                         selectedMode = pillSelectedMode,
                                         onModeSelected = { sharedViewModel.setCaptureMode(it) },
                                         enabled = canSwitchCaptureMode,
-                                        isRecording = recordingUi.value.isRecording,
-                                        isBuffering = recordingUi.value.isBuffering,
-                                        captureMode = recordingUi.value.captureMode,
+                                        isRecording = recordingUi.isRecording,
+                                        isBuffering = recordingUi.isBuffering,
+                                        captureMode = recordingUi.captureMode,
                                     )
                                 }
                                 Spacer(Modifier.height(4.dp))
@@ -381,9 +390,8 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                                 val chipIconSize = if (widthCompact) 16.dp else 18.dp
                                                 Icon(icon, contentDescription = null, modifier = Modifier.size(chipIconSize))
                                             },
-                                            modifier = Modifier
-                                                .padding(start = if (widthCompact) 2.dp else 4.dp)
-                                                .animateContentSize(),
+                                            modifier =
+                                                Modifier.padding(start = if (widthCompact) 2.dp else 4.dp),
                                         )
                                     }
                                 }
@@ -396,7 +404,13 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                 color = barScheme.surface,
                                 tonalElevation = 1.dp,
                             ) {
-                                Column(Modifier.navigationBarsPadding()) {
+                                Column(
+                                    Modifier.windowInsetsPadding(
+                                        WindowInsets.safeDrawing.only(
+                                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
+                                        ),
+                                    ),
+                                ) {
                                     BannerAdRow(adsDisabled = adsDisabled)
                                 }
                             }
@@ -410,7 +424,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                     CaptureMode.GIF -> CaptureModeColors.GifBlue
                                     else -> CaptureModeColors.RecordingRed
                                 }
-                            val rec = recordingUi.value
+                            val rec = recordingUi
                             val fabCd =
                                 when {
                                     rec.isRecording || rec.isBuffering -> stringResource(R.string.notif_action_stop)
@@ -463,10 +477,16 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Recordings.route,
-                        modifier = Modifier.padding(innerPadding),
+                        modifier =
+                            Modifier
+                                .padding(innerPadding)
+                                .consumeWindowInsets(innerPadding),
                     ) {
                         composable(Screen.Screenshots.route) {
-                            ScreenshotsScreen(viewModel = viewModel())
+                            ScreenshotsScreen(
+                                navController = navController,
+                                viewModel = viewModel(),
+                            )
                         }
                         composable(Screen.Recordings.route) {
                             RecordingsScreen(

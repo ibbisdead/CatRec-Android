@@ -30,7 +30,7 @@ class CatRecApplication : Application() {
     /** Single recording session facade (foreground service + lifecycle flows). */
     val recordingSessionRepository: RecordingSessionRepository by lazy {
         val settings = SettingsRepository(this)
-        DefaultRecordingSessionRepository(this, settings)
+        DefaultRecordingSessionRepository(settings)
     }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

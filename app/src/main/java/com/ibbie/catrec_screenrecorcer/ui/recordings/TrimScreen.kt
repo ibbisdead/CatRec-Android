@@ -28,12 +28,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.service.ClipMerger
+import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -55,219 +57,293 @@ fun TrimScreen(
     val videoUri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
     val scope = rememberCoroutineScope()
 
-    val exoPlayer =
-        remember {
-            ExoPlayer.Builder(context).build().apply {
-                setAudioAttributes(
-                    AudioAttributes
-                        .Builder()
-                        .setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        .build(),
-                    true,
-                )
-                setMediaItem(MediaItem.fromUri(videoUri))
-                prepare()
-                playWhenReady = false
-            }
-        }
-    DisposableEffect(Unit) { onDispose { exoPlayer.release() } }
-
-    var durationMs by remember { mutableLongStateOf(1L) }
-    var startFraction by remember { mutableFloatStateOf(0f) }
-    var endFraction by remember { mutableFloatStateOf(1f) }
-    var currentPositionMs by remember { mutableLongStateOf(0L) }
-    var isTrimming by remember { mutableStateOf(false) }
-    var trimProgress by remember { mutableFloatStateOf(0f) }
-
-    // Wait for duration to be known
-    DisposableEffect(exoPlayer) {
-        val listener =
-            object : Player.Listener {
-                override fun onPlaybackStateChanged(state: Int) {
-                    if (state == Player.STATE_READY && durationMs <= 1L) {
-                        durationMs = exoPlayer.duration.coerceAtLeast(1L)
-                    }
+    val mediaReadable =
+        produceState<Boolean?>(initialValue = null, key1 = videoUri) {
+            value =
+                withContext(Dispatchers.IO) {
+                    contentUriReadableForPlayback(context, videoUri)
                 }
-            }
-        exoPlayer.addListener(listener)
-        onDispose { exoPlayer.removeListener(listener) }
-    }
-
-    // Track position
-    LaunchedEffect(exoPlayer) {
-        while (true) {
-            currentPositionMs = exoPlayer.currentPosition
-            delay(200)
         }
-    }
 
-    val startMs = (startFraction * durationMs).toLong()
-    val endMs = (endFraction * durationMs).toLong()
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
-                    }
+    when (mediaReadable.value) {
+        null -> {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
+                            }
+                        },
+                    )
                 },
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-        ) {
-            // Video preview
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .background(Color.Black),
-                contentAlignment = Alignment.Center,
-            ) {
-                AndroidView(
-                    factory = { ctx ->
-                        PlayerView(ctx).apply {
-                            player = exoPlayer
-                            useController = true
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
+            ) { padding ->
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
             }
-
-            // Trim controls
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                // Start trim handle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+        }
+        false -> {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
+                            }
+                        },
+                    )
+                },
+            ) { padding ->
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(24.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        stringResource(R.string.trim_start_label, formatDurationMs(startMs)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium,
+                        stringResource(R.string.player_video_unavailable),
+                        style = MaterialTheme.typography.bodyLarge,
                     )
-                    TextButton(onClick = {
-                        startFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(0f, endFraction - 0.01f)
-                    }) {
-                        Text(stringResource(R.string.trim_set_to_current))
+                }
+            }
+        }
+        true -> {
+            val exoPlayer =
+                remember(videoUri) {
+                    ExoPlayer.Builder(context).build().apply {
+                        setAudioAttributes(
+                            AudioAttributes
+                                .Builder()
+                                .setUsage(C.USAGE_MEDIA)
+                                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                                .build(),
+                            true,
+                        )
+                        setMediaItem(MediaItem.fromUri(videoUri))
+                        prepare()
+                        playWhenReady = false
                     }
                 }
-                Slider(
-                    value = startFraction,
-                    onValueChange = { v ->
-                        startFraction = v.coerceIn(0f, endFraction - 0.01f)
-                        exoPlayer.seekTo((startFraction * durationMs).toLong())
-                    },
-                    valueRange = 0f..1f,
-                    colors =
-                        SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            DisposableEffect(Unit) { onDispose { exoPlayer.release() } }
 
-                // End trim handle
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        stringResource(R.string.trim_end_label, formatDurationMs(endMs)),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    TextButton(onClick = {
-                        endFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(startFraction + 0.01f, 1f)
-                    }) {
-                        Text(stringResource(R.string.trim_set_to_current))
-                    }
-                }
-                Slider(
-                    value = endFraction,
-                    onValueChange = { v ->
-                        endFraction = v.coerceIn(startFraction + 0.01f, 1f)
-                        exoPlayer.seekTo((endFraction * durationMs).toLong())
-                    },
-                    valueRange = 0f..1f,
-                    colors =
-                        SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.secondary,
-                            activeTrackColor = MaterialTheme.colorScheme.secondary,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            var durationMs by remember { mutableLongStateOf(1L) }
+            var startFraction by remember { mutableFloatStateOf(0f) }
+            var endFraction by remember { mutableFloatStateOf(1f) }
+            var currentPositionMs by remember { mutableLongStateOf(0L) }
+            var isTrimming by remember { mutableStateOf(false) }
+            var trimProgress by remember { mutableFloatStateOf(0f) }
 
-                // Duration summary
-                Text(
-                    stringResource(
-                        R.string.trim_duration_summary,
-                        formatDurationMs(endMs - startMs),
-                        formatDurationMs(startMs),
-                        formatDurationMs(endMs),
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Spacer(Modifier.height(8.dp))
-
-                // Trim button
-                Button(
-                    onClick = {
-                        if (endMs - startMs < 500L) {
-                            Toast.makeText(context, context.getString(R.string.trim_too_short), Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
-                        isTrimming = true
-                        scope.launch {
-                            val result =
-                                trimVideo(context, videoUri, startMs, endMs) { progress ->
-                                    trimProgress = progress
-                                }
-                            isTrimming = false
-                            if (result != null) {
-                                Toast.makeText(context, context.getString(R.string.trim_saved_success), Toast.LENGTH_SHORT).show()
-                                navController.popBackStack()
-                            } else {
-                                Toast.makeText(context, context.getString(R.string.trim_failed_retry), Toast.LENGTH_LONG).show()
+            // Wait for duration to be known
+            DisposableEffect(exoPlayer) {
+                val listener =
+                    object : Player.Listener {
+                        override fun onPlaybackStateChanged(state: Int) {
+                            if (state == Player.STATE_READY && durationMs <= 1L) {
+                                durationMs = exoPlayer.duration.coerceAtLeast(1L)
                             }
                         }
-                    },
-                    enabled = !isTrimming && (endMs - startMs) >= 500L,
-                    modifier = Modifier.fillMaxWidth(),
+
+                        override fun onPlayerError(error: PlaybackException) {
+                            Toast
+                                .makeText(
+                                    context,
+                                    context.getString(R.string.player_video_unavailable),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            navController.popBackStack()
+                        }
+                    }
+                exoPlayer.addListener(listener)
+                onDispose { exoPlayer.removeListener(listener) }
+            }
+
+            // Track position
+            LaunchedEffect(exoPlayer) {
+                while (true) {
+                    currentPositionMs = exoPlayer.currentPosition
+                    delay(500)
+                }
+            }
+
+            val startMs = (startFraction * durationMs).toLong()
+            val endMs = (endFraction * durationMs).toLong()
+
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
+                            }
+                        },
+                    )
+                },
+            ) { padding ->
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                 ) {
-                    if (isTrimming) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                    // Video preview
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .background(Color.Black),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        AndroidView(
+                            factory = { ctx ->
+                                PlayerView(ctx).apply {
+                                    player = exoPlayer
+                                    useController = true
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
                         )
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.trim_progress, (trimProgress * 100).toInt()))
-                    } else {
-                        Icon(Icons.Default.ContentCut, null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.trim_save))
+                    }
+
+                    // Trim controls
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        // Start trim handle
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                stringResource(R.string.trim_start_label, formatDurationMs(startMs)),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            TextButton(onClick = {
+                                startFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(0f, endFraction - 0.01f)
+                            }) {
+                                Text(stringResource(R.string.trim_set_to_current))
+                            }
+                        }
+                        Slider(
+                            value = startFraction,
+                            onValueChange = { v ->
+                                startFraction = v.coerceIn(0f, endFraction - 0.01f)
+                                exoPlayer.seekTo((startFraction * durationMs).toLong())
+                            },
+                            valueRange = 0f..1f,
+                            colors =
+                                SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        // End trim handle
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                stringResource(R.string.trim_end_label, formatDurationMs(endMs)),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            TextButton(onClick = {
+                                endFraction = (currentPositionMs.toFloat() / durationMs).coerceIn(startFraction + 0.01f, 1f)
+                            }) {
+                                Text(stringResource(R.string.trim_set_to_current))
+                            }
+                        }
+                        Slider(
+                            value = endFraction,
+                            onValueChange = { v ->
+                                endFraction = v.coerceIn(startFraction + 0.01f, 1f)
+                                exoPlayer.seekTo((endFraction * durationMs).toLong())
+                            },
+                            valueRange = 0f..1f,
+                            colors =
+                                SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.secondary,
+                                    activeTrackColor = MaterialTheme.colorScheme.secondary,
+                                ),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+
+                        // Duration summary
+                        Text(
+                            stringResource(
+                                R.string.trim_duration_summary,
+                                formatDurationMs(endMs - startMs),
+                                formatDurationMs(startMs),
+                                formatDurationMs(endMs),
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        // Trim button
+                        Button(
+                            onClick = {
+                                if (endMs - startMs < 500L) {
+                                    Toast.makeText(context, context.getString(R.string.trim_too_short), Toast.LENGTH_SHORT).show()
+                                    return@Button
+                                }
+                                isTrimming = true
+                                scope.launch {
+                                    val result =
+                                        trimVideo(context, videoUri, startMs, endMs) { progress ->
+                                            trimProgress = progress
+                                        }
+                                    isTrimming = false
+                                    if (result != null) {
+                                        Toast.makeText(context, context.getString(R.string.trim_saved_success), Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack()
+                                    } else {
+                                        Toast.makeText(context, context.getString(R.string.trim_failed_retry), Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            },
+                            enabled = !isTrimming && (endMs - startMs) >= 500L,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (isTrimming) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.trim_progress, (trimProgress * 100).toInt()))
+                            } else {
+                                Icon(Icons.Default.ContentCut, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(R.string.trim_save))
+                            }
+                        }
                     }
                 }
             }

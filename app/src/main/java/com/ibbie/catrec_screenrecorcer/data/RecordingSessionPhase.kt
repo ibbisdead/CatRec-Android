@@ -13,6 +13,7 @@ enum class RecordingSessionPhase {
     Preparing,
     Recording,
     Buffering,
+
     /** Capture finished; no active recording/buffer (projection may still be “ready”). */
     Saved,
 }

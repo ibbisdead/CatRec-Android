@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Vérifier Google Play pour vos achats…</string>
     <string name="support_play_promo_title">Code promo (Supprimer les pubs)</string>
     <string name="support_play_promo_desc">Ouvre l\'achat Google Play pour Supprimer les publicités. Touchez le mode de paiement → Utiliser un code, saisissez le code, puis terminez. Si les pubs restent, touchez Restaurer les achats ci-dessous.</string>
-    <string name="support_toast_promo_browser">Impossible d\'ouvrir le navigateur</string>
     <string name="support_ads_removed">Publicités supprimées — Merci !</string>
     <string name="support_ads_removed_desc">Les options Premium restent débloquées – aucune publicité à regarder.</string>
     <string name="support_watch_ad">Regarder une publicité</string>

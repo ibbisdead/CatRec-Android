@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Google Play で購入内容を確認しています…</string>
     <string name="support_play_promo_title">プロモコード（広告削除）</string>
     <string name="support_play_promo_desc">広告削除の Google Play 購入画面を開きます。お支払い方法 → コードを引き換え、コードを入力して完了してください。広告が残る場合は下の [購入を復元] をタップ。</string>
-    <string name="support_toast_promo_browser">ブラウザを開けませんでした</string>
     <string name="support_ads_removed">広告削除済み — ありがとうございます！</string>
     <string name="support_ads_removed_desc">プレミアム オプションはロック解除されたままになります。視聴する広告はありません。</string>
     <string name="support_watch_ad">広告を見る</string>

@@ -24,6 +24,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -109,6 +110,8 @@ private fun hitTestCrop(
 
 /**
  * Image fitted to the box, dimmed outside a draggable rectangular crop with corner handles.
+ *
+ * @param showBottomBarActions When false, omit inline Apply/Cancel (use app bar or FAB instead) so corner handles are not covered.
  */
 @Composable
 fun EditorFreeformCropContent(
@@ -117,6 +120,7 @@ fun EditorFreeformCropContent(
     geometryOut: MutableState<CropGeometry?>,
     onCancel: () -> Unit,
     onApply: () -> Unit,
+    showBottomBarActions: Boolean = true,
 ) {
     val density = LocalDensity.current
     val minCropPx = with(density) { 48.dp.toPx() }
@@ -124,7 +128,7 @@ fun EditorFreeformCropContent(
     val handleDraw = with(density) { 10.dp.toPx() }
 
     var cropRect by remember(bitmap.width, bitmap.height) { mutableStateOf(Rect.Zero) }
-    var dragKind by remember { mutableStateOf(CropDrag.None) }
+    val cropRectLatest = rememberUpdatedState(cropRect)
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         if (constraints.maxWidth == Constraints.Infinity ||
@@ -216,16 +220,19 @@ fun EditorFreeformCropContent(
             Box(
                 Modifier
                     .fillMaxSize()
-                    .pointerInput(cropRect, imgBounds, minCropPx) {
+                    // Do not key pointerInput on cropRect: it changes every drag frame and would
+                    // restart this block, canceling the gesture (stepwise / tiny corner moves).
+                    .pointerInput(imgBounds, minCropPx, handleRadius) {
+                        var activeDrag = CropDrag.None
                         detectDragGestures(
                             onDragStart = { start ->
-                                dragKind = hitTestCrop(start, cropRect, handleRadius)
+                                activeDrag = hitTestCrop(start, cropRectLatest.value, handleRadius)
                             },
                             onDrag = { change, dragAmount ->
                                 change.consume()
-                                if (dragKind == CropDrag.None) return@detectDragGestures
-                                var r = cropRect
-                                when (dragKind) {
+                                if (activeDrag == CropDrag.None) return@detectDragGestures
+                                var r = cropRectLatest.value
+                                when (activeDrag) {
                                     CropDrag.Move ->
                                         r = r.translate(Offset(dragAmount.x, dragAmount.y))
                                     CropDrag.TL ->
@@ -264,23 +271,25 @@ fun EditorFreeformCropContent(
                                 }
                                 cropRect = clampCropRect(r, imgBounds, minCropPx)
                             },
-                            onDragEnd = { dragKind = CropDrag.None },
-                            onDragCancel = { dragKind = CropDrag.None },
+                            onDragEnd = { activeDrag = CropDrag.None },
+                            onDragCancel = { activeDrag = CropDrag.None },
                         )
                     },
             )
 
-            Row(
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(24.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                IconButton(onClick = onCancel) {
-                    Icon(Icons.Default.Close, stringResource(R.string.action_close))
-                }
-                IconButton(onClick = onApply) {
-                    Icon(Icons.Default.Check, stringResource(R.string.action_apply))
+            if (showBottomBarActions) {
+                Row(
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    IconButton(onClick = onCancel) {
+                        Icon(Icons.Default.Close, stringResource(R.string.action_close))
+                    }
+                    IconButton(onClick = onApply) {
+                        Icon(Icons.Default.Check, stringResource(R.string.action_apply))
+                    }
                 }
             }
         }

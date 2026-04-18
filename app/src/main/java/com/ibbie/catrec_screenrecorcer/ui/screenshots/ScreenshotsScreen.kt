@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -64,16 +66,15 @@ import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
+import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.rememberScreenBackgroundBrush
 import com.ibbie.catrec_screenrecorcer.utils.createDeleteRequestPendingIntent
 import kotlinx.coroutines.launch
 
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ScreenshotsScreen(
+    navController: NavController,
     viewModel: RecordingViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -265,7 +266,11 @@ fun ScreenshotsScreen(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .statusBarsPadding()
+                                .windowInsetsPadding(
+                                    WindowInsets.safeDrawing.only(
+                                        WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                                    ),
+                                )
                                 .padding(8.dp),
                     ) {
                         Icon(
@@ -433,6 +438,12 @@ fun ScreenshotsScreen(
                                     } catch (_: Exception) {
                                     }
                                 },
+                                onEdit = {
+                                    val enc = Uri.encode(item.uri.toString())
+                                    navController.navigate("image_editor?imageUri=$enc") {
+                                        launchSingleTop = true
+                                    }
+                                },
                                 onLongClick = { selectedUris = setOf(item.uri) },
                                 onToggleSelect = {
                                     selectedUris =
@@ -555,6 +566,8 @@ private fun ScreenshotCard(
     onPreviewClick: () -> Unit,
     /** Opens default gallery / viewer app. */
     onOpenExternal: () -> Unit,
+    /** In-app image editor (rotate / crop / draw); same flow as Tools → Edit image. */
+    onEdit: () -> Unit,
     onLongClick: () -> Unit = {},
     onToggleSelect: () -> Unit = {},
 ) {
@@ -670,6 +683,14 @@ private fun ScreenshotCard(
                                 onClick = {
                                     showMenu = false
                                     onOpenExternal()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.action_edit), color = Color.White) },
+                                leadingIcon = { Icon(Icons.Default.Edit, null, tint = accent) },
+                                onClick = {
+                                    showMenu = false
+                                    onEdit()
                                 },
                             )
                             DropdownMenuItem(

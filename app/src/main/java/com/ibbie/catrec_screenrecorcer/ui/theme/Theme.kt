@@ -105,7 +105,10 @@ fun CatRecScreenRecorderTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            val controller = WindowCompat.getInsetsController(window, view)
+            val lightBars = !darkTheme
+            controller.isAppearanceLightStatusBars = lightBars
+            controller.isAppearanceLightNavigationBars = lightBars
         }
     }
 

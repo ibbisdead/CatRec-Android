@@ -12,6 +12,7 @@ import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.atan2
@@ -59,6 +60,39 @@ private sealed class EditorBrushAction {
 class ImageEditorAnnotationView(
     context: Context,
 ) : View(context) {
+    companion object {
+        private const val TAG = "ImageEditorAnnot"
+    }
+
+    /** When false, touches pass through to Compose overlays (e.g. crop handles). */
+    private var interactionEnabled: Boolean = true
+
+    /**
+     * Idempotent: only updates (and aborts in-flight ink) when the value changes.
+     * Disabling clears any active stroke/shape preview so rapid Crop ↔ Draw switches do not leave stuck UI.
+     */
+    fun setInteractionEnabled(enabled: Boolean) {
+        if (interactionEnabled == enabled) return
+        interactionEnabled = enabled
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "interactionEnabled=$enabled")
+        }
+        if (!enabled) {
+            abortActiveGesture()
+        }
+    }
+
+    private fun abortActiveGesture() {
+        currentPath.reset()
+        strokeHadSegment = false
+        previewRect.setEmpty()
+        shapeStartX = 0f
+        shapeStartY = 0f
+        shapeEndX = 0f
+        shapeEndY = 0f
+        invalidate()
+    }
+
     private var imageBitmap: Bitmap? = null
     private var annotationBitmap: Bitmap? = null
     private var annotationCanvas: Canvas? = null
@@ -337,8 +371,18 @@ class ImageEditorAnnotationView(
         canvas.restore()
     }
 
+    /**
+     * When [interactionEnabled] is false, skip the entire touch pipeline so Compose siblings
+     * (crop overlay) receive gestures consistently across densities and AndroidView interop.
+     */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (!interactionEnabled) return false
+        return super.dispatchTouchEvent(ev)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!interactionEnabled) return false
         val ac = annotationCanvas ?: return false
         val (ix, iy) = viewToImage(event.x, event.y)
         when (currentTool) {

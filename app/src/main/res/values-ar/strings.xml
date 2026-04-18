@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">جارٍ التحقق من Google Play بحثًا عن مشترياتك...</string>
     <string name="support_play_promo_title">رمز ترويجي (إزالة الإعلانات)</string>
     <string name="support_play_promo_desc">يفتح شاشة شراء Google Play لإزالة الإعلانات. انقر طريقة الدفع ← استرداد الرمز، أدخل الرمز ثم أكمل. إذا بقيت الإعلانات، انقر استعادة المشتريات أدناه.</string>
-    <string name="support_toast_promo_browser">تعذر فتح المتصفح</string>
     <string name="support_ads_removed">تمت إزالة الإعلانات — شكراً!</string>
     <string name="support_ads_removed_desc">تظل الخيارات المميزة مفتوحة — ولا توجد إعلانات لمشاهدتها.</string>
     <string name="support_watch_ad">مشاهدة إعلان</string>

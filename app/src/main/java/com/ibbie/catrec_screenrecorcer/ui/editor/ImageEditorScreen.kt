@@ -44,6 +44,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -230,14 +231,32 @@ fun ImageEditorScreen(
                     }
                 },
                 actions = {
-                    IconButton(
-                        onClick = { saveImage() },
-                        enabled = bitmap != null && !saving,
-                    ) {
-                        if (saving) {
-                            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.action_save))
+                    when (panel) {
+                        EditorPanel.Crop -> {
+                            IconButton(onClick = { panel = EditorPanel.Rotate }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.action_cancel),
+                                )
+                            }
+                            IconButton(
+                                onClick = { applyCrop() },
+                                enabled = bitmap != null && !saving,
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = stringResource(R.string.action_apply))
+                            }
+                        }
+                        else -> {
+                            IconButton(
+                                onClick = { saveImage() },
+                                enabled = bitmap != null && !saving,
+                            ) {
+                                if (saving) {
+                                    CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.action_save))
+                                }
+                            }
                         }
                     }
                 },
@@ -261,40 +280,9 @@ fun ImageEditorScreen(
                     )
                 bitmap != null -> {
                     val bm = bitmap!!
-                    Box(Modifier.fillMaxSize()) {
-                        AndroidView(
-                            factory = { ctx ->
-                                ImageEditorAnnotationView(ctx)
-                                    .apply {
-                                        layoutParams =
-                                            ViewGroup.LayoutParams(
-                                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                            )
-                                        setBaseBitmap(bm)
-                                    }.also { canvasRef = it }
-                            },
-                            update = { v ->
-                                if (v.getBaseBitmap() !== bm) {
-                                    v.setBaseBitmap(bm)
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-
-                        if (panel == EditorPanel.Crop) {
-                            EditorFreeformCropContent(
-                                bitmap = bm,
-                                modifier = Modifier.fillMaxSize(),
-                                geometryOut = cropGeometry,
-                                onCancel = { panel = EditorPanel.Rotate },
-                                onApply = { applyCrop() },
-                            )
-                        }
-
+                    Column(Modifier.fillMaxSize()) {
                         Column(
                             Modifier
-                                .align(Alignment.TopCenter)
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.92f))
                                 .padding(8.dp),
@@ -332,14 +320,50 @@ fun ImageEditorScreen(
                             }
                         }
 
-                        if (panel == EditorPanel.Annotate) {
-                            EditorBrushToolbar(
-                                modifier = Modifier.align(Alignment.BottomCenter),
-                                onTool = { canvasRef?.setTool(it) },
-                                onUndo = { canvasRef?.rewind() },
-                                onWidthDp = { canvasRef?.setStrokeWidthDp(it) },
-                                onColor = { canvasRef?.setStrokeColor(it) },
+                        Box(Modifier.weight(1f).fillMaxWidth()) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    ImageEditorAnnotationView(ctx)
+                                        .apply {
+                                            layoutParams =
+                                                ViewGroup.LayoutParams(
+                                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                                    ViewGroup.LayoutParams.MATCH_PARENT,
+                                                )
+                                            setBaseBitmap(bm)
+                                        }.also { canvasRef = it }
+                                },
+                                update = { v ->
+                                    if (v.getBaseBitmap() !== bm) {
+                                        v.setBaseBitmap(bm)
+                                    }
+                                    v.setInteractionEnabled(panel != EditorPanel.Crop)
+                                },
+                                modifier = Modifier.fillMaxSize(),
                             )
+
+                            if (panel == EditorPanel.Crop) {
+                                key(bm.width, bm.height, panel) {
+                                    EditorFreeformCropContent(
+                                        bitmap = bm,
+                                        modifier = Modifier.fillMaxSize(),
+                                        geometryOut = cropGeometry,
+                                        onCancel = { panel = EditorPanel.Rotate },
+                                        onApply = { applyCrop() },
+                                        showBottomBarActions = false,
+                                    )
+                                }
+                            }
+
+                            if (panel == EditorPanel.Annotate) {
+                                EditorBrushToolbar(
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                    onTool = { canvasRef?.setTool(it) },
+                                    onUndo = { canvasRef?.rewind() },
+                                    onWidthDp = { canvasRef?.setStrokeWidthDp(it) },
+                                    onColor = { canvasRef?.setStrokeColor(it) },
+                                )
+                            }
                         }
                     }
                 }

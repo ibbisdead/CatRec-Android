@@ -29,6 +29,9 @@
     <uses-feature android:name="android.hardware.camera.any" />
 
     <queries>
+        <!-- AdMob / GMS bind to in-package services; without this, Android 11+ package visibility
+             yields ServiceBindIntentUtils "Dynamic lookup for intent failed" for ads.* actions. -->
+        <package android:name="com.google.android.gms" />
         <intent>
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
@@ -82,6 +85,15 @@
             android:theme="@style/Theme.CatRec.Transparent"
             android:excludeFromRecents="true"
             android:noHistory="true"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".service.ScreenshotAfterShadeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTop"
             android:taskAffinity="" />
 
         <activity

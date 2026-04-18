@@ -2,6 +2,7 @@ package com.ibbie.catrec_screenrecorcer.service
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -16,11 +17,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.setPadding
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
@@ -49,7 +51,7 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
 
         val uriStr = intent.getStringExtra(EXTRA_IMAGE_URI)
         if (uriStr.isNullOrEmpty()) {
@@ -161,23 +163,28 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                             if (marginEndDp > 0) marginEnd = dp(marginEndDp)
                         }
                 importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_YES
-                contentDescription = getString(labelRes)
+                val labelText =
+                    getString(labelRes).ifBlank {
+                        if (labelRes == R.string.screenshot_post_edit) "Edit" else ""
+                    }
+                contentDescription = labelText
+                val skipIconTint = iconRes == R.drawable.ic_post_action_edit
                 val icon =
                     ImageView(this@ScreenshotPostActionActivity).apply {
                         layoutParams = LinearLayout.LayoutParams(dp(22), dp(22))
                         scaleType = ImageView.ScaleType.FIT_CENTER
-                        setImageDrawable(
-                            AppCompatResources.getDrawable(
-                                this@ScreenshotPostActionActivity,
-                                iconRes,
-                            ),
-                        )
-                        imageTintList =
-                            android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                        val d = loadPillIconDrawable(iconRes)
+                        setImageDrawable(d)
+                        if (skipIconTint) {
+                            imageTintList = null
+                        } else {
+                            imageTintList =
+                                android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                        }
                     }
                 val label =
                     TextView(this@ScreenshotPostActionActivity).apply {
-                        text = getString(labelRes)
+                        text = labelText
                         setTextColor(0xFFFFFFFF.toInt())
                         setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                         layoutParams =
@@ -205,7 +212,7 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
         )
         row.addView(
             pillAction(
-                android.R.drawable.ic_menu_edit,
+                R.drawable.ic_post_action_edit,
                 R.string.screenshot_post_edit,
                 marginEndDp = 0,
             ) {
@@ -217,7 +224,15 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
 
         chip.addView(preview)
         chip.addView(hint)
-        chip.addView(row)
+        // Vertical LinearLayout defaults child width to MATCH_PARENT; WRAP_CONTENT lets the row size
+        // to both pills so the second pill is not squeezed (Edit label would measure 0 width).
+        chip.addView(
+            row,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
 
         preview.elevation = dp(3).toFloat()
 
@@ -298,6 +313,11 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
             },
         )
     }
+
+    /** Used by [onCreate] pill row; second path helps if [AppCompatResources] returns null for a vector. */
+    private fun loadPillIconDrawable(iconRes: Int): Drawable? =
+        AppCompatResources.getDrawable(this, iconRes)
+            ?: ResourcesCompat.getDrawable(resources, iconRes, theme)
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()
 

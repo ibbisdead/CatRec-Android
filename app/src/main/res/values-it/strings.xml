@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Controllo su Google Play per i tuoi acquisti…</string>
     <string name="support_play_promo_title">Codice promo (Rimuovi annunci)</string>
     <string name="support_play_promo_desc">Apre l\'acquisto Google Play per Rimuovi annunci. Tocca Metodo di pagamento → Riscatta codice, inserisci il codice e completa. Se gli annunci restano, tocca Ripristina acquisti sotto.</string>
-    <string name="support_toast_promo_browser">Impossibile aprire il browser</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Le opzioni premium rimangono sbloccate: nessuna pubblicità da guardare.</string>
     <string name="support_watch_ad">Guarda un annuncio</string>

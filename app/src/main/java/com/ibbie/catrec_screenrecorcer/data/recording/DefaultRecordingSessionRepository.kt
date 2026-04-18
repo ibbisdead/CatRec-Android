@@ -1,6 +1,5 @@
 package com.ibbie.catrec_screenrecorcer.data.recording
 
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -12,9 +11,6 @@ import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,9 +22,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 class DefaultRecordingSessionRepository(
-    private val app: Application,
     private val settingsRepository: SettingsRepository,
 ) : RecordingSessionRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

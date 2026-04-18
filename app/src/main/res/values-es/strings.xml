@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Buscando en Google Play tus compras…</string>
     <string name="support_play_promo_title">Código promocional (Eliminar anuncios)</string>
     <string name="support_play_promo_desc">Abre la compra de Google Play para Eliminar anuncios. Toque el método de pago → Canjear código, introduzca el código y finalice. Si siguen los anuncios, pulse Restaurar compras abajo.</string>
-    <string name="support_toast_promo_browser">No se pudo abrir el navegador</string>
     <string name="support_ads_removed">Anuncios Eliminados — ¡Gracias!</string>
     <string name="support_ads_removed_desc">Las opciones premium permanecen desbloqueadas: no hay anuncios para ver.</string>
     <string name="support_watch_ad">Ver un anuncio</string>

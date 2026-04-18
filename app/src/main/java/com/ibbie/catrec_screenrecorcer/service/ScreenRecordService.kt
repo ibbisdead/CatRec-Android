@@ -59,12 +59,12 @@ import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineEventBus
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.SessionConfig
 import com.ibbie.catrec_screenrecorcer.data.recording.toMicAndInternalFlags
-import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
-import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlinx.coroutines.Dispatchers
@@ -1961,8 +1961,11 @@ class ScreenRecordService :
         RecordingState.setRecording(false)
         RecordingState.setRecordingPaused(false)
         RecordingState.setSaving(true)
+        if (Log.isLoggable("ScreenRecordService", Log.DEBUG)) {
+            Log.d("ScreenRecordService", "stopRecording: isSaving=true (finalize on IO, then cleanup on Main)")
+        }
         notifyOverlayRecordingState(isRecording = false)
-        
+
         val nm = getSystemService(NotificationManager::class.java)
         nm?.notify(MAIN_FOREGROUND_NOTIFICATION_ID, buildRecordingNotification(isPaused = false, contentText = getString(R.string.editor_saving)))
 
@@ -2522,6 +2525,13 @@ class ScreenRecordService :
                     OverlayService.notifyScreenshotCaptureFinished()
                 }
                 return
+            } ?: run {
+                imageReader.close()
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
+                    OverlayService.notifyScreenshotCaptureFinished()
+                }
+                return
             }
         synchronized(screenshotVirtualDisplayLock) {
             pendingScreenshotVirtualDisplay = virtualDisplay
@@ -2894,7 +2904,14 @@ class ScreenRecordService :
         isRecordingMuted = false
         controlsDismissedByUser = false
         isStopping = false
+        // Clear saving before notification / foreground transitions so UI (AppControlNotification) sees a consistent state.
         RecordingState.setSaving(false)
+        if (Log.isLoggable("ScreenRecordService", Log.DEBUG)) {
+            Log.d(
+                "ScreenRecordService",
+                "cleanup: isSaving=false prepared=$isPrepared revokeAfterStop=$revokeAfterStop lastSavedUri=$lastSavedRecordingUri",
+            )
+        }
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_HIDE_OVERLAYS })
         try {
             unregisterReceiver(screenOffReceiver)
@@ -2910,6 +2927,9 @@ class ScreenRecordService :
             mediaProjection?.stop()
             mediaProjection = null
             mainForegroundActive = false
+            if (Log.isLoggable("ScreenRecordService", Log.DEBUG)) {
+                Log.d("ScreenRecordService", "cleanup: stopForeground+stopSelf (revokeAfterStop)")
+            }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         } else if (isPrepared) {
@@ -2923,11 +2943,20 @@ class ScreenRecordService :
                 } else {
                     buildReadyNotification()
                 }
+            if (Log.isLoggable("ScreenRecordService", Log.DEBUG)) {
+                Log.d(
+                    "ScreenRecordService",
+                    "cleanup: notify MAIN_FOREGROUND (prepared, foreground slot retained)",
+                )
+            }
             nm.notify(MAIN_FOREGROUND_NOTIFICATION_ID, notif)
         } else {
             mediaProjection?.stop()
             mediaProjection = null
             mainForegroundActive = false
+            if (Log.isLoggable("ScreenRecordService", Log.DEBUG)) {
+                Log.d("ScreenRecordService", "cleanup: stopForeground+stopSelf (!prepared)")
+            }
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }

@@ -67,6 +67,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_share">Share</string>
     <string name="action_open">Open</string>
+    <string name="action_edit">Edit</string>
     <string name="consent_analytics_title">Usage analytics</string>
     <string name="consent_analytics_message">Help us improve CatRec by allowing optional usage and crash analytics. Personalized ads are controlled separately in Settings (on by default). You can change this anytime in Settings.</string>
     <string name="setting_usage_analytics">Usage analytics</string>
@@ -241,7 +242,6 @@
     <string name="support_restore_purchases_toast">Checking Google Play for your purchases…</string>
     <string name="support_play_promo_title">Promo code for Remove ads</string>
     <string name="support_play_promo_desc">Opens the Google Play purchase screen for Remove ads. Tap payment method → Redeem code, enter your code, then finish. If ads are still on, tap Restore purchases below.</string>
-    <string name="support_toast_promo_browser">Couldn\'t open the browser</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium options stay unlocked — no ads to watch.</string>
     <string name="support_watch_ad">Watch an Ad</string>
@@ -423,6 +423,7 @@
     <string name="player_rename_failed">Rename failed: %1$s</string>
     <string name="player_delete_failed">Delete failed: %1$s</string>
     <string name="player_no_app_video">No app found to open video</string>
+    <string name="player_video_unavailable">This video is no longer available. It may have been deleted or moved.</string>
     <string name="player_rename_title">Rename</string>
     <string name="player_file_name_label">File name</string>
     <string name="trim_title">Trim video</string>

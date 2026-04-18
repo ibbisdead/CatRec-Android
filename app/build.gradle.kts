@@ -14,7 +14,7 @@ plugins {
 
 android {
     namespace = "com.ibbie.catrec_screenrecorcer"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.ibbie.catrec_screenrecorder"
@@ -27,11 +27,17 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        // Native libs (FFmpeg Kit, CameraX, etc.) are duplicated per ABI. Omit 32-bit arm/x86 to cut download size.
+        // Add "armeabi-v7a" and/or "x86" here if you must support legacy 32-bit-only devices or older emulators.
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -63,6 +69,12 @@ android {
         jniLibs {
             useLegacyPackaging = false
         }
+    }
+    // Play App Bundle: one upload; users receive ABI/language/density splits automatically.
+    bundle {
+        language { enableSplit = true }
+        density { enableSplit = true }
+        abi { enableSplit = true }
     }
 }
 

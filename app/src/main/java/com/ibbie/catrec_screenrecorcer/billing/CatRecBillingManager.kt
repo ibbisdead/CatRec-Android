@@ -40,6 +40,9 @@ sealed interface BillingUiEvent {
 /**
  * Google Play Billing: restore [BillingProductIds.REMOVE_ADS] on connect, persist via [SettingsRepository],
  * consumable [BillingProductIds.SUPPORT_ME] with consume + repeat purchases.
+ *
+ * Promo and standard purchases both surface the same product id in [Purchase.getProducts] — see
+ * [BillingProductIds.REMOVE_ADS] (`"remove_ads"`).
  */
 class CatRecBillingManager(
     private val application: Application,
@@ -63,13 +66,28 @@ class CatRecBillingManager(
     @Volatile
     private var supportMeProductDetails: ProductDetails? = null
 
+    /** True only after [onBillingSetupFinished] with [BillingClient.BillingResponseCode.OK]. */
+    @Volatile
+    private var billingSetupFinishedOk = false
+
+    /**
+     * User asked to refresh/restore while billing was not ready yet; cleared after the next successful
+     * [onBillingSetupFinished] runs [syncInAppPurchases] (tied to connection lifecycle, no fixed retry count).
+     */
+    @Volatile
+    private var pendingRefreshAfterSetup = false
+
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
-            Log.d(TAG, "onPurchasesUpdated code=${billingResult.responseCode} count=${purchases?.size ?: 0}")
+            Log.d(
+                TAG,
+                "onPurchasesUpdated code=${billingResult.responseCode} " +
+                    "count=${purchases?.size ?: 0} setupOk=$billingSetupFinishedOk",
+            )
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
                     if (purchases.isNullOrEmpty()) {
-                        syncInAppPurchases()
+                        syncInAppPurchases("on_purchases_updated_ok_empty")
                     } else {
                         purchases.forEach { handlePurchase(it) }
                     }
@@ -79,7 +97,7 @@ class CatRecBillingManager(
                 }
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
                     Log.d(TAG, "ITEM_ALREADY_OWNED — syncing entitlements")
-                    syncInAppPurchases()
+                    syncInAppPurchases("on_purchases_updated_item_already_owned")
                 }
                 else -> {
                     AppLogger.w(TAG, "onPurchasesUpdated error: ${billingResult.responseCode} ${billingResult.debugMessage}")
@@ -90,17 +108,38 @@ class CatRecBillingManager(
     private val connectionListener =
         object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
-                Log.d(TAG, "onBillingSetupFinished code=${billingResult.responseCode} msg=${billingResult.debugMessage}")
+                val hadPending = pendingRefreshAfterSetup
+                logBillingState("onBillingSetupFinished(before_ok)", billingResult.responseCode)
+                Log.d(
+                    TAG,
+                    "onBillingSetupFinished code=${billingResult.responseCode} " +
+                        "msg=${billingResult.debugMessage} pendingRefreshBefore=$hadPending",
+                )
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    loadProductDetails()
-                    syncInAppPurchases()
+                    billingSetupFinishedOk = true
+                    loadProductDetails("billing_setup_ok")
+                    // Initial sync + fulfils any [pendingRefreshAfterSetup] from restore/resume before connect.
+                    val trigger =
+                        if (hadPending) {
+                            "billing_setup_ok_pending_refresh_fulfilled"
+                        } else {
+                            "billing_setup_ok_initial"
+                        }
+                    syncInAppPurchases(trigger)
+                    pendingRefreshAfterSetup = false
+                    logBillingState("onBillingSetupFinished(after_ok)", BillingClient.BillingResponseCode.OK)
                 } else {
+                    billingSetupFinishedOk = false
                     AppLogger.w(TAG, "Billing setup failed: ${billingResult.debugMessage}")
+                    scheduleReconnectAfterSetupFailure()
+                    logBillingState("onBillingSetupFinished(failed)", billingResult.responseCode)
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                Log.d(TAG, "onBillingServiceDisconnected — scheduling reconnect")
+                billingSetupFinishedOk = false
+                Log.d(TAG, "onBillingServiceDisconnected — scheduling reconnect pendingRefresh=$pendingRefreshAfterSetup")
+                logBillingState("onBillingServiceDisconnected", null)
                 mainHandler.postDelayed({
                     try {
                         val c = billingClient
@@ -124,20 +163,51 @@ class CatRecBillingManager(
                     PendingPurchasesParams.newBuilder().enableOneTimeProducts().build(),
                 ).build()
         billingClient = client
+        Log.d(TAG, "startConnection requested")
         client.startConnection(connectionListener)
     }
 
+    private fun logBillingState(
+        where: String,
+        lastResponseCode: Int?,
+    ) {
+        val c = billingClient
+        Log.d(
+            TAG,
+            "billingState[$where] setupOk=$billingSetupFinishedOk clientNull=${c == null} " +
+                "isReady=${c?.isReady} pendingRefresh=$pendingRefreshAfterSetup " +
+                "lastResponseCode=${lastResponseCode ?: "n/a"}",
+        )
+    }
+
     /**
-     * Call from [Activity.onResume] to pick up grants completed outside the app,
-     * or when the user explicitly restores purchases.
+     * Call from [Activity.onResume] to pick up grants completed outside the app
+     * (e.g. promo redemption in Play Store), or when the user explicitly restores purchases.
+     * If billing is not ready, sets [pendingRefreshAfterSetup]; the next [onBillingSetupFinished](OK) runs sync.
      *
-     * @return true if a sync with Play was started; false if billing is not connected yet.
+     * @return true if sync ran immediately; false if deferred until connection is ready.
      */
     fun refreshPurchasesIfConnected(): Boolean {
-        val c = billingClient ?: return false
-        if (!c.isReady) return false
-        loadProductDetails()
-        syncInAppPurchases()
+        val c = billingClient
+        if (c == null) {
+            Log.w(TAG, "refreshPurchases requested: billingClient null")
+            return false
+        }
+        Log.d(TAG, "refreshPurchases requested setupOk=$billingSetupFinishedOk ready=${c.isReady}")
+        if (!billingSetupFinishedOk || !c.isReady) {
+            pendingRefreshAfterSetup = true
+            Log.d(
+                TAG,
+                "refreshPurchases deferred: pendingRefreshAfterSetup=true " +
+                    "(will sync on next onBillingSetupFinished OK)",
+            )
+            logBillingState("refreshPurchases(deferred)", null)
+            return false
+        }
+        pendingRefreshAfterSetup = false
+        loadProductDetails("refresh_explicit")
+        syncInAppPurchases("refresh_explicit")
+        Log.d(TAG, "refreshPurchases ran immediately")
         return true
     }
 
@@ -164,7 +234,7 @@ class CatRecBillingManager(
         return when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> true
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                syncInAppPurchases()
+                syncInAppPurchases("launch_remove_ads_item_already_owned")
                 true
             }
             else -> {
@@ -203,8 +273,27 @@ class CatRecBillingManager(
         }
     }
 
-    private fun loadProductDetails() {
+    private fun scheduleReconnectAfterSetupFailure() {
+        Log.d(TAG, "scheduleReconnectAfterSetupFailure in ${RECONNECT_DELAY_MS}ms")
+        mainHandler.postDelayed({
+            try {
+                val c = billingClient
+                if (c != null && !c.isReady) {
+                    c.startConnection(connectionListener)
+                }
+            } catch (e: Exception) {
+                AppLogger.w(TAG, "Billing reconnect after setup failure: ${e.message}")
+            }
+        }, RECONNECT_DELAY_MS)
+    }
+
+    private fun loadProductDetails(trigger: String) {
         val client = billingClient ?: return
+        if (!billingSetupFinishedOk || !client.isReady) {
+            Log.d(TAG, "loadProductDetails skipped trigger=$trigger setupOk=$billingSetupFinishedOk ready=${client.isReady}")
+            return
+        }
+        Log.d(TAG, "loadProductDetails start trigger=$trigger ids=${BillingProductIds.REMOVE_ADS},${BillingProductIds.SUPPORT_ME}")
         val productList =
             listOf(
                 QueryProductDetailsParams.Product
@@ -225,15 +314,21 @@ class CatRecBillingManager(
                 .build()
         client.queryProductDetailsAsync(params) { billingResult, detailsResult: QueryProductDetailsResult ->
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                AppLogger.w(TAG, "queryProductDetails failed: ${billingResult.debugMessage}")
+                AppLogger.w(TAG, "queryProductDetails failed trigger=$trigger: ${billingResult.debugMessage}")
                 return@queryProductDetailsAsync
             }
+            val loadedIds = detailsResult.productDetailsList.map { it.productId }
+            Log.d(
+                TAG,
+                "queryProductDetails success trigger=$trigger productDetailsCount=${detailsResult.productDetailsList.size} " +
+                    "productIdsLoaded=$loadedIds",
+            )
             for (pd in detailsResult.productDetailsList) {
                 when (pd.productId) {
                     BillingProductIds.REMOVE_ADS -> removeAdsProductDetails = pd
                     BillingProductIds.SUPPORT_ME -> supportMeProductDetails = pd
                 }
-                Log.d(TAG, "Product loaded: ${pd.productId}")
+                Log.d(TAG, "productDetails loaded productId=${pd.productId}")
             }
             for (unfetched in detailsResult.unfetchedProductList) {
                 AppLogger.w(TAG, "Product not fetched: ${unfetched.productId}")
@@ -241,8 +336,20 @@ class CatRecBillingManager(
         }
     }
 
-    private fun syncInAppPurchases() {
-        val client = billingClient ?: return
+    private fun syncInAppPurchases(trigger: String) {
+        val client = billingClient ?: run {
+            Log.w(TAG, "syncInAppPurchases skipped trigger=$trigger: no client")
+            return
+        }
+        if (!billingSetupFinishedOk || !client.isReady) {
+            Log.d(
+                TAG,
+                "syncInAppPurchases skipped trigger=$trigger setupOk=$billingSetupFinishedOk " +
+                    "ready=${client.isReady}",
+            )
+            return
+        }
+        Log.d(TAG, "syncInAppPurchases start trigger=$trigger expectedRemoveAdsId=\"${BillingProductIds.REMOVE_ADS}\"")
         client.queryPurchasesAsync(
             QueryPurchasesParams
                 .newBuilder()
@@ -250,18 +357,32 @@ class CatRecBillingManager(
                 .build(),
         ) { billingResult, purchases ->
             if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
-                AppLogger.w(TAG, "queryPurchases failed: ${billingResult.debugMessage}")
+                AppLogger.w(TAG, "queryPurchases failed trigger=$trigger: ${billingResult.debugMessage}")
                 return@queryPurchasesAsync
             }
+            Log.d(
+                TAG,
+                "queryPurchases result trigger=$trigger purchaseListSize=${purchases.size} " +
+                    "responseCode=${billingResult.responseCode}",
+            )
             var removeAdsOwned = false
             for (purchase in purchases) {
+                val products = purchase.products
+                val containsRemoveAds = products.contains(BillingProductIds.REMOVE_ADS)
+                Log.d(
+                    TAG,
+                    "purchase row state=${purchase.purchaseState} products=$products " +
+                        "containsRemoveAds=$containsRemoveAds " +
+                        "(match id \"${BillingProductIds.REMOVE_ADS}\") tokenPrefix=" +
+                        "${purchase.purchaseToken.take(12)}…",
+                )
                 when {
-                    purchase.products.contains(BillingProductIds.SUPPORT_ME) &&
+                    products.contains(BillingProductIds.SUPPORT_ME) &&
                         purchase.purchaseState == Purchase.PurchaseState.PURCHASED -> {
                         Log.d(TAG, "Found unconsumed support_me — consuming")
                         consumeSupportMePurchase(purchase)
                     }
-                    purchase.products.contains(BillingProductIds.REMOVE_ADS) -> {
+                    containsRemoveAds -> {
                         when (purchase.purchaseState) {
                             Purchase.PurchaseState.PENDING -> {
                                 Log.d(TAG, "remove_ads PENDING (awaiting completion)")
@@ -278,7 +399,11 @@ class CatRecBillingManager(
             appScope.launch {
                 repository.setAdsDisabled(removeAdsOwned)
             }
-            Log.d(TAG, "syncInAppPurchases removeAdsOwned=$removeAdsOwned count=${purchases.size}")
+            Log.d(
+                TAG,
+                "syncInAppPurchases done trigger=$trigger removeAdsOwned=$removeAdsOwned " +
+                    "purchaseListSize=${purchases.size}",
+            )
         }
     }
 

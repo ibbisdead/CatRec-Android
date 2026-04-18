@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -26,11 +27,11 @@ fun BannerAdRow(
     val unitId = stringResource(R.string.admob_banner_unit_id)
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
+    val localeFingerprint = configuration.locales.toLanguageTags()
     val localeTag =
-        configuration.locales
-            .get(0)
-            ?.toLanguageTag()
-            .orEmpty()
+        remember(localeFingerprint) {
+            configuration.locales.get(0)?.toLanguageTag().orEmpty()
+        }
 
     if (adsDisabled) return
 
@@ -68,7 +69,9 @@ fun BannerAdRow(
                     setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, adWidth))
                     // Match AppOpenAdManager: only load after SDK init. Loading in factory() often runs
                     // before Application.onCreate’s initialize callback finishes → failed banner loads.
-                    MobileAds.initialize(ctx) {
+                    // Use applicationContext so init/load does not run against an activity ConfigurationContext
+                    // (avoids odd WebView / resource resolution paths on some OEM builds).
+                    MobileAds.initialize(ctx.applicationContext) {
                         loadAd(AdMobAdRequestFactory.build())
                     }
                 }

@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">正在檢查 Google Play 的購買情況...</string>
     <string name="support_play_promo_title">促銷代碼（移除廣告）</string>
     <string name="support_play_promo_desc">開啟 Google Play 的「移除廣告」購買畫面。點付款方式 → 兌換代碼，輸入代碼並完成。若仍有廣告，請點下方恢復購買。</string>
-    <string name="support_toast_promo_browser">無法開啟瀏覽器</string>
     <string name="support_ads_removed">廣告已移除 — 感謝！</string>
     <string name="support_ads_removed_desc">高級選項保持解鎖狀態－沒有廣告可看。</string>
     <string name="support_watch_ad">觀看廣告</string>

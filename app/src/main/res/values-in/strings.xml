@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Memeriksa Google Play untuk pembelian Anda…</string>
     <string name="support_play_promo_title">Kode promo (Hapus iklan)</string>
     <string name="support_play_promo_desc">Membuka pembelian Google Play untuk Hapus iklan. Ketuk metode pembayaran → Tukarkan kode, masukkan kode, lalu selesaikan. Jika iklan masih ada, ketuk Pulihkan pembelian di bawah.</string>
-    <string name="support_toast_promo_browser">Tidak dapat membuka browser</string>
     <string name="support_ads_removed">Iklan Dihapus — Terima kasih!</string>
     <string name="support_ads_removed_desc">Opsi premium tetap terbuka — tidak ada iklan untuk ditonton.</string>
     <string name="support_watch_ad">Tonton Iklan</string>

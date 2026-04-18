@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Đang kiểm tra Google Play để biết giao dịch mua của bạn…</string>
     <string name="support_play_promo_title">Mã khuyến mãi (Xóa quảng cáo)</string>
     <string name="support_play_promo_desc">Mở màn hình mua Xóa quảng cáo trên Google Play. Chạm Phương thức thanh toán → Đổi mã, nhập mã rồi hoàn tất. Nếu vẫn còn quảng cáo, chạm Khôi phục giao dịch mua bên dưới.</string>
-    <string name="support_toast_promo_browser">Không thể mở trình duyệt</string>
     <string name="support_ads_removed">Đã xóa quảng cáo — Cảm ơn!</string>
     <string name="support_ads_removed_desc">Tùy chọn cao cấp luôn được mở khóa — không có quảng cáo để xem.</string>
     <string name="support_watch_ad">Xem một quảng cáo</string>

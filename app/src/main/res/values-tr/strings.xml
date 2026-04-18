@@ -239,7 +239,6 @@
     <string name="support_restore_purchases_toast">Satın alma işlemleriniz için Google Play kontrol ediliyor…</string>
     <string name="support_play_promo_title">Promosyon kodu (Reklamları kaldır)</string>
     <string name="support_play_promo_desc">Reklamları kaldır için Google Play satın alma ekranını açar. Ödeme yöntemi → Kodu kullan, kodu girin ve tamamlayın. Reklamlar devam ederse alttan Satın alınanları geri yükle\'ye dokunun.</string>
-    <string name="support_toast_promo_browser">Tarayıcı açılamadı</string>
     <string name="support_ads_removed">Ads Removed — Thank you!</string>
     <string name="support_ads_removed_desc">Premium seçeneklerin kilidi açık kalır; izlenecek reklam yoktur.</string>
     <string name="support_watch_ad">Bir Reklamı İzle</string>
