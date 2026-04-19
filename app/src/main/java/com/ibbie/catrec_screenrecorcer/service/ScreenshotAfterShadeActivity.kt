@@ -14,8 +14,9 @@ import android.view.View
  * [ScreenRecordService.ACTION_TAKE_SCREENSHOT] runs. Capturing immediately from a notification
  * [PendingIntent] often includes the shade in the virtual display; taking focus first avoids that.
  *
- * Scheduling uses [onWindowFocusChanged] plus one [Choreographer] frame (not a fixed sleep). A
- * delayed fallback exists only for devices where focus may not be delivered reliably.
+ * [onWindowFocusChanged] can still fire while the shade is animating closed, so we wait several
+ * vsyncs plus a short post-delay before starting the capture service. A delayed fallback exists
+ * for devices where focus may not be delivered reliably.
  */
 class ScreenshotAfterShadeActivity : Activity() {
 
@@ -61,34 +62,52 @@ class ScreenshotAfterShadeActivity : Activity() {
         }
         mainHandler.removeCallbacks(safetyFallback)
         if (isFinishing) return
-        // One frame after the shade should be gone; avoids capturing mid-animation when possible.
-        Choreographer.getInstance().postFrameCallback { _ ->
+        val ch = Choreographer.getInstance()
+        fun postChainedFrames(
+            remaining: Int,
+            done: () -> Unit,
+        ) {
+            if (remaining <= 0) {
+                done()
+            } else {
+                ch.postFrameCallback { postChainedFrames(remaining - 1, done) }
+            }
+        }
+        postChainedFrames(VSYNCS_BEFORE_CAPTURE) {
             window.decorView.post {
                 if (isFinishing) return@post
-                try {
-                    startService(
-                        Intent(this, ScreenRecordService::class.java).apply {
-                            action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
-                        },
-                    )
-                } finally {
-                    finish()
-                    if (Build.VERSION.SDK_INT >= 34) {
-                        overrideActivityTransition(
-                            OVERRIDE_TRANSITION_CLOSE,
-                            0,
-                            0,
+                // One more hop after layout; then a short delay so the display pipeline shows the
+                // content under the shade (not the last shade frame).
+                mainHandler.postDelayed({
+                    if (isFinishing) return@postDelayed
+                    try {
+                        startService(
+                            Intent(this, ScreenRecordService::class.java).apply {
+                                action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
+                            },
                         )
-                    } else {
-                        @Suppress("DEPRECATION")
-                        overridePendingTransition(0, 0)
+                    } finally {
+                        finish()
+                        if (Build.VERSION.SDK_INT >= 34) {
+                            overrideActivityTransition(
+                                OVERRIDE_TRANSITION_CLOSE,
+                                0,
+                                0,
+                            )
+                        } else {
+                            @Suppress("DEPRECATION")
+                            overridePendingTransition(0, 0)
+                        }
                     }
-                }
+                }, POST_CAPTURE_DELAY_MS)
             }
         }
     }
 
     companion object {
         private const val SAFETY_FALLBACK_MS = 600L
+        /** Wait this many vsyncs after window focus before scheduling capture. */
+        private const val VSYNCS_BEFORE_CAPTURE = 5
+        private const val POST_CAPTURE_DELAY_MS = 120L
     }
 }

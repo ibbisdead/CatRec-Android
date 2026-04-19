@@ -255,8 +255,8 @@
     <string name="support_credits_desc">Testers &amp; creators who helped CatRec</string>
     <string name="dialog_credits_title">Credits</string>
     <string name="credits_intro">Thanks to these people for testing and sharing CatRec. Tap a name to open their channel.</string>
-    <string name="credits_link_youtube">YouTube</string>
-    <string name="credits_link_tiktok">TikTok</string>
+    <string name="credits_link_youtube" translatable="false">YouTube</string>
+    <string name="credits_link_tiktok" translatable="false">TikTok</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Screenshot saved</string>
@@ -295,7 +295,10 @@
     <string name="toast_enable_show_taps">Enable \'Show Taps\' manually</string>
     <string name="toast_overlay_permission">Please grant overlay permission</string>
     <string name="setting_countdown_off">Off</string>
-    <string name="setting_countdown_seconds">%1$d seconds</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
     <string name="setting_internal_audio_note">Android 10+ only</string>
     <string name="gate_feature_separate_mic">Separate Mic Track</string>
     <string name="gate_feature_camera_overlay">Camera Overlay Settings</string>
@@ -411,10 +414,16 @@
     <string name="delete_recording_message">\"%1$s\" will be permanently deleted.</string>
     <string name="delete_screenshot_title">Delete screenshot?</string>
     <string name="delete_screenshot_message">\"%1$s\" will be permanently deleted.</string>
-    <string name="multiselect_selected_count">%1$d selected</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
     <string name="multiselect_select_all">Select all</string>
     <string name="multiselect_deselect_all">Deselect all</string>
-    <string name="multiselect_delete_title">Delete %1$d items?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="one">Delete %1$d item?</item>
+        <item quantity="other">Delete %1$d items?</item>
+    </plurals>
     <string name="multiselect_delete_message">These files will be permanently deleted.</string>
     <string name="multiselect_share_recordings">Share recordings</string>
     <string name="multiselect_share_screenshots">Share screenshots</string>
@@ -439,7 +448,6 @@
     <string name="content_desc_back">Back</string>
     <string name="content_desc_refresh">Refresh</string>
     <string name="content_desc_options">Options</string>
-    <string name="content_desc_logo">CatRec logo</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Video editing</string>
@@ -477,9 +485,7 @@
     <string name="merge_run">Merge &amp; save</string>
     <string name="merge_need_two">Add at least two videos (order is kept).</string>
     <string name="merge_clip_label">Clip %1$d</string>
-    <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec Screen Recorder</string>

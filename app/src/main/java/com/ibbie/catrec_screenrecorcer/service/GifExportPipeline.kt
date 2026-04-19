@@ -188,7 +188,7 @@ object GifExportPipeline {
             1L
         } finally {
             try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= 29) {
                     retriever.release()
                 }
             } catch (_: Exception) {
@@ -206,7 +206,7 @@ object GifExportPipeline {
             ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
                 put(MediaStore.Images.Media.MIME_TYPE, "image/gif")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= 29) {
                     put(
                         MediaStore.Images.Media.RELATIVE_PATH,
                         Environment.DIRECTORY_PICTURES + File.separator + "CatRec" + File.separator + "GIFs",
@@ -222,7 +222,7 @@ object GifExportPipeline {
             resolver.openOutputStream(uri)?.use { out ->
                 FileInputStream(gifFile).use { it.copyTo(out) }
             } ?: return false
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= 29) {
                 resolver.update(
                     uri,
                     ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },

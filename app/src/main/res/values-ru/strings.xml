@@ -65,6 +65,7 @@
     <string name="action_delete">Удалить</string>
     <string name="action_share">Поделиться</string>
     <string name="action_open">Открыть</string>
+    <string name="action_edit">Изменить</string>
     <string name="consent_analytics_title">Аналитика использования</string>
     <string name="consent_analytics_message">Помогите нам улучшить CatRec, разрешив дополнительное использование и анализ сбоев. Персонализированная реклама контролируется отдельно в Настройках (по умолчанию включена). Вы можете изменить это в любое время в настройках.</string>
     <string name="setting_usage_analytics">Аналитика использования</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">Расскажите о нас своим друзьям</string>
     <string name="support_changelog">История изменений</string>
     <string name="support_changelog_desc">Посмотрите, что нового в этой версии</string>
+    <string name="support_credits">Благодарности</string>
+    <string name="support_credits_desc">Тестеры и авторы, помогшие CatRec</string>
+    <string name="dialog_credits_title">Благодарности</string>
+    <string name="credits_intro">Спасибо этим людям за тестирование и распространение CatRec. Нажмите на имя, чтобы открыть канал.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Скриншот сохранён</string>
@@ -286,7 +291,12 @@
     <string name="toast_enable_show_taps">Включите «Показывать нажатия» вручную</string>
     <string name="toast_overlay_permission">Пожалуйста, предоставьте разрешение на оверлей</string>
     <string name="setting_countdown_off">Выкл.</string>
-    <string name="setting_countdown_seconds">%1$d секунд</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="one">%1$d секунда</item>
+        <item quantity="few">%1$d секунды</item>
+        <item quantity="many">%1$d секунд</item>
+        <item quantity="other">%1$d секунд</item>
+    </plurals>
     <string name="setting_internal_audio_note">Только Android 10+</string>
     <string name="gate_feature_separate_mic">Отдельная дорожка микрофона</string>
     <string name="gate_feature_camera_overlay">Настройки оверлея камеры</string>
@@ -402,10 +412,20 @@
     <string name="delete_recording_message">«%1$s» будет удален без возможности восстановления.</string>
     <string name="delete_screenshot_title">Удалить скриншот?</string>
     <string name="delete_screenshot_message">«%1$s» будет удален без возможности восстановления.</string>
-    <string name="multiselect_selected_count">%1$d выбрано</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="one">%1$d выбрано</item>
+        <item quantity="few">%1$d выбрано</item>
+        <item quantity="many">%1$d выбрано</item>
+        <item quantity="other">%1$d выбрано</item>
+    </plurals>
     <string name="multiselect_select_all">Выбрать все</string>
     <string name="multiselect_deselect_all">Отменить выбор всех</string>
-    <string name="multiselect_delete_title">Удалить %1$d элементов?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="one">Удалить %1$d элемент?</item>
+        <item quantity="few">Удалить %1$d элемента?</item>
+        <item quantity="many">Удалить %1$d элементов?</item>
+        <item quantity="other">Удалить %1$d элементов?</item>
+    </plurals>
     <string name="multiselect_delete_message">Эти файлы будут удалены без возможности восстановления.</string>
     <string name="multiselect_share_recordings">Делитесь записями</string>
     <string name="multiselect_share_screenshots">Поделиться скриншотами</string>
@@ -414,6 +434,7 @@
     <string name="player_rename_failed">Не удалось переименовать: %1$s</string>
     <string name="player_delete_failed">Не удалось удалить: %1$s</string>
     <string name="player_no_app_video">Не найдено приложение для открытия видео</string>
+    <string name="player_video_unavailable">Это видео больше недоступно. Возможно, оно удалено или перемещено.</string>
     <string name="player_rename_title">Переименовать</string>
     <string name="player_file_name_label">Имя файла</string>
     <string name="trim_title">Обрезать видео</string>
@@ -429,7 +450,6 @@
     <string name="content_desc_back">Назад</string>
     <string name="content_desc_refresh">Обновить</string>
     <string name="content_desc_options">Параметры</string>
-    <string name="content_desc_logo">Логотип CatRec</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Монтаж видео</string>
@@ -467,9 +487,7 @@
     <string name="merge_run">Объединить и сохранить</string>
     <string name="merge_need_two">Добавьте минимум два видео (порядок сохраняется).</string>
     <string name="merge_clip_label">Клип %1$d</string>
-    <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">Устройство записи экрана CatRec</string>
@@ -508,6 +526,10 @@
     <string name="perm_rationale_overlay">Требуется, чтобы во время записи отображался плавающий пузырь элементов управления и наложение камеры поверх других приложений.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Служба переднего плана во время записи: захват экрана (MediaProjection) с опциональным звуком микрофона и постоянным уведомлением.</string>
+    <string name="service_description_overlay">Служба переднего плана при показе плавающей панели: превью камеры в режиме «картинка в картинке» с постоянным уведомлением.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Запись экрана</string>
@@ -558,6 +580,10 @@
     <string name="notif_camera_in_use_title">Камера используется</string>
     <string name="notif_channel_app_controls">Быстрое управление</string>
     <string name="notif_channel_app_controls_desc">Ярлыки записи, снимков экрана и наложения</string>
+    <string name="notif_channel_recording_interrupted">Запись прервана</string>
+    <string name="notif_channel_recording_interrupted_desc">Показывается, если система остановила CatRec во время активного захвата</string>
+    <string name="notif_recording_interrupted_title">Захват остановлен</string>
+    <string name="notif_recording_interrupted_text">Система закрыла или перезапустила CatRec во время записи или активного сохранения клипа. Последний файл может быть неполным. Откройте CatRec, чтобы начать снова.</string>
     <string name="notif_app_controls_title">CatRec</string>
     <string name="notif_app_controls_text_idle">В режиме ожидания — коснитесь действия ниже</string>
     <string name="notif_action_screenshot">Скриншот</string>

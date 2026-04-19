@@ -37,14 +37,14 @@ object ClipMerger {
         if (sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) {
             out =
                 out or
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (Build.VERSION.SDK_INT >= 34) {
                     MediaCodec.BUFFER_FLAG_KEY_FRAME
                 } else {
                     @Suppress("DEPRECATION")
                     MediaCodec.BUFFER_FLAG_SYNC_FRAME
                 }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        if (Build.VERSION.SDK_INT >= 33 &&
             sampleFlags and MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME != 0
         ) {
             out = out or MediaCodec.BUFFER_FLAG_PARTIAL_FRAME

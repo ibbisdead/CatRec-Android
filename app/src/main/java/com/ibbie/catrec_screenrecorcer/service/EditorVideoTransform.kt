@@ -8,8 +8,10 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Presentation
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.DefaultEncoderFactory
@@ -100,6 +102,7 @@ object EditorVideoTransform {
         return ((videoBps + audioBps) * sec / 8).toLong()
     }
 
+    @OptIn(UnstableApi::class)
     suspend fun compressVideo(
         context: Context,
         inputUri: Uri,
@@ -150,6 +153,7 @@ object EditorVideoTransform {
         }
     }
 
+    @OptIn(UnstableApi::class)
     suspend fun mergeVideos(
         context: Context,
         uris: List<Uri>,
@@ -194,6 +198,7 @@ object EditorVideoTransform {
             insertVideoToCatRecMovies(context, outputDisplayName, cacheOut2)?.also { cacheOut2.delete() }
         }
 
+    @OptIn(UnstableApi::class)
     private suspend fun runTransformer(
         context: Context,
         encoderFactory: DefaultEncoderFactory?,
@@ -219,6 +224,7 @@ object EditorVideoTransform {
                 builder
                     .addListener(
                         object : Transformer.Listener {
+                            @OptIn(UnstableApi::class)
                             override fun onCompleted(
                                 composition: Composition,
                                 exportResult: ExportResult,
@@ -226,6 +232,7 @@ object EditorVideoTransform {
                                 finish(true)
                             }
 
+                            @OptIn(UnstableApi::class)
                             override fun onError(
                                 composition: Composition,
                                 exportResult: ExportResult,
@@ -270,7 +277,7 @@ object EditorVideoTransform {
             ContentValues().apply {
                 put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
                 put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= 29) {
                     put(
                         MediaStore.Video.Media.RELATIVE_PATH,
                         Environment.DIRECTORY_MOVIES + File.separator + "CatRec",
@@ -287,7 +294,7 @@ object EditorVideoTransform {
                 resolver.delete(uri, null, null)
                 return null
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= 29) {
                 resolver.update(
                     uri,
                     ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) },

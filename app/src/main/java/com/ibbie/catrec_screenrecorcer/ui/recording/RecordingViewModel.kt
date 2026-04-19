@@ -391,9 +391,9 @@ class RecordingViewModel(
             settingsRepository.setAnalyticsEnabled(value)
             val app = getApplication<Application>()
             app.applyAnalyticsCollectionEnabled(value)
-            app.applyCrashlyticsCollectionEnabled(value)
+            applyCrashlyticsCollectionEnabled(value)
             app.syncFirebaseUserIdentity(value)
-            app.refreshCrashlyticsSessionKeys(
+            refreshCrashlyticsSessionKeys(
                 settingsRepository.appLanguage.first(),
                 settingsRepository.floatingControls.first(),
             )
@@ -402,7 +402,7 @@ class RecordingViewModel(
     fun setPersonalizedAdsEnabled(value: Boolean) =
         viewModelScope.launch {
             settingsRepository.setPersonalizedAdsEnabled(value)
-            getApplication<Application>().applyPersonalizedAdsEnabled(value)
+            applyPersonalizedAdsEnabled(value)
         }
 
     // Setters — Onboarding

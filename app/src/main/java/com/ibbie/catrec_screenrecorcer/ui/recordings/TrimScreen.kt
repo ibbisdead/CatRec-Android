@@ -46,6 +46,7 @@ import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +55,7 @@ fun TrimScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
-    val videoUri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
+    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
     val scope = rememberCoroutineScope()
 
     val mediaReadable =
@@ -119,6 +120,11 @@ fun TrimScreen(
             }
         }
         true -> {
+            val toastPlayerUnavailable = stringResource(R.string.player_video_unavailable)
+            val toastTrimTooShort = stringResource(R.string.trim_too_short)
+            val toastTrimSavedSuccess = stringResource(R.string.trim_saved_success)
+            val toastTrimFailedRetry = stringResource(R.string.trim_failed_retry)
+
             val exoPlayer =
                 remember(videoUri) {
                     ExoPlayer.Builder(context).build().apply {
@@ -158,7 +164,7 @@ fun TrimScreen(
                             Toast
                                 .makeText(
                                     context,
-                                    context.getString(R.string.player_video_unavailable),
+                                    toastPlayerUnavailable,
                                     Toast.LENGTH_LONG,
                                 ).show()
                             navController.popBackStack()
@@ -309,7 +315,7 @@ fun TrimScreen(
                         Button(
                             onClick = {
                                 if (endMs - startMs < 500L) {
-                                    Toast.makeText(context, context.getString(R.string.trim_too_short), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, toastTrimTooShort, Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }
                                 isTrimming = true
@@ -320,10 +326,10 @@ fun TrimScreen(
                                         }
                                     isTrimming = false
                                     if (result != null) {
-                                        Toast.makeText(context, context.getString(R.string.trim_saved_success), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, toastTrimSavedSuccess, Toast.LENGTH_SHORT).show()
                                         navController.popBackStack()
                                     } else {
-                                        Toast.makeText(context, context.getString(R.string.trim_failed_retry), Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, toastTrimFailedRetry, Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },
@@ -370,7 +376,7 @@ private suspend fun trimVideo(
                 ContentValues().apply {
                     put(MediaStore.Video.Media.DISPLAY_NAME, outputFileName)
                     put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    if (Build.VERSION.SDK_INT >= 29) {
                         put(
                             MediaStore.Video.Media.RELATIVE_PATH,
                             Environment.DIRECTORY_MOVIES + File.separator + "CatRec",
@@ -428,7 +434,7 @@ private suspend fun trimVideo(
                 }
 
                 val sampleTime = extractor.sampleTime
-                if (sampleTime < 0 || sampleTime > endUs) break
+                if (sampleTime !in 0..endUs) break
 
                 info.offset = 0
                 info.size = extractor.readSampleData(buffer, 0)
@@ -452,7 +458,7 @@ private suspend fun trimVideo(
             pfd.close()
 
             // Clear pending flag
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= 29) {
                 val values = ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }
                 context.contentResolver.update(outputUri, values, null, null)
             }

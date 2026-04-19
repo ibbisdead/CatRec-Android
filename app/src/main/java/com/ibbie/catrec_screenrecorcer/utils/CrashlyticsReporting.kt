@@ -1,6 +1,5 @@
 package com.ibbie.catrec_screenrecorcer.utils
 
-import android.content.Context
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 /** Custom keys visible under Crashlytics → Issues → Keys / session metadata. */
@@ -26,7 +25,7 @@ fun recordCrashlyticsNonFatal(
     crash.recordException(e)
 }
 
-fun Context.refreshCrashlyticsSessionKeys(
+fun refreshCrashlyticsSessionKeys(
     appLanguageCode: String,
     floatingControlsEnabled: Boolean,
 ) {

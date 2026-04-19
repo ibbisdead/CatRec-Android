@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.core.net.toUri
 
 private data class HeightPreset(
     val height: Int,
@@ -39,7 +40,9 @@ fun CompressVideoScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
-    val uri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
+    val toastEditorSavedOk = stringResource(R.string.editor_saved_ok)
+    val toastEditorFailed = stringResource(R.string.editor_failed)
+    val uri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
     val scope = rememberCoroutineScope()
 
     val (srcW, srcH) = remember(uri) { EditorVideoTransform.getVideoDisplaySize(context, uri) }
@@ -184,10 +187,10 @@ fun CompressVideoScreen(
                             )
                         exporting = false
                         if (out != null) {
-                            Toast.makeText(context, context.getString(R.string.editor_saved_ok), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
                             navController.popBackStack()
                         } else {
-                            Toast.makeText(context, context.getString(R.string.editor_failed), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
                         }
                     }
                 },

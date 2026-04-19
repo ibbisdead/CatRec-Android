@@ -205,15 +205,14 @@ fun EditorFreeformCropContent(
                     color = Color.White,
                     style = Stroke(width = 2.dp.toPx()),
                 )
-                val hs = handleDraw
                 listOf(
                     Offset(cropRect.left, cropRect.top),
                     Offset(cropRect.right, cropRect.top),
                     Offset(cropRect.left, cropRect.bottom),
                     Offset(cropRect.right, cropRect.bottom),
                 ).forEach { c ->
-                    drawCircle(Color.White, hs, c)
-                    drawCircle(Color.Black.copy(alpha = 0.35f), hs * 0.45f, c)
+                    drawCircle(Color.White, handleDraw, c)
+                    drawCircle(Color.Black.copy(alpha = 0.35f), handleDraw * 0.45f, c)
                 }
             }
 

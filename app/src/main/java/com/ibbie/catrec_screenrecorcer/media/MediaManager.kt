@@ -80,11 +80,11 @@ private fun RecordingEntry.toMediaItem(): MediaItem =
 
 private const val FALLBACK_SCREENSHOT_ASPECT_RATIO = 9f / 16f
 
-private fun aspectRatioFromImageMetadata(
+private fun displayPixelSizeAfterOrientation(
     width: Int,
     height: Int,
     orientationDegrees: Int,
-): Float? {
+): Pair<Int, Int>? {
     if (width <= 0 || height <= 0) return null
     val norm = ((orientationDegrees % 360) + 360) % 360
     val (dw, dh) =
@@ -93,6 +93,16 @@ private fun aspectRatioFromImageMetadata(
             else -> width to height
         }
     if (dw <= 0 || dh <= 0) return null
+    return dw to dh
+}
+
+private fun aspectRatioFromImageMetadata(
+    width: Int,
+    height: Int,
+    orientationDegrees: Int,
+): Float? {
+    val pair = displayPixelSizeAfterOrientation(width, height, orientationDegrees) ?: return null
+    val (dw, dh) = pair
     return (dw.toFloat() / dh.toFloat()).coerceIn(0.15f, 6f)
 }
 
@@ -117,12 +127,12 @@ private fun queryScreenshots(context: Context): List<MediaItem> {
 
     val collections =
         when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+            Build.VERSION.SDK_INT >= 30 -> {
                 MediaStore.getExternalVolumeNames(context).map { vol ->
                     MediaStore.Images.Media.getContentUri(vol)
                 }
             }
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+            Build.VERSION.SDK_INT >= 29 -> {
                 listOf(MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY))
             }
             else -> listOf(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
@@ -140,7 +150,7 @@ private fun queryScreenshots(context: Context): List<MediaItem> {
         )
 
     val (selection, selectionArgs) =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 29) {
             val base = "${Environment.DIRECTORY_PICTURES}/CatRec/Screenshots"
             val sel =
                 "(" +
@@ -186,6 +196,7 @@ private fun queryScreenshots(context: Context): List<MediaItem> {
                         val h = readPositiveInt(cursor, heightCol)
                         val orient = if (orientCol >= 0) cursor.getInt(orientCol) else 0
                         val aspect = aspectRatioFromImageMetadata(w, h, orient)
+                        val disp = displayPixelSizeAfterOrientation(w, h, orient)
                         byUri[key] =
                             MediaItem(
                                 uri = uri,
@@ -195,6 +206,8 @@ private fun queryScreenshots(context: Context): List<MediaItem> {
                                 aspectRatio = aspect,
                                 sizeBytes = sizeBytes,
                                 dateModifiedMs = dateMs,
+                                widthPx = disp?.first,
+                                heightPx = disp?.second,
                             )
                     }
                 }

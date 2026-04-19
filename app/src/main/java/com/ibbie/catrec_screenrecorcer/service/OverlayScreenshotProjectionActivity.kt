@@ -24,7 +24,7 @@ class OverlayScreenshotProjectionActivity : ComponentActivity() {
     private val projectionCapture =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             when {
-                result.resultCode == Activity.RESULT_OK && result.data != null -> {
+                result.resultCode == RESULT_OK && result.data != null -> {
                     val (ssFmt, ssQ) =
                         runBlocking {
                             val repo = SettingsRepository(applicationContext)
@@ -52,7 +52,7 @@ class OverlayScreenshotProjectionActivity : ComponentActivity() {
                     )
                     finish()
                 }
-                result.resultCode != Activity.RESULT_CANCELED -> {
+                result.resultCode != RESULT_CANCELED -> {
                     Toast.makeText(this, getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
                     finish()
                 }

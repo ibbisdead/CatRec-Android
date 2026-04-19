@@ -9,7 +9,6 @@ object RecordingState {
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
 
     private val _recordingDuration = MutableStateFlow(0L)
-    val recordingDuration: StateFlow<Long> = _recordingDuration.asStateFlow()
 
     /** True while the rolling-buffer engine is actively capturing. */
     private val _isBuffering = MutableStateFlow(false)

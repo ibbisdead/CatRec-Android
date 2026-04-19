@@ -54,7 +54,7 @@ internal object VideoEncoderConfigurator {
                     MediaFormat.KEY_BITRATE_MODE,
                     MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR,
                 )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (Build.VERSION.SDK_INT >= 31) {
                     setInteger("max-bitrate", bitrate)
                 }
             }

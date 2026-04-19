@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +41,7 @@ fun VideoToGifScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
-    val videoUri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
+    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
     val scope = rememberCoroutineScope()
 
     val mediaReadable =
@@ -102,6 +103,11 @@ fun VideoToGifScreen(
             }
         }
         true -> {
+            val toastPlayerUnavailable = stringResource(R.string.player_video_unavailable)
+            val toastTrimTooShort = stringResource(R.string.trim_too_short)
+            val toastEditorSavedOk = stringResource(R.string.editor_saved_ok)
+            val toastEditorFailed = stringResource(R.string.editor_failed)
+
             val exoPlayer =
                 remember(videoUri) {
                     ExoPlayer.Builder(context).build().apply {
@@ -148,7 +154,7 @@ fun VideoToGifScreen(
                             Toast
                                 .makeText(
                                     context,
-                                    context.getString(R.string.player_video_unavailable),
+                                    toastPlayerUnavailable,
                                     Toast.LENGTH_LONG,
                                 ).show()
                             navController.popBackStack()
@@ -262,7 +268,7 @@ fun VideoToGifScreen(
                         Button(
                             onClick = {
                                 if (endMs - startMs < 400L) {
-                                    Toast.makeText(context, context.getString(R.string.trim_too_short), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, toastTrimTooShort, Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }
                                 isWorking = true
@@ -282,10 +288,10 @@ fun VideoToGifScreen(
                                         }
                                     isWorking = false
                                     if (ok) {
-                                        Toast.makeText(context, context.getString(R.string.editor_saved_ok), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
                                         navController.popBackStack()
                                     } else {
-                                        Toast.makeText(context, context.getString(R.string.editor_failed), Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
                                     }
                                 }
                             },

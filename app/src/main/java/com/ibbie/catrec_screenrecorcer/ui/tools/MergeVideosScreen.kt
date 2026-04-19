@@ -18,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,11 @@ import java.util.Locale
 @Composable
 fun MergeVideosScreen(navController: NavController) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
+    val configuration = LocalConfiguration.current
+    val toastMergeNeedTwo = stringResource(R.string.merge_need_two)
+    val toastEditorSavedOk = stringResource(R.string.editor_saved_ok)
+    val toastEditorFailed = stringResource(R.string.editor_failed)
     val scope = rememberCoroutineScope()
     val repository = remember { SettingsRepository(context) }
     val saveLocationUri by repository.saveLocationUri.collectAsState(initial = null)
@@ -112,6 +118,10 @@ fun MergeVideosScreen(navController: NavController) {
                 modifier = Modifier.weight(1f),
             ) {
                 itemsIndexed(clips, key = { i, u -> "$i-$u" }) { index, uri ->
+                    val clipLabel =
+                        remember(configuration, index) {
+                            appContext.resources.getString(R.string.merge_clip_label, index + 1)
+                        }
                     Card(
                         colors =
                             CardDefaults.cardColors(
@@ -125,7 +135,7 @@ fun MergeVideosScreen(navController: NavController) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                stringResource(R.string.merge_clip_label, index + 1),
+                                clipLabel,
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
@@ -139,7 +149,7 @@ fun MergeVideosScreen(navController: NavController) {
             Button(
                 onClick = {
                     if (clips.size < 2) {
-                        Toast.makeText(context, context.getString(R.string.merge_need_two), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastMergeNeedTwo, Toast.LENGTH_SHORT).show()
                         return@Button
                     }
                     merging = true
@@ -149,10 +159,10 @@ fun MergeVideosScreen(navController: NavController) {
                         val out = EditorVideoTransform.mergeVideos(context, clips.toList(), name)
                         merging = false
                         if (out != null) {
-                            Toast.makeText(context, context.getString(R.string.editor_saved_ok), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
                             navController.popBackStack()
                         } else {
-                            Toast.makeText(context, context.getString(R.string.editor_failed), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
                         }
                     }
                 },
@@ -178,7 +188,7 @@ fun MergeVideosScreen(navController: NavController) {
     }
 
     if (showCatRecSheet) {
-        ModalBottomSheet(onDismissRequest = { showCatRecSheet = false }) {
+        ModalBottomSheet(onDismissRequest = { }) {
             var entries by remember { mutableStateOf<List<RecordingEntry>>(emptyList()) }
             LaunchedEffect(Unit) {
                 entries = withContext(Dispatchers.IO) { loadAppRecordings(context, saveLocationUri) }
@@ -192,7 +202,6 @@ fun MergeVideosScreen(navController: NavController) {
                                 .fillMaxWidth()
                                 .clickable {
                                     clips.add(entry.uri)
-                                    showCatRecSheet = false
                                 },
                         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                     )

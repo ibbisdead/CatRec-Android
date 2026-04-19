@@ -9,14 +9,6 @@ sealed interface RecordingError {
         val detail: String,
     ) : RecordingError
 
-    data class Codec(
-        val message: String,
-    ) : RecordingError
-
-    data class ProjectionRevoked(
-        val reason: String?,
-    ) : RecordingError
-
     /** [MediaProjection.Callback.onStop] — token consumed, user left capture, or OS revoked (incl. API 35). */
     data class ProjectionStopped(
         val reason: String = "media_projection_on_stop",

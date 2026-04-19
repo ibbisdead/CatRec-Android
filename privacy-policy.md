@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**CatRec – Screen Recorder** · Last updated: March 19, 2026
+**CatRec – Screen Recorder** · Last updated: April 18, 2026
 
 ---
 
@@ -30,7 +30,9 @@ All recordings, screenshots, and clips you create are saved **locally on your de
 
 The App requests the following permissions solely to deliver its core features:
 
-`RECORD_AUDIO` · `FOREGROUND_SERVICE` · `POST_NOTIFICATIONS` · `CAMERA` · `READ_MEDIA_VIDEO` · `READ_MEDIA_IMAGES` · `SYSTEM_ALERT_WINDOW`
+`RECORD_AUDIO` · `FOREGROUND_SERVICE` · `POST_NOTIFICATIONS` · `CAMERA` · `READ_MEDIA_AUDIO` · `READ_EXTERNAL_STORAGE` (older Android only) · `WRITE_EXTERNAL_STORAGE` (Android 8 and below only) · `SYSTEM_ALERT_WINDOW`
+
+For photos and videos you choose from your library (for example tools, watermark image, or merge), the App uses the **system Photo Picker** and does **not** request broad access to all images or videos on your device.
 
 > None of these permissions are used to collect or transmit personal data outside of your device.
 

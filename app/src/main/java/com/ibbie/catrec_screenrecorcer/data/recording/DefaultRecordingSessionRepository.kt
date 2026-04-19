@@ -338,7 +338,7 @@ class DefaultRecordingSessionRepository(
         ): Pair<Int, Int> {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             val (nativeWidth, nativeHeight) =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Build.VERSION.SDK_INT >= 30) {
                     val b = wm.currentWindowMetrics.bounds
                     Pair(b.width(), b.height())
                 } else {

@@ -9,7 +9,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
@@ -19,7 +18,6 @@ import android.graphics.Outline
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -38,6 +36,7 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.annotation.RequiresApi
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -45,6 +44,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
@@ -62,6 +62,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.math.abs
+import androidx.core.net.toUri
 
 class OverlayService : LifecycleService() {
     companion object {
@@ -215,7 +216,7 @@ class OverlayService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createCameraChannel()
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -271,6 +272,7 @@ class OverlayService : LifecycleService() {
         cancelOverlayNotification()
     }
 
+    @RequiresApi(30)
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
@@ -378,8 +380,8 @@ class OverlayService : LifecycleService() {
 
             ACTION_SHOW_IDLE_CONTROLS -> {
                 shouldPersistBubble = true
-                controlsIsRecording = com.ibbie.catrec_screenrecorcer.data.RecordingState.isRecording.value
-                controlsIsBuffering = com.ibbie.catrec_screenrecorcer.data.RecordingState.isBuffering.value
+                controlsIsRecording = RecordingState.isRecording.value
+                controlsIsBuffering = RecordingState.isBuffering.value
                 controlsDismissedByUser = false
                 if (controlsBubbleView == null) {
                     showControlsOverlay()
@@ -500,14 +502,15 @@ class OverlayService : LifecycleService() {
     // ── Camera Overlay ─────────────────────────────────────────────────────────
 
     /**
-     * From API 34+ with targetSdk 34+, [startForeground] with [ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA]
-     * requires [Manifest.permission.CAMERA] to be granted at runtime; otherwise the system throws
-     * [SecurityException] (see Crashlytics non-fatal: FGS camera without permission).
+     * Typed foreground service ([ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA]) must match
+     * [android:foregroundServiceType] and [Manifest.permission.FOREGROUND_SERVICE_CAMERA] on API 34+.
+     * [Manifest.permission.CAMERA] must be granted at runtime or the system throws [SecurityException].
      */
     private fun hasRuntimeCameraPermission(): Boolean =
         ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_GRANTED
 
+    @RequiresApi(30)
     @SuppressLint("ClickableViewAccessibility")
     private fun showCameraOverlay(
         sizeDp: Int = 120,
@@ -527,11 +530,12 @@ class OverlayService : LifecycleService() {
 
         val notification = buildCameraNotification()
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(CAMERA_NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
-            } else {
-                startForeground(CAMERA_NOTIFICATION_ID, notification)
-            }
+            ServiceCompat.startForeground(
+                this,
+                CAMERA_NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA,
+            )
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera foreground start failed: ${e.message}", e)
             recordCrashlyticsNonFatal(e, "Overlay: camera foreground start failed")
@@ -732,7 +736,7 @@ class OverlayService : LifecycleService() {
     private fun bindCamera(previewView: PreviewView) {
         val provider = cameraProvider ?: return
         val selector = if (useFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
-        val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+        val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
         try {
             provider.unbindAll()
             provider.bindToLifecycle(this, selector, preview)
@@ -1397,11 +1401,11 @@ class OverlayService : LifecycleService() {
                 bgRes = R.drawable.bg_btn_overlay_normal,
                 padPx = pad,
             ) {
-                if (com.ibbie.catrec_screenrecorcer.data.RecordingState.isPrepared.value) {
+                if (RecordingState.isPrepared.value) {
                     val overlayAction =
                         if (
-                            com.ibbie.catrec_screenrecorcer.data.RecordingState.currentMode.value ==
-                            com.ibbie.catrec_screenrecorcer.data.CaptureMode.CLIPPER
+                            RecordingState.currentMode.value ==
+                            CaptureMode.CLIPPER
                         ) {
                             ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
                         } else {
@@ -1876,7 +1880,7 @@ class OverlayService : LifecycleService() {
             try {
                 settingsCameraProvider = future.get()
                 val previewView = settingsCameraPreviewView ?: return@addListener
-                val preview = Preview.Builder().build().also { it.setSurfaceProvider(previewView.surfaceProvider) }
+                val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
                 settingsCameraProvider?.unbindAll()
                 settingsCameraProvider?.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
             } catch (e: Exception) {
@@ -2117,7 +2121,7 @@ class OverlayService : LifecycleService() {
                 alpha = opacity.coerceIn(0, 100) / 100f
                 if (!imageUri.isNullOrBlank()) {
                     try {
-                        setImageURI(Uri.parse(imageUri))
+                        setImageURI(imageUri.toUri())
                         if (drawable == null) {
                             setImageDrawable(appIcon)
                         }
@@ -2210,8 +2214,8 @@ class OverlayService : LifecycleService() {
 
     /** Real screen bounds in px for overlays (handles rotation reliably). */
     private fun currentScreenSizePx(): Pair<Int, Int> {
-        val wm = windowManager ?: (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val wm = windowManager ?: (getSystemService(WINDOW_SERVICE) as WindowManager)
+        return if (Build.VERSION.SDK_INT >= 30) {
             val b = wm.currentWindowMetrics.bounds
             Pair(b.width(), b.height())
         } else {

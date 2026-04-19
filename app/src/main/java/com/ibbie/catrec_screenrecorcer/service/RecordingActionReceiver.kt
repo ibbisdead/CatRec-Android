@@ -4,9 +4,9 @@ import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMedia
+import androidx.core.net.toUri
 
 class RecordingActionReceiver : BroadcastReceiver() {
     companion object {
@@ -25,7 +25,7 @@ class RecordingActionReceiver : BroadcastReceiver() {
         val notifId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
 
         try {
-            val uri = Uri.parse(uriString)
+            val uri = uriString.toUri()
             val ok = trySilentDeleteMedia(context, uri)
             Log.d("RecordingActionReceiver", "Delete ${if (ok) "ok" else "failed"} for $uriString")
         } catch (e: Exception) {

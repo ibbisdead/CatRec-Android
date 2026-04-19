@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fallback top inset before window insets are applied (avoid @android internal status_bar_height). -->
+    <dimen name="screenshot_post_top_inset_fallback">32dp</dimen>
+</resources>

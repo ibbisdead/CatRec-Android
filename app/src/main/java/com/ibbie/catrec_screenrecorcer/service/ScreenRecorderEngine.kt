@@ -524,7 +524,7 @@ class ScreenRecorderEngine(
             Log.d(TAG, "RECORD_AUDIO permission: ${if (permGranted) "GRANTED" else "DENIED"}")
             if (!permGranted) throw SecurityException("RECORD_AUDIO permission denied")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            if (Build.VERSION.SDK_INT >= 29 &&
                 (mAudioMode == AudioMode.INTERNAL || mAudioMode == AudioMode.MIXED)
             ) {
                 try {
@@ -747,8 +747,12 @@ class ScreenRecorderEngine(
         mic: AudioRecord?,
     ): Int =
         when (mainMux) {
-            AudioMode.INTERNAL -> (internal?.channelCount ?: 1).coerceIn(1, 2)
-            AudioMode.MIC -> (mic?.channelCount ?: 1).coerceIn(1, 2)
+            AudioMode.INTERNAL -> {
+                (internal?.channelCount ?: 1).coerceIn(1, 2)
+            }
+            AudioMode.MIC -> {
+                (mic?.channelCount ?: 1).coerceIn(1, 2)
+            }
             AudioMode.MIXED -> {
                 if (wantStereo && true) {
                     maxOf(internal?.channelCount ?: 0, mic?.channelCount ?: 0).coerceIn(1, 2)
@@ -759,7 +763,9 @@ class ScreenRecorderEngine(
                     1
                 }
             }
-            else -> 1
+            else -> {
+                1
+            }
         }
 
     @SuppressLint("MissingPermission")

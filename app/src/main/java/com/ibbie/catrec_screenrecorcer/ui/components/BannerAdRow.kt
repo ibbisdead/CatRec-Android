@@ -9,6 +9,8 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdListener
@@ -26,7 +28,12 @@ fun BannerAdRow(
 ) {
     val unitId = stringResource(R.string.admob_banner_unit_id)
     val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp
+    val containerSize = LocalWindowInfo.current.containerSize
+    val density = LocalDensity.current.density
+    val bannerWidthDp =
+        (containerSize.width / density)
+            .toInt()
+            .coerceAtLeast(320)
     val localeFingerprint = configuration.locales.toLanguageTags()
     val localeTag =
         remember(localeFingerprint) {
@@ -37,7 +44,7 @@ fun BannerAdRow(
 
     // Include locale so language / layout-direction changes get a fresh AdView; avoid stacking
     // MobileAds.initialize callbacks on a view that Compose may already have released.
-    key(unitId, screenWidthDp, localeTag) {
+    key(unitId, containerSize.width, containerSize.height, localeTag) {
         AndroidView(
             modifier =
                 modifier
@@ -61,12 +68,9 @@ fun BannerAdRow(
                                 Log.d("BannerAdRow", "onAdLoaded")
                             }
                         }
-                    val density = ctx.resources.displayMetrics.density
-                    val adWidth =
-                        (ctx.resources.displayMetrics.widthPixels / density)
-                            .toInt()
-                            .coerceAtLeast(320)
-                    setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, adWidth))
+                    setAdSize(
+                        AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, bannerWidthDp),
+                    )
                     // Match AppOpenAdManager: only load after SDK init. Loading in factory() often runs
                     // before Application.onCreate’s initialize callback finishes → failed banner loads.
                     // Use applicationContext so init/load does not run against an activity ConfigurationContext

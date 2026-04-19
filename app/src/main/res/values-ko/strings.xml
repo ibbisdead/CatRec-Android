@@ -50,7 +50,7 @@
 
     <string name="settings_section_recording_quality">녹음 품질</string>
     <string name="settings_open_audio_menu">오디오 설정</string>
-    <string name="settings_open_audio_menu_sub">마이크, 내부 오디오, 비트 전송률, 채널...</string>
+    <string name="settings_open_audio_menu_sub">마이크, 내부 오디오, 비트 전송률, 채널…</string>
     <string name="settings_open_video_menu">비디오 및 GIF 설정</string>
     <string name="settings_open_video_menu_sub">GIF 사전 설정, 해상도, FPS, 비트 전송률, 인코더…</string>
 
@@ -65,6 +65,7 @@
     <string name="action_delete">삭제</string>
     <string name="action_share">공유</string>
     <string name="action_open">열기</string>
+    <string name="action_edit">편집</string>
     <string name="consent_analytics_title">사용량 분석</string>
     <string name="consent_analytics_message">선택적 사용 및 충돌 분석을 허용하여 CatRec 개선에 도움을 주세요. 개인화된 광고는 설정에서 별도로 제어됩니다(기본적으로 켜져 있음). 설정에서 언제든지 변경할 수 있습니다.</string>
     <string name="setting_usage_analytics">사용 분석</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">친구들에게 우리에 대해 알려주세요</string>
     <string name="support_changelog">변경 내역</string>
     <string name="support_changelog_desc">이 버전의 새로운 기능을 확인하세요</string>
+    <string name="support_credits">크레딧</string>
+    <string name="support_credits_desc">CatRec을 도와준 테스터 및 크리에이터</string>
+    <string name="dialog_credits_title">크레딧</string>
+    <string name="credits_intro">CatRec 테스트와 공유에 도움을 주신 분들께 감사드립니다. 이름을 눌러 채널을 여세요.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">스크린샷이 저장되었습니다</string>
@@ -286,7 +291,9 @@
     <string name="toast_enable_show_taps">«탭 표시»를 수동으로 활성화하세요</string>
     <string name="toast_overlay_permission">오버레이 권한을 부여해 주세요</string>
     <string name="setting_countdown_off">끄기</string>
-    <string name="setting_countdown_seconds">%1$d초</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d초</item>
+    </plurals>
     <string name="setting_internal_audio_note">Android 10 이상만 지원</string>
     <string name="gate_feature_separate_mic">별도 마이크 트랙</string>
     <string name="gate_feature_camera_overlay">카메라 오버레이 설정</string>
@@ -402,10 +409,14 @@
     <string name="delete_recording_message">"%1$s"이(가) 영구적으로 삭제됩니다.</string>
     <string name="delete_screenshot_title">스크린샷을 삭제하시겠습니까?</string>
     <string name="delete_screenshot_message">"%1$s"이(가) 영구적으로 삭제됩니다.</string>
-    <string name="multiselect_selected_count">%1$d개 선택됨</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d개 선택됨</item>
+    </plurals>
     <string name="multiselect_select_all">모두 선택</string>
     <string name="multiselect_deselect_all">모두 선택 취소</string>
-    <string name="multiselect_delete_title">%1$d개의 항목을 삭제하시겠습니까?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">%1$d개의 항목을 삭제하시겠습니까?</item>
+    </plurals>
     <string name="multiselect_delete_message">해당 파일은 영구적으로 삭제됩니다.</string>
     <string name="multiselect_share_recordings">녹음 공유</string>
     <string name="multiselect_share_screenshots">스크린샷 공유</string>
@@ -414,6 +425,7 @@
     <string name="player_rename_failed">이름 바꾸기 실패: %1$s</string>
     <string name="player_delete_failed">삭제 실패: %1$s</string>
     <string name="player_no_app_video">동영상을 열 수 있는 앱을 찾을 수 없습니다.</string>
+    <string name="player_video_unavailable">이 동영상을 사용할 수 없습니다. 삭제되었거나 이동되었을 수 있습니다.</string>
     <string name="player_rename_title">이름 바꾸기</string>
     <string name="player_file_name_label">파일 이름</string>
     <string name="trim_title">비디오 다듬기</string>
@@ -429,7 +441,6 @@
     <string name="content_desc_back">뒤쪽에</string>
     <string name="content_desc_refresh">새로 고치다</string>
     <string name="content_desc_options">옵션</string>
-    <string name="content_desc_logo">CatRec 로고</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">비디오 편집</string>
@@ -467,9 +478,7 @@
     <string name="merge_run">병합 및 저장</string>
     <string name="merge_need_two">동영상을 2개 이상 추가하세요(순서 유지).</string>
     <string name="merge_clip_label">클립 %1$d</string>
-    <string name="home_app_name">캣렉</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec 스크린 레코더</string>
@@ -508,6 +517,10 @@
     <string name="perm_rationale_overlay">녹화 중에 다른 앱 위에 플로팅 컨트롤 버블과 카메라 오버레이를 표시하는 데 필요합니다.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">녹화 중 포그라운드 서비스: MediaProjection 화면 캡처, 선택적 마이크 오디오, 지속 알림.</string>
+    <string name="service_description_overlay">플로팅 오버레이가 표시되는 동안의 포그라운드 서비스: PiP 카메라 미리보기와 지속 알림.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">화면 녹화</string>
@@ -558,6 +571,10 @@
     <string name="notif_camera_in_use_title">사용 중인 카메라</string>
     <string name="notif_channel_app_controls">빠른 제어</string>
     <string name="notif_channel_app_controls_desc">녹화, 스크린샷, 오버레이 단축키</string>
+    <string name="notif_channel_recording_interrupted">녹화 중단됨</string>
+    <string name="notif_channel_recording_interrupted_desc">캡처 중 시스템이 CatRec을 중지한 경우 표시됩니다</string>
+    <string name="notif_recording_interrupted_title">캡처 중지됨</string>
+    <string name="notif_recording_interrupted_text">녹화 또는 클립 캡처 중 시스템이 CatRec을 닫거나 다시 시작했습니다. 마지막 파일이 불완전할 수 있습니다. CatRec을 열어 다시 시작하세요.</string>
     <string name="notif_app_controls_title">캣렉</string>
     <string name="notif_app_controls_text_idle">유휴 — 아래 작업을 탭하세요.</string>
     <string name="notif_action_screenshot">스크린샷</string>

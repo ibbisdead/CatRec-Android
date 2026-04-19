@@ -8,16 +8,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- Recordings / Screenshots / library (MediaStore). Android 14+: READ_MEDIA_VISUAL_USER_SELECTED must be declared
-         directly after READ_MEDIA_IMAGES / READ_MEDIA_VIDEO for Selected Photos Access (partial library). -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission
-        android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
-        android:minSdkVersion="34" />
+    <!-- Mic sidecar files indexed under Music/Recordings/CatRec (MediaStore audio). Photos/videos from the library use the system Photo Picker — no READ_MEDIA_IMAGES / READ_MEDIA_VIDEO. -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
@@ -29,9 +24,15 @@
     <uses-feature android:name="android.hardware.camera.any" />
 
     <queries>
-        <!-- AdMob / GMS bind to in-package services; without this, Android 11+ package visibility
-             yields ServiceBindIntentUtils "Dynamic lookup for intent failed" for ads.* actions. -->
+        <!-- AdMob / GMS: package + explicit service intents for Android 11+ visibility (reduces
+             ServiceBindIntentUtils "Dynamic lookup for intent failed" for ads.* on some builds). -->
         <package android:name="com.google.android.gms" />
+        <intent>
+            <action android:name="com.google.android.gms.ads.service.START" />
+        </intent>
+        <intent>
+            <action android:name="com.google.android.gms.ads.service.CACHE" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
@@ -54,16 +55,12 @@
         android:supportsRtl="true"
         android:localeConfig="@xml/locale_config"
         android:theme="@style/Theme.CatRecScreenRecorcer"
-        tools:targetApi="35">
+        tools:targetApi="36">
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7741372232895726~5682529172" />
 
-        <property
-            android:name="android.adservices.AD_SERVICES_CONFIG"
-            android:resource="@xml/gma_ad_services_config"
-            tools:replace="android:resource" />
         <activity
             android:name=".service.ScreenshotPostActionActivity"
             android:exported="false"

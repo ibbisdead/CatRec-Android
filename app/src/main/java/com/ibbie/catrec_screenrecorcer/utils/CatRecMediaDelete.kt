@@ -170,7 +170,7 @@ private fun isMediaStoreStyleContentUri(uri: Uri): Boolean {
         path.contains("/audio/media/")
 }
 
-@RequiresApi(Build.VERSION_CODES.R)
+@RequiresApi(30)
 fun createDeleteRequestPendingIntent(
     context: Context,
     uris: Collection<Uri>,
@@ -195,7 +195,7 @@ private fun queryMediaPathHints(
     uri: Uri,
 ): MediaPathHints? {
     val projection =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 29) {
             arrayOf(
                 MediaStore.MediaColumns.DISPLAY_NAME,
                 MediaStore.MediaColumns.RELATIVE_PATH,
@@ -214,7 +214,7 @@ private fun queryMediaPathHints(
                     nameIdxOpen >= 0 -> c.getString(nameIdxOpen)
                     else -> null
                 }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= 29) {
                 val relIdx = c.getColumnIndex(MediaStore.MediaColumns.RELATIVE_PATH)
                 val rel = if (relIdx >= 0) c.getString(relIdx) else null
                 return MediaPathHints(name, rel, null)
@@ -249,7 +249,7 @@ private fun tryDeleteCatRecPublicFile(
 
     val candidates = LinkedHashSet<File>()
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+    if (Build.VERSION.SDK_INT < 29) {
         val path = hints.legacyDataPath
         if (!path.isNullOrEmpty()) candidates.add(File(path))
     } else {

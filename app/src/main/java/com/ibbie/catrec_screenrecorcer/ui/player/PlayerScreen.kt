@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +61,8 @@ fun PlayerScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
-    val videoUri = remember(encodedUri) { Uri.parse(Uri.decode(encodedUri)) }
+    val resources = LocalResources.current
+    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
     val scope = rememberCoroutineScope()
 
     val mediaReadable =
@@ -108,6 +111,10 @@ fun PlayerScreen(
             }
         }
         true -> {
+            val playerVideoUnavailableMsg = stringResource(R.string.player_video_unavailable)
+            val playerNoAppVideoMsg = stringResource(R.string.player_no_app_video)
+            val shareVideoChooserTitle = stringResource(R.string.action_share)
+
             // ── ExoPlayer setup ───────────────────────────────────────────────────────
             val exoPlayer =
                 remember(videoUri) {
@@ -186,7 +193,7 @@ fun PlayerScreen(
                             Toast
                                 .makeText(
                                     context,
-                                    context.getString(R.string.player_video_unavailable),
+                                    playerVideoUnavailableMsg,
                                     Toast.LENGTH_LONG,
                                 ).show()
                             navController.popBackStack()
@@ -207,7 +214,7 @@ fun PlayerScreen(
 
             if (showRenameDialog) {
                 AlertDialog(
-                    onDismissRequest = { showRenameDialog = false },
+                    onDismissRequest = { },
                     title = { Text(stringResource(R.string.player_rename_title)) },
                     text = {
                         OutlinedTextField(
@@ -229,36 +236,34 @@ fun PlayerScreen(
                                         put(MediaStore.Video.Media.DISPLAY_NAME, newName)
                                     }
                                 context.contentResolver.update(videoUri, values, null, null)
-                                Toast.makeText(context, context.getString(R.string.player_renamed_to, newName), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, resources.getString(R.string.player_renamed_to, newName), Toast.LENGTH_SHORT).show()
                             } catch (e: Exception) {
                                 Toast
                                     .makeText(
                                         context,
-                                        context.getString(R.string.player_rename_failed, e.message ?: ""),
+                                        resources.getString(R.string.player_rename_failed, e.message ?: ""),
                                         Toast.LENGTH_SHORT,
                                     ).show()
                             }
-                            showRenameDialog = false
                         }) { Text(stringResource(R.string.action_rename)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showRenameDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+                        TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
                     },
                 )
             }
 
             if (showDeleteConfirm) {
                 AlertDialog(
-                    onDismissRequest = { showDeleteConfirm = false },
+                    onDismissRequest = { },
                     title = { Text(stringResource(R.string.delete_recording_title)) },
                     text = { Text(stringResource(R.string.delete_generic_recording)) },
                     confirmButton = {
                         TextButton(onClick = {
-                            showDeleteConfirm = false
                             if (trySilentDeleteMedia(context, videoUri)) {
                                 exoPlayer.stop()
                                 navController.popBackStack()
-                            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            } else if (Build.VERSION.SDK_INT >= 30) {
                                 val pi = createDeleteRequestPendingIntent(context, listOf(videoUri))
                                 if (pi != null) {
                                     deleteMediaLauncher.launch(
@@ -268,7 +273,7 @@ fun PlayerScreen(
                                     Toast
                                         .makeText(
                                             context,
-                                            context.getString(R.string.player_delete_failed, ""),
+                                            resources.getString(R.string.player_delete_failed, ""),
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                 }
@@ -276,14 +281,14 @@ fun PlayerScreen(
                                 Toast
                                     .makeText(
                                         context,
-                                        context.getString(R.string.player_delete_failed, ""),
+                                        resources.getString(R.string.player_delete_failed, ""),
                                         Toast.LENGTH_SHORT,
                                     ).show()
                             }
                         }) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
+                        TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
                     },
                 )
             }
@@ -399,7 +404,7 @@ fun PlayerScreen(
                                             try {
                                                 context.startActivity(intent)
                                             } catch (_: Exception) {
-                                                Toast.makeText(context, context.getString(R.string.player_no_app_video), Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, playerNoAppVideoMsg, Toast.LENGTH_SHORT).show()
                                             }
                                         },
                                     )
@@ -408,7 +413,6 @@ fun PlayerScreen(
                                         leadingIcon = { Icon(Icons.Default.Edit, null) },
                                         onClick = {
                                             showMenu = false
-                                            showRenameDialog = true
                                         },
                                     )
                                     DropdownMenuItem(
@@ -430,7 +434,7 @@ fun PlayerScreen(
                                                     putExtra(Intent.EXTRA_STREAM, videoUri)
                                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                                 }
-                                            context.startActivity(Intent.createChooser(intent, context.getString(R.string.action_share)))
+                                            context.startActivity(Intent.createChooser(intent, shareVideoChooserTitle))
                                         },
                                     )
                                     HorizontalDivider()
@@ -441,7 +445,6 @@ fun PlayerScreen(
                                         },
                                         onClick = {
                                             showMenu = false
-                                            showDeleteConfirm = true
                                         },
                                     )
                                 }

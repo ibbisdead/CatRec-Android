@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.Locale
+import androidx.core.content.edit
 
 /**
  * Handles locale persistence and context wrapping so that:
@@ -36,9 +37,9 @@ object LocaleHelper {
     ) {
         context.applicationContext
             .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY, languageCode)
-            .apply()
+            .edit {
+                putString(KEY, languageCode)
+            }
     }
 
     /** Read the saved language code (never null; defaults to "system"). */

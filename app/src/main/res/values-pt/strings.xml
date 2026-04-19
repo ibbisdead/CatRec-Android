@@ -65,6 +65,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_share">Share</string>
     <string name="action_open">Open</string>
+    <string name="action_edit">Editar</string>
     <string name="consent_analytics_title">Análise de uso</string>
     <string name="consent_analytics_message">Ajude-nos a melhorar o CatRec permitindo o uso opcional e análises de falhas. Os anúncios personalizados são controlados separadamente nas Configurações (ativado por padrão). Você pode alterar isso a qualquer momento em Configurações.</string>
     <string name="setting_usage_analytics">Usage analytics</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">Conte a seus amigos sobre nós</string>
     <string name="support_changelog">Changelog</string>
     <string name="support_changelog_desc">Veja o que há de novo nesta versão</string>
+    <string name="support_credits">Créditos</string>
+    <string name="support_credits_desc">Testadores e criadores que ajudaram o CatRec</string>
+    <string name="dialog_credits_title">Créditos</string>
+    <string name="credits_intro">Obrigado a estas pessoas por testarem e partilharem o CatRec. Toque num nome para abrir o canal.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Screenshot saved</string>
@@ -286,7 +291,11 @@
     <string name="toast_enable_show_taps">Enable \'Show Taps\' manually</string>
     <string name="toast_overlay_permission">Please grant overlay permission</string>
     <string name="setting_countdown_off">Off</string>
-    <string name="setting_countdown_seconds">%1$d seconds</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="one">%1$d segundo</item>
+        <item quantity="many">%1$d segundos</item>
+        <item quantity="other">%1$d segundos</item>
+    </plurals>
     <string name="setting_internal_audio_note">Android 10+ only</string>
     <string name="gate_feature_separate_mic">Separate Mic Track</string>
     <string name="gate_feature_camera_overlay">Câmera Overlay Settings</string>
@@ -402,10 +411,18 @@
     <string name="delete_recording_message">"%1$s" será excluído permanentemente.</string>
     <string name="delete_screenshot_title">Excluir captura de tela?</string>
     <string name="delete_screenshot_message">"%1$s" será excluído permanentemente.</string>
-    <string name="multiselect_selected_count">%1$d selecionado</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="one">%1$d selecionado</item>
+        <item quantity="many">%1$d selecionado</item>
+        <item quantity="other">%1$d selecionado</item>
+    </plurals>
     <string name="multiselect_select_all">Selecionar tudo</string>
     <string name="multiselect_deselect_all">Desmarcar tudo</string>
-    <string name="multiselect_delete_title">Excluir %1$d itens?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="one">Excluir %1$d item?</item>
+        <item quantity="many">Excluir %1$d itens?</item>
+        <item quantity="other">Excluir %1$d itens?</item>
+    </plurals>
     <string name="multiselect_delete_message">Esses arquivos serão excluídos permanentemente.</string>
     <string name="multiselect_share_recordings">Compartilhar gravações</string>
     <string name="multiselect_share_screenshots">Compartilhe capturas de tela</string>
@@ -414,6 +431,7 @@
     <string name="player_rename_failed">Falha ao renomear: %1$s</string>
     <string name="player_delete_failed">Falha na exclusão: %1$s</string>
     <string name="player_no_app_video">Nenhum aplicativo encontrado para abrir o vídeo</string>
+    <string name="player_video_unavailable">Este vídeo já não está disponível. Pode ter sido eliminado ou movido.</string>
     <string name="player_rename_title">Renomear</string>
     <string name="player_file_name_label">Nome do arquivo</string>
     <string name="trim_title">Cortar vídeo</string>
@@ -429,7 +447,6 @@
     <string name="content_desc_back">Voltar</string>
     <string name="content_desc_refresh">Atualizar</string>
     <string name="content_desc_options">Opções</string>
-    <string name="content_desc_logo">Logotipo CatRec</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Edição de vídeo</string>
@@ -467,9 +484,7 @@
     <string name="merge_run">Mesclar e salvar</string>
     <string name="merge_need_two">Adicione pelo menos dois vídeos (a ordem é mantida).</string>
     <string name="merge_clip_label">Clipe %1$d</string>
-    <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">Gravador de tela CatRec</string>
@@ -508,6 +523,10 @@
     <string name="perm_rationale_overlay">Necessário para mostrar o balão de controles flutuantes e a sobreposição da câmera sobre outros aplicativos durante a gravação.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Serviço em primeiro plano durante a gravação: captura de ecrã (MediaProjection) com áudio opcional do microfone e notificação persistente.</string>
+    <string name="service_description_overlay">Serviço em primeiro plano enquanto a sobreposição flutuante é mostrada: pré-visualização da câmara em imagem na imagem, com notificação persistente.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Gravação de tela</string>
@@ -558,6 +577,10 @@
     <string name="notif_camera_in_use_title">Câmera em uso</string>
     <string name="notif_channel_app_controls">Controles rápidos</string>
     <string name="notif_channel_app_controls_desc">Gravação, captura de tela e atalhos de sobreposição</string>
+    <string name="notif_channel_recording_interrupted">Gravação interrompida</string>
+    <string name="notif_channel_recording_interrupted_desc">Mostrado se o sistema parou o CatRec durante uma captura ativa</string>
+    <string name="notif_recording_interrupted_title">Captura parada</string>
+    <string name="notif_recording_interrupted_text">O CatRec foi fechado ou reiniciado pelo sistema durante uma gravação ou captura de clip ativa. O último ficheiro pode estar incompleto. Abra o CatRec para começar de novo.</string>
     <string name="notif_app_controls_title">CatRec</string>
     <string name="notif_app_controls_text_idle">Inativo – toque em uma ação abaixo</string>
     <string name="notif_action_screenshot">Captura de tela</string>

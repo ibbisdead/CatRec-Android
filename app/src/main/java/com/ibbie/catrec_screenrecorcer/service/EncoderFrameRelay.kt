@@ -29,6 +29,7 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import androidx.core.graphics.createBitmap
 
 /**
  * Feeds a single [VirtualDisplay] into [encoderInputSurface] so [MediaProjection.createVirtualDisplay]
@@ -278,7 +279,7 @@ internal class EncoderFrameRelay(
         if (!DROP_STALE_FRAMES) {
             return false
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT < 29) {
             return false
         }
         val ts = image.timestamp
@@ -335,7 +336,7 @@ internal class EncoderFrameRelay(
         val stridePixels = w + rowPadding / pixelStride
         if (scratchRowBitmap == null || scratchRowBitmap!!.width != stridePixels || scratchRowBitmap!!.height != h) {
             scratchRowBitmap?.recycle()
-            scratchRowBitmap = Bitmap.createBitmap(stridePixels, h, Bitmap.Config.ARGB_8888)
+            scratchRowBitmap = createBitmap(stridePixels, h)
         }
         buffer.rewind()
         scratchRowBitmap!!.copyPixelsFromBuffer(buffer)
@@ -359,7 +360,7 @@ internal class EncoderFrameRelay(
             return existing
         }
         existing?.recycle()
-        val b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val b = createBitmap(w, h)
         reuseCropBitmap = b
         reuseCropCanvas = Canvas(b)
         return b
@@ -393,7 +394,7 @@ internal class EncoderFrameRelay(
  * Minimal GLES2 path to feed RGBA bitmaps into a [Surface] (e.g. MediaCodec input).
  */
 private class EglBitmapBlitter(
-    private val surface: Surface,
+    surface: Surface,
     private val width: Int,
     private val height: Int,
 ) {

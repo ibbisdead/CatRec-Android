@@ -25,7 +25,7 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
     private val projectionCapture =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             when {
-                result.resultCode == Activity.RESULT_OK && result.data != null -> {
+                result.resultCode == RESULT_OK && result.data != null -> {
                     val asBuffer = intent.getBooleanExtra(EXTRA_START_AS_BUFFER, false)
                     val svc =
                         Intent(this, ScreenRecordService::class.java).apply {
@@ -43,7 +43,7 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
                         finish()
                     }
                 }
-                result.resultCode != Activity.RESULT_CANCELED -> {
+                result.resultCode != RESULT_CANCELED -> {
                     Toast.makeText(this, getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
                     finish()
                 }

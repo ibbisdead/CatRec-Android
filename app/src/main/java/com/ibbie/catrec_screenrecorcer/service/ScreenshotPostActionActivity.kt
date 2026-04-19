@@ -23,9 +23,9 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.content.res.ResourcesCompat
-import androidx.core.view.setPadding
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import androidx.core.net.toUri
 
 /**
  * After a screenshot: compact preview at the top-end with share and edit actions
@@ -58,10 +58,11 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
             finish()
             return
         }
-        val uri = Uri.parse(uriStr)
+        val uri = uriStr.toUri()
 
         val margin = dp(12)
-        val statusFallback = statusBarHeight() + dp(8)
+        val statusFallback =
+            resources.getDimensionPixelSize(R.dimen.screenshot_post_top_inset_fallback)
 
         val root =
             FrameLayout(this).apply {
@@ -175,11 +176,10 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                         scaleType = ImageView.ScaleType.FIT_CENTER
                         val d = loadPillIconDrawable(iconRes)
                         setImageDrawable(d)
-                        if (skipIconTint) {
-                            imageTintList = null
+                        imageTintList = if (skipIconTint) {
+                            null
                         } else {
-                            imageTintList =
-                                android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                            android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
                         }
                     }
                 val label =
@@ -320,11 +320,6 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
             ?: ResourcesCompat.getDrawable(resources, iconRes, theme)
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()
-
-    private fun statusBarHeight(): Int {
-        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (id > 0) resources.getDimensionPixelSize(id) else dp(24)
-    }
 
     companion object {
         const val EXTRA_IMAGE_URI = "EXTRA_IMAGE_URI"

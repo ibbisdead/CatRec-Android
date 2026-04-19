@@ -14,12 +14,15 @@ plugins {
 
 android {
     namespace = "com.ibbie.catrec_screenrecorcer"
-    compileSdk = 36
+    // compileSdk 37: build-time SDK for current CameraX / Media3 / Navigation AAR metadata.
+    // targetSdk 36 (Android 16): runtime behavior under test (Google Play). Platform APIs @since 37+ must be gated with
+    // Build.VERSION.SDK_INT >= 37 (see ObsoleteSdkInt / NewApi in lint).
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.ibbie.catrec_screenrecorder"
-        minSdk = 26
-        targetSdk = 35
+        minSdk = 27
+        targetSdk = 36
         versionCode = 16
         versionName = "1.0.1"
 
@@ -76,6 +79,17 @@ android {
         density { enableSplit = true }
         abi { enableSplit = true }
     }
+
+    lint {
+        // Keep API/version checks visible in CI and IDE; NewApi flags calls not valid on minSdk without guards.
+        checkReleaseBuilds = true
+        checkDependencies = true
+        enable += setOf(
+            "NewApi",
+            "InlinedApi",
+            "ObsoleteSdkInt",
+        )
+    }
 }
 
 kotlin {
@@ -107,12 +121,12 @@ ktlint {
 
 dependencies {
     // Firebase (BoM manages all Firebase library versions)
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    implementation("com.google.firebase:firebase-crashlytics")
-    implementation("com.google.firebase:firebase-analytics")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
 
     // Google Mobile Ads
-    implementation("com.google.android.gms:play-services-ads:23.6.0")
+    implementation(libs.play.services.ads)
 
     // Google Play Billing
     implementation(libs.android.billing.ktx)
@@ -121,7 +135,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.service)
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.documentfile)
 
     // Compose
@@ -141,10 +155,13 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
 
     // AppCompat — required for per-app locale switching (AppCompatDelegate)
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation(libs.androidx.appcompat)
+
+    // Play Feature Delivery — request language splits when user changes in-app locale (bundle language splits enabled).
+    implementation(libs.play.feature.delivery)
 
     // Coil — image loading for ScreenshotsScreen
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation(libs.coil.compose)
 
     // Views (Required for OverlayService XML)
     implementation(libs.androidx.cardview)
@@ -157,14 +174,14 @@ dependencies {
 
     // FFmpeg (LGPL): GIF export uses palettegen + paletteuse. Official arthenica binaries were
     // retired; this fork ships 16KB page-size libs for current Play / API 35 targets.
-    implementation("com.moizhassan.ffmpeg:ffmpeg-kit-16kb:6.1.1")
+    implementation(libs.ffmpeg.kit.x6kb)
 
     // Media3 / ExoPlayer
-    implementation("androidx.media3:media3-exoplayer:1.5.0")
-    implementation("androidx.media3:media3-ui:1.5.0")
-    implementation("androidx.media3:media3-common:1.5.0")
-    implementation("androidx.media3:media3-transformer:1.5.0")
-    implementation("androidx.media3:media3-effect:1.5.0")
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.common)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.androidx.media3.effect)
 
     // Testing
     testImplementation(libs.junit)

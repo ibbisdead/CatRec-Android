@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +57,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Scale
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.media.MediaDeleteResult
 import com.ibbie.catrec_screenrecorcer.media.MediaItem
@@ -79,6 +83,8 @@ fun ScreenshotsScreen(
 ) {
     val context = LocalContext.current
     val accent = LocalAccentColor.current
+    val shareScreenshotChooserTitle = stringResource(R.string.share_screenshot_chooser_title)
+    val shareScreenshotsBulkTitle = stringResource(R.string.multiselect_share_screenshots)
 
     var screenshots by remember { mutableStateOf<List<MediaItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -139,7 +145,7 @@ fun ScreenshotsScreen(
     if (screenshotToDelete != null) {
         val item = screenshotToDelete!!
         AlertDialog(
-            onDismissRequest = { screenshotToDelete = null },
+            onDismissRequest = { },
             icon = {
                 Icon(
                     Icons.Default.Delete,
@@ -159,7 +165,7 @@ fun ScreenshotsScreen(
                                 screenshots = screenshots.filter { it.uri != u }
                             }
                             MediaDeleteResult.FAILED -> {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                if (Build.VERSION.SDK_INT >= 30) {
                                     val pi = createDeleteRequestPendingIntent(context, listOf(u))
                                     if (pi != null) {
                                         pendingIntentDeleteUris = listOf(u)
@@ -171,11 +177,10 @@ fun ScreenshotsScreen(
                             }
                         }
                     }
-                    screenshotToDelete = null
                 }) { Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { screenshotToDelete = null }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -183,15 +188,14 @@ fun ScreenshotsScreen(
     if (showBulkDeleteDialog) {
         val count = selectedUris.size
         AlertDialog(
-            onDismissRequest = { showBulkDeleteDialog = false },
+            onDismissRequest = { },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
-            title = { Text(stringResource(R.string.multiselect_delete_title, count)) },
+            title = { Text(pluralStringResource(R.plurals.multiselect_delete_title, count, count)) },
             text = { Text(stringResource(R.string.multiselect_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showBulkDeleteDialog = false
                     val toDelete = selectedUris.toSet()
                     scope.launch {
                         val snapshot = screenshots.toList()
@@ -204,7 +208,7 @@ fun ScreenshotsScreen(
                         }
                         screenshots =
                             screenshots.filter { it.uri !in toDelete || it.uri in needsIntent }
-                        if (needsIntent.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (needsIntent.isNotEmpty() && Build.VERSION.SDK_INT >= 30) {
                             val pi = createDeleteRequestPendingIntent(context, needsIntent)
                             if (pi != null) {
                                 pendingIntentDeleteUris = needsIntent
@@ -220,7 +224,7 @@ fun ScreenshotsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showBulkDeleteDialog = false }) {
+                TextButton(onClick = { }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -228,41 +232,63 @@ fun ScreenshotsScreen(
     }
 
     detailItem?.let { detail ->
-        val dm = context.resources.displayMetrics
-        val maxDecodeW = dm.widthPixels.coerceAtLeast(1)
-        val maxDecodeH = dm.heightPixels.coerceAtLeast(1)
-        val detailRequest =
-            remember(detail.uri) {
-                ImageRequest
-                    .Builder(context)
-                    .data(detail.uri)
-                    .size(maxDecodeW, maxDecodeH)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .crossfade(240)
-                    .build()
-            }
         Dialog(
-            onDismissRequest = { detailItem = null },
+            onDismissRequest = { },
             properties =
                 DialogProperties(
                     usePlatformDefaultWidth = false,
                     decorFitsSystemWindows = false,
                 ),
         ) {
+            var lastValidDecode by remember(detail.uri) { mutableStateOf<Pair<Int, Int>?>(null) }
+            val containerSize = LocalWindowInfo.current.containerSize
+            val computedDecode =
+                if (containerSize.width > 0 && containerSize.height > 0) {
+                    screenshotDecodeBounds(
+                        containerSize.width,
+                        containerSize.height,
+                        detail.widthPx,
+                        detail.heightPx,
+                    )
+                } else {
+                    null
+                }
+            SideEffect {
+                val c = computedDecode
+                if (c != null && c != lastValidDecode) {
+                    lastValidDecode = c
+                }
+            }
+            val decodePair = computedDecode ?: lastValidDecode
+            val detailRequest =
+                remember(detail.uri, decodePair?.first, decodePair?.second) {
+                    val p = decodePair ?: return@remember null
+                    ImageRequest
+                        .Builder(context)
+                        .data(detail.uri)
+                        .size(p.first, p.second)
+                        .scale(Scale.FIT)
+                        .precision(Precision.EXACT)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .crossfade(240)
+                        .build()
+                }
             Surface(color = Color.Black, modifier = Modifier.fillMaxSize()) {
                 Box(Modifier.fillMaxSize()) {
-                    AsyncImage(
-                        model = detailRequest,
-                        contentDescription = detail.name ?: "",
-                        contentScale = ContentScale.Fit,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(top = 48.dp, bottom = 24.dp),
-                    )
+                    if (detailRequest != null) {
+                        AsyncImage(
+                            model = detailRequest,
+                            contentDescription = detail.name ?: "",
+                            contentScale = ContentScale.Fit,
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(top = 48.dp, bottom = 24.dp),
+                        )
+                    }
                     IconButton(
-                        onClick = { detailItem = null },
+                        onClick = { },
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
@@ -422,11 +448,11 @@ fun ScreenshotsScreen(
                                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                         }
                                     context.startActivity(
-                                        Intent.createChooser(shareIntent, context.getString(R.string.share_screenshot_chooser_title)),
+                                        Intent.createChooser(shareIntent, shareScreenshotChooserTitle),
                                     )
                                 },
-                                onDelete = { screenshotToDelete = item },
-                                onPreviewClick = { detailItem = item },
+                                onDelete = { },
+                                onPreviewClick = { },
                                 onOpenExternal = {
                                     val viewIntent =
                                         Intent(Intent.ACTION_VIEW).apply {
@@ -491,7 +517,7 @@ fun ScreenshotsScreen(
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
                     }
                     Text(
-                        text = stringResource(R.string.multiselect_selected_count, selectedUris.size),
+                        text = pluralStringResource(R.plurals.multiselect_selected_count, selectedUris.size, selectedUris.size),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
@@ -528,7 +554,7 @@ fun ScreenshotsScreen(
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                             context.startActivity(
-                                Intent.createChooser(intent, context.getString(R.string.multiselect_share_screenshots)),
+                                Intent.createChooser(intent, shareScreenshotsBulkTitle),
                             )
                         },
                         enabled = selectedUris.isNotEmpty(),
@@ -540,7 +566,7 @@ fun ScreenshotsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { showBulkDeleteDialog = true },
+                        onClick = { },
                         enabled = selectedUris.isNotEmpty(),
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = accent)
@@ -574,12 +600,20 @@ private fun ScreenshotCard(
     var showMenu by remember { mutableStateOf(false) }
     val cardContext = LocalContext.current
     val displayAspect = item.screenshotDisplayAspect()
+    val (thumbW, thumbH) =
+        screenshotDecodeBounds(
+            thumbnailDecodePx,
+            thumbnailDecodePx,
+            item.widthPx,
+            item.heightPx,
+        )
     val thumbRequest =
-        remember(item.uri, thumbnailDecodePx) {
+        remember(item.uri, thumbW, thumbH) {
             ImageRequest
                 .Builder(cardContext)
                 .data(item.uri)
-                .size(thumbnailDecodePx)
+                .size(thumbW, thumbH)
+                .scale(Scale.FIT)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .crossfade(180)
@@ -755,4 +789,25 @@ private fun ScreenshotCard(
             }
         }
     }
+}
+
+/** Hard cap on decoded edge length to avoid pathological allocations (very large source files). */
+private const val MaxScreenshotDecodeEdgePx = 4096
+
+/**
+ * Decode bounds for [AsyncImage] with [ContentScale.Fit]: at most the UI container, at most the
+ * intrinsic image size, and at most [MaxScreenshotDecodeEdgePx].
+ */
+private fun screenshotDecodeBounds(
+    containerWidthPx: Int,
+    containerHeightPx: Int,
+    intrinsicWidthPx: Int?,
+    intrinsicHeightPx: Int?,
+): Pair<Int, Int> {
+    val tw = containerWidthPx.coerceIn(1, MaxScreenshotDecodeEdgePx)
+    val th = containerHeightPx.coerceIn(1, MaxScreenshotDecodeEdgePx)
+    val iw = intrinsicWidthPx?.takeIf { it > 0 }
+    val ih = intrinsicHeightPx?.takeIf { it > 0 }
+    if (iw == null || ih == null) return tw to th
+    return (minOf(tw, iw).coerceAtLeast(1)) to (minOf(th, ih).coerceAtLeast(1))
 }

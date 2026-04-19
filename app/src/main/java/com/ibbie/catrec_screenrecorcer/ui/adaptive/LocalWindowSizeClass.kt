@@ -13,6 +13,6 @@ import androidx.compose.ui.unit.dp
  * Defaults suit previews when not provided.
  */
 val LocalWindowSizeClass =
-    compositionLocalOf<WindowSizeClass> {
+    compositionLocalOf {
         WindowSizeClass.calculateFromSize(DpSize(400.dp, 800.dp))
     }

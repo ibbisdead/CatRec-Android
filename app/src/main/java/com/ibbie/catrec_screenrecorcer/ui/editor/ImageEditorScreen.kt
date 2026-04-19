@@ -99,7 +99,7 @@ private suspend fun saveMergedToGallery(
                 ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, name)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    if (Build.VERSION.SDK_INT >= 29) {
                         put(
                             MediaStore.Images.Media.RELATIVE_PATH,
                             Environment.DIRECTORY_PICTURES + "/CatRec/Screenshots",
@@ -114,7 +114,7 @@ private suspend fun saveMergedToGallery(
             resolver.openOutputStream(uri)?.use { os ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 92, os)
             } ?: return@withContext false
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= 29) {
                 resolver.update(
                     uri,
                     ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
@@ -135,6 +135,8 @@ fun ImageEditorScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val toastImageEditorSaved = stringResource(R.string.image_editor_saved)
+    val toastImageEditorSaveFailed = stringResource(R.string.image_editor_save_failed)
     val scope = rememberCoroutineScope()
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -213,10 +215,10 @@ fun ImageEditorScreen(
             if (merged !== b) merged.recycle()
             saving = false
             if (ok) {
-                Toast.makeText(context, context.getString(R.string.image_editor_saved), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, toastImageEditorSaved, Toast.LENGTH_SHORT).show()
                 navController.popBackStack()
             } else {
-                Toast.makeText(context, context.getString(R.string.image_editor_save_failed), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, toastImageEditorSaveFailed, Toast.LENGTH_SHORT).show()
             }
         }
     }

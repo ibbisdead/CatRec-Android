@@ -47,6 +47,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import androidx.core.net.toUri
 
 @Composable
 fun CropScreen(
@@ -64,7 +65,7 @@ fun CropScreen(
     LaunchedEffect(imageUriString) {
         withContext(Dispatchers.IO) {
             try {
-                val uri = Uri.parse(imageUriString)
+                val uri = imageUriString.toUri()
                 val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
                 bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()

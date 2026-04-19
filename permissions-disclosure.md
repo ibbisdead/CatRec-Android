@@ -30,8 +30,15 @@ This document explains every permission CatRec requests, why it is needed, and h
 ### `CAPTURE_AUDIO_OUTPUT`
 **Why needed:** Allows CatRec to capture internal device audio (system sounds and app audio). This is only used when you enable "Internal Audio" in settings. This permission is reserved for screen-recorder use cases by Android.
 
-### `READ_MEDIA_VIDEO` / `READ_EXTERNAL_STORAGE`
-**Why needed:** Allows CatRec to display your saved recordings in the Library tab. These permissions are only used to read video files from the `Movies/CatRec` folder on your device; CatRec never reads unrelated files.
+### `READ_MEDIA_AUDIO`
+**Why needed:** On Android 13 and above, this lets CatRec discover optional microphone sidecar files (`.m4a` under CatRec music/recordings paths in MediaStore) so the Library can show when a separate mic track exists for a recording. It is **not** used to scan your general music library.
+
+### `READ_EXTERNAL_STORAGE`
+**Why needed:** On Android 12 and below, used for the same MediaStore discovery and compatibility with older storage rules. On Android 13+, CatRec does **not** request broad photo/video storage access.
+
+**Photos & videos you pick:** When you choose an image or video (tools, watermark, merge, feedback attachments, etc.), CatRec uses Android’s **Photo Picker** (`PickVisualMedia`). You select specific items; the App does **not** use `READ_MEDIA_IMAGES` or `READ_MEDIA_VIDEO` for full-library access.
+
+**Your CatRec recordings list:** Videos and screenshots you created with CatRec are shown using MediaStore and paths under `Movies/CatRec` and `Pictures/CatRec`; the App does not require broad read access to all media on the device for that purpose.
 
 ### `WRITE_EXTERNAL_STORAGE`
 **Why needed:** Required on Android 8 and below to save recordings to external storage. On Android 9+, CatRec uses the MediaStore API instead and this permission is not requested.
@@ -63,4 +70,4 @@ This document explains every permission CatRec requests, why it is needed, and h
 
 If you have questions about these permissions, please contact: **ibbiedead@gmail.com**
 
-_Last updated: March 2026_
+_Last updated: April 2026_

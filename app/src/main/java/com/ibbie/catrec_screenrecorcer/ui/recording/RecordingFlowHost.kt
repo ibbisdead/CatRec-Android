@@ -69,6 +69,9 @@ import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 import com.ibbie.catrec_screenrecorcer.utils.PermissionInfo
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
+import androidx.core.net.toUri
+
+private const val RECORDING_FLOW_HOST_LOG = "RecordingFlowHost"
 
 private enum class RecordingFlowPermissionStep {
     IDLE,
@@ -95,6 +98,9 @@ fun FabRecordingBridge(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+    val toastScreenCaptureDenied = stringResource(R.string.toast_screen_capture_denied)
+    val betaFeedbackEmailSubject = stringResource(R.string.beta_feedback_email_subject)
+    val toastNoEmailApp = stringResource(R.string.toast_no_email_app)
     val lifecycleOwner = LocalLifecycleOwner.current
     val permissionManager = remember { PermissionManager(context) }
     val accent = LocalAccentColor.current
@@ -185,7 +191,7 @@ fun FabRecordingBridge(
     LaunchedEffect(setupStep) {
         when (setupStep) {
             RecordingFlowPermissionStep.NOTIFICATIONS -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                if (Build.VERSION.SDK_INT >= 33 &&
                     !permissionManager.isNotificationGranted()
                 ) {
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -215,7 +221,7 @@ fun FabRecordingBridge(
                     val intent =
                         Intent(
                             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            Uri.parse("package:${context.packageName}"),
+                            "package:${context.packageName}".toUri(),
                         )
                     overlayPermissionLauncher.launch(intent)
                 } else {
@@ -257,9 +263,9 @@ fun FabRecordingBridge(
         recordingUiSnapshot.isRecordingPaused,
         recordingUiSnapshot.isSaving,
     ) {
-        if (Log.isLoggable("RecordingFlowHost", Log.DEBUG)) {
+        if (Log.isLoggable(RECORDING_FLOW_HOST_LOG, Log.DEBUG)) {
             Log.d(
-                "RecordingFlowHost",
+                RECORDING_FLOW_HOST_LOG,
                 "AppControlNotification.refresh: rec=${recordingUiSnapshot.isRecording} buf=${recordingUiSnapshot.isBuffering} " +
                     "prep=${recordingUiSnapshot.isPrepared} paused=${recordingUiSnapshot.isRecordingPaused} saving=${recordingUiSnapshot.isSaving}",
             )
@@ -298,7 +304,7 @@ fun FabRecordingBridge(
                 viewModel.startRecordingService(context, result.resultCode, result.data!!)
                 (context as? Activity)?.moveTaskToBack(true)
             } else {
-                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, toastScreenCaptureDenied, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -310,7 +316,7 @@ fun FabRecordingBridge(
                 viewModel.startBufferService(context, result.resultCode, result.data!!)
                 (context as? Activity)?.moveTaskToBack(true)
             } else {
-                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, toastScreenCaptureDenied, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -328,7 +334,7 @@ fun FabRecordingBridge(
                     )
                 }, 450L)
             } else {
-                Toast.makeText(context, context.getString(R.string.toast_screen_capture_denied), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, toastScreenCaptureDenied, Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -353,7 +359,7 @@ fun FabRecordingBridge(
         }
 
     fun checkStorageAndProceed() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT <= 28) {
             if (ContextCompat.checkSelfPermission(
                     context,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -415,10 +421,9 @@ fun FabRecordingBridge(
         PermissionRationaleDialog(
             missingPermissions = missingPermissions,
             onGrantNow = {
-                showPermissionDialog = false
                 setupStep = RecordingFlowPermissionStep.NOTIFICATIONS
             },
-            onDismiss = { showPermissionDialog = false },
+            onDismiss = { },
         )
     }
 
@@ -426,21 +431,19 @@ fun FabRecordingBridge(
         BetaNoticeDialog(
             accent = accent,
             onFeedback = {
-                showBetaNotice = false
                 viewModel.setBetaNoticeShown(true)
                 try {
                     context.startActivity(
-                        Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:")).apply {
+                        Intent(Intent.ACTION_SENDTO, "mailto:".toUri()).apply {
                             putExtra(Intent.EXTRA_EMAIL, arrayOf("ibbiedead@gmail.com"))
-                            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.beta_feedback_email_subject))
+                            putExtra(Intent.EXTRA_SUBJECT, betaFeedbackEmailSubject)
                         },
                     )
                 } catch (_: Exception) {
-                    Toast.makeText(context, context.getString(R.string.toast_no_email_app), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, toastNoEmailApp, Toast.LENGTH_SHORT).show()
                 }
             },
             onDismiss = {
-                showBetaNotice = false
                 viewModel.setBetaNoticeShown(true)
             },
         )

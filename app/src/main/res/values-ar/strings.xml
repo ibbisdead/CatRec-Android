@@ -50,9 +50,9 @@
 
     <string name="settings_section_recording_quality">جودة التسجيل</string>
     <string name="settings_open_audio_menu">إعدادات الصوت</string>
-    <string name="settings_open_audio_menu_sub">الميكروفون، الصوت الداخلي، معدل البت، القنوات...</string>
+    <string name="settings_open_audio_menu_sub">الميكروفون، الصوت الداخلي، معدل البت، القنوات…</string>
     <string name="settings_open_video_menu">إعدادات الفيديو و GIF</string>
-    <string name="settings_open_video_menu_sub">إعدادات GIF المسبقة، الدقة، FPS، معدل البت، برنامج التشفير...</string>
+    <string name="settings_open_video_menu_sub">إعدادات GIF المسبقة، الدقة، FPS، معدل البت، برنامج التشفير…</string>
 
     <string name="support_section_help">يساعد</string>
     <string name="support_send_feedback">إرسال ردود الفعل</string>
@@ -65,6 +65,7 @@
     <string name="action_delete">حذف</string>
     <string name="action_share">مشاركة</string>
     <string name="action_open">فتح</string>
+    <string name="action_edit">تعديل</string>
     <string name="consent_analytics_title">تحليلات الاستخدام</string>
     <string name="consent_analytics_message">ساعدنا على تحسين CatRec من خلال السماح بتحليلات الاستخدام والأعطال الاختيارية. يمكنك تغيير هذا في أي وقت من الإعدادات.</string>
     <string name="setting_usage_analytics">تحليلات الاستخدام</string>
@@ -236,7 +237,7 @@
     <string name="support_remove_ads_desc">شراء لمرة واحدة، بدون إعلانات للأبد</string>
     <string name="support_restore_purchases">استعادة المشتريات</string>
     <string name="support_restore_purchases_desc">مزامنة إزالة الإعلانات والمشتريات الأخرى من Google Play</string>
-    <string name="support_restore_purchases_toast">جارٍ التحقق من Google Play بحثًا عن مشترياتك...</string>
+    <string name="support_restore_purchases_toast">جارٍ التحقق من Google Play بحثًا عن مشترياتك…</string>
     <string name="support_play_promo_title">رمز ترويجي (إزالة الإعلانات)</string>
     <string name="support_play_promo_desc">يفتح شاشة شراء Google Play لإزالة الإعلانات. انقر طريقة الدفع ← استرداد الرمز، أدخل الرمز ثم أكمل. إذا بقيت الإعلانات، انقر استعادة المشتريات أدناه.</string>
     <string name="support_ads_removed">تمت إزالة الإعلانات — شكراً!</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">أخبر أصدقاءك عنا</string>
     <string name="support_changelog">سجل التغييرات</string>
     <string name="support_changelog_desc">اطلع على الجديد في هذا الإصدار</string>
+    <string name="support_credits">شكر وتقدير</string>
+    <string name="support_credits_desc">المختبرون والمبدعون الذين ساعدوا CatRec</string>
+    <string name="dialog_credits_title">شكر وتقدير</string>
+    <string name="credits_intro">شكرًا لهؤلاء على تجربة ومشاركة CatRec. اضغط على الاسم لفتح القناة.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">تم حفظ لقطة الشاشة</string>
@@ -286,7 +291,14 @@
     <string name="toast_enable_show_taps">فعّل «إظهار النقرات» يدوياً</string>
     <string name="toast_overlay_permission">يرجى منح إذن التراكب</string>
     <string name="setting_countdown_off">لا يوجد</string>
-    <string name="setting_countdown_seconds">%1$d ثوانٍ</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="zero">%1$d ثوانٍ</item>
+        <item quantity="one">%1$d ثوانٍ</item>
+        <item quantity="two">%1$d ثوانٍ</item>
+        <item quantity="few">%1$d ثوانٍ</item>
+        <item quantity="many">%1$d ثوانٍ</item>
+        <item quantity="other">%1$d ثوانٍ</item>
+    </plurals>
     <string name="setting_internal_audio_note">أندرويد 10 وأعلى فقط</string>
     <string name="gate_feature_separate_mic">مسار ميكروفون منفصل</string>
     <string name="gate_feature_camera_overlay">إعدادات تراكب الكاميرا</string>
@@ -402,10 +414,24 @@
     <string name="delete_recording_message">سيُحذف «%1$s» نهائياً.</string>
     <string name="delete_screenshot_title">حذف لقطة الشاشة؟</string>
     <string name="delete_screenshot_message">ستُحذف «%1$s» نهائياً.</string>
-    <string name="multiselect_selected_count">تم تحديد %1$d</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="zero">تم تحديد %1$d</item>
+        <item quantity="one">تم تحديد %1$d</item>
+        <item quantity="two">تم تحديد %1$d</item>
+        <item quantity="few">تم تحديد %1$d</item>
+        <item quantity="many">تم تحديد %1$d</item>
+        <item quantity="other">تم تحديد %1$d</item>
+    </plurals>
     <string name="multiselect_select_all">حدد الكل</string>
     <string name="multiselect_deselect_all">قم بإلغاء تحديد الكل</string>
-    <string name="multiselect_delete_title">هل تريد حذف %1$d من العناصر؟</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="zero">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="one">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="two">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="few">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="many">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="other">هل تريد حذف %1$d من العناصر؟</item>
+    </plurals>
     <string name="multiselect_delete_message">سيتم حذف هذه الملفات نهائيًا.</string>
     <string name="multiselect_share_recordings">مشاركة التسجيلات</string>
     <string name="multiselect_share_screenshots">مشاركة لقطات الشاشة</string>
@@ -414,6 +440,7 @@
     <string name="player_rename_failed">فشلت إعادة التسمية: %1$s</string>
     <string name="player_delete_failed">فشل الحذف: %1$s</string>
     <string name="player_no_app_video">لم يُعثر على تطبيق لفتح الفيديو</string>
+    <string name="player_video_unavailable">هذا الفيديو لم يعد متاحًا. ربما تم حذفه أو نقله.</string>
     <string name="player_rename_title">إعادة التسمية</string>
     <string name="player_file_name_label">اسم الملف</string>
     <string name="trim_title">قص الفيديو</string>
@@ -429,7 +456,6 @@
     <string name="content_desc_back">رجوع</string>
     <string name="content_desc_refresh">تحديث</string>
     <string name="content_desc_options">خيارات</string>
-    <string name="content_desc_logo">شعار CatRec</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">تحرير الفيديو</string>
@@ -467,9 +493,7 @@
     <string name="merge_run">دمج وحفظ</string>
     <string name="merge_need_two">أضف مقطعي فيديو على الأقل (يتم الاحتفاظ بالترتيب).</string>
     <string name="merge_clip_label">المقطع %1$d</string>
-    <string name="home_app_name">كاتريك</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">الخامس%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec مسجل الشاشة</string>
@@ -508,6 +532,10 @@
     <string name="perm_rationale_overlay">مطلوب لعرض فقاعة التحكم العائمة وتراكب الكاميرا فوق التطبيقات الأخرى أثناء التسجيل.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">خدمة أمامية أثناء التسجيل: التقاط الشاشة (MediaProjection) مع صوت ميكروفون اختياري وإشعار دائم.</string>
+    <string name="service_description_overlay">خدمة أمامية أثناء عرض الطبقة العائمة: معاينة الكاميرا داخل الصورة مع إشعار دائم.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">تسجيل الشاشة</string>
@@ -558,6 +586,10 @@
     <string name="notif_camera_in_use_title">الكاميرا قيد الاستخدام</string>
     <string name="notif_channel_app_controls">ضوابط سريعة</string>
     <string name="notif_channel_app_controls_desc">اختصارات التسجيل ولقطة الشاشة والتراكب</string>
+    <string name="notif_channel_recording_interrupted">توقف التسجيل</string>
+    <string name="notif_channel_recording_interrupted_desc">يُعرض إذا أوقف النظام CatRec أثناء التقاط نشط</string>
+    <string name="notif_recording_interrupted_title">توقف الالتقاط</string>
+    <string name="notif_recording_interrupted_text">أغلق النظام CatRec أو أعاد تشغيله أثناء التسجيل أو التقاط المقاطع. قد يكون ملفك الأخير غير مكتمل. افتح CatRec للبدء من جديد.</string>
     <string name="notif_app_controls_title">كاتريك</string>
     <string name="notif_app_controls_text_idle">خامل - اضغط على الإجراء أدناه</string>
     <string name="notif_action_screenshot">لقطة الشاشة</string>

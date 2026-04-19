@@ -42,13 +42,14 @@ class ClipperTileService : TileService() {
                     Intent(this, MainActivity::class.java).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                     }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (Build.VERSION.SDK_INT >= 34) {
                     startActivityAndCollapse(
                         PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE),
                     )
                 } else {
-                    @Suppress("DEPRECATION")
-                    startActivityAndCollapse(intent)
+                    // PendingIntent overload is API 34+. [collapse] is not a public SDK method on [TileService].
+                    // Starting the activity usually dismisses quick settings; no deprecated Intent overload needed.
+                    startActivity(intent)
                 }
             }
         }
@@ -61,7 +62,7 @@ class ClipperTileService : TileService() {
         tile.label = getString(R.string.tile_clipper_label)
         tile.icon = Icon.createWithResource(this, R.mipmap.ic_launcher)
         tile.state = if (isBuffering) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 29) {
             tile.subtitle =
                 when {
                     isBuffering -> getString(R.string.tile_subtitle_buffering)

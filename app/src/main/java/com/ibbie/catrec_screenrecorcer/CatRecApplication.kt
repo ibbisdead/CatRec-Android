@@ -61,7 +61,7 @@ class CatRecApplication : Application() {
         // has been disabled; without this, crash reports are silently dropped.
         // MainActivity will later call setCrashlyticsCollectionEnabled(false) if the user
         // previously declined the analytics consent prompt.
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
         // Avoid blocking process start; MainActivity re-syncs after reading consent/prefs.
         applicationScope.launch(Dispatchers.IO) {
             syncFirebaseUserIdentity(reportingEnabled = true)

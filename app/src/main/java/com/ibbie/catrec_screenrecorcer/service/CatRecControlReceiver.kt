@@ -58,6 +58,9 @@ class CatRecControlReceiver : BroadcastReceiver() {
                 return
             }
             ACTION_EXIT_APP -> {
+                if (Log.isLoggable(TAG, Log.DEBUG)) {
+                    Log.d(TAG, "ACTION_EXIT_APP: stop overlay, exit capture service, cancel idle notif")
+                }
                 app.stopService(Intent(app, OverlayService::class.java))
                 app.startService(
                     Intent(app, ScreenRecordService::class.java).apply {
@@ -65,7 +68,11 @@ class CatRecControlReceiver : BroadcastReceiver() {
                     },
                 )
                 AppControlNotification.cancel(app)
-                app.sendBroadcast(Intent(MainActivity.ACTION_FINISH_UI).setPackage(app.packageName))
+                // Post so the broadcast runs after this receiver returns; avoids competing with the
+                // notification shade / input dispatcher for the same frame as notification exit.
+                Handler(Looper.getMainLooper()).post {
+                    app.sendBroadcast(Intent(MainActivity.ACTION_FINISH_UI).setPackage(app.packageName))
+                }
                 return
             }
         }

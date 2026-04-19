@@ -105,6 +105,7 @@ import com.ibbie.catrec_screenrecorcer.ui.tools.CompressVideoScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.MergeVideosScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.ToolsScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.VideoToGifScreen
+import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
@@ -151,12 +152,12 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
 
     val accentColor =
         remember(accentHex) {
-            runCatching { Color(android.graphics.Color.parseColor("#${accentHex.removePrefix("#").take(6)}")) }
+            runCatching { Color("#${accentHex.removePrefix("#").take(6)}".toColorInt()) }
                 .getOrDefault(CrimsonRed)
         }
     val accentColor2 =
         remember(accentHex2) {
-            runCatching { Color(android.graphics.Color.parseColor("#${accentHex2.removePrefix("#").take(6)}")) }
+            runCatching { Color("#${accentHex2.removePrefix("#").take(6)}".toColorInt()) }
                 .getOrDefault(Color(0xFFFF6600))
         }
     val accentBrush: Brush =
@@ -240,8 +241,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
     // this is the local equivalent of optimistic UI / decoupling indicator from back stack).
     var pendingTabRoute by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(currentRoute) {
-        val route = currentRoute
-        if (route != null && mainTabScreens.any { it.route == route }) {
+        if (currentRoute != null && mainTabScreens.any { it.route == currentRoute }) {
             pendingTabRoute = null
         }
     }

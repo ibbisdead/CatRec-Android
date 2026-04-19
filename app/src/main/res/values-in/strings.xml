@@ -65,6 +65,7 @@
     <string name="action_delete">Hapus</string>
     <string name="action_share">Bagikan</string>
     <string name="action_open">Buka</string>
+    <string name="action_edit">Sunting</string>
     <string name="consent_analytics_title">Analisis penggunaan</string>
     <string name="consent_analytics_message">Bantu kami meningkatkan CatRec dengan mengizinkan penggunaan opsional dan analisis kerusakan. Iklan yang dipersonalisasi dikontrol secara terpisah di Pengaturan (diaktifkan secara default). Anda dapat mengubahnya kapan saja di Pengaturan.</string>
     <string name="setting_usage_analytics">Analitik penggunaan</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">Beritahu teman Anda tentang kami</string>
     <string name="support_changelog">Catatan Perubahan</string>
     <string name="support_changelog_desc">Lihat apa yang baru di versi ini</string>
+    <string name="support_credits">Ucapan terima kasih</string>
+    <string name="support_credits_desc">Penguji dan kreator yang membantu CatRec</string>
+    <string name="dialog_credits_title">Ucapan terima kasih</string>
+    <string name="credits_intro">Terima kasih kepada mereka yang telah menguji dan membagikan CatRec. Ketuk nama untuk membuka salurannya.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Tangkapan layar tersimpan</string>
@@ -286,7 +291,9 @@
     <string name="toast_enable_show_taps">Aktifkan «Tampilkan ketukan» secara manual</string>
     <string name="toast_overlay_permission">Harap berikan izin overlay</string>
     <string name="setting_countdown_off">Nonaktif</string>
-    <string name="setting_countdown_seconds">%1$d detik</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d detik</item>
+    </plurals>
     <string name="setting_internal_audio_note">Hanya Android 10+</string>
     <string name="gate_feature_separate_mic">Trek Mikrofon Terpisah</string>
     <string name="gate_feature_camera_overlay">Pengaturan Overlay Kamera</string>
@@ -402,10 +409,14 @@
     <string name="delete_recording_message">"%1$s" akan dihapus secara permanen.</string>
     <string name="delete_screenshot_title">Hapus tangkapan layar?</string>
     <string name="delete_screenshot_message">"%1$s" akan dihapus secara permanen.</string>
-    <string name="multiselect_selected_count">%1$d dipilih</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d dipilih</item>
+    </plurals>
     <string name="multiselect_select_all">Pilih semua</string>
     <string name="multiselect_deselect_all">Batalkan pilihan semua</string>
-    <string name="multiselect_delete_title">Hapus %1$d item?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">Hapus %1$d item?</item>
+    </plurals>
     <string name="multiselect_delete_message">File-file ini akan dihapus secara permanen.</string>
     <string name="multiselect_share_recordings">Bagikan rekaman</string>
     <string name="multiselect_share_screenshots">Bagikan tangkapan layar</string>
@@ -414,6 +425,7 @@
     <string name="player_rename_failed">Gagal mengganti nama: %1$s</string>
     <string name="player_delete_failed">Gagal menghapus: %1$s</string>
     <string name="player_no_app_video">Tidak ditemukan aplikasi untuk membuka video</string>
+    <string name="player_video_unavailable">Video ini tidak lagi tersedia. Mungkin telah dihapus atau dipindahkan.</string>
     <string name="player_rename_title">Ganti nama</string>
     <string name="player_file_name_label">Nama berkas</string>
     <string name="trim_title">Potong video</string>
@@ -429,7 +441,6 @@
     <string name="content_desc_back">Kembali</string>
     <string name="content_desc_refresh">Menyegarkan</string>
     <string name="content_desc_options">Pilihan</string>
-    <string name="content_desc_logo">Logo CatRec</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Pengeditan video</string>
@@ -467,9 +478,7 @@
     <string name="merge_run">Gabungkan &amp; simpan</string>
     <string name="merge_need_two">Tambahkan setidaknya dua video (pesanan dipertahankan).</string>
     <string name="merge_clip_label">Klip %1$d</string>
-    <string name="home_app_name">Rek Cat</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">Perekam Layar CatRec</string>
@@ -508,6 +517,10 @@
     <string name="perm_rationale_overlay">Diperlukan untuk menampilkan gelembung kontrol mengambang dan hamparan kamera di atas aplikasi lain selama perekaman.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Layanan latar depan saat merekam: tangkapan layar (MediaProjection) dengan audio mikrofon opsional dan notifikasi persisten.</string>
+    <string name="service_description_overlay">Layanan latar depan saat overlay mengambang ditampilkan: pratinjau kamera picture-in-picture dengan notifikasi persisten.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Rekaman layar</string>
@@ -558,6 +571,10 @@
     <string name="notif_camera_in_use_title">Kamera sedang digunakan</string>
     <string name="notif_channel_app_controls">Kontrol cepat</string>
     <string name="notif_channel_app_controls_desc">Pintasan perekaman, tangkapan layar, dan hamparan</string>
+    <string name="notif_channel_recording_interrupted">Perekaman terputus</string>
+    <string name="notif_channel_recording_interrupted_desc">Ditampilkan jika sistem menghentikan CatRec saat penangkapan aktif</string>
+    <string name="notif_recording_interrupted_title">Penangkapan dihentikan</string>
+    <string name="notif_recording_interrupted_text">CatRec ditutup atau dimulai ulang oleh sistem saat perekaman atau penangkapan klip aktif. File terakhir Anda mungkin tidak lengkap. Buka CatRec untuk mulai lagi.</string>
     <string name="notif_app_controls_title">Rek Cat</string>
     <string name="notif_app_controls_text_idle">Menganggur — ketuk tindakan di bawah</string>
     <string name="notif_action_screenshot">Tangkapan layar</string>

@@ -49,7 +49,7 @@ class RollingBufferEngine(
     private val dpi: Int,
     private val bitrate: Int,
     private val fps: Int,
-    private val audioMode: AudioMode,
+    audioMode: AudioMode,
     private val mediaProjection: MediaProjection,
     private val encoderType: String,
     private val audioBitrate: Int = 128_000,
@@ -76,8 +76,6 @@ class RollingBufferEngine(
         /** Video drain pacing — see [ScreenRecorderEngine] companion. */
         private const val VIDEO_DRAIN_SLEEP_MS = 2L
 
-        /** Default rolling window (1 min at 10 s/segment). */
-        const val MAX_SEGMENTS_DEFAULT = 6
         private const val MIN_MAX_SEGMENTS = 6 // 1 min
         private const val ABSOLUTE_MAX_SEGMENTS = 30 // 5 min × 6 segments
 
@@ -265,14 +263,6 @@ class RollingBufferEngine(
         internalRecord?.release()
         internalRecord = null
         Log.d(TAG, "Buffer engine stopped.")
-    }
-
-    fun mute() {
-        isMuted.set(true)
-    }
-
-    fun unmute() {
-        isMuted.set(false)
     }
 
     /**
@@ -758,7 +748,7 @@ class RollingBufferEngine(
         params: Map<String, String> = emptyMap(),
     ) {
         try {
-            val bundle = android.os.Bundle()
+            val bundle = Bundle()
             params.forEach { (k, v) -> bundle.putString(k, v.take(100)) }
             FirebaseAnalytics.getInstance(context).logEvent(name, bundle)
             FirebaseCrashlytics.getInstance().log("analytics[$name] $params")
@@ -843,7 +833,7 @@ class RollingBufferEngine(
             Log.d(TAG, "RECORD_AUDIO permission: ${if (permGranted) "GRANTED" else "DENIED"}")
             if (!permGranted) throw SecurityException("RECORD_AUDIO permission denied")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+            if (Build.VERSION.SDK_INT >= 29 &&
                 (mAudioMode == AudioMode.INTERNAL || mAudioMode == AudioMode.MIXED)
             ) {
                 try {

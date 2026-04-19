@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -27,20 +26,18 @@ object RecordingInterruptionNotifier {
 
     fun ensureChannel(context: Context) {
         val mgr = context.getSystemService(NotificationManager::class.java) ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val existing = mgr.getNotificationChannel(CHANNEL_ID)
-            if (existing == null) {
-                mgr.createNotificationChannel(
-                    NotificationChannel(
-                        CHANNEL_ID,
-                        context.getString(R.string.notif_channel_recording_interrupted),
-                        NotificationManager.IMPORTANCE_HIGH,
-                    ).apply {
-                        description = context.getString(R.string.notif_channel_recording_interrupted_desc)
-                        setShowBadge(true)
-                    },
-                )
-            }
+        val existing = mgr.getNotificationChannel(CHANNEL_ID)
+        if (existing == null) {
+            mgr.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID,
+                    context.getString(R.string.notif_channel_recording_interrupted),
+                    NotificationManager.IMPORTANCE_HIGH,
+                ).apply {
+                    description = context.getString(R.string.notif_channel_recording_interrupted_desc)
+                    setShowBadge(true)
+                },
+            )
         }
     }
 
@@ -93,12 +90,7 @@ object RecordingInterruptionNotifier {
             )
         val triggerAt = SystemClock.elapsedRealtime() + 15_000L
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
-            } else {
-                @Suppress("DEPRECATION")
-                am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
-            }
+            am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
         } catch (e: Exception) {
             Log.e("RecordingInterruption", "scheduleRetryAlarm failed", e)
         }

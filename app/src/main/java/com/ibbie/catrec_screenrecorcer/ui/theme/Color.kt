@@ -5,13 +5,8 @@ import androidx.compose.ui.graphics.Color
 // ─── Cyber-Cat Core Palette ───────────────────────────────────────────────────
 val CyberBlack = Color(0xFF0A0A0A) // deep void background
 val CrimsonRed = Color(0xFFFF0033) // primary accent
-val DarkCrimson = Color(0xFF8B0000) // secondary accent
 val RimRed = Color(0xFF4D0011) // 1dp rim-light border
-val CrimsonGlow = Color(0x33FF0033) // transparent glow overlay
 
-// ─── Legacy aliases (kept for backwards compatibility in other screens) ────────
-val AmoledBlack = Color(0xFF0A0A0A)
-val AccentRed = Color(0xFFFF0033)
 val SwitchOffGray = Color(0xFF4C4C4C)
 val TextWhite = Color(0xFFFFFFFF)
 val TextGray = Color(0xFFAFAFAF)

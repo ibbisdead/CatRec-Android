@@ -14,4 +14,10 @@ data class MediaItem(
     val dateModifiedMs: Long? = null,
     /** Video: separate mic track exists. */
     val hasSeparateAudio: Boolean = false,
+    /**
+     * Display pixel size when known (screenshots from MediaStore), after orientation swap.
+     * Used to cap Coil decode so we never allocate above source resolution.
+     */
+    val widthPx: Int? = null,
+    val heightPx: Int? = null,
 )

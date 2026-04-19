@@ -65,6 +65,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_share">Share</string>
     <string name="action_open">Open</string>
+    <string name="action_edit">Düzenle</string>
     <string name="consent_analytics_title">Kullanım analitiği</string>
     <string name="consent_analytics_message">İsteğe bağlı kullanıma ve kilitlenme analizlerine izin vererek CatRec\'i geliştirmemize yardımcı olun. Kişiselleştirilmiş reklamlar Ayarlar\'da ayrı olarak kontrol edilir (varsayılan olarak açıktır). Bunu istediğiniz zaman Ayarlar\'dan değiştirebilirsiniz.</string>
     <string name="setting_usage_analytics">Usage analytics</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">Arkadaşlarınıza bizden bahsedin</string>
     <string name="support_changelog">Changelog</string>
     <string name="support_changelog_desc">Bu sürümdeki yeniliklere bakın</string>
+    <string name="support_credits">Katkıda bulunanlar</string>
+    <string name="support_credits_desc">CatRec\'e yardımcı olan testçiler ve içerik üreticileri</string>
+    <string name="dialog_credits_title">Katkıda bulunanlar</string>
+    <string name="credits_intro">CatRec\'i test edip paylaştıkları için bu kişilere teşekkürler. Kanalı açmak için bir isme dokunun.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Screenshot saved</string>
@@ -286,7 +291,10 @@
     <string name="toast_enable_show_taps">Enable \'Show Taps\' manually</string>
     <string name="toast_overlay_permission">Please grant overlay permission</string>
     <string name="setting_countdown_off">Off</string>
-    <string name="setting_countdown_seconds">%1$d seconds</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="one">%1$d saniye</item>
+        <item quantity="other">%1$d saniye</item>
+    </plurals>
     <string name="setting_internal_audio_note">Android 10+ only</string>
     <string name="gate_feature_separate_mic">Separate Mic Track</string>
     <string name="gate_feature_camera_overlay">Camera Overlay Settings</string>
@@ -402,10 +410,16 @@
     <string name="delete_recording_message">"%1$s" kalıcı olarak silinecek.</string>
     <string name="delete_screenshot_title">Ekran görüntüsü silinsin mi?</string>
     <string name="delete_screenshot_message">"%1$s" kalıcı olarak silinecek.</string>
-    <string name="multiselect_selected_count">%1$d seçildi</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="one">%1$d seçildi</item>
+        <item quantity="other">%1$d seçildi</item>
+    </plurals>
     <string name="multiselect_select_all">Tümünü seç</string>
     <string name="multiselect_deselect_all">Tümünün seçimini kaldır</string>
-    <string name="multiselect_delete_title">%1$d öğe silinsin mi?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="one">%1$d öğe silinsin mi?</item>
+        <item quantity="other">%1$d öğe silinsin mi?</item>
+    </plurals>
     <string name="multiselect_delete_message">Bu dosyalar kalıcı olarak silinecek.</string>
     <string name="multiselect_share_recordings">Kayıtları paylaş</string>
     <string name="multiselect_share_screenshots">Ekran görüntülerini paylaşın</string>
@@ -414,6 +428,7 @@
     <string name="player_rename_failed">Yeniden adlandırılamadı: %1$s</string>
     <string name="player_delete_failed">Silinemedi: %1$s</string>
     <string name="player_no_app_video">Videoyu açacak uygulama bulunamadı</string>
+    <string name="player_video_unavailable">Bu video artık kullanılamıyor. Silinmiş veya taşınmış olabilir.</string>
     <string name="player_rename_title">Yeniden isimlendirmek</string>
     <string name="player_file_name_label">Dosya adı</string>
     <string name="trim_title">Videoyu kırp</string>
@@ -429,7 +444,6 @@
     <string name="content_desc_back">Geri</string>
     <string name="content_desc_refresh">Yenile</string>
     <string name="content_desc_options">Seçenekler</string>
-    <string name="content_desc_logo">CatRec logosu</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Video düzenleme</string>
@@ -467,9 +481,7 @@
     <string name="merge_run">Birleştir ve kaydet</string>
     <string name="merge_need_two">En az iki video ekleyin (sıra korunur).</string>
     <string name="merge_clip_label">%1$d. klip</string>
-    <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec Ekran Kaydedici</string>
@@ -508,6 +520,10 @@
     <string name="perm_rationale_overlay">Kayıt sırasında kayan kontrol balonunu ve kamera katmanını diğer uygulamaların üzerinde göstermek için gereklidir.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Kayıt sırasında ön plan hizmeti: MediaProjection ile ekran yakalama, isteğe bağlı mikrofon sesi ve kalıcı bildirim.</string>
+    <string name="service_description_overlay">Yüzen bindirme gösterilirken ön plan hizmeti: resim içinde resim kamera önizlemesi ve kalıcı bildirim.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Ekran kaydı</string>
@@ -558,6 +574,10 @@
     <string name="notif_camera_in_use_title">Kullanılan kamera</string>
     <string name="notif_channel_app_controls">Hızlı kontroller</string>
     <string name="notif_channel_app_controls_desc">Kayıt, ekran görüntüsü ve yer paylaşımı kısayolları</string>
+    <string name="notif_channel_recording_interrupted">Kayıt kesildi</string>
+    <string name="notif_channel_recording_interrupted_desc">Sistem etkin bir yakalama sırasında CatRec\'i durdurduysa gösterilir</string>
+    <string name="notif_recording_interrupted_title">Yakalama durdu</string>
+    <string name="notif_recording_interrupted_text">Kayıt veya klip yakalama devam ederken sistem CatRec\'i kapattı veya yeniden başlattı. Son dosyanız eksik olabilir. Yeniden başlamak için CatRec\'i açın.</string>
     <string name="notif_app_controls_title">CatRec</string>
     <string name="notif_app_controls_text_idle">Boşta — aşağıdaki bir işleme dokunun</string>
     <string name="notif_action_screenshot">Ekran görüntüsü</string>

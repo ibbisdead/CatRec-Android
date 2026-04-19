@@ -36,13 +36,12 @@ internal object VideoEncoderResolver {
     ): String? {
         val mediaCodecList = regularCodecList()
         val hardware =
-            mediaCodecList.codecInfos
-                .filter { info ->
-                    info.isEncoder &&
-                        info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
-                        !info.name.contains("google", ignoreCase = true) &&
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) info.isHardwareAccelerated else true
-                }.firstOrNull()
+            mediaCodecList.codecInfos.firstOrNull { info ->
+                info.isEncoder &&
+                    info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
+                    !info.name.contains("google", ignoreCase = true) &&
+                    if (Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated else true
+            }
                 ?.name
         if (hardware != null) return hardware
         val discoveryFormat =

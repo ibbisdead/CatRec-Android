@@ -48,10 +48,10 @@ fun CaptureModePill(
     selectedMode: String,
     onModeSelected: (String) -> Unit,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
     isRecording: Boolean = false,
     isBuffering: Boolean = false,
     captureMode: String = CaptureMode.RECORD,
-    modifier: Modifier = Modifier,
 ) {
     val isDark = !MaterialTheme.colorScheme.isLightTheme()
     val onGlass = remember(isDark) { if (isDark) Color.White.copy(alpha = 0.85f) else Color.Black.copy(alpha = 0.75f) }

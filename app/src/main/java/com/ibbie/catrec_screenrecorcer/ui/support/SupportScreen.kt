@@ -43,6 +43,7 @@ import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
+import androidx.core.net.toUri
 
 private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md"
 private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
@@ -78,6 +79,17 @@ fun SupportScreen(
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val toastBillingThanksSupportMe = stringResource(R.string.billing_thanks_support_me)
+    val toastBillingPending = stringResource(R.string.billing_pending)
+    val toastSupportYoutube = stringResource(R.string.support_toast_youtube)
+    val toastBillingStoreNotReady = stringResource(R.string.billing_store_not_ready)
+    val toastSupportAdFailed = stringResource(R.string.support_toast_ad_failed)
+    val toastSupportThanksAd = stringResource(R.string.support_toast_thanks_ad)
+    val textSupportAdLoading = stringResource(R.string.support_toast_ad_loading)
+    val toastSupportNoAd = stringResource(R.string.support_toast_no_ad)
+    val toastRestorePurchases = stringResource(R.string.support_restore_purchases_toast)
+    val textShareApp = stringResource(R.string.toast_share_app)
+    val toastSupportBrowser = stringResource(R.string.support_toast_browser)
     val activity = context as? Activity
     val adsDisabled by viewModel.adsDisabled.collectAsState()
     val billing =
@@ -131,9 +143,9 @@ fun SupportScreen(
         billing.uiEvents.collect { ev ->
             when (ev) {
                 BillingUiEvent.SupportMeConsumed ->
-                    Toast.makeText(context, context.getString(R.string.billing_thanks_support_me), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, toastBillingThanksSupportMe, Toast.LENGTH_SHORT).show()
                 BillingUiEvent.RemoveAdsPending ->
-                    Toast.makeText(context, context.getString(R.string.billing_pending), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, toastBillingPending, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -214,9 +226,9 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_subscribe_youtube_desc),
                 onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://youtube.com/@ibbie")))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, "http://youtube.com/@ibbie".toUri()))
                     } catch (_: Exception) {
-                        Toast.makeText(context, context.getString(R.string.support_toast_youtube), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastSupportYoutube, Toast.LENGTH_SHORT).show()
                     }
                 },
             )
@@ -237,7 +249,7 @@ fun SupportScreen(
                     if (adsDisabled) return@SupportActionCard
                     if (activity == null) return@SupportActionCard
                     if (!billing.launchRemoveAdsPurchase(activity)) {
-                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastBillingStoreNotReady, Toast.LENGTH_SHORT).show()
                         billing.refreshPurchasesIfConnected()
                     }
                 },
@@ -271,22 +283,22 @@ fun SupportScreen(
                                             activity.resetWindowFocusAfterFullscreenOverlay()
                                             rewardedAd = null
                                             loadRewardedAd()
-                                            Toast.makeText(context, context.getString(R.string.support_toast_ad_failed), Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, toastSupportAdFailed, Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 ad.show(activity) {
-                                    Toast.makeText(context, context.getString(R.string.support_toast_thanks_ad), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, toastSupportThanksAd, Toast.LENGTH_SHORT).show()
                                 }
                             }
                             isAdLoading ->
                                 Toast
                                     .makeText(
                                         context,
-                                        context.getString(R.string.support_toast_ad_loading),
+                                        textSupportAdLoading,
                                         Toast.LENGTH_SHORT,
                                     ).show()
                             else -> {
-                                Toast.makeText(context, context.getString(R.string.support_toast_no_ad), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, toastSupportNoAd, Toast.LENGTH_SHORT).show()
                                 loadRewardedAd()
                             }
                         }
@@ -303,7 +315,7 @@ fun SupportScreen(
                 onClick = {
                     if (activity == null) return@SupportActionCard
                     if (!billing.launchSupportMePurchase(activity)) {
-                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastBillingStoreNotReady, Toast.LENGTH_SHORT).show()
                         billing.refreshPurchasesIfConnected()
                     }
                 },
@@ -317,9 +329,9 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_restore_purchases_desc),
                 onClick = {
                     if (billing.refreshPurchasesIfConnected()) {
-                        Toast.makeText(context, context.getString(R.string.support_restore_purchases_toast), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastRestorePurchases, Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastBillingStoreNotReady, Toast.LENGTH_SHORT).show()
                     }
                 },
             )
@@ -336,7 +348,7 @@ fun SupportScreen(
                     // App-specific Play codes must be redeemed inside Google Play’s purchase UI (payment method → Redeem),
                     // not on play.google.com/redeem — same entry point as Remove ads.
                     if (!billing.launchRemoveAdsPurchase(activity)) {
-                        Toast.makeText(context, context.getString(R.string.billing_store_not_ready), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastBillingStoreNotReady, Toast.LENGTH_SHORT).show()
                         billing.refreshPurchasesIfConnected()
                     }
                 },
@@ -352,7 +364,7 @@ fun SupportScreen(
                     val shareIntent =
                         Intent().apply {
                             action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.toast_share_app))
+                            putExtra(Intent.EXTRA_TEXT, textShareApp)
                             type = "text/plain"
                         }
                     context.startActivity(Intent.createChooser(shareIntent, null))
@@ -393,9 +405,9 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_privacy_policy_desc),
                 onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri()))
                     } catch (_: Exception) {
-                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastSupportBrowser, Toast.LENGTH_SHORT).show()
                     }
                 },
             )
@@ -408,9 +420,9 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_terms_of_service_desc),
                 onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TERMS_OF_SERVICE_URL)))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, TERMS_OF_SERVICE_URL.toUri()))
                     } catch (_: Exception) {
-                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastSupportBrowser, Toast.LENGTH_SHORT).show()
                     }
                 },
             )
@@ -423,9 +435,9 @@ fun SupportScreen(
                 subtitle = stringResource(R.string.support_permissions_disclosure_desc),
                 onClick = {
                     try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PERMISSIONS_DISCLOSURE_URL)))
+                        context.startActivity(Intent(Intent.ACTION_VIEW, PERMISSIONS_DISCLOSURE_URL.toUri()))
                     } catch (_: Exception) {
-                        Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, toastSupportBrowser, Toast.LENGTH_SHORT).show()
                     }
                 },
             )
@@ -437,7 +449,7 @@ fun SupportScreen(
     if (showChangelogDialog) {
         val changelog100Items = stringArrayResource(R.array.changelog_v100_items).toList()
         AlertDialog(
-            onDismissRequest = { showChangelogDialog = false },
+            onDismissRequest = { },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             icon = { Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
@@ -452,7 +464,7 @@ fun SupportScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showChangelogDialog = false }) {
+                TextButton(onClick = { }) {
                     Text(stringResource(R.string.action_close))
                 }
             },
@@ -461,7 +473,7 @@ fun SupportScreen(
 
     if (showCreditsDialog) {
         AlertDialog(
-            onDismissRequest = { showCreditsDialog = false },
+            onDismissRequest = { },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             icon = { Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
@@ -480,9 +492,9 @@ fun SupportScreen(
                             credit = credit,
                             onOpenUrl = { url ->
                                 try {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                                 } catch (_: Exception) {
-                                    Toast.makeText(context, context.getString(R.string.support_toast_browser), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, toastSupportBrowser, Toast.LENGTH_SHORT).show()
                                 }
                             },
                         )
@@ -491,7 +503,7 @@ fun SupportScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showCreditsDialog = false }) {
+                TextButton(onClick = { }) {
                     Text(stringResource(R.string.action_close))
                 }
             },

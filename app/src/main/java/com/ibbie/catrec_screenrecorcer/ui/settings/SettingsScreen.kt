@@ -8,7 +8,9 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,6 +35,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -57,6 +61,8 @@ import com.ibbie.catrec_screenrecorcer.ui.components.*
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
+import androidx.core.net.toUri
+import androidx.core.graphics.toColorInt
 
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -70,6 +76,7 @@ fun SettingsScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val accent = LocalAccentColor.current
 
     // Video
@@ -379,15 +386,15 @@ fun SettingsScreen(
     val stopBehaviorSummary =
         stopBehavior.joinToString(", ") { key ->
             when (key) {
-                StopBehaviorKeys.NOTIFICATION -> context.getString(R.string.stop_behavior_notification)
-                StopBehaviorKeys.SHAKE -> context.getString(R.string.stop_behavior_shake)
-                StopBehaviorKeys.SCREEN_OFF -> context.getString(R.string.stop_behavior_screen_off)
-                StopBehaviorKeys.PAUSE_ON_SCREEN_OFF -> context.getString(R.string.stop_behavior_pause_on_screen_off)
+                StopBehaviorKeys.NOTIFICATION -> resources.getString(R.string.stop_behavior_notification)
+                StopBehaviorKeys.SHAKE -> resources.getString(R.string.stop_behavior_shake)
+                StopBehaviorKeys.SCREEN_OFF -> resources.getString(R.string.stop_behavior_screen_off)
+                StopBehaviorKeys.PAUSE_ON_SCREEN_OFF -> resources.getString(R.string.stop_behavior_pause_on_screen_off)
                 else -> key
             }
         }
     val langIdx = languageCodes.indexOf(appLanguage).takeIf { it >= 0 } ?: 0
-    val languageDisplay = context.getString(languageLabelIds.getOrElse(langIdx) { R.string.language_system })
+    val languageDisplay = stringResource(languageLabelIds.getOrElse(langIdx) { R.string.language_system })
 
     // ── Dialogs (all logic unchanged) ──────────────────────────────────────────
     if (showFpsDialog) {
@@ -396,17 +403,16 @@ fun SettingsScreen(
             options = listOf("24", "30", "45", "60", "90", "120"),
             selectedOption = "${fps.toInt()}",
             onOptionSelected = { selected ->
-                showFpsDialog = false
                 if ((selected == "90" || selected == "120") && !AdGate.isUnlocked(AdGate.HIGH_FPS, adsDisabled)) {
                     gateFeature(
                         AdGate.HIGH_FPS,
-                        context.getString(R.string.gate_high_fps, selected),
+                        resources.getString(R.string.gate_high_fps, selected),
                     ) { viewModel.setFps(selected.toFloat()) }
                 } else {
                     viewModel.setFps(selected.toFloat())
                 }
             },
-            onDismiss = { showFpsDialog = false },
+            onDismiss = { },
         )
     }
 
@@ -419,13 +425,10 @@ fun SettingsScreen(
                 AdGate.unlock(adGateFeature)
                 adGatePending?.invoke()
                 adGatePending = null
-                showAdGateDialog = false
                 adGateAd = null
                 loadAdGateAd()
             },
             onDismiss = {
-                adGatePending = null
-                showAdGateDialog = false
             },
         )
     }
@@ -440,9 +443,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = bitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setBitrate(bitrateKeys[idx].toFloat())
-                showBitrateDialog = false
             },
-            onDismiss = { showBitrateDialog = false },
+            onDismiss = { },
         )
     }
     if (showResolutionDialog) {
@@ -452,17 +454,15 @@ fun SettingsScreen(
             onOptionSelected = { sel ->
                 when {
                     sel == "Custom…" -> {
-                        showResolutionDialog = false
                         showCustomResolutionDialog = true
                     }
                     sel.startsWith("—") -> {}
                     else -> {
                         viewModel.setResolution(sel)
-                        showResolutionDialog = false
                     }
                 }
             },
-            onDismiss = { showResolutionDialog = false },
+            onDismiss = { },
         )
     }
     if (showCustomResolutionDialog) {
@@ -470,9 +470,8 @@ fun SettingsScreen(
             current = if (resolution.contains("x") && !resolutionOptions.contains(resolution)) resolution else "",
             onConfirm = {
                 viewModel.setResolution(it)
-                showCustomResolutionDialog = false
             },
-            onDismiss = { showCustomResolutionDialog = false },
+            onDismiss = { },
         )
     }
     if (showVideoEncoderDialog) {
@@ -482,9 +481,8 @@ fun SettingsScreen(
             selectedOption = videoEncoder,
             onOptionSelected = {
                 viewModel.setVideoEncoder(it)
-                showVideoEncoderDialog = false
             },
-            onDismiss = { showVideoEncoderDialog = false },
+            onDismiss = { },
         )
     }
     if (showOrientationDialog) {
@@ -502,9 +500,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = orientLabels.indexOf(label)
                 if (idx >= 0) viewModel.setRecordingOrientation(orientKeys[idx])
-                showOrientationDialog = false
             },
-            onDismiss = { showOrientationDialog = false },
+            onDismiss = { },
         )
     }
     if (showAudioBitrateDialog) {
@@ -518,9 +515,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = audioBitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioBitrate(audioBitrateKeys[idx])
-                showAudioBitrateDialog = false
             },
-            onDismiss = { showAudioBitrateDialog = false },
+            onDismiss = { },
         )
     }
     if (showAudioSampleRateDialog) {
@@ -534,9 +530,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = sampleRateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioSampleRate(sampleRateKeys[idx])
-                showAudioSampleRateDialog = false
             },
-            onDismiss = { showAudioSampleRateDialog = false },
+            onDismiss = { },
         )
     }
     if (showAudioEncoderDialog) {
@@ -546,9 +541,8 @@ fun SettingsScreen(
             selectedOption = audioEncoder,
             onOptionSelected = {
                 viewModel.setAudioEncoder(it)
-                showAudioEncoderDialog = false
             },
-            onDismiss = { showAudioEncoderDialog = false },
+            onDismiss = { },
         )
     }
     if (showCountdownDialog) {
@@ -567,9 +561,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = countdownLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCountdown(countdownKeys[idx])
-                showCountdownDialog = false
             },
-            onDismiss = { showCountdownDialog = false },
+            onDismiss = { },
         )
     }
     if (showClipperDurationDialog) {
@@ -580,9 +573,8 @@ fun SettingsScreen(
             onOptionSelected = { sel ->
                 val idx = clipperDurationLabels.indexOf(sel)
                 if (idx >= 0) viewModel.setClipperDurationMinutes(idx + 1)
-                showClipperDurationDialog = false
             },
-            onDismiss = { showClipperDurationDialog = false },
+            onDismiss = { },
         )
     }
     if (showStopDialog) {
@@ -594,7 +586,7 @@ fun SettingsScreen(
                 StopBehaviorKeys.PAUSE_ON_SCREEN_OFF to R.string.stop_behavior_pause_on_screen_off,
             )
         AlertDialog(
-            onDismissRequest = { showStopDialog = false },
+            onDismissRequest = { },
             title = { Text(stringResource(R.string.setting_stop_behavior)) },
             text = {
                 Column {
@@ -612,7 +604,7 @@ fun SettingsScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showStopDialog = false }) { Text(stringResource(R.string.action_done)) } },
+            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_done)) } },
         )
     }
     if (showPatternDialog) {
@@ -622,9 +614,8 @@ fun SettingsScreen(
             selectedOption = filenamePattern,
             onOptionSelected = {
                 viewModel.setFilenamePattern(it)
-                showPatternDialog = false
             },
-            onDismiss = { showPatternDialog = false },
+            onDismiss = { },
         )
     }
     if (showThemeDialog) {
@@ -635,7 +626,7 @@ fun SettingsScreen(
                 "Dark" to R.string.theme_dark,
             )
         AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
+            onDismissRequest = { },
             title = { Text(stringResource(R.string.dialog_theme_title)) },
             text = {
                 Column {
@@ -646,25 +637,23 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clickable {
                                         viewModel.setAppTheme(theme)
-                                        showThemeDialog = false
                                     }.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(selected = appTheme == theme, onClick = {
                                 viewModel.setAppTheme(theme)
-                                showThemeDialog = false
                             })
                             Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showThemeDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
+            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
     if (showLanguageDialog) {
         AlertDialog(
-            onDismissRequest = { showLanguageDialog = false },
+            onDismissRequest = { },
             title = { Text(stringResource(R.string.dialog_language_title)) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
@@ -675,14 +664,12 @@ fun SettingsScreen(
                                 Modifier
                                     .fillMaxWidth()
                                     .selectable(selected = appLanguage == code, onClick = {
-                                        showLanguageDialog = false
                                         viewModel.setAppLanguageWithUiApply(context, code)
                                     })
                                     .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(selected = appLanguage == code, onClick = {
-                                showLanguageDialog = false
                                 viewModel.setAppLanguageWithUiApply(context, code)
                             })
                             Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
@@ -690,7 +677,7 @@ fun SettingsScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
+            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
     if (showScreenshotFormatDialog) {
@@ -708,9 +695,8 @@ fun SettingsScreen(
             onOptionSelected = { label ->
                 val idx = formatLabels.indexOf(label)
                 if (idx >= 0) viewModel.setScreenshotFormat(formatKeys[idx])
-                showScreenshotFormatDialog = false
             },
-            onDismiss = { showScreenshotFormatDialog = false },
+            onDismiss = { },
         )
     }
     if (showCameraSettingsDialog) {
@@ -727,7 +713,7 @@ fun SettingsScreen(
             isRecording = isRecording,
             canDrawOverlays = canDrawOverlays,
             context = context,
-            onDismiss = { showCameraSettingsDialog = false },
+            onDismiss = { },
         )
     }
 
@@ -761,22 +747,23 @@ fun SettingsScreen(
                 floatingControls,
             ) {
                 if (it && !Settings.canDrawOverlays(context)) {
-                    Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                     context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")),
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            "package:${context.packageName}".toUri()),
                     )
                 } else {
                     viewModel.setFloatingControls(it)
                     if (it && Settings.canDrawOverlays(context)) {
                         context.startService(
-                            Intent(context, com.ibbie.catrec_screenrecorcer.service.OverlayService::class.java).apply {
-                                action = com.ibbie.catrec_screenrecorcer.service.OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                            Intent(context, OverlayService::class.java).apply {
+                                action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
                             },
                         )
                     } else if (!it) {
                         context.startService(
-                            Intent(context, com.ibbie.catrec_screenrecorcer.service.OverlayService::class.java).apply {
-                                action = com.ibbie.catrec_screenrecorcer.service.OverlayService.ACTION_HIDE_IDLE_CONTROLS
+                            Intent(context, OverlayService::class.java).apply {
+                                action = OverlayService.ACTION_HIDE_IDLE_CONTROLS
                             },
                         )
                     }
@@ -827,7 +814,7 @@ fun SettingsScreen(
                         context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
                     } catch (_: Exception) {
                     }
-                    Toast.makeText(context, context.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, resources.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
                 }
             }
             ClickableSettingItem(
@@ -836,17 +823,16 @@ fun SettingsScreen(
                 if (countdown == 0) {
                     stringResource(R.string.setting_countdown_off)
                 } else {
-                    stringResource(R.string.setting_countdown_seconds, countdown)
+                    pluralStringResource(R.plurals.setting_countdown_seconds, countdown, countdown)
                 },
-            ) { showCountdownDialog = true }
+            ) { }
             ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehaviorSummary) {
-                showStopDialog = true
             }
             ClickableSettingItem(
                 Icons.Default.ContentCut,
                 stringResource(R.string.setting_clipper_duration),
                 clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
-            ) { showClipperDurationDialog = true }
+            ) { }
             if (!batteryOptimizationIgnored) {
                 ClickableSettingItem(
                     Icons.Filled.PowerSettingsNew,
@@ -859,7 +845,7 @@ fun SettingsScreen(
                         Toast
                             .makeText(
                                 context,
-                                context.getString(R.string.toast_battery_settings_failed),
+                                resources.getString(R.string.toast_battery_settings_failed),
                                 Toast.LENGTH_LONG,
                             ).show()
                     }
@@ -906,11 +892,9 @@ fun SettingsScreen(
                 },
             ) {
                 if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS, adsDisabled)) {
-                    gateFeature(AdGate.CAMERA_SETTINGS, context.getString(R.string.gate_feature_camera_overlay)) {
-                        showCameraSettingsDialog = true
+                    gateFeature(AdGate.CAMERA_SETTINGS, resources.getString(R.string.gate_feature_camera_overlay)) {
                     }
                 } else {
-                    showCameraSettingsDialog = true
                 }
             }
 
@@ -921,9 +905,9 @@ fun SettingsScreen(
                 showWatermark,
             ) {
                 if (it && !Settings.canDrawOverlays(context)) {
-                    Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                     context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")),
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
                     )
                 } else {
                     viewModel.setShowWatermark(it)
@@ -1056,7 +1040,7 @@ fun SettingsScreen(
                 }
 
                 val imagePickerLauncher =
-                    rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+                    rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
                         if (uri != null) {
                             try {
                                 context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -1077,7 +1061,7 @@ fun SettingsScreen(
                     } else {
                         stringResource(R.string.watermark_image_default)
                     },
-                ) { imagePickerLauncher.launch("image/*") }
+                ) { imagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
                 if (watermarkImageUri != null) {
                     ListItem(
                         modifier =
@@ -1107,7 +1091,6 @@ fun SettingsScreen(
                 stringResource(R.string.setting_screenshot_format),
                 screenshotFormatDisplay,
             ) {
-                showScreenshotFormatDialog = true
             }
             GlassSlider(
                 stringResource(R.string.setting_screenshot_quality),
@@ -1133,17 +1116,17 @@ fun SettingsScreen(
                 Icons.Default.SettingsSystemDaydream,
                 stringResource(R.string.setting_theme),
                 themeDisplay,
-            ) { showThemeDialog = true }
+            ) { }
 
             // ── Accent Color row ─────────────────────────────────────────
             val parsedAccent =
                 remember(accentHex) {
-                    runCatching { Color(android.graphics.Color.parseColor("#${accentHex.removePrefix("#").take(6)}")) }
+                    runCatching { Color("#${accentHex.removePrefix("#").take(6)}".toColorInt()) }
                         .getOrDefault(accent)
                 }
             val parsedAccent2 =
                 remember(accentHex2) {
-                    runCatching { Color(android.graphics.Color.parseColor("#${accentHex2.removePrefix("#").take(6)}")) }
+                    runCatching { Color("#${accentHex2.removePrefix("#").take(6)}".toColorInt()) }
                         .getOrDefault(Color(0xFFFF6600))
                 }
             SettingsListRow(
@@ -1323,7 +1306,7 @@ fun SettingsScreen(
                             accentPresets.take(8).forEach { (hex, _) ->
                                 val c =
                                     remember(hex) {
-                                        runCatching { Color(android.graphics.Color.parseColor("#$hex")) }
+                                    runCatching { Color("#$hex".toColorInt()) }
                                             .getOrDefault(accent)
                                     }
                                 val isSelected =
@@ -1423,12 +1406,12 @@ fun SettingsScreen(
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 val c1 =
                                     remember(accentHexInput) {
-                                        runCatching { Color(android.graphics.Color.parseColor("#$accentHexInput")) }
+                                        runCatching { Color("#$accentHexInput".toColorInt()) }
                                             .getOrDefault(accent)
                                     }
                                 val c2 =
                                     remember(accentHex2Input) {
-                                        runCatching { Color(android.graphics.Color.parseColor("#$accentHex2Input")) }
+                                        runCatching { Color("#$accentHex2Input".toColorInt()) }
                                             .getOrDefault(Color(0xFFFF6600))
                                     }
                                 TextButton(
@@ -1466,7 +1449,7 @@ fun SettingsScreen(
                 Icons.Default.Language,
                 stringResource(R.string.setting_language),
                 languageDisplay,
-            ) { showLanguageDialog = true }
+            ) { }
         }
 
         // ── STORAGE ───────────────────────────────────────────────────────
@@ -1484,7 +1467,6 @@ fun SettingsScreen(
                 },
             ) { folderPickerLauncher.launch(null) }
             ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), filenamePattern) {
-                showPatternDialog = true
             }
             SwitchSettingItem(
                 Icons.Default.DeleteSweep,
@@ -1535,7 +1517,7 @@ fun SettingsScreen(
 
     if (showAudioMenuSheet) {
         ModalBottomSheet(
-            onDismissRequest = { showAudioMenuSheet = false },
+            onDismissRequest = { },
             sheetState = audioMenuSheetState,
         ) {
             Column(
@@ -1573,14 +1555,12 @@ fun SettingsScreen(
                     stringResource(R.string.setting_audio_bitrate),
                     "$audioBitrate ${stringResource(R.string.label_kbps)}",
                 ) {
-                    showAudioBitrateDialog = true
                 }
                 ClickableSettingItem(
                     Icons.Default.Audiotrack,
                     stringResource(R.string.setting_audio_sample_rate),
                     "$audioSampleRate ${stringResource(R.string.label_hz)}",
                 ) {
-                    showAudioSampleRateDialog = true
                 }
                 SettingsListRow(
                     leadingContent = { Icon(Icons.Default.SettingsVoice, contentDescription = null, tint = accent.copy(alpha = 0.7f)) },
@@ -1614,7 +1594,7 @@ fun SettingsScreen(
                     Icons.Default.Tune,
                     stringResource(R.string.setting_audio_encoder),
                     audioEncoder,
-                ) { showAudioEncoderDialog = true }
+                ) { }
                 SwitchSettingItem(
                     Icons.AutoMirrored.Filled.CallSplit,
                     stringResource(R.string.setting_separate_mic),
@@ -1622,7 +1602,7 @@ fun SettingsScreen(
                     separateMicRecording,
                 ) { newValue ->
                     if (newValue && !AdGate.isUnlocked(AdGate.SEPARATE_MIC, adsDisabled)) {
-                        gateFeature(AdGate.SEPARATE_MIC, context.getString(R.string.gate_feature_separate_mic)) {
+                        gateFeature(AdGate.SEPARATE_MIC, resources.getString(R.string.gate_feature_separate_mic)) {
                             viewModel.setSeparateMicRecording(true)
                         }
                     } else {
@@ -1636,7 +1616,7 @@ fun SettingsScreen(
     if (showVideoMenuSheet) {
         val videoLocked = isGifCaptureMode
         ModalBottomSheet(
-            onDismissRequest = { showVideoMenuSheet = false },
+            onDismissRequest = { },
             sheetState = videoMenuSheetState,
         ) {
             Column(
@@ -1715,13 +1695,17 @@ fun SettingsScreen(
                     stringResource(R.string.setting_fps),
                     "${fps.toInt()} ${stringResource(R.string.label_fps)}",
                     enabled = !videoLocked,
-                ) { if (!videoLocked) showFpsDialog = true }
+                ) {
+                    if (!videoLocked) showFpsDialog = true
+                }
                 ClickableSettingItem(
                     Icons.Default.DataUsage,
                     stringResource(R.string.setting_bitrate),
                     "${bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
                     enabled = !videoLocked,
-                ) { if (!videoLocked) showBitrateDialog = true }
+                ) {
+                    if (!videoLocked) showBitrateDialog = true
+                }
                 SwitchSettingItem(
                     icon = Icons.Default.Tune,
                     title = stringResource(R.string.setting_adaptive_recording_performance),
@@ -1735,19 +1719,25 @@ fun SettingsScreen(
                     stringResource(R.string.setting_resolution),
                     resolutionDisplay,
                     enabled = !videoLocked,
-                ) { if (!videoLocked) showResolutionDialog = true }
+                ) {
+                    if (!videoLocked) showResolutionDialog = true
+                }
                 ClickableSettingItem(
                     Icons.Default.VideoSettings,
                     stringResource(R.string.setting_video_encoder),
                     videoEncoder,
                     enabled = !videoLocked,
-                ) { if (!videoLocked) showVideoEncoderDialog = true }
+                ) {
+                    if (!videoLocked) showVideoEncoderDialog = true
+                }
                 ClickableSettingItem(
                     Icons.Default.ScreenRotation,
                     stringResource(R.string.setting_orientation),
                     orientationDisplay,
                     enabled = !videoLocked,
-                ) { if (!videoLocked) showOrientationDialog = true }
+                ) {
+                    if (!videoLocked) showOrientationDialog = true
+                }
             }
         }
     }
@@ -1768,9 +1758,10 @@ private fun CameraSettingsDialog(
     cameraYFraction: Float,
     isRecording: Boolean,
     canDrawOverlays: Boolean,
-    context: android.content.Context,
+    context: Context,
     onDismiss: () -> Unit,
 ) {
+    val resources = LocalResources.current
     val accent = LocalAccentColor.current
     var showCameraFacingDialog by remember { mutableStateOf(false) }
     var showCameraAspectDialog by remember { mutableStateOf(false) }
@@ -1791,9 +1782,8 @@ private fun CameraSettingsDialog(
             onOptionSelected = { label ->
                 val idx = facingLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraFacing(facingKeys[idx])
-                showCameraFacingDialog = false
             },
-            onDismiss = { showCameraFacingDialog = false },
+            onDismiss = { },
         )
     }
     if (showCameraAspectDialog) {
@@ -1812,9 +1802,8 @@ private fun CameraSettingsDialog(
             onOptionSelected = { label ->
                 val idx = aspectLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraAspectRatio(aspectKeys[idx])
-                showCameraAspectDialog = false
             },
-            onDismiss = { showCameraAspectDialog = false },
+            onDismiss = { },
         )
     }
     if (showCameraOrientationDialog) {
@@ -1832,9 +1821,8 @@ private fun CameraSettingsDialog(
             onOptionSelected = { label ->
                 val idx = orientLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraOrientation(orientKeys[idx])
-                showCameraOrientationDialog = false
             },
-            onDismiss = { showCameraOrientationDialog = false },
+            onDismiss = { },
         )
     }
 
@@ -1854,9 +1842,9 @@ private fun CameraSettingsDialog(
                     trailingContent = {
                         Switch(checked = cameraOverlay, onCheckedChange = {
                             if (it && !canDrawOverlays) {
-                                Toast.makeText(context, context.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                                 context.startActivity(
-                                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}")),
+                                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
                                 )
                             } else {
                                 viewModel.setCameraOverlay(it)
@@ -1930,7 +1918,7 @@ private fun CameraSettingsDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clickable { showCameraFacingDialog = true },
+                                .clickable { },
                         headlineContent = { Text(stringResource(R.string.camera_facing)) },
                         supportingContent = {
                             Text(
@@ -1947,7 +1935,7 @@ private fun CameraSettingsDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clickable { showCameraAspectDialog = true },
+                                .clickable { },
                         headlineContent = { Text(stringResource(R.string.camera_aspect_ratio)) },
                         supportingContent = {
                             Text(
@@ -1966,7 +1954,7 @@ private fun CameraSettingsDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clickable { showCameraOrientationDialog = true },
+                                .clickable { },
                         headlineContent = { Text(stringResource(R.string.camera_orientation)) },
                         supportingContent = {
                             Text(
@@ -2071,6 +2059,7 @@ private fun CustomResolutionDialog(
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var text by remember { mutableStateOf(current) }
     var error by remember { mutableStateOf<String?>(null) }
 
@@ -2108,9 +2097,12 @@ private fun CustomResolutionDialog(
                 val w = parts.getOrNull(0)?.toIntOrNull()
                 val h = parts.getOrNull(1)?.toIntOrNull()
                 when {
-                    parts.size != 2 || w == null || h == null -> error = context.getString(R.string.error_resolution_format)
-                    w < 100 || h < 100 -> error = context.getString(R.string.error_resolution_min)
-                    w > 7680 || h > 7680 -> error = context.getString(R.string.error_resolution_max)
+                    parts.size != 2 || w == null || h == null ->
+                        error = resources.getString(R.string.error_resolution_format)
+                    w < 100 || h < 100 ->
+                        error = resources.getString(R.string.error_resolution_min)
+                    w > 7680 || h > 7680 ->
+                        error = resources.getString(R.string.error_resolution_max)
                     else -> onConfirm("${w}x$h")
                 }
             }) { Text(stringResource(R.string.action_apply)) }
@@ -2233,9 +2225,8 @@ private fun AdGateDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val loadedAd = ad
-                    if (loadedAd != null && activity != null) {
-                        loadedAd.fullScreenContentCallback =
+                    if (ad != null && activity != null) {
+                        ad.fullScreenContentCallback =
                             object : FullScreenContentCallback() {
                                 override fun onAdDismissedFullScreenContent() {
                                     activity.resetWindowFocusAfterFullscreenOverlay()
@@ -2247,7 +2238,7 @@ private fun AdGateDialog(
                                     onUnlocked()
                                 }
                             }
-                        loadedAd.show(activity) { onUnlocked() }
+                        ad.show(activity) { onUnlocked() }
                     } else {
                         // No ad loaded yet (not on Play Store / test build) — unlock directly
                         onUnlocked()
@@ -2302,12 +2293,6 @@ fun SingleChoiceDialog(
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
-}
-
-/** Legacy alias kept for backward-compat — now styled as GlassSectionHeader inside GlassCards. */
-@Composable
-fun SettingsSectionHeader(title: String) {
-    GlassSectionHeader(title)
 }
 
 @Composable

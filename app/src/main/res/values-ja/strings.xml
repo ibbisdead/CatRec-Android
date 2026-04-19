@@ -65,6 +65,7 @@
     <string name="action_delete">削除</string>
     <string name="action_share">共有</string>
     <string name="action_open">開く</string>
+    <string name="action_edit">編集</string>
     <string name="consent_analytics_title">使用状況分析</string>
     <string name="consent_analytics_message">オプションの使用とクラッシュ分析を許可して、CatRec の改善にご協力ください。パーソナライズされた広告は、設定で個別に制御されます (デフォルトでオン)。これは「設定」でいつでも変更できます。</string>
     <string name="setting_usage_analytics">使用状況分析</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">お友達に私たちのことを教えてください</string>
     <string name="support_changelog">変更履歴</string>
     <string name="support_changelog_desc">このバージョンの新機能を確認する</string>
+    <string name="support_credits">クレジット</string>
+    <string name="support_credits_desc">CatRec のテストや宣伝に協力してくれた方々</string>
+    <string name="dialog_credits_title">クレジット</string>
+    <string name="credits_intro">CatRec のテストと共有にご協力いただいた皆様に感謝します。名前をタップするとチャンネルを開きます。</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">スクリーンショットを保存しました</string>
@@ -286,7 +291,9 @@
     <string name="toast_enable_show_taps">「タップを表示」を手動で有効にしてください</string>
     <string name="toast_overlay_permission">オーバーレイ許可を付与してください</string>
     <string name="setting_countdown_off">オフ</string>
-    <string name="setting_countdown_seconds">%1$d 秒</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
     <string name="setting_internal_audio_note">Android 10以上のみ</string>
     <string name="gate_feature_separate_mic">マイクを別トラックで保存</string>
     <string name="gate_feature_camera_overlay">カメラオーバーレイ設定</string>
@@ -402,10 +409,14 @@
     <string name="delete_recording_message">「%1$s」は完全に削除されます。</string>
     <string name="delete_screenshot_title">スクリーンショットを削除しますか?</string>
     <string name="delete_screenshot_message">「%1$s」は完全に削除されます。</string>
-    <string name="multiselect_selected_count">%1$d 個が選択されました</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d 個が選択されました</item>
+    </plurals>
     <string name="multiselect_select_all">すべて選択</string>
     <string name="multiselect_deselect_all">すべての選択を解除します</string>
-    <string name="multiselect_delete_title">%1$d 個のアイテムを削除しますか?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">%1$d 個のアイテムを削除しますか?</item>
+    </plurals>
     <string name="multiselect_delete_message">これらのファイルは完全に削除されます。</string>
     <string name="multiselect_share_recordings">録音を共有する</string>
     <string name="multiselect_share_screenshots">スクリーンショットを共有する</string>
@@ -414,6 +425,7 @@
     <string name="player_rename_failed">名前の変更に失敗しました: %1$s</string>
     <string name="player_delete_failed">削除に失敗しました: %1$s</string>
     <string name="player_no_app_video">ビデオを開くアプリが見つかりません</string>
+    <string name="player_video_unavailable">この動画は利用できません。削除されたか、移動された可能性があります。</string>
     <string name="player_rename_title">名前の変更</string>
     <string name="player_file_name_label">ファイル名</string>
     <string name="trim_title">ビデオをトリミングする</string>
@@ -429,7 +441,6 @@
     <string name="content_desc_back">戻る</string>
     <string name="content_desc_refresh">リフレッシュ</string>
     <string name="content_desc_options">オプション</string>
-    <string name="content_desc_logo">CatRec ロゴ</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">ビデオ編集</string>
@@ -467,9 +478,7 @@
     <string name="merge_run">結合して保存</string>
     <string name="merge_need_two">少なくとも 2 つのビデオを追加します (順序は維持されます)。</string>
     <string name="merge_clip_label">クリップ %1$d</string>
-    <string name="home_app_name">キャットレック</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec スクリーンレコーダー</string>
@@ -508,6 +517,10 @@
     <string name="perm_rationale_overlay">録画中に他のアプリの上にフローティング コントロールのバブルとカメラ オーバーレイを表示するために必要です。</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">録画中のフォアグラウンド サービス: MediaProjection による画面キャプチャ、オプションのマイク音声、常駐通知。</string>
+    <string name="service_description_overlay">フローティング オーバーレイ表示中のフォアグラウンド サービス: ピクチャー イン ピクチャーのカメラプレビューと常駐通知。</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">画面録画</string>
@@ -558,6 +571,10 @@
     <string name="notif_camera_in_use_title">使用中のカメラ</string>
     <string name="notif_channel_app_controls">クイックコントロール</string>
     <string name="notif_channel_app_controls_desc">録画、スクリーンショット、オーバーレイのショートカット</string>
+    <string name="notif_channel_recording_interrupted">録画が中断されました</string>
+    <string name="notif_channel_recording_interrupted_desc">アクティブなキャプチャ中にシステムが CatRec を停止した場合に表示されます</string>
+    <string name="notif_recording_interrupted_title">キャプチャを停止しました</string>
+    <string name="notif_recording_interrupted_text">録画またはクリップ保存の最中にシステムによって CatRec が終了または再起動されました。最後のファイルが不完全な場合があります。CatRec を開いて再度お試しください。</string>
     <string name="notif_app_controls_title">キャットレック</string>
     <string name="notif_app_controls_text_idle">アイドル — 下のアクションをタップします</string>
     <string name="notif_action_screenshot">スクリーンショット</string>

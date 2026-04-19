@@ -18,8 +18,8 @@ fun Context.applyAnalyticsCollectionEnabled(enabled: Boolean) {
  * Must be kept in sync with the analytics consent so the Firebase Sessions SDK
  * (shared by both products) is not left in a conflicting state.
  */
-fun Context.applyCrashlyticsCollectionEnabled(enabled: Boolean) {
-    FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(enabled)
+fun applyCrashlyticsCollectionEnabled(enabled: Boolean) {
+    FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = enabled
 }
 
 /**
@@ -53,23 +53,11 @@ suspend fun Context.syncFirebaseUserIdentity(
 }
 
 /**
- * Sets Crashlytics (and Analytics) user id: [signedInUserId] when logged in, otherwise
- * the persisted anonymous install UUID. Must match your consent: use the same
- * [reportingEnabled] as [applyCrashlyticsCollectionEnabled].
- */
-suspend fun Context.setCrashlyticsUserId(
-    reportingEnabled: Boolean,
-    signedInUserId: String? = null,
-) {
-    syncFirebaseUserIdentity(reportingEnabled, signedInUserId)
-}
-
-/**
  * AdMob: when [personalized] is false, all ad requests must include the `npa=1` extra
  * ([AdMobAdRequestFactory]); do not use tag-for-under-age-of-consent for NPA — that is for minor-directed
  * inventory and causes severe NO_FILL if applied to general users.
  */
-fun Context.applyPersonalizedAdsEnabled(personalized: Boolean) {
+fun applyPersonalizedAdsEnabled(personalized: Boolean) {
     AdMobAdRequestFactory.personalizedAdsEnabled = personalized
     MobileAds.setRequestConfiguration(RequestConfiguration.Builder().build())
 }

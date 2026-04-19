@@ -4,17 +4,10 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import android.os.PowerManager
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FiberManualRecord
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,7 +37,7 @@ val LocalAccentColor = compositionLocalOf { CrimsonRed }
  * otherwise a vertical fade of the accent color.
  */
 val LocalAccentBrush =
-    compositionLocalOf<Brush> {
+    compositionLocalOf {
         Brush.verticalGradient(
             listOf(CrimsonRed.copy(alpha = 0.4f), CrimsonRed.copy(alpha = 0.1f)),
         )
@@ -74,7 +67,7 @@ val LocalPerformanceMode = compositionLocalOf { false }
 fun rememberIsLowEndDevice(): Boolean {
     val context = LocalContext.current
     return remember {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@remember true
+        if (Build.VERSION.SDK_INT < 31) return@remember true
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val info = ActivityManager.MemoryInfo()
         am.getMemoryInfo(info)
@@ -93,7 +86,7 @@ fun rememberCanUseBlur(): Boolean {
     // performanceMode is a key so the block re-runs whenever the user toggles the setting.
     return remember(performanceMode) {
         if (performanceMode) return@remember false
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@remember false
+        if (Build.VERSION.SDK_INT < 31) return@remember false
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val info = ActivityManager.MemoryInfo()
         am.getMemoryInfo(info)
@@ -175,166 +168,7 @@ fun GlassCard(
 
 // ─── GlassPill ───────────────────────────────────────────────────────────────
 
-/**
- * Small floating pill for HUD stats (FPS, Resolution, Bitrate, Audio mode).
- */
-@Composable
-fun GlassPill(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val light = scheme.isLightTheme()
-    val canUseBlur = rememberCanUseBlur()
-    val accent = LocalAccentColor.current
-    val rimBrush = LocalAccentBrush.current
-    val shape = RoundedCornerShape(50)
-    val bgColor =
-        when {
-            light -> scheme.surfaceVariant.copy(alpha = 0.95f)
-            canUseBlur -> Color(0x990A0A0A)
-            else -> Color(0xBB0A0A0A)
-        }
-
-    Box(
-        modifier =
-            modifier
-                .clip(shape)
-                .background(bgColor, shape)
-                .border(width = 1.dp, brush = rimBrush, shape = shape)
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = accent,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                letterSpacing = 1.sp,
-            )
-        }
-    }
-}
-
 // ─── CatRecordButton ─────────────────────────────────────────────────────────
-
-/**
- * CatRec record button — clean glass circle with accent pulse ring.
- */
-@Composable
-fun CatRecordButton(
-    isRecording: Boolean,
-    isEnabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val accent = LocalAccentColor.current
-    val isBatterySaver = rememberIsBatterySaver()
-    val showPulse = isRecording && !isBatterySaver
-
-    val infiniteTransition = rememberInfiniteTransition(label = "CatPulse")
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = if (showPulse) 1.25f else 1.0f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(900, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "PulseScale",
-    )
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.20f,
-        targetValue = if (showPulse) 0.55f else 0.20f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(900, easing = FastOutSlowInEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-        label = "PulseAlpha",
-    )
-
-    val scheme = MaterialTheme.colorScheme
-    val onMuted = scheme.onSurfaceVariant
-    val rimColor =
-        when {
-            isRecording -> accent
-            isEnabled -> accent.darkened(0.45f)
-            else -> onMuted.copy(alpha = 0.5f)
-        }
-    val iconTint =
-        when {
-            isRecording -> accent
-            isEnabled -> accent.copy(alpha = 0.85f)
-            else -> onMuted
-        }
-
-    // Caller supplies bounded size (ConstraintLayout / Box + aspectRatio); inner stays circular.
-    Box(modifier = modifier) {
-        val innerFrac = 0.46f
-        // ── Pulse ring ───────────────────────────────────────────────────────
-        if (showPulse) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize(innerFrac * pulseScale)
-                        .clip(CircleShape)
-                        .background(accent.copy(alpha = pulseAlpha * 0.35f)),
-            )
-        }
-
-        // ── Glass circle button ──────────────────────────────────────────────
-        val circleBrush =
-            if (scheme.isLightTheme()) {
-                Brush.radialGradient(
-                    colors =
-                        listOf(
-                            scheme.primary.copy(alpha = 0.12f),
-                            scheme.surfaceVariant,
-                        ),
-                )
-            } else {
-                Brush.radialGradient(
-                    colors = listOf(Color(0xFF1A0008), Color(0xFF0A0A0A)),
-                )
-            }
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier =
-                Modifier
-                    .align(Alignment.Center)
-                    .fillMaxSize(innerFrac)
-                    .clip(CircleShape)
-                    .background(brush = circleBrush)
-                    .border(
-                        width = if (isRecording) 2.dp else 1.5.dp,
-                        color = rimColor,
-                        shape = CircleShape,
-                    ).clickable(enabled = isEnabled || isRecording, onClick = onClick),
-        ) {
-            Icon(
-                imageVector =
-                    when {
-                        isRecording -> Icons.Default.Stop
-                        !isEnabled -> Icons.Default.Lock
-                        else -> Icons.Default.FiberManualRecord
-                    },
-                contentDescription = if (isRecording) "Stop Recording" else "Start Recording",
-                tint = iconTint,
-                modifier = Modifier.fillMaxSize(0.4f),
-            )
-        }
-    }
-}
 
 // ─── GlassSlider ─────────────────────────────────────────────────────────────
 

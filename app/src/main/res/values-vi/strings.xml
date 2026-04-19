@@ -65,6 +65,7 @@
     <string name="action_delete">Xóa</string>
     <string name="action_share">Chia sẻ</string>
     <string name="action_open">Mở</string>
+    <string name="action_edit">Sửa</string>
     <string name="consent_analytics_title">Phân tích sử dụng</string>
     <string name="consent_analytics_message">Hãy giúp chúng tôi cải thiện CatRec bằng cách cho phép phân tích sự cố và sử dụng tùy chọn. Quảng cáo được cá nhân hóa được kiểm soát riêng trong Cài đặt (bật theo mặc định). Bạn có thể thay đổi điều này bất cứ lúc nào trong Cài đặt.</string>
     <string name="setting_usage_analytics">Phân tích sử dụng</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">Hãy kể cho bạn bè của bạn về chúng tôi</string>
     <string name="support_changelog">Nhật ký thay đổi</string>
     <string name="support_changelog_desc">Xem có gì mới trong phiên bản này</string>
+    <string name="support_credits">Ghi công</string>
+    <string name="support_credits_desc">Người thử nghiệm và nhà sáng tạo đã hỗ trợ CatRec</string>
+    <string name="dialog_credits_title">Ghi công</string>
+    <string name="credits_intro">Cảm ơn những người đã thử nghiệm và chia sẻ CatRec. Chạm vào tên để mở kênh của họ.</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">Ảnh chụp màn hình đã lưu</string>
@@ -286,7 +291,9 @@
     <string name="toast_enable_show_taps">Bật «Hiển thị thao tác chạm» thủ công</string>
     <string name="toast_overlay_permission">Vui lòng cấp quyền overlay</string>
     <string name="setting_countdown_off">Tắt</string>
-    <string name="setting_countdown_seconds">%1$d giây</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d giây</item>
+    </plurals>
     <string name="setting_internal_audio_note">Chỉ Android 10+</string>
     <string name="gate_feature_separate_mic">Bản nhạc micrô riêng</string>
     <string name="gate_feature_camera_overlay">Cài đặt overlay camera</string>
@@ -402,10 +409,14 @@
     <string name="delete_recording_message">"%1$s" sẽ bị xóa vĩnh viễn.</string>
     <string name="delete_screenshot_title">Xóa ảnh chụp màn hình?</string>
     <string name="delete_screenshot_message">"%1$s" sẽ bị xóa vĩnh viễn.</string>
-    <string name="multiselect_selected_count">%1$d đã chọn</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d đã chọn</item>
+    </plurals>
     <string name="multiselect_select_all">Chọn tất cả</string>
     <string name="multiselect_deselect_all">Bỏ chọn tất cả</string>
-    <string name="multiselect_delete_title">Xóa %1$d mục?</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">Xóa %1$d mục?</item>
+    </plurals>
     <string name="multiselect_delete_message">Những tập tin này sẽ bị xóa vĩnh viễn.</string>
     <string name="multiselect_share_recordings">Chia sẻ bản ghi</string>
     <string name="multiselect_share_screenshots">Chia sẻ ảnh chụp màn hình</string>
@@ -414,6 +425,7 @@
     <string name="player_rename_failed">Đổi tên không thành công: %1$s</string>
     <string name="player_delete_failed">Xóa không thành công: %1$s</string>
     <string name="player_no_app_video">Không tìm thấy ứng dụng nào để mở video</string>
+    <string name="player_video_unavailable">Video này không còn khả dụng. Có thể đã bị xóa hoặc di chuyển.</string>
     <string name="player_rename_title">Đổi tên</string>
     <string name="player_file_name_label">Tên tập tin</string>
     <string name="trim_title">Cắt video</string>
@@ -429,7 +441,6 @@
     <string name="content_desc_back">Mặt sau</string>
     <string name="content_desc_refresh">Làm cho khỏe lại</string>
     <string name="content_desc_options">Tùy chọn</string>
-    <string name="content_desc_logo">Logo CatRec</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">Chỉnh sửa video</string>
@@ -467,9 +478,7 @@
     <string name="merge_run">Hợp nhất và lưu</string>
     <string name="merge_need_two">Thêm ít nhất hai video (thứ tự được giữ nguyên).</string>
     <string name="merge_clip_label">Đoạn %1$d</string>
-    <string name="home_app_name">CatRec</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">Trình ghi màn hình CatRec</string>
@@ -508,6 +517,10 @@
     <string name="perm_rationale_overlay">Bắt buộc phải hiển thị bong bóng điều khiển nổi và lớp phủ camera lên trên các ứng dụng khác trong khi ghi.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Dịch vụ nền khi đang ghi: chụp màn hình (MediaProjection) với tùy chọn âm thanh micrô và thông báo liên tục.</string>
+    <string name="service_description_overlay">Dịch vụ nền khi hiển thị lớp phủ nổi: xem trước camera dạng hình trong hình với thông báo liên tục.</string>
 
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Ghi màn hình</string>
@@ -558,6 +571,10 @@
     <string name="notif_camera_in_use_title">Máy ảnh đang được sử dụng</string>
     <string name="notif_channel_app_controls">Điều khiển nhanh</string>
     <string name="notif_channel_app_controls_desc">Phím tắt ghi, ảnh chụp màn hình và lớp phủ</string>
+    <string name="notif_channel_recording_interrupted">Ghi bị gián đoạn</string>
+    <string name="notif_channel_recording_interrupted_desc">Hiển thị nếu hệ thống đã dừng CatRec trong lúc đang ghi</string>
+    <string name="notif_recording_interrupted_title">Đã dừng ghi</string>
+    <string name="notif_recording_interrupted_text">Hệ thống đã đóng hoặc khởi động lại CatRec khi đang ghi hoặc lưu clip. Tệp cuối có thể chưa hoàn chỉnh. Mở CatRec để bắt đầu lại.</string>
     <string name="notif_app_controls_title">CatRec</string>
     <string name="notif_app_controls_text_idle">Nhàn rỗi - nhấn vào một hành động bên dưới</string>
     <string name="notif_action_screenshot">Ảnh chụp màn hình</string>

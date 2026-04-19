@@ -20,6 +20,8 @@ import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withMatrix
 
 enum class EditorDrawTool { PEN, ERASER, SQUARE, CIRCLE, ARROW, BLUR }
 
@@ -156,7 +158,7 @@ class ImageEditorAnnotationView(
         imageBitmap?.recycle()
         annotationBitmap?.recycle()
         imageBitmap = bitmap
-        annotationBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        annotationBitmap = createBitmap(bitmap.width, bitmap.height)
         annotationCanvas = Canvas(annotationBitmap!!)
         actions.clear()
         currentPath.reset()
@@ -214,13 +216,6 @@ class ImageEditorAnnotationView(
         shapeStartY = 0f
         shapeEndX = 0f
         shapeEndY = 0f
-        redrawAnnotations()
-        invalidate()
-    }
-
-    fun clearAnnotations() {
-        actions.clear()
-        currentPath.reset()
         redrawAnnotations()
         invalidate()
     }
@@ -351,24 +346,32 @@ class ImageEditorAnnotationView(
         canvas.drawBitmap(ib, null, destRect, filterPaint)
         canvas.drawBitmap(ab, null, destRect, filterPaint)
 
-        canvas.save()
-        canvas.concat(imageToViewMatrix)
-        shapePaint.color = strokeColor
-        when (currentTool) {
-            EditorDrawTool.PEN -> {
-                penPaint.color = strokeColor
-                canvas.drawPath(currentPath, penPaint)
-            }
-            EditorDrawTool.ERASER -> canvas.drawPath(currentPath, eraserPreviewPaint)
-            EditorDrawTool.SQUARE -> canvas.drawRect(previewRect, shapePaint)
-            EditorDrawTool.CIRCLE -> canvas.drawOval(previewRect, shapePaint)
-            EditorDrawTool.ARROW -> drawArrowOnCanvas(canvas, shapeStartX, shapeStartY, shapeEndX, shapeEndY, shapePaint)
-            EditorDrawTool.BLUR -> {
-                shapePaint.style = Paint.Style.STROKE
-                canvas.drawRect(previewRect, shapePaint)
+        canvas.withMatrix(imageToViewMatrix) {
+            shapePaint.color = strokeColor
+            when (currentTool) {
+                EditorDrawTool.PEN -> {
+                    penPaint.color = strokeColor
+                    drawPath(currentPath, penPaint)
+                }
+
+                EditorDrawTool.ERASER -> drawPath(currentPath, eraserPreviewPaint)
+                EditorDrawTool.SQUARE -> drawRect(previewRect, shapePaint)
+                EditorDrawTool.CIRCLE -> drawOval(previewRect, shapePaint)
+                EditorDrawTool.ARROW -> drawArrowOnCanvas(
+                    this,
+                    shapeStartX,
+                    shapeStartY,
+                    shapeEndX,
+                    shapeEndY,
+                    shapePaint
+                )
+
+                EditorDrawTool.BLUR -> {
+                    shapePaint.style = Paint.Style.STROKE
+                    drawRect(previewRect, shapePaint)
+                }
             }
         }
-        canvas.restore()
     }
 
     /**

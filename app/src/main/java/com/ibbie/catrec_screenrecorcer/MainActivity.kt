@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
@@ -51,6 +52,7 @@ import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
+import com.ibbie.catrec_screenrecorcer.utils.ExitUiCoordinator
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
@@ -67,6 +69,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
     companion object {
+        private const val TAG = "MainActivity"
         /** Opens the screen-capture dialog, then prepares projection and takes one screenshot. */
         const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
             "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
@@ -124,11 +127,41 @@ class MainActivity : ComponentActivity() {
                 context: Context?,
                 intent: Intent?,
             ) {
-                if (intent?.action == ACTION_FINISH_UI) {
-                    finishAffinity()
+                if (intent?.action != ACTION_FINISH_UI) return
+                val activity = context as? MainActivity ?: return
+                // Defer one frame so we are past the notification PendingIntent / shade transition;
+                // synchronous finishAffinity competes with the system for focus and can flicker.
+                activity.window.decorView.post {
+                    if (activity.isFinishing || activity.isDestroyed) return@post
+                    activity.applyNotificationExitFinishIfNeeded()
                 }
             }
         }
+
+    /**
+     * Handles [ACTION_FINISH_UI] from notification exit: finishes the task when CatRec is at least
+     * [Lifecycle.State.STARTED] (visible, including under an expanded shade). If the user was in
+     * another app, we defer until CatRec is shown again so we do not steal focus.
+     */
+    private fun applyNotificationExitFinishIfNeeded() {
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "notification exit: finishAffinity (lifecycle=${lifecycle.currentState})")
+            }
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+            finishAffinity()
+        } else {
+            ExitUiCoordinator.markPendingFinishAffinity(this)
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(
+                    TAG,
+                    "notification exit: defer finishAffinity (lifecycle=${lifecycle.currentState}) — " +
+                        "will finish when CatRec task is visible again",
+                )
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -165,7 +198,7 @@ class MainActivity : ComponentActivity() {
                 // (only once the user has made an explicit choice — before that,
                 // CatRecApplication.onCreate already armed Crashlytics).
                 if (consentDone) {
-                    applicationContext.applyCrashlyticsCollectionEnabled(analyticsEnabled)
+                    applyCrashlyticsCollectionEnabled(analyticsEnabled)
                 }
                 // Anonymous user ID for Crashlytics: before consent, match CatRecApplication (reporting on).
                 val reportingEnabled = if (consentDone) analyticsEnabled else true
@@ -173,7 +206,7 @@ class MainActivity : ComponentActivity() {
                 crashlyticsLog("App cold start")
                 val appLang = settingsRepository.appLanguage.first()
                 val floatingOn = settingsRepository.floatingControls.first()
-                applicationContext.refreshCrashlyticsSessionKeys(appLang, floatingOn)
+                refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
             // AdMob is initialized in [CatRecApplication] (single SDK init per process).
 
@@ -247,9 +280,10 @@ class MainActivity : ComponentActivity() {
                             ConsentUiState.Ready -> {
                                 AppOpenAdOnStartEffect(activity = this@MainActivity)
                                 val configuration = LocalConfiguration.current
+                                val windowContainerSize = LocalWindowInfo.current.containerSize
                                 key(
-                                    configuration.screenWidthDp,
-                                    configuration.screenHeightDp,
+                                    windowContainerSize.width,
+                                    windowContainerSize.height,
                                     configuration.orientation,
                                     configuration.screenLayout,
                                     configuration.uiMode,
@@ -281,6 +315,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (ExitUiCoordinator.consumePendingFinishAffinity(this)) {
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "notification exit: applying deferred finishAffinity from onResume")
+            }
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+            finishAffinity()
+            return
+        }
         (application as? CatRecApplication)?.billingManager?.refreshPurchasesIfConnected()
         lifecycleScope.launch {
             try {

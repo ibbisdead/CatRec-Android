@@ -476,10 +476,6 @@ class SettingsRepository(
         context.dataStore.edit { it[PERSONALIZED_ADS_ENABLED] = value }
     }
 
-    suspend fun setAnalyticsConsentPromptCompleted(value: Boolean) {
-        context.dataStore.edit { it[ANALYTICS_CONSENT_PROMPT_COMPLETED] = value }
-    }
-
     /**
      * Stable anonymous ID per install (UUID) for Firebase Crashlytics / Analytics user identifiers.
      * Not PII; unchanged until app data is cleared.
@@ -500,8 +496,8 @@ class SettingsRepository(
             it[ANALYTICS_CONSENT_PROMPT_COMPLETED] = true
         }
         context.applyAnalyticsCollectionEnabled(accepted)
-        context.applyCrashlyticsCollectionEnabled(accepted)
-        context.applyPersonalizedAdsEnabled(personalizedAdsEnabled.first())
+        applyCrashlyticsCollectionEnabled(accepted)
+        applyPersonalizedAdsEnabled(personalizedAdsEnabled.first())
         context.syncFirebaseUserIdentity(accepted)
     }
 

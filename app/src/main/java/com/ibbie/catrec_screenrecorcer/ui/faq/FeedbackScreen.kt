@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -86,6 +87,9 @@ private val feedbackIssues =
 @Composable
 fun FeedbackScreen(navController: NavController) {
     val context = LocalContext.current
+    val resources = LocalResources.current
+    val toastSelectIssue = stringResource(R.string.feedback_select_issue)
+    val toastDescriptionTooShort = stringResource(R.string.feedback_description_too_short)
     var selectedIssueIndex by remember { mutableIntStateOf(-1) }
     var description by remember { mutableStateOf("") }
     val attachments = remember { mutableStateListOf<Uri>() }
@@ -238,7 +242,7 @@ fun FeedbackScreen(navController: NavController) {
                         Toast
                             .makeText(
                                 context,
-                                context.getString(R.string.feedback_select_issue),
+                                toastSelectIssue,
                                 Toast.LENGTH_SHORT,
                             ).show()
                         return@Button
@@ -248,13 +252,13 @@ fun FeedbackScreen(navController: NavController) {
                         Toast
                             .makeText(
                                 context,
-                                context.getString(R.string.feedback_description_too_short),
+                                toastDescriptionTooShort,
                                 Toast.LENGTH_LONG,
                             ).show()
                         return@Button
                     }
                     val issue = feedbackIssues[selectedIssueIndex]
-                    val label = context.getString(issue.labelRes)
+                    val label = resources.getString(issue.labelRes)
                     FeedbackEmail.send(context, label, desc, attachments.toList())
                 },
                 modifier = Modifier.fillMaxWidth(),

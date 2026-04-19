@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -144,15 +145,14 @@ fun RecordingsScreen(
     if (showBulkDeleteDialog) {
         val count = selectedUris.size
         AlertDialog(
-            onDismissRequest = { showBulkDeleteDialog = false },
+            onDismissRequest = { },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
-            title = { Text(stringResource(R.string.multiselect_delete_title, count)) },
+            title = { Text(pluralStringResource(R.plurals.multiselect_delete_title, count, count)) },
             text = { Text(stringResource(R.string.multiselect_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showBulkDeleteDialog = false
                     val toDelete = selectedUris.toSet()
                     scope.launch {
                         val snapshot = recordings.toList()
@@ -165,7 +165,7 @@ fun RecordingsScreen(
                         }
                         recordings =
                             recordings.filter { it.uri !in toDelete || it.uri in needsIntent }
-                        if (needsIntent.isNotEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        if (needsIntent.isNotEmpty() && Build.VERSION.SDK_INT >= 30) {
                             val pi = createDeleteRequestPendingIntent(context, needsIntent)
                             if (pi != null) {
                                 pendingIntentDeleteUris = needsIntent
@@ -181,7 +181,7 @@ fun RecordingsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showBulkDeleteDialog = false }) {
+                TextButton(onClick = { }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -235,6 +235,7 @@ fun RecordingsScreen(
             }
 
             else -> {
+                val shareChooserOne = stringResource(R.string.share_recording_title)
                 LazyColumn(
                     contentPadding =
                         PaddingValues(
@@ -268,7 +269,7 @@ fun RecordingsScreen(
                                         putExtra(Intent.EXTRA_STREAM, item.uri)
                                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
-                                context.startActivity(Intent.createChooser(intent, "Share Recording"))
+                                context.startActivity(Intent.createChooser(intent, shareChooserOne))
                             },
                             onTrim = {
                                 navController.navigate("trim?videoUri=${Uri.encode(item.uri.toString())}")
@@ -280,7 +281,7 @@ fun RecordingsScreen(
                                             recordings = recordings.filter { it.uri != item.uri }
                                         }
                                         MediaDeleteResult.FAILED -> {
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                            if (Build.VERSION.SDK_INT >= 30) {
                                                 val pi =
                                                     createDeleteRequestPendingIntent(
                                                         context,
@@ -321,6 +322,7 @@ fun RecordingsScreen(
             exit = slideOutVertically { it } + fadeOut(),
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
+            val shareChooserMany = stringResource(R.string.multiselect_share_recordings)
             val rimBrush = LocalAccentBrush.current
             val allSelected = recordings.isNotEmpty() && selectedUris.size == recordings.size
             Box(
@@ -345,7 +347,7 @@ fun RecordingsScreen(
                         Icon(Icons.Default.Close, contentDescription = null, tint = Color.White)
                     }
                     Text(
-                        text = stringResource(R.string.multiselect_selected_count, selectedUris.size),
+                        text = pluralStringResource(R.plurals.multiselect_selected_count, selectedUris.size, selectedUris.size),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
@@ -386,7 +388,7 @@ fun RecordingsScreen(
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                 }
                             context.startActivity(
-                                Intent.createChooser(intent, context.getString(R.string.multiselect_share_recordings)),
+                                Intent.createChooser(intent, shareChooserMany),
                             )
                         },
                         enabled = selectedUris.isNotEmpty(),
@@ -398,7 +400,7 @@ fun RecordingsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { showBulkDeleteDialog = true },
+                        onClick = { },
                         enabled = selectedUris.isNotEmpty(),
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = accent)
@@ -431,7 +433,7 @@ fun RecordingCard(
         thumbnail =
             withContext(Dispatchers.IO) {
                 try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    if (Build.VERSION.SDK_INT >= 29) {
                         context.contentResolver.loadThumbnail(item.uri, Size(160, 120), null)
                     } else {
                         val retriever = MediaMetadataRetriever()
@@ -448,7 +450,7 @@ fun RecordingCard(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
@@ -456,14 +458,13 @@ fun RecordingCard(
             text = { Text(stringResource(R.string.delete_recording_message, item.name ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
-                    showDeleteDialog = false
                     onDelete()
                 }) {
                     Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -623,7 +624,7 @@ fun RecordingCard(
                     IconButton(onClick = onShare) {
                         Icon(Icons.Default.Share, "Share", tint = accent.copy(alpha = 0.65f))
                     }
-                    IconButton(onClick = { showDeleteDialog = true }) {
+                    IconButton(onClick = { }) {
                         Icon(Icons.Default.Delete, "Delete", tint = accent)
                     }
                 }

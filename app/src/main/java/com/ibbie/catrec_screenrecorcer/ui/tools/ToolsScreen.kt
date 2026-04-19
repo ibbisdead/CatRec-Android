@@ -2,7 +2,8 @@ package com.ibbie.catrec_screenrecorcer.ui.tools
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,7 +67,7 @@ fun ToolsScreen(navController: NavController) {
 
     val storageLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.GetContent(),
+            PickVisualMedia(),
         ) { uri ->
             val tool = pendingTool
             pendingTool = null
@@ -75,7 +76,7 @@ fun ToolsScreen(navController: NavController) {
 
     val imageEditorLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.GetContent(),
+            PickVisualMedia(),
         ) { uri ->
             if (uri != null) {
                 val enc = Uri.encode(uri.toString())
@@ -95,7 +96,7 @@ fun ToolsScreen(navController: NavController) {
     val imageTools =
         listOf(
             ToolItem(editImageTitle, Icons.Default.Image) {
-                imageEditorLauncher.launch("image/*")
+                imageEditorLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
             },
         )
 
@@ -121,14 +122,12 @@ fun ToolsScreen(navController: NavController) {
     if (showSourceDialog && pendingTool != null) {
         AlertDialog(
             onDismissRequest = {
-                showSourceDialog = false
                 pendingTool = null
             },
             title = { Text(stringResource(R.string.editor_pick_video_title)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showSourceDialog = false
                         pendingTool = null
                     },
                 ) {
@@ -139,7 +138,6 @@ fun ToolsScreen(navController: NavController) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
                         onClick = {
-                            showSourceDialog = false
                             showCatRecSheet = true
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -148,8 +146,7 @@ fun ToolsScreen(navController: NavController) {
                     }
                     TextButton(
                         onClick = {
-                            showSourceDialog = false
-                            storageLauncher.launch("video/*")
+                            storageLauncher.launch(PickVisualMediaRequest(PickVisualMedia.VideoOnly))
                         },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
@@ -163,7 +160,6 @@ fun ToolsScreen(navController: NavController) {
     if (showCatRecSheet) {
         val tool = pendingTool
         ModalBottomSheet(onDismissRequest = {
-            showCatRecSheet = false
             pendingTool = null
         }) {
             var entries by remember { mutableStateOf<List<RecordingEntry>>(emptyList()) }
@@ -187,7 +183,6 @@ fun ToolsScreen(navController: NavController) {
                                         navigateForTool(tool, entry.uri)
                                         pendingTool = null
                                     }
-                                    showCatRecSheet = false
                                 },
                         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                     )

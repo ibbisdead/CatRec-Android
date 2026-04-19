@@ -65,6 +65,7 @@
     <string name="action_delete">刪除</string>
     <string name="action_share">分享</string>
     <string name="action_open">開啟</string>
+    <string name="action_edit">編輯</string>
     <string name="consent_analytics_title">使用情況分析</string>
     <string name="consent_analytics_message">透過允許可選的使用和崩潰分析來幫助我們改進 CatRec。個人化廣告在「設定」中單獨控制（預設為開啟）。您可以隨時在“設定”中更改此設定。</string>
     <string name="setting_usage_analytics">使用情況分析</string>
@@ -236,7 +237,7 @@
     <string name="support_remove_ads_desc">一次性購買，永久無廣告</string>
     <string name="support_restore_purchases">恢復購買</string>
     <string name="support_restore_purchases_desc">同步刪除廣告和 Google Play 中的其他購買項目</string>
-    <string name="support_restore_purchases_toast">正在檢查 Google Play 的購買情況...</string>
+    <string name="support_restore_purchases_toast">正在檢查 Google Play 的購買情況…</string>
     <string name="support_play_promo_title">促銷代碼（移除廣告）</string>
     <string name="support_play_promo_desc">開啟 Google Play 的「移除廣告」購買畫面。點付款方式 → 兌換代碼，輸入代碼並完成。若仍有廣告，請點下方恢復購買。</string>
     <string name="support_ads_removed">廣告已移除 — 感謝！</string>
@@ -248,6 +249,10 @@
     <string name="support_share_desc">向朋友們介紹我們</string>
     <string name="support_changelog">更新記錄</string>
     <string name="support_changelog_desc">查看此版本的新功能</string>
+    <string name="support_credits">致謝</string>
+    <string name="support_credits_desc">協助 CatRec 的測試者與創作者</string>
+    <string name="dialog_credits_title">致謝</string>
+    <string name="credits_intro">感謝這些朋友測試與分享 CatRec。點按姓名可開啟其頻道。</string>
 
     <!-- Notifications -->
     <string name="notif_screenshot_saved">截圖已儲存</string>
@@ -286,7 +291,9 @@
     <string name="toast_enable_show_taps">請手動啟用「顯示點選操作」</string>
     <string name="toast_overlay_permission">請授予懸浮視窗權限</string>
     <string name="setting_countdown_off">關閉</string>
-    <string name="setting_countdown_seconds">%1$d 秒</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
     <string name="setting_internal_audio_note">僅限 Android 10+</string>
     <string name="gate_feature_separate_mic">獨立麥克風軌道</string>
     <string name="gate_feature_camera_overlay">相機疊加層設定</string>
@@ -402,10 +409,14 @@
     <string name="delete_recording_message">“%1$s”將永久刪除。</string>
     <string name="delete_screenshot_title">刪除截圖？</string>
     <string name="delete_screenshot_message">“%1$s”將永久刪除。</string>
-    <string name="multiselect_selected_count">%1$d 已選擇</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d 已選擇</item>
+    </plurals>
     <string name="multiselect_select_all">選擇全部</string>
     <string name="multiselect_deselect_all">取消全選</string>
-    <string name="multiselect_delete_title">刪除 %1$d 項嗎？</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">刪除 %1$d 項嗎？</item>
+    </plurals>
     <string name="multiselect_delete_message">這些文件將永久刪除。</string>
     <string name="multiselect_share_recordings">分享錄音</string>
     <string name="multiselect_share_screenshots">分享截圖</string>
@@ -414,6 +425,7 @@
     <string name="player_rename_failed">重新命名失敗：%1$s</string>
     <string name="player_delete_failed">刪除失敗：%1$s</string>
     <string name="player_no_app_video">找不到可以開啟影片的應用</string>
+    <string name="player_video_unavailable">此影片已無法使用，可能已刪除或移動。</string>
     <string name="player_rename_title">重新命名</string>
     <string name="player_file_name_label">檔案名稱</string>
     <string name="trim_title">修剪視頻</string>
@@ -429,7 +441,6 @@
     <string name="content_desc_back">後退</string>
     <string name="content_desc_refresh">重新整理</string>
     <string name="content_desc_options">選項</string>
-    <string name="content_desc_logo">貓Rec標誌</string>
 
     <!-- Tools / Editor -->
     <string name="tools_video_editing">影片編輯</string>
@@ -467,9 +478,7 @@
     <string name="merge_run">合併並保存</string>
     <string name="merge_need_two">新增至少兩個影片（保持順序）。</string>
     <string name="merge_clip_label">剪輯%1$d</string>
-    <string name="home_app_name">貓記錄</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="home_version">v%1$s</string>
 
     <!-- Support (extra) -->
     <string name="support_app_headline">CatRec 螢幕錄影機</string>
@@ -478,12 +487,12 @@
     <string name="changelog_version_template">v%1$s</string>
     <string name="support_section_support_dev">支援開發者</string>
     <string name="support_section_legal">合法的</string>
-    <string name="support_watch_ad_sub_loading">正在加載廣告...</string>
+    <string name="support_watch_ad_sub_loading">正在加載廣告…</string>
     <string name="support_watch_ad_sub">快速獲得免費支援的方法</string>
     <string name="support_toast_youtube">無法打開 YouTube</string>
     <string name="support_toast_ad_failed">無法展示廣告。稍後再試。</string>
     <string name="support_toast_thanks_ad">感謝您的觀看！ 🐱</string>
-    <string name="support_toast_ad_loading">廣告正在加載，請稍候...</string>
+    <string name="support_toast_ad_loading">廣告正在加載，請稍候…</string>
     <string name="support_toast_no_ad">目前沒有廣告。稍後再試。</string>
     <string name="support_toast_browser">無法開啟瀏覽器</string>
     <string name="billing_store_not_ready">Play 商店尚未準備就緒。檢查您的連線並重試。</string>
@@ -509,6 +518,10 @@
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
 
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">錄製期間的前景服務：透過 MediaProjection 擷取螢幕畫面，可選麥克風音訊，並顯示持續通知。</string>
+    <string name="service_description_overlay">顯示浮動疊加層時的前景服務：子母畫面相機預覽，並顯示持續通知。</string>
+
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">螢幕錄製</string>
     <string name="notif_channel_recording_complete">錄音完成</string>
@@ -517,9 +530,9 @@
     <string name="notif_ready_text">點擊疊加按鈕開始錄製</string>
     <string name="notif_action_revoke">撤銷</string>
     <string name="notif_preparing">正在準備…</string>
-    <string name="notif_recording_starting_in">錄製於 %1$d 開始...</string>
+    <string name="notif_recording_starting_in">錄製於 %1$d 開始…</string>
     <string name="notif_recording_paused">錄音暫停</string>
-    <string name="notif_recording_muted">錄音（靜音）...</string>
+    <string name="notif_recording_muted">錄音（靜音）…</string>
     <string name="notif_recording_in_progress">錄音正在進行中…</string>
     <string name="notif_title_short">貓記錄</string>
     <string name="notif_action_stop">停止</string>
@@ -529,7 +542,7 @@
     <string name="notif_action_unmute">取消靜音</string>
     <string name="notif_action_show_controls">顯示控制項</string>
     <string name="notif_buffer_title">CatRec — 滾動緩衝區</string>
-    <string name="notif_buffer_starting">啟動緩衝區...</string>
+    <string name="notif_buffer_starting">啟動緩衝區…</string>
     <string name="notif_buffer_buffering">正在緩衝最後 %1$d 秒…</string>
     <string name="notif_buffer_save_clip">保存剪輯</string>
     <string name="notif_post_title">錄音完成</string>
@@ -558,6 +571,10 @@
     <string name="notif_camera_in_use_title">相機使用中</string>
     <string name="notif_channel_app_controls">快速控制</string>
     <string name="notif_channel_app_controls_desc">錄製、螢幕截圖和疊加快捷方式</string>
+    <string name="notif_channel_recording_interrupted">錄製已中斷</string>
+    <string name="notif_channel_recording_interrupted_desc">若在進行擷取時系統停止了 CatRec 則顯示</string>
+    <string name="notif_recording_interrupted_title">擷取已停止</string>
+    <string name="notif_recording_interrupted_text">在錄製或剪輯擷取進行中時，系統關閉或重新啟動了 CatRec。上一個檔案可能不完整。請開啟 CatRec 重新開始。</string>
     <string name="notif_app_controls_title">貓記錄</string>
     <string name="notif_app_controls_text_idle">空閒 — 點選下面的一個操作</string>
     <string name="notif_action_screenshot">螢幕截圖</string>

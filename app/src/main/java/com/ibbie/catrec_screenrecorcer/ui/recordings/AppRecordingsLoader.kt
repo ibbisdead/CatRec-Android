@@ -12,16 +12,17 @@ import androidx.documentfile.provider.DocumentFile
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import androidx.core.net.toUri
 
 /** Public video collections to query (primary + SD / other volumes where supported). */
 private fun mediaStoreVideoCollections(context: Context): List<Uri> =
     when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+        Build.VERSION.SDK_INT >= 30 -> {
             MediaStore.getExternalVolumeNames(context).map { vol ->
                 MediaStore.Video.Media.getContentUri(vol)
             }
         }
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+        Build.VERSION.SDK_INT >= 29 -> {
             listOf(MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY))
         }
         else -> listOf(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
@@ -29,12 +30,12 @@ private fun mediaStoreVideoCollections(context: Context): List<Uri> =
 
 private fun mediaStoreAudioCollections(context: Context): List<Uri> =
     when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R -> {
+        Build.VERSION.SDK_INT >= 30 -> {
             MediaStore.getExternalVolumeNames(context).map { vol ->
                 MediaStore.Audio.Media.getContentUri(vol)
             }
         }
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+        Build.VERSION.SDK_INT >= 29 -> {
             listOf(MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY))
         }
         else -> listOf(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
@@ -64,7 +65,7 @@ internal fun ensureCatRecMediaIndexed(context: Context) {
         }
     } catch (_: Exception) {
     }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    if (Build.VERSION.SDK_INT >= 29) {
         try {
             val shots =
                 File(
@@ -115,7 +116,7 @@ internal fun ensureCatRecMediaIndexed(context: Context) {
 }
 
 private fun videoPrimarySelection(): Pair<String, Array<String>> =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    if (Build.VERSION.SDK_INT >= 29) {
         val base = "${Environment.DIRECTORY_MOVIES}/CatRec"
         val sel =
             "(" +
@@ -131,7 +132,7 @@ private fun videoPrimarySelection(): Pair<String, Array<String>> =
 
 /** Catches rows where path encoding differs but files are still under the CatRec bucket. */
 private fun videoFallbackSelection(): Pair<String, Array<String>>? {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return null
+    if (Build.VERSION.SDK_INT < 29) return null
     val sel =
         "(${MediaStore.Video.Media.IS_PENDING} = 0) AND (" +
             "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ? OR " +
@@ -240,7 +241,7 @@ fun loadAppRecordings(
     if (!saveLocationUri.isNullOrEmpty()) {
         try {
             val existingNames = results.map { it.displayName }.toSet()
-            val safDir = DocumentFile.fromTreeUri(context, Uri.parse(saveLocationUri))
+            val safDir = DocumentFile.fromTreeUri(context, saveLocationUri.toUri())
             val safMicNames =
                 safDir
                     ?.listFiles()
@@ -289,11 +290,11 @@ private fun loadMicFileTimestamps(context: Context): Set<String> {
     val collections = mediaStoreAudioCollections(context)
 
     val (audioSel, audioArgs) =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= 29) {
             val paths =
                 buildList {
                     add("${Environment.DIRECTORY_MUSIC}${File.separator}CatRec${File.separator}")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (Build.VERSION.SDK_INT >= 31) {
                         add("${Environment.DIRECTORY_RECORDINGS}${File.separator}CatRec${File.separator}")
                     }
                 }

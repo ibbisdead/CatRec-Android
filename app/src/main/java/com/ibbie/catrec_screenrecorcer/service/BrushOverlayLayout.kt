@@ -29,6 +29,7 @@ import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
+import androidx.core.graphics.createBitmap
 
 private sealed class BrushCommittedAction {
     data class Stroke(
@@ -138,15 +139,6 @@ internal class BrushSurfaceView(
         invalidate()
     }
 
-    fun clearSession() {
-        actions.clear()
-        currentPath.reset()
-        strokeHadSegment = false
-        previewRect.setEmpty()
-        redrawAll()
-        invalidate()
-    }
-
     private fun redrawAll() {
         val b = bitmap ?: return
         b.eraseColor(Color.TRANSPARENT)
@@ -217,7 +209,7 @@ internal class BrushSurfaceView(
         super.onSizeChanged(w, h, oldw, oldh)
         if (w <= 0 || h <= 0) return
         bitmap?.recycle()
-        bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        bitmap = createBitmap(w, h)
         bitmapCanvas = Canvas(bitmap!!)
         penPaint.strokeWidth = strokeWidthPx
         eraserPaint.strokeWidth = strokeWidthPx * 1.4f
