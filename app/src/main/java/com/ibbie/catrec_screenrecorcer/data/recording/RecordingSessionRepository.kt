@@ -48,15 +48,18 @@ interface RecordingSessionRepository {
     fun saveClip(context: Context)
 
     /**
-     * Suspends until current settings + [context] display metrics can build a [SessionConfig].
+     * Builds a [SessionConfig] from current settings + [context] display metrics. Must be
+     * callable synchronously from an activity-result callback so the subsequent
+     * `startForegroundService` stays inside the foreground-service grant window that Android
+     * 12+ only keeps open on the caller's original thread.
      */
-    suspend fun createSessionConfigForFullRecording(
+    fun createSessionConfigForFullRecording(
         context: Context,
         resultCode: Int,
         projectionIntent: Intent,
     ): SessionConfig
 
-    suspend fun createSessionConfigForBuffer(
+    fun createSessionConfigForBuffer(
         context: Context,
         resultCode: Int,
         projectionIntent: Intent,

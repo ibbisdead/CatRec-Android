@@ -6,6 +6,8 @@ import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
 import android.view.Surface
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlin.math.roundToInt
 
 /**
  * Shared screen-capture video encoder setup: tiered [MediaCodec.configure] attempts,
@@ -18,10 +20,92 @@ internal data class ConfiguredVideoEncoder(
     val codec: MediaCodec,
     val inputSurface: Surface,
     val mime: String,
+    /** Dimensions passed to [MediaCodec.configure] and the encoder input surface (may differ from the request after hardware fallback). */
+    val encodedWidth: Int,
+    val encodedHeight: Int,
 )
 
 internal object VideoEncoderConfigurator {
     private const val TAG = "VideoEncCfg"
+
+    private fun resolveSupportedEncoderSize(
+        videoCaps: MediaCodecInfo.VideoCapabilities,
+        width: Int,
+        height: Int,
+    ): Pair<Int, Int> {
+        val align = VideoEncoderDimensionMath::alignCeil16
+        val primary = align(width) to align(height)
+        if (primary.first > 0 &&
+            primary.second > 0 &&
+            videoCaps.isSizeSupported(primary.first, primary.second)
+        ) {
+            return primary
+        }
+
+        val safeW = width.coerceAtLeast(1)
+        val safeH = height.coerceAtLeast(1)
+        val aspect = safeW.toFloat() / safeH.toFloat()
+        val ladderHeights = listOf(2160, 1440, 1080, 720, 540, 480, 360)
+        val standardBoxes =
+            listOf(
+                1920 to 1080,
+                1280 to 720,
+                854 to 480,
+                640 to 360,
+            )
+
+        val candidates = ArrayList<Pair<Int, Int>>(24)
+        candidates.add(primary)
+        for (th in ladderHeights) {
+            val h = align(th)
+            val w = align((h * aspect).roundToInt().coerceAtLeast(1))
+            candidates.add(w to h)
+            candidates.add(h to w)
+        }
+        for ((bw, bh) in standardBoxes) {
+            val w = align(bw)
+            val h = align(bh)
+            candidates.add(w to h)
+            candidates.add(h to w)
+        }
+
+        for ((w, h) in candidates.distinct()) {
+            if (w > 0 && h > 0 && videoCaps.isSizeSupported(w, h)) return w to h
+        }
+
+        // Uniform scale (aspect-preserving); avoids independent W/H shrink which warps aspect ratio.
+        var factor = 0.9f
+        repeat(40) {
+            val (w, h) =
+                VideoEncoderDimensionMath.scalePreservingAspectCeil16(
+                    width,
+                    height,
+                    factor,
+                    minEdgePx = 160,
+                )
+            if (w > 0 && h > 0 && videoCaps.isSizeSupported(w, h)) return w to h
+            factor *= 0.9f
+            if (factor < 0.04f) return@repeat
+        }
+        return primary
+    }
+
+    private fun logConfigureFailureToCrashlytics(
+        mimeType: String,
+        codecInfo: MediaCodecInfo?,
+        format: MediaFormat,
+        e: Exception,
+    ) {
+        try {
+            val crash = FirebaseCrashlytics.getInstance()
+            crash.setCustomKey("video_configure_codec_name", codecInfo?.name ?: "unknown")
+            crash.setCustomKey("video_configure_mime", mimeType)
+            val formatDump = format.toString()
+            crash.setCustomKey("video_configure_media_format", formatDump.take(1024))
+            crash.log("MediaCodec.configure failure MediaFormat=$formatDump")
+        } catch (_: Exception) {
+        }
+    }
 
     private fun isEmulator(): Boolean =
         Build.MODEL.contains("sdk_gphone", ignoreCase = true) ||
@@ -169,22 +253,49 @@ internal object VideoEncoderConfigurator {
                     }
 
                     codec = openEncoderInstance(mimeType, attempt.codecName, logTag)
+                    val codecInfo = VideoEncoderResolver.findEncoderInfo(codec.name)
+                    val videoCaps =
+                        try {
+                            codecInfo?.getCapabilitiesForType(mimeType)?.videoCapabilities
+                        } catch (_: Throwable) {
+                            null
+                        }
+                    val (encW, encH) =
+                        if (videoCaps != null) {
+                            resolveSupportedEncoderSize(videoCaps, width, height)
+                        } else {
+                            VideoEncoderDimensionMath.alignCeil16(width) to VideoEncoderDimensionMath.alignCeil16(height)
+                        }
+                    if (encW != VideoEncoderDimensionMath.alignCeil16(width) ||
+                        encH != VideoEncoderDimensionMath.alignCeil16(height)
+                    ) {
+                        Log.w(
+                            TAG,
+                            "[$logTag] Encoder size adjusted for hardware support " +
+                                "request=${width}x${height} -> ${encW}x${encH} mime=$mimeType codec=${codec.name}",
+                        )
+                    }
                     val format =
                         buildConfigFormat(
                             mimeType,
-                            width,
-                            height,
+                            encW,
+                            encH,
                             fps,
                             bitrate,
                             attempt.withProfile,
                             attempt.withAdvancedHints,
                         )
-                    codec.configure(
-                        format,
-                        null,
-                        null,
-                        MediaCodec.CONFIGURE_FLAG_ENCODE,
-                    )
+                    try {
+                        codec.configure(
+                            format,
+                            null,
+                            null,
+                            MediaCodec.CONFIGURE_FLAG_ENCODE,
+                        )
+                    } catch (e: Exception) {
+                        logConfigureFailureToCrashlytics(mimeType, codecInfo, format, e)
+                        throw e
+                    }
                     surface = codec.createInputSurface()
                     if (tierIdx > 0) {
                         Log.i(
@@ -198,9 +309,9 @@ internal object VideoEncoderConfigurator {
                     }
                     Log.i(
                         TAG,
-                        "[$logTag] Video encoder ready mime=$mimeType tier=$tierIdx",
+                        "[$logTag] Video encoder ready mime=$mimeType tier=$tierIdx size=${encW}x${encH}",
                     )
-                    return ConfiguredVideoEncoder(codec, surface, mimeType)
+                    return ConfiguredVideoEncoder(codec, surface, mimeType, encW, encH)
                 } catch (e: Exception) {
                     lastError = e
                     Log.w(
@@ -229,6 +340,10 @@ internal object VideoEncoderConfigurator {
         }
         val err = lastError ?: IllegalStateException("Video encoder configure failed")
         Log.e(TAG, "[$logTag] Video encoder configure failed after all mime candidates", err)
+        try {
+            FirebaseCrashlytics.getInstance().recordException(err)
+        } catch (_: Exception) {
+        }
         throw err
     }
 }

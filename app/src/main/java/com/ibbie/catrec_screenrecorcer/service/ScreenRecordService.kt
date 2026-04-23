@@ -64,6 +64,7 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineEventBus
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingFatalKind
 import com.ibbie.catrec_screenrecorcer.data.recording.SessionConfig
 import com.ibbie.catrec_screenrecorcer.data.recording.toMicAndInternalFlags
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
@@ -103,6 +104,16 @@ class ScreenRecordService :
         const val ACTION_UNMUTE = "ACTION_UNMUTE"
         const val ACTION_NOTIFICATION_DISMISSED = "ACTION_NOTIFICATION_DISMISSED"
         const val ACTION_TAKE_SCREENSHOT = "ACTION_TAKE_SCREENSHOT"
+
+        /**
+         * Standalone screenshot: caller supplies [EXTRA_RESULT_CODE] + [EXTRA_DATA] obtained
+         * directly from a fresh [MediaProjectionManager.createScreenCaptureIntent] dialog. The
+         * service starts foreground with [ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION],
+         * captures one frame, then releases the projection and stops the service (unless an
+         * unrelated recording/buffer/prepared session is already live, in which case it only
+         * drops the one-shot projection).
+         */
+        const val ACTION_TAKE_SCREENSHOT_ONE_SHOT = "ACTION_TAKE_SCREENSHOT_ONE_SHOT"
 
         /** Toggle pause while recording (quick controls / app control notification). */
         const val ACTION_TOGGLE_PAUSE = "ACTION_TOGGLE_PAUSE"
@@ -219,11 +230,56 @@ class ScreenRecordService :
      * [takeScreenshot] without a running engine uses a dedicated [VirtualDisplay]. From Android 14
      * onward the system rejects a second [MediaProjection.createVirtualDisplay] while one is still
      * active — always release this before starting [EncoderFrameRelay].
+     *
+     * Locking: ALL reads and writes of this field MUST be performed while holding
+     * [screenshotVirtualDisplayLock]. The lock is the sole gate for the one-shot capture
+     * producer/consumer pair; `@Volatile` is intentionally NOT used so no caller is tempted to
+     * rely on lock-free visibility — the lock provides both mutual exclusion and happens-before.
+     */
+    private var pendingScreenshotVirtualDisplay: VirtualDisplay? = null
+
+    /**
+     * Consumer paired with [pendingScreenshotVirtualDisplay]. Tracked at service scope so every
+     * teardown path (listener, [MediaProjection.Callback.onStop], error branches) can explicitly
+     * close it in the required order (VirtualDisplay → ImageReader → MediaProjection.stop).
+     * Relying solely on the capture listener to close the reader was fragile — if the projection
+     * was revoked before a frame arrived, the reader would leak. Owner: this service.
+     *
+     * Locking: shares [screenshotVirtualDisplayLock] with [pendingScreenshotVirtualDisplay]. The
+     * reader and its producer VD must never be observed in inconsistent states, so both fields
+     * are guarded by the same lock and written together when published/cleared.
+     */
+    private var pendingScreenshotImageReader: ImageReader? = null
+
+    /**
+     * Sole lock guarding [pendingScreenshotVirtualDisplay] and [pendingScreenshotImageReader].
+     * Held for every read and write of either field so callers always observe them as an
+     * atomic pair. Kept intentionally narrow — it does NOT cover [mediaProjection] or any
+     * other service state.
+     */
+    private val screenshotVirtualDisplayLock = Any()
+
+    /** Read from encoder threads (fatal callbacks); writes occur on main during buffer start/stop. */
+    @Volatile
+    private var isBufferRunning = false
+
+    /**
+     * Set by [ACTION_TAKE_SCREENSHOT_ONE_SHOT] when the current [mediaProjection] was created
+     * exclusively for a single standalone screenshot. Every teardown path that runs after the
+     * capture must call [releaseOneShotScreenshotProjectionIfNeeded] so the projection is
+     * stopped, the permission grant is dropped, and (when no other session is active) the
+     * service exits the foreground and calls [stopSelf].
      */
     @Volatile
-    private var pendingScreenshotVirtualDisplay: VirtualDisplay? = null
-    private val screenshotVirtualDisplayLock = Any()
-    private var isBufferRunning = false
+    private var oneShotScreenshotProjection: Boolean = false
+
+    /**
+     * Single-flight guard for [releaseOneShotScreenshotProjectionIfNeeded]. Prevents the
+     * [MediaProjection.Callback.onStop] path and the synchronous teardown path from both
+     * running the release sequence when they race (Android 14+ may deliver `onStop`
+     * immediately after [MediaProjection.stop]).
+     */
+    private val releasingOneShotProjection = AtomicBoolean(false)
 
     /**
      * True after foreground started with [Companion.MAIN_FOREGROUND_NOTIFICATION_ID] until removed.
@@ -247,7 +303,7 @@ class ScreenRecordService :
     private var audioEnabled: Boolean = false
     private var internalAudioEnabled: Boolean = false
     private var audioBitrate: Int = 128_000
-    private var audioSampleRate: Int = 48_000
+    private var audioSampleRate: Int = 44_100
     private var audioChannels: String = "Mono"
     private var audioEncoderType: String = "AAC-LC"
     private var separateMicRecording: Boolean = false
@@ -295,6 +351,8 @@ class ScreenRecordService :
     // Tells the service to revoke projection after the next stop completes
     private var revokeAfterStop = false
 
+    /** Read from encoder threads (fatal callbacks); writes occur on main during record start/stop. */
+    @Volatile
     private var isRecorderRunning = false
     private val isStoppingForCodec = AtomicBoolean(false)
     private var isStopping = false
@@ -370,35 +428,80 @@ class ScreenRecordService :
         mode: String,
         detail: String,
     ) {
+        handleFatalRecordingFromEngine(
+            mode = mode,
+            detail = detail,
+            kind = RecordingFatalKind.HardwareVideoEncoder,
+        )
+    }
+
+    /**
+     * Graceful stop after a fatal recording failure. [kind] distinguishes codec vs muxer for logs and UI.
+     *
+     * May be invoked from a background encoder thread. Claims [isStoppingForCodec] immediately so a
+     * second fatal (e.g. video + audio) does not schedule duplicate toasts or stops. UI work runs on
+     * the main looper.
+     */
+    private fun handleFatalRecordingFromEngine(
+        mode: String,
+        detail: String,
+        kind: RecordingFatalKind,
+    ) {
+        val err =
+            when (kind) {
+                RecordingFatalKind.HardwareVideoEncoder ->
+                    RecordingError.HardwareEncoder(source = mode, detail = detail)
+                RecordingFatalKind.MediaMuxer ->
+                    RecordingError.MediaMuxerFailure(source = mode, detail = detail)
+            }
+
+        val shouldStop =
+            when (mode) {
+                "record" -> isRecorderRunning
+                "buffer" -> isBufferRunning
+                else -> false
+            }
+        if (!shouldStop) {
+            Log.w(
+                LOG_TAG,
+                "RecordingFatal_stop kind=$kind mode=$mode ignored (inactive) $detail",
+            )
+            return
+        }
+        if (!isStoppingForCodec.compareAndSet(false, true)) {
+            Log.d(
+                LOG_TAG,
+                "RecordingFatal_stop kind=$kind mode=$mode suppressed (fatal stop already in flight) $detail",
+            )
+            return
+        }
+
         mainHandler.post {
-            val shouldStop =
+            val stillActive =
                 when (mode) {
                     "record" -> isRecorderRunning
                     "buffer" -> isBufferRunning
                     else -> false
                 }
-            if (!shouldStop) {
+            if (!stillActive) {
+                isStoppingForCodec.set(false)
                 Log.w(
                     LOG_TAG,
-                    "VideoEncFatal_stop $mode ignored (inactive) $detail",
+                    "RecordingFatal_stop kind=$kind mode=$mode aborted (inactive on main) $detail",
                 )
                 return@post
             }
-            if (!isStoppingForCodec.compareAndSet(false, true)) {
-                Log.d(
-                    LOG_TAG,
-                    "VideoEncFatal_stop $mode ignored (already stopping for codec) $detail",
-                )
-                return@post
-            }
-            Log.e(LOG_TAG, "VideoEncFatal_stop graceful mode=$mode $detail")
-            FirebaseCrashlytics.getInstance().log("graceful_stop_encoder mode=$mode ${detail.take(180)}")
-            Toast
-                .makeText(
-                    this,
-                    getString(R.string.toast_video_encoder_failed),
-                    Toast.LENGTH_LONG,
-                ).show()
+            Log.e(LOG_TAG, "RecordingFatal_stop graceful kind=$kind mode=$mode $detail")
+            FirebaseCrashlytics.getInstance().log(
+                "graceful_stop_recording kind=$kind mode=$mode ${detail.take(180)}",
+            )
+            RecordingEngineEventBus.tryEmit(err)
+            val toastRes =
+                when (kind) {
+                    RecordingFatalKind.HardwareVideoEncoder -> R.string.toast_video_encoder_failed
+                    RecordingFatalKind.MediaMuxer -> R.string.toast_recording_muxer_failed
+                }
+            Toast.makeText(this, getString(toastRes), Toast.LENGTH_LONG).show()
             when (mode) {
                 "record" -> stopRecording()
                 "buffer" -> stopBuffer()
@@ -471,7 +574,7 @@ class ScreenRecordService :
                 audioEnabled = intent.getBooleanExtra(EXTRA_AUDIO_ENABLED, false)
                 internalAudioEnabled = intent.getBooleanExtra(EXTRA_INTERNAL_AUDIO_ENABLED, false)
                 audioBitrate = intent.getIntExtra(EXTRA_AUDIO_BITRATE, 128_000)
-                audioSampleRate = intent.getIntExtra(EXTRA_AUDIO_SAMPLE_RATE, 48_000)
+                audioSampleRate = intent.getIntExtra(EXTRA_AUDIO_SAMPLE_RATE, 44_100)
                 audioChannels = intent.getStringExtra(EXTRA_AUDIO_CHANNELS) ?: "Mono"
                 audioEncoderType = intent.getStringExtra(EXTRA_AUDIO_ENCODER) ?: "AAC-LC"
                 separateMicRecording = intent.getBooleanExtra(EXTRA_SEPARATE_MIC_RECORDING, false)
@@ -608,7 +711,7 @@ class ScreenRecordService :
                     audioEnabled = intent.getBooleanExtra(EXTRA_AUDIO_ENABLED, false)
                     internalAudioEnabled = intent.getBooleanExtra(EXTRA_INTERNAL_AUDIO_ENABLED, false)
                     audioBitrate = intent.getIntExtra(EXTRA_AUDIO_BITRATE, 128_000)
-                    audioSampleRate = intent.getIntExtra(EXTRA_AUDIO_SAMPLE_RATE, 48_000)
+                    audioSampleRate = intent.getIntExtra(EXTRA_AUDIO_SAMPLE_RATE, 44_100)
                     audioChannels = intent.getStringExtra(EXTRA_AUDIO_CHANNELS) ?: "Mono"
                     audioEncoderType = intent.getStringExtra(EXTRA_AUDIO_ENCODER) ?: "AAC-LC"
                     resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
@@ -790,8 +893,180 @@ class ScreenRecordService :
                     }
                 }
             }
+
+            ACTION_TAKE_SCREENSHOT_ONE_SHOT -> {
+                handleOneShotScreenshotStart(intent)
+            }
         }
         return START_STICKY
+    }
+
+    /**
+     * Handle a single-use screenshot launched from a transparent consent activity. The service
+     * must be in the foreground with [ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION]
+     * before [MediaProjectionManager.getMediaProjection] is called on Android 14+. When any
+     * engine or already-active projection exists, route through the normal [takeScreenshot]
+     * path and drop the freshly granted token — the existing session's projection is reused.
+     */
+    @RequiresApi(30)
+    private fun handleOneShotScreenshotStart(intent: Intent) {
+        val code = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
+        val data: Intent? =
+            if (Build.VERSION.SDK_INT >= 33) {
+                intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(EXTRA_DATA)
+            }
+        intent.getStringExtra(EXTRA_SCREENSHOT_FORMAT)?.let { screenshotFormat = it }
+        val q = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, -1)
+        if (q >= 0) screenshotQuality = q.coerceIn(1, 100)
+
+        if (code == 0 || data == null) {
+            Log.w(LOG_TAG, "one_shot_screenshot missing projection result")
+            stopOneShotForegroundAndSelfIfIdle()
+            return
+        }
+
+        if (recorderEngine != null || rollingBufferEngine != null || mediaProjection != null) {
+            Log.d(LOG_TAG, "one_shot_screenshot reusing active session projection")
+            takeScreenshot()
+            return
+        }
+
+        try {
+            ServiceCompat.startForeground(
+                this,
+                MAIN_FOREGROUND_NOTIFICATION_ID,
+                buildReadyNotification(),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                } else {
+                    0
+                },
+            )
+            mainForegroundActive = true
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            Log.e(LOG_TAG, "one_shot_screenshot startForeground failed", e)
+            stopOneShotForegroundAndSelfIfIdle()
+            return
+        }
+
+        val projection =
+            try {
+                mediaProjectionManager?.getMediaProjection(code, data)
+            } catch (e: Exception) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                null
+            }
+        if (projection == null) {
+            Log.w(LOG_TAG, "one_shot_screenshot getMediaProjection returned null")
+            stopOneShotForegroundAndSelfIfIdle()
+            return
+        }
+
+        resultCode = code
+        resultData = data
+        mediaProjection = projection
+        oneShotScreenshotProjection = true
+        projection.registerCallback(
+            object : MediaProjection.Callback() {
+                override fun onStop() {
+                    super.onStop()
+                    mainHandler.post {
+                        // System revoked the projection (user consent flow, security policy,
+                        // single-app mode switch, etc.). If we already detached as part of
+                        // [releaseOneShotScreenshotProjectionIfNeeded] the guard is a no-op.
+                        if (mediaProjection === projection) {
+                            mediaProjection = null
+                        }
+                        if (oneShotScreenshotProjection &&
+                            releasingOneShotProjection.compareAndSet(false, true)
+                        ) {
+                            try {
+                                oneShotScreenshotProjection = false
+                                // Strict teardown order (VD → ImageReader → MediaProjection → null):
+                                // the projection is already being stopped by the OS here, but we
+                                // still release producer + consumer explicitly so a pending capture
+                                // cannot keep either alive past onStop. Idempotent with the
+                                // capture listener's own cleanup.
+                                releasePendingScreenshotVirtualDisplay()
+                                releasePendingScreenshotImageReader()
+                                resultCode = 0
+                                resultData = null
+                                stopOneShotForegroundAndSelfIfIdle()
+                            } finally {
+                                releasingOneShotProjection.set(false)
+                            }
+                        }
+                    }
+                }
+            },
+            mainHandler,
+        )
+
+        takeScreenshot()
+    }
+
+    /**
+     * Stop the projection acquired exclusively for [ACTION_TAKE_SCREENSHOT_ONE_SHOT] and, when
+     * no other session is active, drop the foreground notification and stop the service so the
+     * user must reconsent for the next standalone screenshot.
+     *
+     * Idempotent and non-reentrant — guarded by [releasingOneShotProjection] so the
+     * capture-listener teardown and the [MediaProjection.Callback.onStop] handler cannot
+     * both run the release sequence concurrently.
+     *
+     * Cleanup order (strict — matches [MediaProjection.Callback.onStop] and
+     * [teardownScreenshotReader] so no branch can double-release or reorder the steps):
+     *   1) [VirtualDisplay.release] (producer stops frame delivery)
+     *   2) [ImageReader.close]      (consumer — explicit, no longer relying on listener drain)
+     *   3) [MediaProjection.stop]   (revokes the grant)
+     *   4) null out references      (mediaProjection, resultCode, resultData)
+     *   5) drop foreground + stopSelf if idle
+     * Idempotent: the reader / VD helpers are safe to call repeatedly.
+     */
+    private fun releaseOneShotScreenshotProjectionIfNeeded() {
+        if (!oneShotScreenshotProjection) return
+        if (!releasingOneShotProjection.compareAndSet(false, true)) return
+        try {
+            oneShotScreenshotProjection = false
+            // 1) producer first (stops frame delivery)
+            releasePendingScreenshotVirtualDisplay()
+            // 2) consumer — must run before [MediaProjection.stop] so the reader never outlives
+            //    its producer and projection. No-op if the capture listener already closed it.
+            releasePendingScreenshotImageReader()
+            // 3) then projection itself — this may synchronously fire onStop, which is now a no-op
+            //    because we already flipped [oneShotScreenshotProjection] to false and hold the flag.
+            try {
+                mediaProjection?.stop()
+            } catch (_: Exception) {
+            }
+            // 4) null out references
+            mediaProjection = null
+            resultCode = 0
+            resultData = null
+            // 5) foreground + stopSelf if no other session keeps us alive
+            stopOneShotForegroundAndSelfIfIdle()
+        } finally {
+            releasingOneShotProjection.set(false)
+        }
+    }
+
+    private fun stopOneShotForegroundAndSelfIfIdle() {
+        if (isRecorderRunning || isBufferRunning || isPrepared) return
+        if (mainForegroundActive) {
+            try {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } catch (_: Exception) {
+            }
+            mainForegroundActive = false
+        }
+        try {
+            stopSelf()
+        } catch (_: Exception) {
+        }
     }
 
     /**
@@ -1300,7 +1575,7 @@ class ScreenRecordService :
         lifecycleScope.launch {
             if (countdownValue > 0) {
                 showCountdownOverlay(countdownValue)
-                for (i in countdownValue..1) {
+                for (i in countdownValue downTo 1) {
                     updateCountdownOverlayNumber(i)
                     notifMgr.notify(
                         MAIN_FOREGROUND_NOTIFICATION_ID,
@@ -1518,6 +1793,7 @@ class ScreenRecordService :
                 }
             try {
                 releasePendingScreenshotVirtualDisplay()
+                releasePendingScreenshotImageReader()
                 recorderEngine =
                     ScreenRecorderEngine(
                         context = this@ScreenRecordService,
@@ -1559,9 +1835,6 @@ class ScreenRecordService :
                             )
                         },
                         onFatalVideoEncodeError = { detail ->
-                            RecordingEngineEventBus.tryEmit(
-                                RecordingError.HardwareEncoder(source = "record", detail = detail),
-                            )
                             handleFatalVideoEncodeFromEngine("record", detail)
                         },
                     )
@@ -1614,6 +1887,9 @@ class ScreenRecordService :
             }
         }
     }
+
+    /** Ceil to a multiple of 16 — same policy as [VideoEncoderDimensionMath] / [VideoEncoderConfigurator]. */
+    private fun alignCaptureDimCeil16(value: Int): Int = VideoEncoderDimensionMath.alignCeil16(value)
 
     private fun applyOrientationLock() {
         if (captureDimensionsFromSessionConfig) {
@@ -1712,8 +1988,8 @@ class ScreenRecordService :
                 session.heightPx > SessionConfig.USE_SERVICE_DEFAULT_DIMENSIONS
         captureDimensionsFromSessionConfig = freeze
         if (freeze) {
-            displayWidth = session.widthPx
-            displayHeight = session.heightPx
+            displayWidth = alignCaptureDimCeil16(session.widthPx)
+            displayHeight = alignCaptureDimCeil16(session.heightPx)
         }
         return true
     }
@@ -2150,7 +2426,7 @@ class ScreenRecordService :
         lifecycleScope.launch {
             if (countdownValue > 0) {
                 showCountdownOverlay(countdownValue)
-                for (i in countdownValue..1) {
+                for (i in countdownValue downTo 1) {
                     updateCountdownOverlayNumber(i)
                     notifMgr.notify(
                         BUFFER_NOTIFICATION_ID,
@@ -2231,6 +2507,7 @@ class ScreenRecordService :
                 }
             try {
                 releasePendingScreenshotVirtualDisplay()
+                releasePendingScreenshotImageReader()
                 rollingBufferEngine =
                     RollingBufferEngine(
                         context = this@ScreenRecordService,
@@ -2266,11 +2543,8 @@ class ScreenRecordService :
                                 "Buffer internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
                             )
                         },
-                        onFatalVideoEncodeError = { detail ->
-                            RecordingEngineEventBus.tryEmit(
-                                RecordingError.HardwareEncoder(source = "buffer", detail = detail),
-                            )
-                            handleFatalVideoEncodeFromEngine("buffer", detail)
+                        onFatalRecordingError = { fatalKind, detail ->
+                            handleFatalRecordingFromEngine("buffer", detail, fatalKind)
                         },
                     )
                 recordingPerformanceController = perfController
@@ -2472,6 +2746,28 @@ class ScreenRecordService :
         }
     }
 
+    /**
+     * Explicitly closes the one-shot screenshot [ImageReader] if present. Idempotent — safe to
+     * call multiple times and from any teardown path (listener drain, [MediaProjection.Callback]
+     * onStop, error branches). Also detaches the frame listener first so no callbacks run during
+     * close. Paired with [releasePendingScreenshotVirtualDisplay] so callers can enforce the
+     * producer → consumer → projection teardown order.
+     */
+    private fun releasePendingScreenshotImageReader() {
+        synchronized(screenshotVirtualDisplayLock) {
+            val reader = pendingScreenshotImageReader ?: return
+            try {
+                reader.setOnImageAvailableListener(null, null)
+            } catch (_: Exception) {
+            }
+            try {
+                reader.close()
+            } catch (_: Exception) {
+            }
+            pendingScreenshotImageReader = null
+        }
+    }
+
     private fun takeScreenshot() {
         recorderEngine?.let { eng ->
             requestScreenshotFromEngine { cb -> eng.requestScreenshot(cb) }
@@ -2487,13 +2783,33 @@ class ScreenRecordService :
                     Toast.makeText(this, getString(R.string.error_screenshot_no_projection), Toast.LENGTH_SHORT).show()
                     OverlayService.notifyScreenshotCaptureFinished()
                 }
+                releaseOneShotScreenshotProjectionIfNeeded()
                 return
             }
-        val metrics = resources.displayMetrics
+        // Idle (no active encode engine): mirror the real display via a dedicated VirtualDisplay.
+        // The 8-frame skip inside [doTakeScreenshotFromProjection] absorbs stale SurfaceFlinger
+        // buffers from any in-flight shade-close animation on high-refresh-rate devices; no
+        // time-based countdown is required — we rely on the caller having already handed focus
+        // back from the shade (see [ScreenshotAfterShadeActivity]).
+        doTakeScreenshotFromProjection(mp, resources.displayMetrics)
+    }
+
+    private fun doTakeScreenshotFromProjection(
+        mp: MediaProjection,
+        metrics: DisplayMetrics,
+    ) {
+        // Enforce: never run a standalone VirtualDisplay capture while any engine is encoding.
+        // The engines own the active VirtualDisplay tied to [mediaProjection]; from Android 14
+        // onward the system rejects a second createVirtualDisplay() on the same projection.
+        if (recorderEngine != null || rollingBufferEngine != null) {
+            Log.w(LOG_TAG, "doTakeScreenshotFromProjection skipped — engine active, routing to engine path")
+            takeScreenshot()
+            return
+        }
+        releasePendingScreenshotVirtualDisplay()
+        releasePendingScreenshotImageReader()
         val width = metrics.widthPixels
         val height = metrics.heightPixels
-
-        releasePendingScreenshotVirtualDisplay()
         val imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
         val virtualDisplay =
             try {
@@ -2509,29 +2825,39 @@ class ScreenRecordService :
                 )
             } catch (e: SecurityException) {
                 Log.e(LOG_TAG, "Screenshot VirtualDisplay rejected", e)
-                imageReader.close()
+                try {
+                    imageReader.close()
+                } catch (_: Exception) {
+                }
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
                     OverlayService.notifyScreenshotCaptureFinished()
                 }
+                releaseOneShotScreenshotProjectionIfNeeded()
                 return
             } ?: run {
-                imageReader.close()
+                try {
+                    imageReader.close()
+                } catch (_: Exception) {
+                }
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(this, getString(R.string.error_screenshot_capture_failed), Toast.LENGTH_SHORT).show()
                     OverlayService.notifyScreenshotCaptureFinished()
                 }
+                releaseOneShotScreenshotProjectionIfNeeded()
                 return
             }
         synchronized(screenshotVirtualDisplayLock) {
             pendingScreenshotVirtualDisplay = virtualDisplay
+            pendingScreenshotImageReader = imageReader
         }
 
-        // Auto-mirror VD often delivers one or more stale buffers (notification shade / transition)
-        // captured before the display has caught up — drop the first few frames, then save.
+        // Auto-mirror VD often delivers stale buffers containing the notification shade or
+        // transition frames. Skip enough frames to clear the pipeline on high-refresh-rate devices
+        // (120/144 Hz) where the shade animation produces many more queued frames.
         val mirrorFrameIndex = AtomicInteger(0)
         val mirrorCaptureDone = AtomicBoolean(false)
-        val skipMirrorFrames = 3
+        val skipMirrorFrames = 8
         val maxMirrorFrames = 64
 
         fun teardownScreenshotReader(
@@ -2558,8 +2884,15 @@ class ScreenRecordService :
                 if (pendingScreenshotVirtualDisplay === vd) {
                     pendingScreenshotVirtualDisplay = null
                 }
+                // Reader is already closed above; drop the service-scope reference so the
+                // [releasePendingScreenshotImageReader] call inside
+                // [releaseOneShotScreenshotProjectionIfNeeded] is a safe no-op.
+                if (pendingScreenshotImageReader === reader) {
+                    pendingScreenshotImageReader = null
+                }
             }
             OverlayService.notifyScreenshotCaptureFinished()
+            releaseOneShotScreenshotProjectionIfNeeded()
         }
 
         imageReader.setOnImageAvailableListener(
@@ -2689,6 +3022,7 @@ class ScreenRecordService :
                     contentResolver.update(uri, values, null, null)
                 }
                 savedUri = uri
+                RecordingState.onScreenshotSaved()
             }
         } catch (e: Exception) {
             Log.e(LOG_TAG, "Screenshot save failed", e)

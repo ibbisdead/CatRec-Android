@@ -188,7 +188,7 @@ fun MergeVideosScreen(navController: NavController) {
     }
 
     if (showCatRecSheet) {
-        ModalBottomSheet(onDismissRequest = { }) {
+        ModalBottomSheet(onDismissRequest = { showCatRecSheet = false }) {
             var entries by remember { mutableStateOf<List<RecordingEntry>>(emptyList()) }
             LaunchedEffect(Unit) {
                 entries = withContext(Dispatchers.IO) { loadAppRecordings(context, saveLocationUri) }

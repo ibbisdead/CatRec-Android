@@ -4,6 +4,15 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="31" />
     <!-- Android 14+: base FGS permission plus one FOREGROUND_SERVICE_* per type used by our services (see ScreenRecordService, OverlayService). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
@@ -12,7 +21,12 @@
         tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- Mic sidecar files indexed under Music/Recordings/CatRec (MediaStore audio). Photos/videos from the library use the system Photo Picker — no READ_MEDIA_IMAGES / READ_MEDIA_VIDEO. -->
+    <!-- API 33+: granular media permissions that replace READ_EXTERNAL_STORAGE.
+         READ_MEDIA_VIDEO + READ_MEDIA_IMAGES are needed so MediaStore queries show own recordings
+         and screenshots after a fresh install or reinstall (OEMs often clear MediaStore on uninstall).
+         READ_MEDIA_AUDIO covers mic-sidecar files indexed under Music/Recordings/CatRec. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
@@ -60,6 +74,12 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7741372232895726~5682529172" />
+
+        <!-- Drop legacy Apache HTTP shim if a dependency merges it; not used by this app. -->
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false"
+            tools:node="remove" />
 
         <activity
             android:name=".service.ScreenshotPostActionActivity"

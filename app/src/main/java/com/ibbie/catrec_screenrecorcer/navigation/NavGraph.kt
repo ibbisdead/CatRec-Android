@@ -1,6 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.navigation
 
 import android.net.Uri
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -107,6 +108,8 @@ import com.ibbie.catrec_screenrecorcer.ui.tools.ToolsScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.VideoToGifScreen
 import androidx.core.graphics.toColorInt
 
+private const val NAV_GRAPH_LOG = "CatRecNavGraph"
+
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
@@ -118,10 +121,57 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
 
     fun drainQueuedImageEditor() {
         val act = context as? MainActivity ?: return
-        val raw = act.takeQueuedImageEditorUri() ?: return
-        val enc = Uri.encode(raw)
-        navController.navigate("image_editor?imageUri=$enc") {
-            launchSingleTop = true
+        val raw = act.peekQueuedImageEditorUri() ?: return
+        val destination = "image_editor?imageUri=${Uri.encode(raw)}"
+        val lifecycleState = lifecycleOwner.lifecycle.currentState
+
+        // Readiness gates (any failed → leave queued, retry on next ON_RESUME):
+        //  1. NavHost has attached its graph — `navController.graph` throws IllegalStateException
+        //     before the NavHost composable's first composition, so we check access defensively.
+        //  2. A current destination exists (host has composed at least once).
+        //  3. Lifecycle is at least RESUMED — navigating on STARTED/CREATED can drop the
+        //     transaction or race with a pending config change; wait until the host is fully
+        //     interactive before committing the navigation.
+        val graphAttached =
+            try {
+                navController.graph
+                true
+            } catch (_: IllegalStateException) {
+                false
+            }
+        if (!graphAttached || navController.currentDestination == null ||
+            !lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+        ) {
+            if (Log.isLoggable(NAV_GRAPH_LOG, Log.DEBUG)) {
+                Log.d(
+                    NAV_GRAPH_LOG,
+                    "drainQueuedImageEditor skipped dest=$destination graphAttached=$graphAttached " +
+                        "currentDestination=${navController.currentDestination?.route} lifecycle=$lifecycleState",
+                )
+            }
+            return
+        }
+
+        try {
+            navController.navigate(destination) {
+                launchSingleTop = true
+            }
+            act.clearQueuedImageEditorUri(raw)
+        } catch (e: IllegalArgumentException) {
+            // Graph not yet attached / destination missing — leave queued, retry on next resume.
+            Log.w(
+                NAV_GRAPH_LOG,
+                "drainQueuedImageEditor IAE dest=$destination currentDestination=" +
+                    "${navController.currentDestination?.route} lifecycle=$lifecycleState",
+                e,
+            )
+        } catch (e: IllegalStateException) {
+            Log.w(
+                NAV_GRAPH_LOG,
+                "drainQueuedImageEditor ISE dest=$destination currentDestination=" +
+                    "${navController.currentDestination?.route} lifecycle=$lifecycleState",
+                e,
+            )
         }
     }
 

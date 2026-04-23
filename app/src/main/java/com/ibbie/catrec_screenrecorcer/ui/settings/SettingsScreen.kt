@@ -60,6 +60,7 @@ import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.components.*
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
+import com.ibbie.catrec_screenrecorcer.ui.safeStringResource
 import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
 import androidx.core.net.toUri
 import androidx.core.graphics.toColorInt
@@ -412,9 +413,9 @@ fun SettingsScreen(
                     viewModel.setFps(selected.toFloat())
                 }
             },
-            onDismiss = { },
-        )
-    }
+        onDismiss = { showFpsDialog = false },
+    )
+}
 
     if (showAdGateDialog) {
         AdGateDialog(
@@ -428,10 +429,9 @@ fun SettingsScreen(
                 adGateAd = null
                 loadAdGateAd()
             },
-            onDismiss = {
-            },
-        )
-    }
+        onDismiss = { showAdGateDialog = false },
+    )
+}
     if (showBitrateDialog) {
         val bitrateKeys = listOf(1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200)
         val mbpsLabel = stringResource(R.string.label_mbps)
@@ -444,7 +444,7 @@ fun SettingsScreen(
                 val idx = bitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setBitrate(bitrateKeys[idx].toFloat())
             },
-            onDismiss = { },
+            onDismiss = { showBitrateDialog = false },
         )
     }
     if (showResolutionDialog) {
@@ -454,6 +454,7 @@ fun SettingsScreen(
             onOptionSelected = { sel ->
                 when {
                     sel == "Custom…" -> {
+                        showResolutionDialog = false
                         showCustomResolutionDialog = true
                     }
                     sel.startsWith("—") -> {}
@@ -462,7 +463,7 @@ fun SettingsScreen(
                     }
                 }
             },
-            onDismiss = { },
+            onDismiss = { showResolutionDialog = false },
         )
     }
     if (showCustomResolutionDialog) {
@@ -470,8 +471,9 @@ fun SettingsScreen(
             current = if (resolution.contains("x") && !resolutionOptions.contains(resolution)) resolution else "",
             onConfirm = {
                 viewModel.setResolution(it)
+                showCustomResolutionDialog = false
             },
-            onDismiss = { },
+            onDismiss = { showCustomResolutionDialog = false },
         )
     }
     if (showVideoEncoderDialog) {
@@ -482,7 +484,7 @@ fun SettingsScreen(
             onOptionSelected = {
                 viewModel.setVideoEncoder(it)
             },
-            onDismiss = { },
+            onDismiss = { showVideoEncoderDialog = false },
         )
     }
     if (showOrientationDialog) {
@@ -501,7 +503,7 @@ fun SettingsScreen(
                 val idx = orientLabels.indexOf(label)
                 if (idx >= 0) viewModel.setRecordingOrientation(orientKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showOrientationDialog = false },
         )
     }
     if (showAudioBitrateDialog) {
@@ -516,7 +518,7 @@ fun SettingsScreen(
                 val idx = audioBitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioBitrate(audioBitrateKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showAudioBitrateDialog = false },
         )
     }
     if (showAudioSampleRateDialog) {
@@ -531,7 +533,7 @@ fun SettingsScreen(
                 val idx = sampleRateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioSampleRate(sampleRateKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showAudioSampleRateDialog = false },
         )
     }
     if (showAudioEncoderDialog) {
@@ -542,7 +544,7 @@ fun SettingsScreen(
             onOptionSelected = {
                 viewModel.setAudioEncoder(it)
             },
-            onDismiss = { },
+            onDismiss = { showAudioEncoderDialog = false },
         )
     }
     if (showCountdownDialog) {
@@ -562,7 +564,7 @@ fun SettingsScreen(
                 val idx = countdownLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCountdown(countdownKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showCountdownDialog = false },
         )
     }
     if (showClipperDurationDialog) {
@@ -574,7 +576,7 @@ fun SettingsScreen(
                 val idx = clipperDurationLabels.indexOf(sel)
                 if (idx >= 0) viewModel.setClipperDurationMinutes(idx + 1)
             },
-            onDismiss = { },
+            onDismiss = { showClipperDurationDialog = false },
         )
     }
     if (showStopDialog) {
@@ -586,7 +588,7 @@ fun SettingsScreen(
                 StopBehaviorKeys.PAUSE_ON_SCREEN_OFF to R.string.stop_behavior_pause_on_screen_off,
             )
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showStopDialog = false },
             title = { Text(stringResource(R.string.setting_stop_behavior)) },
             text = {
                 Column {
@@ -604,7 +606,7 @@ fun SettingsScreen(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_done)) } },
+            confirmButton = { TextButton(onClick = { showStopDialog = false }) { Text(stringResource(R.string.action_done)) } },
         )
     }
     if (showPatternDialog) {
@@ -615,7 +617,7 @@ fun SettingsScreen(
             onOptionSelected = {
                 viewModel.setFilenamePattern(it)
             },
-            onDismiss = { },
+            onDismiss = { showPatternDialog = false },
         )
     }
     if (showThemeDialog) {
@@ -626,7 +628,7 @@ fun SettingsScreen(
                 "Dark" to R.string.theme_dark,
             )
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showThemeDialog = false },
             title = { Text(stringResource(R.string.dialog_theme_title)) },
             text = {
                 Column {
@@ -637,23 +639,25 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .clickable {
                                         viewModel.setAppTheme(theme)
+                                        showThemeDialog = false
                                     }.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(selected = appTheme == theme, onClick = {
                                 viewModel.setAppTheme(theme)
+                                showThemeDialog = false
                             })
                             Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) } },
+            confirmButton = { TextButton(onClick = { showThemeDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
     if (showLanguageDialog) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showLanguageDialog = false },
             title = { Text(stringResource(R.string.dialog_language_title)) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
@@ -665,19 +669,21 @@ fun SettingsScreen(
                                     .fillMaxWidth()
                                     .selectable(selected = appLanguage == code, onClick = {
                                         viewModel.setAppLanguageWithUiApply(context, code)
+                                        showLanguageDialog = false
                                     })
                                     .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             RadioButton(selected = appLanguage == code, onClick = {
                                 viewModel.setAppLanguageWithUiApply(context, code)
+                                showLanguageDialog = false
                             })
                             Text(stringResource(labelRes), modifier = Modifier.padding(start = 8.dp))
                         }
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) } },
+            confirmButton = { TextButton(onClick = { showLanguageDialog = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
     if (showScreenshotFormatDialog) {
@@ -696,7 +702,7 @@ fun SettingsScreen(
                 val idx = formatLabels.indexOf(label)
                 if (idx >= 0) viewModel.setScreenshotFormat(formatKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showScreenshotFormatDialog = false },
         )
     }
     if (showCameraSettingsDialog) {
@@ -713,7 +719,7 @@ fun SettingsScreen(
             isRecording = isRecording,
             canDrawOverlays = canDrawOverlays,
             context = context,
-            onDismiss = { },
+            onDismiss = { showCameraSettingsDialog = false },
         )
     }
 
@@ -825,14 +831,15 @@ fun SettingsScreen(
                 } else {
                     pluralStringResource(R.plurals.setting_countdown_seconds, countdown, countdown)
                 },
-            ) { }
+            ) { showCountdownDialog = true }
             ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehaviorSummary) {
+                showStopDialog = true
             }
             ClickableSettingItem(
                 Icons.Default.ContentCut,
                 stringResource(R.string.setting_clipper_duration),
                 clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
-            ) { }
+            ) { showClipperDurationDialog = true }
             if (!batteryOptimizationIgnored) {
                 ClickableSettingItem(
                     Icons.Filled.PowerSettingsNew,
@@ -893,8 +900,10 @@ fun SettingsScreen(
             ) {
                 if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS, adsDisabled)) {
                     gateFeature(AdGate.CAMERA_SETTINGS, resources.getString(R.string.gate_feature_camera_overlay)) {
+                        showCameraSettingsDialog = true
                     }
                 } else {
+                    showCameraSettingsDialog = true
                 }
             }
 
@@ -1022,7 +1031,7 @@ fun SettingsScreen(
 
                 GlassSlider(
                     stringResource(R.string.setting_watermark_size),
-                    stringResource(R.string.label_dp, watermarkSize),
+                    safeStringResource(R.string.label_dp, watermarkSize),
                     watermarkSize.toFloat(),
                     50f..300f,
                     49,
@@ -1031,7 +1040,7 @@ fun SettingsScreen(
                 }
                 GlassSlider(
                     stringResource(R.string.setting_watermark_opacity),
-                    stringResource(R.string.label_percent, watermarkOpacity),
+                    safeStringResource(R.string.label_percent, watermarkOpacity),
                     watermarkOpacity.toFloat(),
                     10f..100f,
                     17,
@@ -1090,8 +1099,7 @@ fun SettingsScreen(
                 Icons.Default.PhotoSizeSelectLarge,
                 stringResource(R.string.setting_screenshot_format),
                 screenshotFormatDisplay,
-            ) {
-            }
+            ) { showScreenshotFormatDialog = true }
             GlassSlider(
                 stringResource(R.string.setting_screenshot_quality),
                 "$screenshotQuality%",
@@ -1116,7 +1124,7 @@ fun SettingsScreen(
                 Icons.Default.SettingsSystemDaydream,
                 stringResource(R.string.setting_theme),
                 themeDisplay,
-            ) { }
+            ) { showThemeDialog = true }
 
             // ── Accent Color row ─────────────────────────────────────────
             val parsedAccent =
@@ -1226,10 +1234,10 @@ fun SettingsScreen(
                         },
                         colors =
                             SwitchDefaults.colors(
-                                checkedThumbColor = accent,
-                                checkedTrackColor = accent.copy(alpha = 0.3f),
-                                uncheckedThumbColor = Color(0xFF555555),
-                                uncheckedTrackColor = Color(0xFF222222),
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = accent,
+                                uncheckedThumbColor = SwitchOffGray,
+                                uncheckedTrackColor = SwitchOffGray.copy(alpha = 0.5f),
                             ),
                     )
                 },
@@ -1449,7 +1457,7 @@ fun SettingsScreen(
                 Icons.Default.Language,
                 stringResource(R.string.setting_language),
                 languageDisplay,
-            ) { }
+            ) { showLanguageDialog = true }
         }
 
         // ── STORAGE ───────────────────────────────────────────────────────
@@ -1467,6 +1475,7 @@ fun SettingsScreen(
                 },
             ) { folderPickerLauncher.launch(null) }
             ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), filenamePattern) {
+                showPatternDialog = true
             }
             SwitchSettingItem(
                 Icons.Default.DeleteSweep,
@@ -1517,7 +1526,7 @@ fun SettingsScreen(
 
     if (showAudioMenuSheet) {
         ModalBottomSheet(
-            onDismissRequest = { },
+            onDismissRequest = { showAudioMenuSheet = false },
             sheetState = audioMenuSheetState,
         ) {
             Column(
@@ -1554,14 +1563,12 @@ fun SettingsScreen(
                     Icons.Default.GraphicEq,
                     stringResource(R.string.setting_audio_bitrate),
                     "$audioBitrate ${stringResource(R.string.label_kbps)}",
-                ) {
-                }
+                ) { showAudioBitrateDialog = true }
                 ClickableSettingItem(
                     Icons.Default.Audiotrack,
                     stringResource(R.string.setting_audio_sample_rate),
                     "$audioSampleRate ${stringResource(R.string.label_hz)}",
-                ) {
-                }
+                ) { showAudioSampleRateDialog = true }
                 SettingsListRow(
                     leadingContent = { Icon(Icons.Default.SettingsVoice, contentDescription = null, tint = accent.copy(alpha = 0.7f)) },
                     headlineContent = {
@@ -1594,7 +1601,7 @@ fun SettingsScreen(
                     Icons.Default.Tune,
                     stringResource(R.string.setting_audio_encoder),
                     audioEncoder,
-                ) { }
+                ) { showAudioEncoderDialog = true }
                 SwitchSettingItem(
                     Icons.AutoMirrored.Filled.CallSplit,
                     stringResource(R.string.setting_separate_mic),
@@ -1616,7 +1623,7 @@ fun SettingsScreen(
     if (showVideoMenuSheet) {
         val videoLocked = isGifCaptureMode
         ModalBottomSheet(
-            onDismissRequest = { },
+            onDismissRequest = { showVideoMenuSheet = false },
             sheetState = videoMenuSheetState,
         ) {
             Column(
@@ -1783,7 +1790,7 @@ private fun CameraSettingsDialog(
                 val idx = facingLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraFacing(facingKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showCameraFacingDialog = false },
         )
     }
     if (showCameraAspectDialog) {
@@ -1803,7 +1810,7 @@ private fun CameraSettingsDialog(
                 val idx = aspectLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraAspectRatio(aspectKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showCameraAspectDialog = false },
         )
     }
     if (showCameraOrientationDialog) {
@@ -1822,7 +1829,7 @@ private fun CameraSettingsDialog(
                 val idx = orientLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCameraOrientation(orientKeys[idx])
             },
-            onDismiss = { },
+            onDismiss = { showCameraOrientationDialog = false },
         )
     }
 
@@ -1973,7 +1980,7 @@ private fun CameraSettingsDialog(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(stringResource(R.string.camera_size), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                stringResource(R.string.label_dp, cameraOverlaySize),
+                                safeStringResource(R.string.label_dp, cameraOverlaySize),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = accent,
                             )
@@ -1996,7 +2003,7 @@ private fun CameraSettingsDialog(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(stringResource(R.string.camera_opacity), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                stringResource(R.string.label_percent, cameraOpacity),
+                                safeStringResource(R.string.label_percent, cameraOpacity),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = accent,
                             )
@@ -2058,7 +2065,7 @@ private fun CustomResolutionDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
+    LocalContext.current
     val resources = LocalResources.current
     var text by remember { mutableStateOf(current) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -2148,7 +2155,7 @@ private fun ResolutionDialog(
                         }
                         option == "Custom…" -> {
                             Row(
-                                modifier = Modifier.fillMaxWidth().clickable { onOptionSelected(option) }.padding(vertical = 12.dp),
+                                modifier = Modifier.fillMaxWidth().clickable { onOptionSelected(option); onDismiss() }.padding(vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
@@ -2167,11 +2174,11 @@ private fun ResolutionDialog(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .selectable(selected = isSelected, onClick = { onOptionSelected(option) })
+                                        .selectable(selected = isSelected, onClick = { onOptionSelected(option); onDismiss() })
                                         .padding(vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                RadioButton(selected = isSelected, onClick = { onOptionSelected(option) })
+                                RadioButton(selected = isSelected, onClick = { onOptionSelected(option); onDismiss() })
                                 Text(displayText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
                             }
                         }
@@ -2281,11 +2288,11 @@ fun SingleChoiceDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .selectable(selected = option == selectedOption, onClick = { onOptionSelected(option) })
+                                .selectable(selected = option == selectedOption, onClick = { onOptionSelected(option); onDismiss() })
                                 .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = option == selectedOption, onClick = { onOptionSelected(option) })
+                        RadioButton(selected = option == selectedOption, onClick = { onOptionSelected(option); onDismiss() })
                         Text(option, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
                     }
                 }

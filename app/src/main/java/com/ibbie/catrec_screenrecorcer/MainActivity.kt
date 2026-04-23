@@ -47,6 +47,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
+import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
             "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
 
-        /** Raw image URI string; [takeQueuedImageEditorUri] consumes it for in-app editor navigation. */
+        /** Raw image URI string; NavGraph drains it once the graph is attached. */
         const val EXTRA_OPEN_IMAGE_EDITOR_URI = "com.ibbie.catrec_screenrecorcer.OPEN_IMAGE_EDITOR_URI"
 
         const val ACTION_FINISH_UI = "com.ibbie.catrec_screenrecorcer.FINISH_UI"
@@ -85,13 +86,26 @@ class MainActivity : ComponentActivity() {
     @Volatile
     private var pendingImageEditorUri: String? = null
 
-    /** Called from NavHost after resume / first frame to open [Screen.ImageEditor]. */
-    fun takeQueuedImageEditorUri(): String? =
+    /**
+     * Returns the pending image-editor URI without clearing it. The NavGraph drain must call
+     * this, attempt navigation, and only on success invoke [clearQueuedImageEditorUri] with
+     * the same value — so a skipped drain (e.g. because the NavHost has not yet attached its
+     * graph on cold start) retries on the next `ON_RESUME` instead of dropping the request.
+     */
+    fun peekQueuedImageEditorUri(): String? =
+        synchronized(pendingImageEditorLock) { pendingImageEditorUri }
+
+    /**
+     * Clears the pending URI iff it still matches [expected]. Matching prevents dropping a
+     * newer enqueue that arrived while the drain was navigating.
+     */
+    fun clearQueuedImageEditorUri(expected: String) {
         synchronized(pendingImageEditorLock) {
-            val v = pendingImageEditorUri
-            pendingImageEditorUri = null
-            v
+            if (pendingImageEditorUri == expected) {
+                pendingImageEditorUri = null
+            }
         }
+    }
 
     private fun consumeOpenImageEditorIntent(intent: Intent?) {
         val uriStr = intent?.getStringExtra(EXTRA_OPEN_IMAGE_EDITOR_URI)?.trim().orEmpty()
@@ -189,10 +203,16 @@ class MainActivity : ComponentActivity() {
             val settingsRepository = SettingsRepository(applicationContext)
             val analyticsEnabled: Boolean
             val personalizedAdsEnabled: Boolean
+            val adsDisabled: Boolean
             runBlocking {
                 analyticsEnabled = settingsRepository.analyticsEnabled.first()
                 personalizedAdsEnabled = settingsRepository.personalizedAdsEnabled.first()
-                applicationContext.applyPrivacySettings(analyticsEnabled, personalizedAdsEnabled)
+                adsDisabled = settingsRepository.adsDisabled.first()
+                applicationContext.applyPrivacySettings(
+                    analyticsEnabled,
+                    personalizedAdsEnabled,
+                    adsDisabled,
+                )
                 val consentDone = settingsRepository.analyticsConsentPromptCompleted.first()
                 // Re-apply Crashlytics state from stored consent on every cold start
                 // (only once the user has made an explicit choice — before that,
@@ -208,7 +228,7 @@ class MainActivity : ComponentActivity() {
                 val floatingOn = settingsRepository.floatingControls.first()
                 refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
-            // AdMob is initialized in [CatRecApplication] (single SDK init per process).
+            // AdMob init: [CatRecApplication] calls [MobileAdsInitializer]; completion may wait for BLUETOOTH_CONNECT (API 31+).
 
             if (BuildConfig.DEBUG && analyticsEnabled) {
                 FirebaseAnalytics.getInstance(this).logEvent("debug_analytics_verification", null)
@@ -315,6 +335,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        MobileAdsInitializer.initializeIfReady(this)
         if (ExitUiCoordinator.consumePendingFinishAffinity(this)) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "notification exit: applying deferred finishAffinity from onResume")

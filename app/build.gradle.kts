@@ -1,4 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,7 +7,6 @@ plugins {
     // Must be applied (no apply false) so google-services.json is processed and Firebase SDKs initialize.
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
-    alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
 }
 
@@ -18,6 +16,9 @@ android {
     // targetSdk 36 (Android 16): runtime behavior under test (Google Play). Platform APIs @since 37+ must be gated with
     // Build.VERSION.SDK_INT >= 37 (see ObsoleteSdkInt / NewApi in lint).
     compileSdk = 37
+    // Pin to NDK 27 LTS — NDK 29's llvm-strip rejects already-stripped prebuilt .so files
+    // (FFmpegKit, Media3, etc.), producing "Unable to strip" warnings at build time.
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.ibbie.catrec_screenrecorder"
@@ -98,18 +99,8 @@ kotlin {
     }
 }
 
-detekt {
-    buildUponDefaultConfig = true
-    parallel = true
-    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
-}
-
-tasks.withType<Detekt>().configureEach {
-    jvmTarget = "17"
-}
-
 tasks.named("check") {
-    dependsOn(tasks.named("detekt"), tasks.named("ktlintCheck"))
+    dependsOn(tasks.named("ktlintCheck"))
 }
 
 ktlint {

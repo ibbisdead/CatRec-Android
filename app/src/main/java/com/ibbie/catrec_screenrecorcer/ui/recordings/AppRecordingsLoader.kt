@@ -42,20 +42,53 @@ private fun mediaStoreAudioCollections(context: Context): List<Uri> =
     }
 
 /**
- * Re-scan public CatRec folders so MediaStore picks up files after reinstall or side loads.
- * Files in Movies/CatRec (and screenshot folder) may exist on disk but be missing from MediaStore
- * until scanned. Best-effort scan when the process can see the public dirs (works on many devices;
- * no-op if blocked by scoped storage).
- * Waits (on the calling thread, use IO) for scan callbacks so a follow-up query sees new rows.
+ * Re-scan public CatRec folders so MediaStore picks up files after reinstall or side-loads.
+ *
+ * Strategy:
+ * 1. Always scan the directory paths themselves — [MediaScannerConnection.scanFile] on a
+ *    directory causes the system scanner to index its contents even when [File.listFiles]
+ *    returns null (e.g. API 30+ scoped storage without READ_EXTERNAL_STORAGE, which can
+ *    happen after a fresh install before the user has granted any storage permission).
+ * 2. When individual files are listable, also scan each file directly for faster, precise
+ *    indexing (avoids waiting for the directory-level crawler to finish).
+ *
+ * Must be called on a background thread (IO dispatcher); blocks until all scan callbacks
+ * arrive or the timeout elapses.
  */
 internal fun ensureCatRecMediaIndexed(context: Context) {
     val app = context.applicationContext
     val paths = mutableListOf<String>()
-    val mimes = mutableListOf<String>()
+    val mimes = mutableListOf<String?>()
+
+    val moviesDir = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+        "CatRec",
+    )
+    val shotsDir = if (Build.VERSION.SDK_INT >= 29) {
+        File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+            "CatRec${File.separator}Screenshots",
+        )
+    } else {
+        null
+    }
+
+    // Always include the directories themselves so the scanner can find files even when
+    // File.listFiles() is unavailable (scoped storage restrictions on API 33+).
+    if (moviesDir.exists()) {
+        paths.add(moviesDir.absolutePath)
+        mimes.add(null)
+    }
+    if (shotsDir?.exists() == true) {
+        paths.add(shotsDir.absolutePath)
+        mimes.add(null)
+    }
+
+    // Also scan individual files when we can list them — gives faster, exact indexing
+    // and handles the case where directory-level scan callbacks are unreliable.
     try {
-        val movies = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "CatRec")
-        if (movies.isDirectory) {
-            movies
+        if (moviesDir.isDirectory) {
+            moviesDir
                 .listFiles()
                 ?.filter { it.isFile && it.name.endsWith(".mp4", ignoreCase = true) }
                 ?.forEach { f ->
@@ -65,51 +98,39 @@ internal fun ensureCatRecMediaIndexed(context: Context) {
         }
     } catch (_: Exception) {
     }
-    if (Build.VERSION.SDK_INT >= 29) {
-        try {
-            val shots =
-                File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    "CatRec${File.separator}Screenshots",
-                )
-            if (shots.isDirectory) {
-                shots
-                    .listFiles()
-                    ?.filter {
-                        it.isFile &&
-                            (
-                                it.name.endsWith(".jpg", ignoreCase = true) ||
-                                    it.name.endsWith(".jpeg", ignoreCase = true) ||
-                                    it.name.endsWith(".png", ignoreCase = true) ||
-                                    it.name.endsWith(".webp", ignoreCase = true)
-                            )
-                    }?.forEach { f ->
-                        paths.add(f.absolutePath)
-                        mimes.add(
-                            when {
-                                f.name.endsWith(".png", ignoreCase = true) -> "image/png"
-                                f.name.endsWith(".webp", ignoreCase = true) -> "image/webp"
-                                else -> "image/jpeg"
-                            },
+    try {
+        if (shotsDir?.isDirectory == true) {
+            shotsDir
+                .listFiles()
+                ?.filter {
+                    it.isFile &&
+                        (
+                            it.name.endsWith(".jpg", ignoreCase = true) ||
+                                it.name.endsWith(".jpeg", ignoreCase = true) ||
+                                it.name.endsWith(".png", ignoreCase = true) ||
+                                it.name.endsWith(".webp", ignoreCase = true)
                         )
-                    }
-            }
-        } catch (_: Exception) {
+                }?.forEach { f ->
+                    paths.add(f.absolutePath)
+                    mimes.add(
+                        when {
+                            f.name.endsWith(".png", ignoreCase = true) -> "image/png"
+                            f.name.endsWith(".webp", ignoreCase = true) -> "image/webp"
+                            else -> "image/jpeg"
+                        },
+                    )
+                }
         }
+    } catch (_: Exception) {
     }
+
     if (paths.isEmpty()) return
     val pathArr = paths.toTypedArray()
     val mimeArr = mimes.toTypedArray()
     val latch = CountDownLatch(pathArr.size)
-    MediaScannerConnection.scanFile(
-        app,
-        pathArr,
-        mimeArr,
-    ) { _, _ ->
-        latch.countDown()
-    }
+    MediaScannerConnection.scanFile(app, pathArr, mimeArr) { _, _ -> latch.countDown() }
     try {
-        latch.await(8, TimeUnit.SECONDS)
+        latch.await(10, TimeUnit.SECONDS)
     } catch (_: InterruptedException) {
         Thread.currentThread().interrupt()
     }

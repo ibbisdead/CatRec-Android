@@ -21,6 +21,7 @@ import android.view.Surface
 import androidx.core.content.ContextCompat
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingFatalKind
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
 import java.io.File
 import java.util.concurrent.Executors
@@ -53,15 +54,18 @@ class RollingBufferEngine(
     private val mediaProjection: MediaProjection,
     private val encoderType: String,
     private val audioBitrate: Int = 128_000,
-    private val audioSampleRate: Int = 48_000,
+    private val audioSampleRate: Int = 44_100,
     private val audioChannelCount: Int = 1,
     private val audioEncoderType: String = "AAC-LC",
     /** Completed segments kept (each [SEGMENT_DURATION_MS]); oldest evicted when over limit. */
     maxSegmentsLimit: Int = maxSegmentsForClipperMinutes(1),
     /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
     private val onInternalAudioSilence: (() -> Unit)? = null,
-    /** Invoked at most once when the video encoder drain path hits a fatal error (encoder thread). */
-    private val onFatalVideoEncodeError: ((String) -> Unit)? = null,
+    /**
+     * Invoked at most once on fatal encoder or muxer errors (drain threads).
+     * [RecordingFatalKind] selects the matching [com.ibbie.catrec_screenrecorcer.data.recording.RecordingError] variant.
+     */
+    private val onFatalRecordingError: ((RecordingFatalKind, String) -> Unit)? = null,
     private val adaptivePreferAvcForPrepare: Boolean = false,
 ) {
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
@@ -85,6 +89,8 @@ class RollingBufferEngine(
 
     // ── Encoder objects ────────────────────────────────────────────────────────
     private var videoEncoder: MediaCodec? = null
+    private var captureWidth: Int = width
+    private var captureHeight: Int = height
     private var configuredVideoMime: String = ""
     private var audioEncoder: MediaCodec? = null
     private var inputSurface: Surface? = null
@@ -106,6 +112,9 @@ class RollingBufferEngine(
     private var isMuxerReady = false
     private var storedVideoFmt: MediaFormat? = null
     private var storedAudioFmt: MediaFormat? = null
+
+    /** Last PTS written to the muxer for the audio track in the current segment; guarded by [muxerLock]. */
+    private var lastAudioMuxerPtsUs = -1L
 
     // Timestamp base for the current segment (encoder time when the segment started)
     private var segStartPtsUs = AtomicLong(-1L)
@@ -185,8 +194,8 @@ class RollingBufferEngine(
             EncoderFrameRelay(
                 mediaProjection,
                 inputSurface!!,
-                width,
-                height,
+                captureWidth,
+                captureHeight,
                 dpi,
                 "CatRecBuffer",
             ).also { it.start() }
@@ -256,6 +265,13 @@ class RollingBufferEngine(
 
         videoEncoder?.release()
         videoEncoder = null
+
+        try {
+            inputSurface?.release()
+        } catch (_: Exception) {
+        }
+        inputSurface = null
+
         audioEncoder?.release()
         audioEncoder = null
         micRecord?.release()
@@ -361,6 +377,7 @@ class RollingBufferEngine(
         val file = File(segmentDir, "seg_${System.currentTimeMillis()}.mp4")
         currentSegFile = file
         segStartPtsUs.set(-1L)
+        lastAudioMuxerPtsUs = -1L
 
         val muxer = MediaMuxer(file.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         currentMuxer = muxer
@@ -423,8 +440,9 @@ class RollingBufferEngine(
         }
     }
 
-    private fun reportFatalVideoEncodeIfNeeded(
+    private fun reportFatalRecordingIfNeeded(
         e: Exception,
+        kind: RecordingFatalKind,
         phase: String,
     ) {
         if (!videoEncodeFatalSignaled.compareAndSet(false, true)) return
@@ -438,11 +456,13 @@ class RollingBufferEngine(
             }
         Log.e(
             TAG,
-            "VideoEncFatal buffer mime=$configuredVideoMime encoder=$encoderType singleShot detail=$detail",
+            "RecordingFatal kind=$kind phase=$phase mime=$configuredVideoMime encoder=$encoderType detail=$detail",
             e,
         )
-        FirebaseCrashlytics.getInstance().log("VideoEncFatal buffer $detail mime=$configuredVideoMime")
-        onFatalVideoEncodeError?.invoke(detail)
+        FirebaseCrashlytics.getInstance().log(
+            "RecordingFatal kind=$kind phase=$phase $detail mime=$configuredVideoMime",
+        )
+        onFatalRecordingError?.invoke(kind, detail)
     }
 
     private fun drainVideoOnce(info: MediaCodec.BufferInfo) {
@@ -507,7 +527,11 @@ class RollingBufferEngine(
                     }
                 }
             } catch (e: Exception) {
-                reportFatalVideoEncodeIfNeeded(e, phase = "buffer_dequeue_or_output")
+                reportFatalRecordingIfNeeded(
+                    e,
+                    kind = RecordingFatalKind.HardwareVideoEncoder,
+                    phase = "video_buffer_dequeue_or_output",
+                )
                 break@loop
             }
         }
@@ -691,17 +715,42 @@ class RollingBufferEngine(
                     ) {
                         synchronized(muxerLock) {
                             if (isMuxerReady && muxerAudioTrack >= 0) {
+                                val muxer = currentMuxer ?: return@synchronized
                                 val base = segStartPtsUs.get()
-                                val adjPts = if (base < 0) 0L else (info.presentationTimeUs - base).coerceAtLeast(0L)
+                                val adjPts =
+                                    if (base < 0) 0L else (info.presentationTimeUs - base).coerceAtLeast(0L)
+                                val last = lastAudioMuxerPtsUs
+                                val pts =
+                                    if (last < 0L) {
+                                        adjPts
+                                    } else {
+                                        maxOf(adjPts, last + 1L).also { p ->
+                                            if (adjPts <= last) {
+                                                Log.w(
+                                                    TAG,
+                                                    "Audio muxer PTS non-monotonic adj=$adjPts last=$last -> $p",
+                                                )
+                                            }
+                                        }
+                                    }
                                 buf.position(info.offset)
                                 buf.limit(info.offset + info.size)
                                 muxerAudioSampleInfo.set(
                                     info.offset,
                                     info.size,
-                                    adjPts,
+                                    pts,
                                     info.flags,
                                 )
-                                currentMuxer?.writeSampleData(muxerAudioTrack, buf, muxerAudioSampleInfo)
+                                try {
+                                    muxer.writeSampleData(muxerAudioTrack, buf, muxerAudioSampleInfo)
+                                    lastAudioMuxerPtsUs = pts
+                                } catch (e: Exception) {
+                                    reportFatalRecordingIfNeeded(
+                                        e,
+                                        kind = RecordingFatalKind.MediaMuxer,
+                                        phase = "muxer_audio_writeSampleData",
+                                    )
+                                }
                             }
                         }
                     }
@@ -800,7 +849,9 @@ class RollingBufferEngine(
         videoEncoder = result.codec
         inputSurface = result.inputSurface
         configuredVideoMime = result.mime
-        Log.d(TAG, "Buffer video encoder mime=$configuredVideoMime avcOnly=$avcOnly")
+        captureWidth = result.encodedWidth
+        captureHeight = result.encodedHeight
+        Log.d(TAG, "Buffer video encoder mime=$configuredVideoMime avcOnly=$avcOnly size=${captureWidth}x${captureHeight}")
     }
 
     @SuppressLint("MissingPermission")

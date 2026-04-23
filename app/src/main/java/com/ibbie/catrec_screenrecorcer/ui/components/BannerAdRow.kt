@@ -17,9 +17,9 @@ import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
+import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 
 @Composable
 fun BannerAdRow(
@@ -61,7 +61,7 @@ fun BannerAdRow(
                     adListener =
                         object : AdListener() {
                             override fun onAdFailedToLoad(error: LoadAdError) {
-                                Log.w("BannerAdRow", "onAdFailedToLoad: ${error.message} code=${error.code}")
+                                Log.d("BannerAdRow", "onAdFailedToLoad: ${error.message} code=${error.code}")
                             }
 
                             override fun onAdLoaded() {
@@ -69,13 +69,14 @@ fun BannerAdRow(
                             }
                         }
                     setAdSize(
-                        AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(ctx, bannerWidthDp),
+                        AdSize.getLargeAnchoredAdaptiveBannerAdSize(ctx, bannerWidthDp),
                     )
                     // Match AppOpenAdManager: only load after SDK init. Loading in factory() often runs
                     // before Application.onCreate’s initialize callback finishes → failed banner loads.
                     // Use applicationContext so init/load does not run against an activity ConfigurationContext
                     // (avoids odd WebView / resource resolution paths on some OEM builds).
-                    MobileAds.initialize(ctx.applicationContext) {
+                    // API 31+: [MobileAdsInitializer] defers init until BLUETOOTH_CONNECT is granted.
+                    MobileAdsInitializer.runAfterInitialized(ctx) {
                         loadAd(AdMobAdRequestFactory.build())
                     }
                 }

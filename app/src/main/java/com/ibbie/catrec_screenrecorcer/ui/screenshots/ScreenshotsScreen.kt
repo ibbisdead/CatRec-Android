@@ -124,11 +124,13 @@ fun ScreenshotsScreen(
         onDispose { suppressRecordFab.value = false }
     }
 
-    // Reload when returning to this tab, after manual refresh, or when a recording stops.
+    // Reload when returning to this tab, after manual refresh, when a recording stops,
+    // or when a new screenshot is saved (screenshotSavedCount bumped by the service).
     val lifecycleState by viewModel.sessionLifecycleState.collectAsState()
     val isIdle = lifecycleState is com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState.Idle
+    val screenshotSavedCount by viewModel.screenshotSavedCount.collectAsState()
 
-    LifecycleResumeEffect(manualRefreshKey, isIdle) {
+    LifecycleResumeEffect(manualRefreshKey, isIdle, screenshotSavedCount) {
         isLoading = true
         val job =
             scope.launch {
@@ -145,7 +147,7 @@ fun ScreenshotsScreen(
     if (screenshotToDelete != null) {
         val item = screenshotToDelete!!
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { screenshotToDelete = null },
             icon = {
                 Icon(
                     Icons.Default.Delete,
@@ -158,9 +160,11 @@ fun ScreenshotsScreen(
             text = { Text(stringResource(R.string.delete_screenshot_message, item.name ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
-                    val u = item.uri
+                    val toRemove = item
+                    screenshotToDelete = null
                     scope.launch {
-                        when (MediaManager.delete(context, item)) {
+                        val u = toRemove.uri
+                        when (MediaManager.delete(context, toRemove)) {
                             MediaDeleteResult.DELETED -> {
                                 screenshots = screenshots.filter { it.uri != u }
                             }
@@ -180,7 +184,7 @@ fun ScreenshotsScreen(
                 }) { Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold) }
             },
             dismissButton = {
-                TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { screenshotToDelete = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -188,7 +192,7 @@ fun ScreenshotsScreen(
     if (showBulkDeleteDialog) {
         val count = selectedUris.size
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showBulkDeleteDialog = false },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
@@ -218,13 +222,14 @@ fun ScreenshotsScreen(
                             }
                         }
                         selectedUris = emptySet()
+                        showBulkDeleteDialog = false
                     }
                 }) {
                     Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showBulkDeleteDialog = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -233,7 +238,7 @@ fun ScreenshotsScreen(
 
     detailItem?.let { detail ->
         Dialog(
-            onDismissRequest = { },
+            onDismissRequest = { detailItem = null },
             properties =
                 DialogProperties(
                     usePlatformDefaultWidth = false,
@@ -288,7 +293,7 @@ fun ScreenshotsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { },
+                        onClick = { detailItem = null },
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
@@ -451,8 +456,8 @@ fun ScreenshotsScreen(
                                         Intent.createChooser(shareIntent, shareScreenshotChooserTitle),
                                     )
                                 },
-                                onDelete = { },
-                                onPreviewClick = { },
+                                onDelete = { screenshotToDelete = item },
+                                onPreviewClick = { detailItem = item },
                                 onOpenExternal = {
                                     val viewIntent =
                                         Intent(Intent.ACTION_VIEW).apply {
@@ -566,7 +571,7 @@ fun ScreenshotsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { },
+                        onClick = { showBulkDeleteDialog = true },
                         enabled = selectedUris.isNotEmpty(),
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = accent)

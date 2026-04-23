@@ -9,6 +9,15 @@ sealed interface RecordingError {
         val detail: String,
     ) : RecordingError
 
+    /**
+     * [MediaMuxer] failure (e.g. [android.media.MediaMuxer.writeSampleData]), muxer state,
+     * or timestamp rules — distinct from hardware codec encode failures.
+     */
+    data class MediaMuxerFailure(
+        val source: String,
+        val detail: String,
+    ) : RecordingError
+
     /** [MediaProjection.Callback.onStop] — token consumed, user left capture, or OS revoked (incl. API 35). */
     data class ProjectionStopped(
         val reason: String = "media_projection_on_stop",
@@ -17,4 +26,10 @@ sealed interface RecordingError {
     data class PermissionDenied(
         val what: String,
     ) : RecordingError
+}
+
+/** Category for a single-shot fatal callback from recording engines (maps to [RecordingError]). */
+enum class RecordingFatalKind {
+    HardwareVideoEncoder,
+    MediaMuxer,
 }

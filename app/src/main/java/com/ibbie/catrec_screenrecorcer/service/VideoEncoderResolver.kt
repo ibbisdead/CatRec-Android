@@ -28,6 +28,10 @@ internal object VideoEncoderResolver {
         }
     }
 
+    /** Matches a live [MediaCodec] instance to its [MediaCodecInfo] (for [MediaCodecInfo.getCapabilitiesForType]). */
+    fun findEncoderInfo(codecName: String): MediaCodecInfo? =
+        regularCodecList().codecInfos.firstOrNull { it.isEncoder && it.name == codecName }
+
     fun resolveVideoEncoderName(
         mimeType: String,
         width: Int,

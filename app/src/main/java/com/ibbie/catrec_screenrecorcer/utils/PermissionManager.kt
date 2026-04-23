@@ -57,14 +57,21 @@ class PermissionManager(
     fun isOverlayGranted(): Boolean = Settings.canDrawOverlays(context)
 
     /**
-     * Read access for optional mic-sidecar discovery in MediaStore (audio under CatRec paths).
-     * API 33+: [READ_MEDIA_AUDIO] only. User-picked photos/videos use [ActivityResultContracts.PickVisualMedia] (no broad media read).
+     * Read access for the app's recordings and screenshots in MediaStore.
+     * API 33+: [READ_MEDIA_VIDEO], [READ_MEDIA_IMAGES], [READ_MEDIA_AUDIO].
+     *   - VIDEO + IMAGES are required so MediaStore queries return own recordings/screenshots
+     *     after a fresh install or reinstall (some OEMs clear MediaStore entries on uninstall).
+     *   - AUDIO covers mic-sidecar files indexed under Music/Recordings/CatRec.
      * API 32 and below: [READ_EXTERNAL_STORAGE].
      */
     fun mediaLibraryReadPermissions(): Array<String> =
         when {
             Build.VERSION.SDK_INT >= 33 ->
-                arrayOf(Manifest.permission.READ_MEDIA_AUDIO)
+                arrayOf(
+                    Manifest.permission.READ_MEDIA_VIDEO,
+                    Manifest.permission.READ_MEDIA_IMAGES,
+                    Manifest.permission.READ_MEDIA_AUDIO,
+                )
             else -> arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
 
@@ -75,6 +82,25 @@ class PermissionManager(
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
     }
+
+    /**
+     * BLUETOOTH_CONNECT (API 31+, dangerous) — requested alongside media permissions during
+     * setup so AdMob's audio-routing detection works without logcat warnings. Optional:
+     * denial does not break any core feature.
+     */
+    fun bluetoothPermissions(): Array<String> =
+        if (Build.VERSION.SDK_INT >= 31) arrayOf(Manifest.permission.BLUETOOTH_CONNECT) else emptyArray()
+
+    /** API 31+: runtime BLUETOOTH_CONNECT; older APIs have no equivalent dangerous permission. */
+    fun isBluetoothConnectGranted(): Boolean =
+        if (Build.VERSION.SDK_INT >= 31) {
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.BLUETOOTH_CONNECT,
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
 
     fun areAllGranted(): Boolean =
         isNotificationGranted() &&

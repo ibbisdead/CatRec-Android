@@ -454,8 +454,7 @@ private fun EditorBrushToolbar(
                             Modifier
                                 .size(32.dp)
                                 .background(
-                                    androidx.compose.ui.graphics
-                                        .Color(c),
+                                    Color(c),
                                     CircleShape,
                                 ).clickable { onColor(c) },
                     )

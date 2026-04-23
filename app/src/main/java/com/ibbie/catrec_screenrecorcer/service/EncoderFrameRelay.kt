@@ -28,6 +28,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import androidx.core.graphics.createBitmap
 
@@ -59,7 +60,24 @@ internal class EncoderFrameRelay(
     private var eglBlitter: EglBitmapBlitter? = null
     private var useCanvas: Boolean? = null
 
-    private val pendingScreenshot = AtomicReference<((Bitmap?) -> Unit)?>(null)
+    /**
+     * Pairs a screenshot callback with the [frameGeneration] value observed when it was armed so
+     * [deliverScreenshotIfNeeded] can skip any frame that was already being processed at the time
+     * of the request. Prevents handing the caller a stale/in-flight frame.
+     */
+    private class ScreenshotRequest(
+        val armedAtGen: Long,
+        val callback: (Bitmap?) -> Unit,
+    )
+
+    private val pendingScreenshot = AtomicReference<ScreenshotRequest?>(null)
+
+    /**
+     * Monotonic counter stamped onto each [processLatestFrame] pass. A request only succeeds when
+     * the current pass's generation is strictly greater than the generation observed when the
+     * request was armed — i.e. the frame was acquired AFTER the caller asked for a screenshot.
+     */
+    private val frameGeneration = AtomicLong(0)
 
     /**
      * Coalesces burst [ImageReader] notifications into one [Handler] job so we do not queue
@@ -198,7 +216,10 @@ internal class EncoderFrameRelay(
             callback(null)
             return
         }
-        pendingScreenshot.set(callback)
+        // Capture the current generation so [deliverScreenshotIfNeeded] only satisfies the
+        // request with a frame acquired AFTER this arm point. Any pass already in flight
+        // (acquired BEFORE we were called) is rejected, guaranteeing no stale frame.
+        pendingScreenshot.set(ScreenshotRequest(frameGeneration.get(), callback))
     }
 
     private fun scheduleProcessLatestFrame() {
@@ -218,6 +239,10 @@ internal class EncoderFrameRelay(
         if (!framePipelineBusy.compareAndSet(false, true)) {
             return
         }
+        // Bump BEFORE [acquireLatestImage] so the frame about to be grabbed belongs to this
+        // generation. A request armed after this point sees a larger start value and will be
+        // satisfied only by a later pass — never by this in-flight frame.
+        val currentGen = frameGeneration.incrementAndGet()
         val adaptiveOn = adaptiveSignalsEnabled && adaptiveSignalSink != null
         val sink = adaptiveSignalSink
         val t0 = if (adaptiveOn) SystemClock.elapsedRealtime() else 0L
@@ -266,7 +291,7 @@ internal class EncoderFrameRelay(
                     }
                 }
             }
-            deliverScreenshotIfNeeded(bitmap)
+            deliverScreenshotIfNeeded(bitmap, currentGen)
         } finally {
             framePipelineBusy.set(false)
             if (pendingWhileBusy.compareAndSet(true, false)) {
@@ -290,17 +315,25 @@ internal class EncoderFrameRelay(
         return ageNs > MAX_CAPTURE_LATENCY_NS
     }
 
-    private fun deliverScreenshotIfNeeded(bitmap: Bitmap) {
-        val cb = pendingScreenshot.getAndSet(null) ?: return
+    private fun deliverScreenshotIfNeeded(
+        bitmap: Bitmap,
+        currentGen: Long,
+    ) {
+        val req = pendingScreenshot.get() ?: return
+        // Only deliver when this frame was acquired AFTER the request was armed. If the request
+        // arrived while this pass was already in flight (req.armedAtGen == currentGen), leave it
+        // pending so the NEXT relay pass can satisfy it with a fresh frame.
+        if (req.armedAtGen >= currentGen) return
+        if (!pendingScreenshot.compareAndSet(req, null)) return
         val copy =
             try {
                 bitmap.copy(Bitmap.Config.ARGB_8888, false)
             } catch (e: Exception) {
                 Log.e(TAG, "screenshot copy failed", e)
-                cb(null)
+                req.callback(null)
                 return
             }
-        cb(copy)
+        req.callback(copy)
     }
 
     private fun drawBitmapToEncoder(bitmap: Bitmap) {

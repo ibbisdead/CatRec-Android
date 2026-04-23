@@ -3,6 +3,7 @@ package com.ibbie.catrec_screenrecorcer.data
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 object RecordingState {
     private val _isRecording = MutableStateFlow(false)
@@ -37,6 +38,14 @@ object RecordingState {
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
+    /**
+     * Monotonically-incrementing counter bumped each time a screenshot is successfully saved to
+     * MediaStore. UI screens can observe this as a [kotlinx.coroutines.flow.StateFlow] key to
+     * trigger a list refresh without polling.
+     */
+    private val _screenshotSavedCount = MutableStateFlow(0)
+    val screenshotSavedCount: StateFlow<Int> = _screenshotSavedCount.asStateFlow()
+
     fun setRecording(recording: Boolean) {
         _isRecording.value = recording
     }
@@ -63,5 +72,9 @@ object RecordingState {
 
     fun setSaving(saving: Boolean) {
         _isSaving.value = saving
+    }
+
+    fun onScreenshotSaved() {
+        _screenshotSavedCount.update { it + 1 }
     }
 }

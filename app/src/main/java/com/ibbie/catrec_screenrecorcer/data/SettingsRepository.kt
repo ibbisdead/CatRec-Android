@@ -2,6 +2,7 @@ package com.ibbie.catrec_screenrecorcer.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
@@ -11,14 +12,33 @@ import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.io.File
 import java.util.UUID
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+private const val SETTINGS_DATASTORE_NAME = "settings"
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = SETTINGS_DATASTORE_NAME,
+    corruptionHandler = ReplaceFileCorruptionHandler(
+        produceNewData = { emptyPreferences() },
+    ),
+)
 
 class SettingsRepository(
-    private val context: Context,
+    context: Context,
 ) {
+    private val context = context.applicationContext
+
     companion object {
+        /**
+         * Ensures `files/datastore` exists before the first DataStore read.
+         * Some devices (e.g. Android 16) have been observed to surface `FileNotFoundException` / ENOENT
+         * when the parent directory was never created because no write had run yet.
+         */
+        fun prepareDataStoreFilesystem(context: Context) {
+            File(context.applicationContext.filesDir, "datastore").mkdirs()
+        }
+
         // Video
         val FPS = floatPreferencesKey("fps")
         val BITRATE = floatPreferencesKey("bitrate")
@@ -146,7 +166,7 @@ class SettingsRepository(
     val recordAudio: Flow<Boolean> = context.dataStore.data.map { it[RECORD_AUDIO] ?: false }
     val internalAudio: Flow<Boolean> = context.dataStore.data.map { it[INTERNAL_AUDIO] ?: false }
     val audioBitrate: Flow<Int> = context.dataStore.data.map { it[AUDIO_BITRATE] ?: 128 }
-    val audioSampleRate: Flow<Int> = context.dataStore.data.map { it[AUDIO_SAMPLE_RATE] ?: 48000 }
+    val audioSampleRate: Flow<Int> = context.dataStore.data.map { it[AUDIO_SAMPLE_RATE] ?: 44100 }
     val audioChannels: Flow<String> = context.dataStore.data.map { it[AUDIO_CHANNELS] ?: "Mono" }
     val audioEncoder: Flow<String> = context.dataStore.data.map { it[AUDIO_ENCODER] ?: "AAC-LC" }
     val separateMicRecording: Flow<Boolean> = context.dataStore.data.map { it[SEPARATE_MIC_RECORDING] ?: false }
@@ -497,7 +517,10 @@ class SettingsRepository(
         }
         context.applyAnalyticsCollectionEnabled(accepted)
         applyCrashlyticsCollectionEnabled(accepted)
-        applyPersonalizedAdsEnabled(personalizedAdsEnabled.first())
+        applyPersonalizedAdsEnabled(
+            personalizedAdsEnabled.first(),
+            adsSdkEnabled = !adsDisabled.first(),
+        )
         context.syncFirebaseUserIdentity(accepted)
     }
 

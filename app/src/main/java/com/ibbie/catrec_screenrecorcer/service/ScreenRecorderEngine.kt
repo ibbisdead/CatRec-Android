@@ -40,7 +40,7 @@ class ScreenRecorderEngine(
     private val outputFileDescriptor: FileDescriptor,
     private val encoderType: String,
     private val audioBitrate: Int = 128_000,
-    private val audioSampleRate: Int = 48_000,
+    private val audioSampleRate: Int = 44_100,
     private val audioChannelCount: Int = 1,
     private val audioEncoderType: String = "AAC-LC",
     private val separateMicFileDescriptor: FileDescriptor? = null,
@@ -77,6 +77,10 @@ class ScreenRecorderEngine(
 
     private var videoEncoder: MediaCodec? = null
 
+    /** Matches [VideoEncoderConfigurator] output (may differ from [width]/[height] after hardware fallback). */
+    private var captureWidth: Int = width
+    private var captureHeight: Int = height
+
     /** MIME from [VideoEncoderConfigurator]; used for HEVC→AVC recovery on [MediaCodec.start] failure. */
     private var configuredVideoMime: String = ""
     private var audioEncoder: MediaCodec? = null
@@ -86,7 +90,33 @@ class ScreenRecorderEngine(
 
     private var videoTrackIndex = -1
     private var audioTrackIndex = -1
+
+    /**
+     * Muxer lifecycle flag. Set to true ONLY after [MediaMuxer.start] returns successfully
+     * (all tracks added). Gated by [muxerLock] so drain threads never observe a torn state.
+     * [MediaMuxer.stop] must only be invoked while this is true AND at least one track has
+     * had a sample written (see [videoSamplesWritten] / [audioSamplesWritten]).
+     */
     private var isMuxerStarted = false
+
+    /**
+     * Per-track write flags. Flipped to true on the first successful [MediaMuxer.writeSampleData]
+     * for that track. Gated by [muxerLock].
+     *
+     * Required because some OEM MPEG4Writer implementations defer per-track `start` until the
+     * first sample arrives; calling [MediaMuxer.stop] with a track that never received a sample
+     * triggers the "Stop() called but track is not started" warning (and on a few devices throws
+     * IllegalStateException from the native muxer).
+     */
+    private var videoSamplesWritten = false
+    private var audioSamplesWritten = false
+
+    /**
+     * Once the muxer has been released (or will be imminently), prevents drain threads from
+     * racing a late [MediaCodec.INFO_OUTPUT_FORMAT_CHANGED] into [MediaMuxer.start] /
+     * [MediaMuxer.writeSampleData] during teardown.
+     */
+    private var muxerReleased = false
     private val muxerLock = object {}
 
     // Separate mic muxer/encoder
@@ -94,9 +124,14 @@ class ScreenRecorderEngine(
     private var separateMicMuxer: MediaMuxer? = null
     private var separateMicTrackIndex = -1
     private var isSeparateMicMuxerStarted = false
+    private var separateMicSamplesWritten = false
+    private var separateMicMuxerReleased = false
     private val separateMicLock = object {}
 
     private val isRecording = AtomicBoolean(false)
+
+    /** Guards against re-entrant / concurrent [stop] calls (e.g. from [start]'s failure path + service cleanup). */
+    private val stopInvoked = AtomicBoolean(false)
 
     // Set to true by drain loops once the encoder signals end-of-stream.
     // Used to gate muxer.stop() so it is never called while draining is still in progress.
@@ -174,8 +209,8 @@ class ScreenRecorderEngine(
                 EncoderFrameRelay(
                     mediaProjection,
                     inputSurface!!,
-                    width,
-                    height,
+                    captureWidth,
+                    captureHeight,
                     dpi,
                     "CatRecEngine",
                 ).also { it.start() }
@@ -211,119 +246,214 @@ class ScreenRecorderEngine(
         }
     }
 
+    /**
+     * Teardown sequence — MUST run exactly once, in this strict order, to satisfy the
+     * MediaCodec ↔ MediaMuxer state contract (otherwise MPEG4Writer logs
+     * "Stop() called but track is not started" or throws IllegalStateException):
+     *
+     *   1. Stop producing into the encoder input surface (frame relay) and audio sources.
+     *   2. signalEndOfInputStream (video) / queue EOS input buffer (audio).
+     *   3. Join drain threads — they run past isRecording=false until BUFFER_FLAG_END_OF_STREAM
+     *      is observed (with a bounded deadline) so every pending output buffer is written.
+     *   4. muxer.stop() — only if isMuxerStarted (i.e. [MediaMuxer.start] completed with all
+     *      required tracks added). Guarded by [muxerLock] so drain threads cannot race.
+     *   5. muxer.release(), then release encoders and audio sources.
+     *
+     * Re-entry is guarded by [stopInvoked] so [start]'s failure path and the service's
+     * teardown cannot both execute the sequence.
+     */
     fun stop() {
-        val wasRecording = isRecording.getAndSet(false)
-        val hasOpenResources =
-            frameRelay != null ||
-                videoEncoder != null ||
-                audioEncoder != null ||
-                separateMicEncoder != null ||
-                muxer != null ||
-                separateMicMuxer != null ||
-                micRecord != null ||
-                internalRecord != null ||
-                audioThread != null ||
-                videoDrainThread != null ||
-                audioDrainThread != null ||
-                separateMicDrainThread != null
-        // [start] can throw before [isRecording] is set; we must still release muxer/codec/VD.
-        if (!wasRecording && !hasOpenResources) return
+        if (!stopInvoked.compareAndSet(false, true)) {
+            Log.d(TAG, "stop(): already invoked, ignoring duplicate call")
+            return
+        }
+        isRecording.set(false)
         Log.d(TAG, "Stopping recorder…")
 
+        // ── 1. Halt input into encoders ───────────────────────────────────────
         try {
             frameRelay?.stop()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "frameRelay.stop() failed: ${e.message}")
         }
         frameRelay = null
 
         try {
             micRecord?.stop()
-        } catch (_: Exception) {
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "micRecord.stop() in unexpected state: ${e.message}")
         }
         try {
             internalRecord?.stop()
-        } catch (_: Exception) {
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "internalRecord.stop() in unexpected state: ${e.message}")
         }
 
         try {
             audioThread?.join(3000)
-        } catch (_: Exception) {
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
 
+        // ── 2. Signal EOS to every encoder ────────────────────────────────────
         try {
             videoEncoder?.signalEndOfInputStream()
-        } catch (e: Exception) {
-            Log.w(TAG, "signalEndOfInputStream failed", e)
+        } catch (e: IllegalStateException) {
+            // Only legitimately throws if the encoder was never configured/started.
+            Log.w(TAG, "signalEndOfInputStream in unexpected state: ${e.message}")
         }
         signalAudioEOS()
         signalSeparateMicEOS()
 
+        // ── 3. Drain until BUFFER_FLAG_END_OF_STREAM (bounded by drain-loop deadline) ─
         try {
             audioDrainThread?.join(6000)
-        } catch (_: Exception) {
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
         try {
             videoDrainThread?.join(6000)
-        } catch (_: Exception) {
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
         try {
             separateMicDrainThread?.join(6000)
-        } catch (_: Exception) {
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
 
+        // If the drain threads exited via the deadline rather than observing EOS, the muxer
+        // may be missing trailing samples. We still stop it cleanly, but flag the condition
+        // so the warning is not silent.
+        if (videoEncoder != null && !videoEosReached.get()) {
+            Log.w(TAG, "Video drain exited WITHOUT observing EOS — muxer may lose trailing frames")
+        }
+        if (audioEncoder != null && mainMuxAudioMode != AudioMode.NONE && !audioEosReached.get()) {
+            Log.w(TAG, "Audio drain exited WITHOUT observing EOS — muxer may lose trailing samples")
+        }
+        if (separateMicEncoder != null && !separateMicEosReached.get()) {
+            Log.w(TAG, "Separate-mic drain exited WITHOUT observing EOS")
+        }
+
+        // ── 4 + 5. Stop and release the main muxer ────────────────────────────
+        // Under muxerLock so any drain-thread leftover (if join timed out) cannot
+        // writeSampleData / start() concurrently with stop/release.
+        //
+        // Guard on (videoSamplesWritten || audioSamplesWritten): calling muxer.stop() when
+        // a track was added but never received a sample is exactly what triggers
+        // MPEG4Writer's "Stop() called but track is not started". In that case the output
+        // file is empty anyway, so we skip stop() and release() the muxer directly —
+        // [hadOutput] will report false and the service will discard the file.
         synchronized(muxerLock) {
-            try {
-                muxer?.takeIf { isMuxerStarted }?.stop()
-            } catch (e: Exception) {
-                Log.e(TAG, "Muxer stop failed: ${e.message}")
-            } finally {
-                try {
-                    muxer?.release()
-                } catch (_: Exception) {
+            muxerReleased = true
+            val m = muxer
+            if (m != null) {
+                val anySamples = videoSamplesWritten || audioSamplesWritten
+                if (isMuxerStarted && anySamples) {
+                    try {
+                        m.stop()
+                    } catch (e: IllegalStateException) {
+                        // Should be unreachable now that we gate on anySamples, but keep
+                        // the loud log so any OEM regression surfaces instead of corrupting
+                        // output silently.
+                        Log.e(
+                            TAG,
+                            "Muxer stop() rejected by MPEG4Writer — tracks started=$isMuxerStarted " +
+                                "videoTrack=$videoTrackIndex audioTrack=$audioTrackIndex " +
+                                "videoSamples=$videoSamplesWritten audioSamples=$audioSamplesWritten " +
+                                "videoEos=${videoEosReached.get()} audioEos=${audioEosReached.get()}",
+                            e,
+                        )
+                    }
+                } else if (isMuxerStarted) {
+                    Log.w(
+                        TAG,
+                        "Skipping muxer.stop(): no samples written " +
+                            "(videoTrack=$videoTrackIndex audioTrack=$audioTrackIndex " +
+                            "videoSamples=$videoSamplesWritten audioSamples=$audioSamplesWritten)",
+                    )
+                } else {
+                    Log.d(TAG, "Muxer never started (no tracks ready) — skipping stop(), release only")
                 }
-                isMuxerStarted = false
-                muxer = null
+                try {
+                    m.release()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Muxer release failed: ${e.message}")
+                }
             }
+            isMuxerStarted = false
+            muxer = null
         }
 
         synchronized(separateMicLock) {
-            try {
-                separateMicMuxer?.takeIf { isSeparateMicMuxerStarted }?.stop()
-            } catch (e: Exception) {
-                Log.e(TAG, "Separate mic muxer stop failed: ${e.message}")
-            } finally {
-                try {
-                    separateMicMuxer?.release()
-                } catch (_: Exception) {
+            separateMicMuxerReleased = true
+            val m = separateMicMuxer
+            if (m != null) {
+                if (isSeparateMicMuxerStarted && separateMicSamplesWritten) {
+                    try {
+                        m.stop()
+                    } catch (e: IllegalStateException) {
+                        Log.e(
+                            TAG,
+                            "Separate-mic muxer stop() rejected — track=$separateMicTrackIndex " +
+                                "samples=$separateMicSamplesWritten eos=${separateMicEosReached.get()}",
+                            e,
+                        )
+                    }
+                } else if (isSeparateMicMuxerStarted) {
+                    Log.w(
+                        TAG,
+                        "Skipping separate-mic muxer.stop(): no samples written " +
+                            "(track=$separateMicTrackIndex)",
+                    )
                 }
-                isSeparateMicMuxerStarted = false
-                separateMicMuxer = null
+                try {
+                    m.release()
+                } catch (e: Exception) {
+                    Log.w(TAG, "Separate-mic muxer release failed: ${e.message}")
+                }
             }
+            isSeparateMicMuxerStarted = false
+            separateMicMuxer = null
         }
 
+        // Encoders/surface/audio sources can be released only after the muxer is down.
         try {
             videoEncoder?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "videoEncoder.release() failed: ${e.message}")
         }
+        videoEncoder = null
+
+        try {
+            inputSurface?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "inputSurface.release() failed: ${e.message}")
+        }
+        inputSurface = null
+
         try {
             audioEncoder?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "audioEncoder.release() failed: ${e.message}")
         }
         try {
             separateMicEncoder?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "separateMicEncoder.release() failed: ${e.message}")
         }
-        videoEncoder = null
         audioEncoder = null
         separateMicEncoder = null
 
         try {
             micRecord?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "micRecord.release() failed: ${e.message}")
         }
         try {
             internalRecord?.release()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "internalRecord.release() failed: ${e.message}")
         }
         micRecord = null
         internalRecord = null
@@ -331,10 +461,17 @@ class ScreenRecorderEngine(
         Log.d(TAG, "Recorder stopped cleanly")
     }
 
-    /** Returns true if the muxer was successfully started, meaning at least one video track
-     *  was written. A false result means the output file is empty and should be discarded. */
+    /**
+     * True only if the muxer was started AND at least one sample was actually written to a
+     * track. Gated by [muxerLock] so the read is consistent with drain threads.
+     *
+     * A muxer that was `start()`ed but never received a sample produces an empty / non-playable
+     * MP4, so the service must treat that case as "no output" and discard the file.
+     */
     fun hadOutput(): Boolean {
-        synchronized(muxerLock) { return isMuxerStarted }
+        synchronized(muxerLock) {
+            return isMuxerStarted && (videoSamplesWritten || audioSamplesWritten)
+        }
     }
 
     /**
@@ -490,7 +627,9 @@ class ScreenRecorderEngine(
         videoEncoder = result.codec
         inputSurface = result.inputSurface
         configuredVideoMime = result.mime
-        Log.d(TAG, "Video encoder configured mime=$configuredVideoMime avcOnly=$avcOnly")
+        captureWidth = result.encodedWidth
+        captureHeight = result.encodedHeight
+        Log.d(TAG, "Video encoder configured mime=$configuredVideoMime avcOnly=$avcOnly size=${captureWidth}x${captureHeight}")
     }
 
     @SuppressLint("MissingPermission")
@@ -1174,17 +1313,28 @@ class ScreenRecorderEngine(
 
                     status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         synchronized(muxerLock) {
-                            if (!isMuxerStarted) {
+                            // Never touch the muxer once teardown has claimed it, even if the
+                            // codec fires a late format-changed event on its output thread.
+                            val activeMuxer = muxer
+                            if (!isMuxerStarted && !muxerReleased && activeMuxer != null) {
                                 val newFormat = encoder.outputFormat
-                                val index = muxer?.addTrack(newFormat) ?: -1
+                                val index = activeMuxer.addTrack(newFormat)
                                 if (isVideo) videoTrackIndex = index else audioTrackIndex = index
 
                                 val videoReady = videoTrackIndex >= 0
                                 val audioReady = if (mainMuxAudioMode != AudioMode.NONE) audioTrackIndex >= 0 else true
 
+                                // Contract: muxer.start() is called ONLY after every track we
+                                // plan to mux has been added via addTrack(). After start(),
+                                // addTrack() is no longer permitted by MediaMuxer.
                                 if (videoReady && audioReady) {
-                                    muxer?.start()
+                                    activeMuxer.start()
                                     isMuxerStarted = true
+                                    Log.d(
+                                        TAG,
+                                        "Muxer started: videoTrack=$videoTrackIndex audioTrack=$audioTrackIndex " +
+                                            "mainMuxAudioMode=$mainMuxAudioMode",
+                                    )
                                 }
                             }
                         }
@@ -1204,13 +1354,15 @@ class ScreenRecorderEngine(
 
                         if (bufferInfo.size != 0) {
                             synchronized(muxerLock) {
-                                if (isMuxerStarted && !isPaused.get()) {
+                                val activeMuxer = muxer
+                                if (isMuxerStarted && !muxerReleased && activeMuxer != null && !isPaused.get()) {
                                     bufferInfo.presentationTimeUs -= totalPausedTimeUs.get()
                                     val trackIndex = if (isVideo) videoTrackIndex else audioTrackIndex
                                     if (trackIndex >= 0) {
                                         encodedData.position(bufferInfo.offset)
                                         encodedData.limit(bufferInfo.offset + bufferInfo.size)
-                                        muxer?.writeSampleData(trackIndex, encodedData, bufferInfo)
+                                        activeMuxer.writeSampleData(trackIndex, encodedData, bufferInfo)
+                                        if (isVideo) videoSamplesWritten = true else audioSamplesWritten = true
                                     }
                                 }
                             }
@@ -1245,11 +1397,12 @@ class ScreenRecorderEngine(
 
                     status == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         synchronized(separateMicLock) {
-                            if (!isSeparateMicMuxerStarted) {
+                            val activeMuxer = separateMicMuxer
+                            if (!isSeparateMicMuxerStarted && !separateMicMuxerReleased && activeMuxer != null) {
                                 val newFormat = encoder.outputFormat
-                                separateMicTrackIndex = separateMicMuxer?.addTrack(newFormat) ?: -1
+                                separateMicTrackIndex = activeMuxer.addTrack(newFormat)
                                 if (separateMicTrackIndex >= 0) {
-                                    separateMicMuxer?.start()
+                                    activeMuxer.start()
                                     isSeparateMicMuxerStarted = true
                                 }
                             }
@@ -1266,11 +1419,13 @@ class ScreenRecorderEngine(
 
                         if (bufferInfo.size != 0) {
                             synchronized(separateMicLock) {
-                                if (isSeparateMicMuxerStarted && !isPaused.get()) {
+                                val activeMuxer = separateMicMuxer
+                                if (isSeparateMicMuxerStarted && !separateMicMuxerReleased && activeMuxer != null && !isPaused.get()) {
                                     if (separateMicTrackIndex >= 0) {
                                         outputBuffer.position(bufferInfo.offset)
                                         outputBuffer.limit(bufferInfo.offset + bufferInfo.size)
-                                        separateMicMuxer?.writeSampleData(separateMicTrackIndex, outputBuffer, bufferInfo)
+                                        activeMuxer.writeSampleData(separateMicTrackIndex, outputBuffer, bufferInfo)
+                                        separateMicSamplesWritten = true
                                     }
                                 }
                             }

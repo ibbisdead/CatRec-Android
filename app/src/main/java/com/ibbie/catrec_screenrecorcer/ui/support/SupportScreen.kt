@@ -449,7 +449,7 @@ fun SupportScreen(
     if (showChangelogDialog) {
         val changelog100Items = stringArrayResource(R.array.changelog_v100_items).toList()
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showChangelogDialog = false },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             icon = { Icon(Icons.Default.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
@@ -464,7 +464,7 @@ fun SupportScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showChangelogDialog = false }) {
                     Text(stringResource(R.string.action_close))
                 }
             },
@@ -473,7 +473,7 @@ fun SupportScreen(
 
     if (showCreditsDialog) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showCreditsDialog = false },
             containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp,
             icon = { Icon(Icons.Default.Star, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(36.dp)) },
@@ -503,7 +503,7 @@ fun SupportScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showCreditsDialog = false }) {
                     Text(stringResource(R.string.action_close))
                 }
             },

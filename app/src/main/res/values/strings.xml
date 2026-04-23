@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- App -->
     <string name="app_name">CatRec - Screen Recorder</string>
 
@@ -316,8 +316,8 @@
     <string name="watermark_image_custom">Custom image set</string>
     <string name="watermark_image_default">Default (app icon)</string>
     <string name="watermark_reset_icon">Reset to default icon</string>
-    <string name="label_dp">%1$d dp</string>
-    <string name="label_percent">%1$d%%</string>
+    <string name="label_dp"><xliff:g id="value" example="200">%1$d</xliff:g> dp</string>
+    <string name="label_percent"><xliff:g id="value" example="100">%1$d</xliff:g>%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
     <string name="perf_auto_low_end">Auto-enabled — low-end device detected</string>
@@ -559,6 +559,7 @@
     <string name="notif_post_delete">Delete</string>
     <string name="share_recording_title">Share recording</string>
     <string name="toast_video_encoder_failed">Could not start the video encoder. Try a lower resolution or a different encoder in Settings.</string>
+    <string name="toast_recording_muxer_failed">Could not save recording (file write error). Try starting again.</string>
     <string name="toast_recording_stopped_projection">Recording stopped: the captured app was closed or moved to the background</string>
     <string name="toast_recording_failed_no_video">Recording failed: no video was captured</string>
     <string name="toast_gif_transcode_failed">Could not create GIF — your MP4 recording was kept.</string>

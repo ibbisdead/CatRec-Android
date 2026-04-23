@@ -1624,6 +1624,14 @@ class OverlayService : LifecycleService() {
         } else {
             hideFloatingChromeForScreenshotOnly()
         }
+        // Best-effort: collapse any open shade / system panel before the capture. Android
+        // 12+ restricts this broadcast to privileged apps so we treat it as a hint only —
+        // the 100 ms settle delay + engine-based capture remain the real guarantees.
+        try {
+            @Suppress("DEPRECATION")
+            sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+        } catch (_: Exception) {
+        }
         h.postDelayed({
             startService(
                 Intent(this, ScreenRecordService::class.java).apply {

@@ -160,6 +160,7 @@ fun ToolsScreen(navController: NavController) {
     if (showCatRecSheet) {
         val tool = pendingTool
         ModalBottomSheet(onDismissRequest = {
+            showCatRecSheet = false
             pendingTool = null
         }) {
             var entries by remember { mutableStateOf<List<RecordingEntry>>(emptyList()) }

@@ -56,16 +56,25 @@ suspend fun Context.syncFirebaseUserIdentity(
  * AdMob: when [personalized] is false, all ad requests must include the `npa=1` extra
  * ([AdMobAdRequestFactory]); do not use tag-for-under-age-of-consent for NPA — that is for minor-directed
  * inventory and causes severe NO_FILL if applied to general users.
+ *
+ * When [adsSdkEnabled] is false (remove-ads purchase), skips [MobileAds.setRequestConfiguration] so the
+ * Ads SDK is never touched for paid users (see [com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer]).
  */
-fun applyPersonalizedAdsEnabled(personalized: Boolean) {
+fun applyPersonalizedAdsEnabled(
+    personalized: Boolean,
+    adsSdkEnabled: Boolean = true,
+) {
     AdMobAdRequestFactory.personalizedAdsEnabled = personalized
-    MobileAds.setRequestConfiguration(RequestConfiguration.Builder().build())
+    if (adsSdkEnabled) {
+        MobileAds.setRequestConfiguration(RequestConfiguration.Builder().build())
+    }
 }
 
 fun Context.applyPrivacySettings(
     analyticsEnabled: Boolean,
     personalizedAdsEnabled: Boolean,
+    adsDisabled: Boolean = false,
 ) {
     applyAnalyticsCollectionEnabled(analyticsEnabled)
-    applyPersonalizedAdsEnabled(personalizedAdsEnabled)
+    applyPersonalizedAdsEnabled(personalizedAdsEnabled, adsSdkEnabled = !adsDisabled)
 }

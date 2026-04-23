@@ -8,7 +8,7 @@ import android.view.WindowManager
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
-import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import kotlinx.coroutines.CoroutineScope
@@ -19,15 +19,13 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
 class DefaultRecordingSessionRepository(
-    private val settingsRepository: SettingsRepository,
+    private val settingsCache: SettingsConfigCache,
 ) : RecordingSessionRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -55,124 +53,120 @@ class DefaultRecordingSessionRepository(
         }
     }
 
-    override suspend fun createSessionConfigForFullRecording(
+    override fun createSessionConfigForFullRecording(
         context: Context,
         resultCode: Int,
         projectionIntent: Intent,
     ): SessionConfig {
-        val mode = settingsRepository.captureMode.first()
-        val presetId = settingsRepository.gifRecorderPresetId.first()
+        // Synchronous read from [SettingsConfigCache]. The cache is warmed at process
+        // start; if it has not yet received its first snapshot we fall back to
+        // [SettingsConfigCache.Snapshot.DEFAULTS] (identical to the DataStore flow
+        // defaults) — never blocks the main thread.
+        val snap = settingsCache.current()
         val (w, h) =
             estimateCapturePixels(
                 context.applicationContext,
-                effectiveResolution(mode, presetId),
-                settingsRepository.recordingOrientation.first(),
+                effectiveResolution(snap.captureMode, snap.gifRecorderPresetId, snap.resolution),
+                snap.recordingOrientation,
             )
-        val fps = effectiveFps(mode, presetId)
-        val bitrate = effectiveBitrateBits(mode, presetId)
         val audio =
             when {
-                settingsRepository.recordAudio.first() && settingsRepository.internalAudio.first() ->
-                    SessionAudioSource.MICROPHONE_AND_INTERNAL
-                settingsRepository.recordAudio.first() -> SessionAudioSource.MICROPHONE
-                settingsRepository.internalAudio.first() -> SessionAudioSource.INTERNAL
+                snap.recordAudio && snap.internalAudio -> SessionAudioSource.MICROPHONE_AND_INTERNAL
+                snap.recordAudio -> SessionAudioSource.MICROPHONE
+                snap.internalAudio -> SessionAudioSource.INTERNAL
                 else -> SessionAudioSource.NONE
             }
         return SessionConfig(
             widthPx = w,
             heightPx = h,
-            bitrateBitsPerSecond = bitrate,
-            frameRate = fps,
+            bitrateBitsPerSecond = effectiveBitrateBits(snap.captureMode, snap.gifRecorderPresetId, snap.bitrateMbps),
+            frameRate = effectiveFps(snap.captureMode, snap.gifRecorderPresetId, snap.fps),
             audioSource = audio,
             mediaProjectionResultCode = resultCode,
             mediaProjectionGrantIntent = cloneProjectionIntent(projectionIntent),
-            recordSingleApp = settingsRepository.recordSingleAppEnabled.first(),
+            recordSingleApp = snap.recordSingleAppEnabled,
         )
     }
 
-    override suspend fun createSessionConfigForBuffer(
+    override fun createSessionConfigForBuffer(
         context: Context,
         resultCode: Int,
         projectionIntent: Intent,
     ): SessionConfig {
+        val snap = settingsCache.current()
         val (w, h) =
             estimateCapturePixels(
                 context.applicationContext,
-                settingsRepository.resolution.first(),
-                settingsRepository.recordingOrientation.first(),
+                snap.resolution,
+                snap.recordingOrientation,
             )
         val audio =
             when {
-                settingsRepository.recordAudio.first() && settingsRepository.internalAudio.first() ->
-                    SessionAudioSource.MICROPHONE_AND_INTERNAL
-                settingsRepository.recordAudio.first() -> SessionAudioSource.MICROPHONE
-                settingsRepository.internalAudio.first() -> SessionAudioSource.INTERNAL
+                snap.recordAudio && snap.internalAudio -> SessionAudioSource.MICROPHONE_AND_INTERNAL
+                snap.recordAudio -> SessionAudioSource.MICROPHONE
+                snap.internalAudio -> SessionAudioSource.INTERNAL
                 else -> SessionAudioSource.NONE
             }
         return SessionConfig(
             widthPx = w,
             heightPx = h,
-            bitrateBitsPerSecond = (settingsRepository.bitrate.first() * 1_000_000).toInt(),
-            frameRate = settingsRepository.fps.first().toInt(),
+            bitrateBitsPerSecond = (snap.bitrateMbps * 1_000_000).toInt(),
+            frameRate = snap.fps.toInt(),
             audioSource = audio,
             mediaProjectionResultCode = resultCode,
             mediaProjectionGrantIntent = cloneProjectionIntent(projectionIntent),
-            recordSingleApp = settingsRepository.recordSingleAppEnabled.first(),
+            recordSingleApp = snap.recordSingleAppEnabled,
         )
     }
 
-    private suspend fun effectiveResolution(
+    private fun effectiveResolution(
         mode: String,
         presetId: String,
+        defaultResolution: String,
     ): String =
         if (mode == CaptureMode.GIF) {
             GifRecordingPresets.byId(presetId).resolutionSetting
         } else {
-            settingsRepository.resolution.first()
+            defaultResolution
         }
 
-    private suspend fun effectiveFps(
+    private fun effectiveFps(
         mode: String,
         presetId: String,
+        defaultFps: Float,
     ): Int =
         if (mode == CaptureMode.GIF) {
             GifRecordingPresets.byId(presetId).fps
         } else {
-            settingsRepository.fps.first().toInt()
+            defaultFps.toInt()
         }
 
-    private suspend fun effectiveBitrateBits(
+    private fun effectiveBitrateBits(
         mode: String,
         presetId: String,
+        defaultBitrateMbps: Float,
     ): Int =
         if (mode == CaptureMode.GIF) {
             GifRecordingPresets.byId(presetId).bitrateBitsPerSec
         } else {
-            (settingsRepository.bitrate.first() * 1_000_000).toInt()
+            (defaultBitrateMbps * 1_000_000).toInt()
         }
 
     override fun startRecording(
         context: Context,
         config: SessionConfig,
     ) {
-        scope.launch {
-            val intent = buildFullRecordingStartIntent(context.applicationContext, config)
-            withContext(Dispatchers.Main) {
-                context.applicationContext.startForegroundService(intent)
-            }
-        }
+        // Synchronous by design — see [createSessionConfigForFullRecording] docs.
+        val intent = buildFullRecordingStartIntent(context.applicationContext, config)
+        context.applicationContext.startForegroundService(intent)
     }
 
     override fun startBufferSession(
         context: Context,
         config: SessionConfig,
     ) {
-        scope.launch {
-            val intent = buildBufferStartIntent(context.applicationContext, config)
-            withContext(Dispatchers.Main) {
-                context.applicationContext.startForegroundService(intent)
-            }
-        }
+        val intent = buildBufferStartIntent(context.applicationContext, config)
+        context.applicationContext.startForegroundService(intent)
     }
 
     override fun prepareOverlaySession(
@@ -240,62 +234,61 @@ class DefaultRecordingSessionRepository(
         )
     }
 
-    private suspend fun buildFullRecordingStartIntent(
+    private fun buildFullRecordingStartIntent(
         ctx: Context,
         config: SessionConfig,
     ): Intent {
-        val mode = settingsRepository.captureMode.first()
-        val presetId = settingsRepository.gifRecorderPresetId.first()
-        val gif = mode == CaptureMode.GIF
-        val gifPreset = if (gif) GifRecordingPresets.byId(presetId) else null
+        val snap = settingsCache.current()
+        val gif = snap.captureMode == CaptureMode.GIF
+        val gifPreset = if (gif) GifRecordingPresets.byId(snap.gifRecorderPresetId) else null
         return Intent(ctx, ScreenRecordService::class.java).apply {
             action = ScreenRecordService.ACTION_START
             putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config)
             putExtra(ScreenRecordService.EXTRA_RESULT_CODE, config.mediaProjectionResultCode)
             putExtra(ScreenRecordService.EXTRA_DATA, config.mediaProjectionGrantIntent)
-            putExtra(ScreenRecordService.EXTRA_FPS, effectiveFps(mode, presetId))
-            putExtra(ScreenRecordService.EXTRA_BITRATE, effectiveBitrateBits(mode, presetId))
-            putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, settingsRepository.recordAudio.first())
-            putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, settingsRepository.internalAudio.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, settingsRepository.audioBitrate.first() * 1000)
-            putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, settingsRepository.audioSampleRate.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, settingsRepository.audioChannels.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, settingsRepository.audioEncoder.first())
-            putExtra(ScreenRecordService.EXTRA_SEPARATE_MIC_RECORDING, settingsRepository.separateMicRecording.first())
-            putExtra(ScreenRecordService.EXTRA_SHOW_CAMERA, settingsRepository.cameraOverlay.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_SIZE, settingsRepository.cameraOverlaySize.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_X_FRACTION, settingsRepository.cameraXFraction.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_Y_FRACTION, settingsRepository.cameraYFraction.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_LOCK_POSITION, settingsRepository.cameraLockPosition.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_FACING, settingsRepository.cameraFacing.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_ASPECT_RATIO, settingsRepository.cameraAspectRatio.first())
-            putExtra(ScreenRecordService.EXTRA_CAMERA_OPACITY, settingsRepository.cameraOpacity.first())
-            putExtra(ScreenRecordService.EXTRA_SHOW_WATERMARK, settingsRepository.showWatermark.first())
+            putExtra(ScreenRecordService.EXTRA_FPS, effectiveFps(snap.captureMode, snap.gifRecorderPresetId, snap.fps))
+            putExtra(ScreenRecordService.EXTRA_BITRATE, effectiveBitrateBits(snap.captureMode, snap.gifRecorderPresetId, snap.bitrateMbps))
+            putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, snap.recordAudio)
+            putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, snap.internalAudio)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, snap.audioBitrateKbps * 1000)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, snap.audioSampleRate)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, snap.audioChannels)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, snap.audioEncoder)
+            putExtra(ScreenRecordService.EXTRA_SEPARATE_MIC_RECORDING, snap.separateMicRecording)
+            putExtra(ScreenRecordService.EXTRA_SHOW_CAMERA, snap.cameraOverlay)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_SIZE, snap.cameraOverlaySize)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_X_FRACTION, snap.cameraXFraction)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_Y_FRACTION, snap.cameraYFraction)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_LOCK_POSITION, snap.cameraLockPosition)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_FACING, snap.cameraFacing)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_ASPECT_RATIO, snap.cameraAspectRatio)
+            putExtra(ScreenRecordService.EXTRA_CAMERA_OPACITY, snap.cameraOpacity)
+            putExtra(ScreenRecordService.EXTRA_SHOW_WATERMARK, snap.showWatermark)
             putStringArrayListExtra(
                 ScreenRecordService.EXTRA_STOP_BEHAVIOR,
-                ArrayList(StopBehaviorKeys.migrateSet(settingsRepository.stopBehavior.first()).toList()),
+                ArrayList(StopBehaviorKeys.migrateSet(snap.stopBehavior).toList()),
             )
-            putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, settingsRepository.saveLocationUri.first())
-            putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, settingsRepository.videoEncoder.first())
-            putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, settingsRepository.floatingControls.first())
+            putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, snap.saveLocationUri)
+            putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, snap.videoEncoder)
+            putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, snap.floatingControls)
             putExtra(
                 ScreenRecordService.EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING,
-                settingsRepository.hideFloatingIconWhileRecording.first(),
+                snap.hideFloatingIconWhileRecording,
             )
-            putExtra(ScreenRecordService.EXTRA_RESOLUTION, effectiveResolution(mode, presetId))
-            putExtra(ScreenRecordService.EXTRA_FILENAME_PATTERN, settingsRepository.filenamePattern.first())
-            putExtra(ScreenRecordService.EXTRA_COUNTDOWN, settingsRepository.countdown.first())
-            putExtra(ScreenRecordService.EXTRA_KEEP_SCREEN_ON, settingsRepository.keepScreenOn.first())
-            putExtra(ScreenRecordService.EXTRA_RECORDING_ORIENTATION, settingsRepository.recordingOrientation.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_LOCATION, settingsRepository.watermarkLocation.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_IMAGE_URI, settingsRepository.watermarkImageUri.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_SHAPE, settingsRepository.watermarkShape.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_OPACITY, settingsRepository.watermarkOpacity.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_SIZE, settingsRepository.watermarkSize.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_X_FRACTION, settingsRepository.watermarkXFraction.first())
-            putExtra(ScreenRecordService.EXTRA_WATERMARK_Y_FRACTION, settingsRepository.watermarkYFraction.first())
-            putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, settingsRepository.screenshotFormat.first())
-            putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, settingsRepository.screenshotQuality.first())
+            putExtra(ScreenRecordService.EXTRA_RESOLUTION, effectiveResolution(snap.captureMode, snap.gifRecorderPresetId, snap.resolution))
+            putExtra(ScreenRecordService.EXTRA_FILENAME_PATTERN, snap.filenamePattern)
+            putExtra(ScreenRecordService.EXTRA_COUNTDOWN, snap.countdown)
+            putExtra(ScreenRecordService.EXTRA_KEEP_SCREEN_ON, snap.keepScreenOn)
+            putExtra(ScreenRecordService.EXTRA_RECORDING_ORIENTATION, snap.recordingOrientation)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_LOCATION, snap.watermarkLocation)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_IMAGE_URI, snap.watermarkImageUri)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_SHAPE, snap.watermarkShape)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_OPACITY, snap.watermarkOpacity)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_SIZE, snap.watermarkSize)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_X_FRACTION, snap.watermarkXFraction)
+            putExtra(ScreenRecordService.EXTRA_WATERMARK_Y_FRACTION, snap.watermarkYFraction)
+            putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, snap.screenshotFormat)
+            putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, snap.screenshotQuality)
             putExtra(ScreenRecordService.EXTRA_GIF_SESSION, gif)
             if (gif && gifPreset != null) {
                 putExtra(ScreenRecordService.EXTRA_GIF_MAX_DURATION_SEC, gifPreset.maxDurationSec)
@@ -307,28 +300,30 @@ class DefaultRecordingSessionRepository(
         }
     }
 
-    private suspend fun buildBufferStartIntent(
+    private fun buildBufferStartIntent(
         ctx: Context,
         config: SessionConfig,
-    ): Intent =
-        Intent(ctx, ScreenRecordService::class.java).apply {
+    ): Intent {
+        val snap = settingsCache.current()
+        return Intent(ctx, ScreenRecordService::class.java).apply {
             action = ScreenRecordService.ACTION_START_BUFFER
             putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config)
             putExtra(ScreenRecordService.EXTRA_RESULT_CODE, config.mediaProjectionResultCode)
             putExtra(ScreenRecordService.EXTRA_DATA, config.mediaProjectionGrantIntent)
-            putExtra(ScreenRecordService.EXTRA_FPS, settingsRepository.fps.first().toInt())
-            putExtra(ScreenRecordService.EXTRA_BITRATE, (settingsRepository.bitrate.first() * 1_000_000).toInt())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, settingsRepository.recordAudio.first())
-            putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, settingsRepository.internalAudio.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, settingsRepository.audioBitrate.first() * 1000)
-            putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, settingsRepository.audioSampleRate.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, settingsRepository.audioChannels.first())
-            putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, settingsRepository.audioEncoder.first())
-            putExtra(ScreenRecordService.EXTRA_RESOLUTION, settingsRepository.resolution.first())
-            putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, settingsRepository.videoEncoder.first())
-            putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, settingsRepository.clipperDurationMinutes.first())
-            putExtra(ScreenRecordService.EXTRA_COUNTDOWN, settingsRepository.countdown.first())
+            putExtra(ScreenRecordService.EXTRA_FPS, snap.fps.toInt())
+            putExtra(ScreenRecordService.EXTRA_BITRATE, (snap.bitrateMbps * 1_000_000).toInt())
+            putExtra(ScreenRecordService.EXTRA_AUDIO_ENABLED, snap.recordAudio)
+            putExtra(ScreenRecordService.EXTRA_INTERNAL_AUDIO_ENABLED, snap.internalAudio)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_BITRATE, snap.audioBitrateKbps * 1000)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_SAMPLE_RATE, snap.audioSampleRate)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, snap.audioChannels)
+            putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, snap.audioEncoder)
+            putExtra(ScreenRecordService.EXTRA_RESOLUTION, snap.resolution)
+            putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, snap.videoEncoder)
+            putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, snap.clipperDurationMinutes)
+            putExtra(ScreenRecordService.EXTRA_COUNTDOWN, snap.countdown)
         }
+    }
 
     companion object {
         fun estimateCapturePixels(

@@ -65,6 +65,8 @@ class RecordingViewModel(
     val isRecording: StateFlow<Boolean> = RecordingState.isRecording
     val isBuffering: StateFlow<Boolean> = RecordingState.isBuffering
     val isPrepared: StateFlow<Boolean> = RecordingState.isPrepared
+    val isSaving: StateFlow<Boolean> = RecordingState.isSaving
+    val screenshotSavedCount: StateFlow<Int> = RecordingState.screenshotSavedCount
 
     // Video
     val fps: StateFlow<Float> = settingsRepository.fps.stateIn(viewModelScope, SharingStarted.Lazily, 30f)
@@ -77,7 +79,7 @@ class RecordingViewModel(
     val recordAudio: StateFlow<Boolean> = settingsRepository.recordAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val internalAudio: StateFlow<Boolean> = settingsRepository.internalAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val audioBitrate: StateFlow<Int> = settingsRepository.audioBitrate.stateIn(viewModelScope, SharingStarted.Lazily, 128)
-    val audioSampleRate: StateFlow<Int> = settingsRepository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 48000)
+    val audioSampleRate: StateFlow<Int> = settingsRepository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 44100)
     val audioChannels: StateFlow<String> = settingsRepository.audioChannels.stateIn(viewModelScope, SharingStarted.Lazily, "Mono")
     val audioEncoder: StateFlow<String> = settingsRepository.audioEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "AAC-LC")
     val separateMicRecording: StateFlow<Boolean> = settingsRepository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -402,7 +404,10 @@ class RecordingViewModel(
     fun setPersonalizedAdsEnabled(value: Boolean) =
         viewModelScope.launch {
             settingsRepository.setPersonalizedAdsEnabled(value)
-            applyPersonalizedAdsEnabled(value)
+            applyPersonalizedAdsEnabled(
+                value,
+                adsSdkEnabled = !settingsRepository.adsDisabled.first(),
+            )
         }
 
     // Setters — Onboarding
@@ -416,20 +421,22 @@ class RecordingViewModel(
     fun setAccentUseGradient(value: Boolean) = viewModelScope.launch { settingsRepository.setAccentUseGradient(value) }
 
     // Session control (delegates to [RecordingSessionRepository] → [ScreenRecordService])
+    // NOTE: Must be synchronous. Android 12+ only keeps the transient foreground-service grant
+    // window open while the activity-result call stack is still unwinding. Deferring the
+    // startForegroundService call through `viewModelScope.launch` would trigger
+    // `ForegroundServiceStartNotAllowedException`. See [DefaultRecordingSessionRepository].
     fun startRecordingService(
         context: Context,
         resultCode: Int,
         data: Intent,
     ) {
-        viewModelScope.launch {
-            val config =
-                recordingSessionRepository.createSessionConfigForFullRecording(
-                    context,
-                    resultCode,
-                    data,
-                )
-            recordingSessionRepository.startRecording(context, config)
-        }
+        val config =
+            recordingSessionRepository.createSessionConfigForFullRecording(
+                context,
+                resultCode,
+                data,
+            )
+        recordingSessionRepository.startRecording(context, config)
     }
 
     fun stopRecordingService(context: Context) {
@@ -442,15 +449,13 @@ class RecordingViewModel(
         resultCode: Int,
         data: Intent,
     ) {
-        viewModelScope.launch {
-            val config =
-                recordingSessionRepository.createSessionConfigForBuffer(
-                    context,
-                    resultCode,
-                    data,
-                )
-            recordingSessionRepository.startBufferSession(context, config)
-        }
+        val config =
+            recordingSessionRepository.createSessionConfigForBuffer(
+                context,
+                resultCode,
+                data,
+            )
+        recordingSessionRepository.startBufferSession(context, config)
     }
 
     /**

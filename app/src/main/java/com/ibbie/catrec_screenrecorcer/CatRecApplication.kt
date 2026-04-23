@@ -2,10 +2,11 @@ package com.ibbie.catrec_screenrecorcer
 
 import android.app.Application
 import android.content.Context
-import com.google.android.gms.ads.MobileAds
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
+import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 import com.ibbie.catrec_screenrecorcer.billing.CatRecBillingManager
+import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.recording.DefaultRecordingSessionRepository
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
@@ -27,10 +28,18 @@ class CatRecApplication : Application() {
     lateinit var billingManager: CatRecBillingManager
         private set
 
+    /**
+     * Process-wide read cache for recording settings. Warmed on cold start so the
+     * activity-result → `startForegroundService` path never has to hit DataStore on the
+     * main thread. See [SettingsConfigCache].
+     */
+    val settingsConfigCache: SettingsConfigCache by lazy {
+        SettingsConfigCache(SettingsRepository(this)).also { it.start() }
+    }
+
     /** Single recording session facade (foreground service + lifecycle flows). */
     val recordingSessionRepository: RecordingSessionRepository by lazy {
-        val settings = SettingsRepository(this)
-        DefaultRecordingSessionRepository(settings)
+        DefaultRecordingSessionRepository(settingsConfigCache)
     }
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -41,18 +50,32 @@ class CatRecApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        SettingsRepository.prepareDataStoreFilesystem(this)
+        // Warm the shared settings cache as early as possible so the foreground-service
+        // grant window path in DefaultRecordingSessionRepository never has to block.
+        settingsConfigCache
         val settingsRepository = SettingsRepository(this)
         runBlocking {
-            applyPersonalizedAdsEnabled(settingsRepository.personalizedAdsEnabled.first())
+            val adsDisabled = settingsRepository.adsDisabled.first()
+            AppOpenAdManager.adsDisabled = adsDisabled
+            MobileAdsInitializer.adsDisabled = adsDisabled
+            applyPersonalizedAdsEnabled(
+                settingsRepository.personalizedAdsEnabled.first(),
+                adsSdkEnabled = !adsDisabled,
+            )
         }
         applicationScope.launch {
             settingsRepository.adsDisabled.collect { disabled ->
                 AppOpenAdManager.adsDisabled = disabled
+                MobileAdsInitializer.adsDisabled = disabled
+                if (!disabled) {
+                    MobileAdsInitializer.initializeIfReady(this@CatRecApplication)
+                }
             }
         }
-        MobileAds.initialize(this) {
-            AppOpenAdManager.load(this, getString(R.string.admob_app_open_unit_id))
-        }
+        // Free tier only: paid users skip Ads SDK entirely (see [MobileAdsInitializer.adsDisabled]).
+        // Also defers until BLUETOOTH_CONNECT is granted on API 31+.
+        MobileAdsInitializer.initializeIfReady(this)
         billingManager = CatRecBillingManager(this)
         billingManager.start()
         // Arm Crashlytics explicitly so it is active before MainActivity loads the saved

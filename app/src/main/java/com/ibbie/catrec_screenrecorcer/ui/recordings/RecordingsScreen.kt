@@ -123,29 +123,35 @@ fun RecordingsScreen(
         onDispose { suppressRecordFab.value = false }
     }
 
-    // Reload whenever this tab’s lifecycle resumes (switching tabs), save folder changes,
-    // or when the recording session stops (so new clips show up immediately).
+    // Reload when the tab resumes, when the save folder changes, or when saving completes.
+    // isSaving is a key so the effect re-fires once the muxer finishes writing; the guard
+    // prevents a premature load while isSaving is true (MediaStore won't have the new row yet).
     val lifecycleState by viewModel.sessionLifecycleState.collectAsState()
     val isIdle = lifecycleState is com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState.Idle
+    val isSaving by viewModel.isSaving.collectAsState()
 
-    LifecycleResumeEffect(saveLocationUri, isIdle) {
-        isLoading = true
+    LifecycleResumeEffect(saveLocationUri, isIdle, isSaving) {
         val job =
-            scope.launch {
-                try {
-                    val list = MediaManager.loadRecordings(context)
-                    recordings = list
-                } finally {
-                    isLoading = false
+            if (!isSaving) {
+                isLoading = true
+                scope.launch {
+                    try {
+                        val list = MediaManager.loadRecordings(context)
+                        recordings = list
+                    } finally {
+                        isLoading = false
+                    }
                 }
+            } else {
+                null
             }
-        onPauseOrDispose { job.cancel() }
+        onPauseOrDispose { job?.cancel() }
     }
 
     if (showBulkDeleteDialog) {
         val count = selectedUris.size
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showBulkDeleteDialog = false },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
@@ -175,13 +181,14 @@ fun RecordingsScreen(
                             }
                         }
                         selectedUris = emptySet()
+                        showBulkDeleteDialog = false
                     }
                 }) {
                     Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) {
+                TextButton(onClick = { showBulkDeleteDialog = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },
@@ -400,7 +407,7 @@ fun RecordingsScreen(
                         )
                     }
                     IconButton(
-                        onClick = { },
+                        onClick = { showBulkDeleteDialog = true },
                         enabled = selectedUris.isNotEmpty(),
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = accent)
@@ -450,7 +457,7 @@ fun RecordingCard(
 
     if (showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { },
+            onDismissRequest = { showDeleteDialog = false },
             icon = {
                 Icon(Icons.Default.Delete, null, tint = accent, modifier = Modifier.size(28.dp))
             },
@@ -458,13 +465,14 @@ fun RecordingCard(
             text = { Text(stringResource(R.string.delete_recording_message, item.name ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
+                    showDeleteDialog = false
                     onDelete()
                 }) {
                     Text(stringResource(R.string.action_delete), color = accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -624,7 +632,7 @@ fun RecordingCard(
                     IconButton(onClick = onShare) {
                         Icon(Icons.Default.Share, "Share", tint = accent.copy(alpha = 0.65f))
                     }
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(Icons.Default.Delete, "Delete", tint = accent)
                     }
                 }

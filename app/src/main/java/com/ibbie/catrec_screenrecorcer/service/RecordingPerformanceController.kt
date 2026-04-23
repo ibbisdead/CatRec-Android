@@ -19,6 +19,12 @@ interface AdaptiveRecordingSignalSink {
  * Session-scoped adaptive mitigations for screen recording / rolling buffer.
  * Signals: [onRelayBackpressure], [onSlowFrame] (relay-throttled). Tier steps are cooldown-gated.
  * Decay and tier logic run on a dedicated background thread ([tickHandler]); not on the main thread.
+ *
+ * **Resolution:** this controller does **not** change capture width/height. Mitigations are
+ * bitrate reduction ([applyAdaptiveVideoBitrateBps]), frame skipping ([setRelaySkipModulo]), and
+ * HEVC→AVC preference for the next encoder prepare ([onPreferAvc]). Encoder-safe dimensions and
+ * [MediaCodecInfo.VideoCapabilities.isSizeSupported] are enforced once at configure time in
+ * [VideoEncoderConfigurator] (including aspect-preserving fallback via [VideoEncoderDimensionMath]).
  */
 internal class RecordingPerformanceController(
     private val sessionBaselineBitrateBps: Int,

@@ -7,8 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
@@ -63,6 +61,7 @@ import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
+import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
@@ -161,6 +160,7 @@ fun FabRecordingBridge(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions(),
         ) {
+            MobileAdsInitializer.initializeIfReady(context)
             setupStep = RecordingFlowPermissionStep.COMPLETE
         }
 
@@ -231,14 +231,32 @@ fun FabRecordingBridge(
 
             RecordingFlowPermissionStep.MEDIA_LIBRARY -> {
                 val mediaPerms = permissionManager.mediaLibraryReadPermissions()
-                if (mediaPerms.isEmpty() || permissionManager.isMediaLibraryReadGranted()) {
+                // Also bundle BLUETOOTH_CONNECT (API 31+) so it is granted in the same pass;
+                // it is optional (denial is silently accepted — no core feature depends on it).
+                val btPerms = permissionManager.bluetoothPermissions()
+                val needsMedia = !permissionManager.isMediaLibraryReadGranted()
+                val needsBt =
+                    Build.VERSION.SDK_INT >= 31 && !permissionManager.isBluetoothConnectGranted()
+                if (!needsMedia && !needsBt) {
+                    MobileAdsInitializer.initializeIfReady(context)
                     setupStep = RecordingFlowPermissionStep.COMPLETE
                 } else {
-                    mediaLibraryPermissionLauncher.launch(mediaPerms)
+                    val toRequest =
+                        buildList {
+                            if (needsMedia) addAll(mediaPerms)
+                            if (needsBt) addAll(btPerms)
+                        }.distinct()
+                    if (toRequest.isEmpty()) {
+                        MobileAdsInitializer.initializeIfReady(context)
+                        setupStep = RecordingFlowPermissionStep.COMPLETE
+                    } else {
+                        mediaLibraryPermissionLauncher.launch(toRequest.toTypedArray())
+                    }
                 }
             }
 
             RecordingFlowPermissionStep.COMPLETE -> {
+                MobileAdsInitializer.initializeIfReady(context)
                 refreshPermissions()
                 setupStep = RecordingFlowPermissionStep.IDLE
             }
@@ -251,6 +269,7 @@ fun FabRecordingBridge(
         if (!permissionManager.isSetupComplete() || !permissionManager.areAllGranted()) {
             setupStep = RecordingFlowPermissionStep.NOTIFICATIONS
         } else {
+            MobileAdsInitializer.initializeIfReady(context)
             refreshPermissions()
         }
     }
@@ -325,26 +344,64 @@ fun FabRecordingBridge(
             contract = ActivityResultContracts.StartActivityForResult(),
         ) { result ->
             if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-                viewModel.prepareForOverlayRecording(context, result.resultCode, result.data!!)
-                Handler(Looper.getMainLooper()).postDelayed({
-                    context.startService(
-                        Intent(context, ScreenRecordService::class.java).apply {
-                            action = ScreenRecordService.ACTION_TAKE_SCREENSHOT
-                        },
-                    )
-                }, 450L)
+                // One-shot standalone screenshot: the service creates the MediaProjection from
+                // this fresh token, captures a single frame, releases the projection and stops.
+                // No prepared session is kept alive — the next screenshot prompts consent again.
+                val oneShot =
+                    Intent(context, ScreenRecordService::class.java).apply {
+                        action = ScreenRecordService.ACTION_TAKE_SCREENSHOT_ONE_SHOT
+                        putExtra(ScreenRecordService.EXTRA_RESULT_CODE, result.resultCode)
+                        putExtra(ScreenRecordService.EXTRA_DATA, result.data)
+                        putExtra(
+                            ScreenRecordService.EXTRA_SCREENSHOT_FORMAT,
+                            viewModel.screenshotFormat.value,
+                        )
+                        putExtra(
+                            ScreenRecordService.EXTRA_SCREENSHOT_QUALITY,
+                            viewModel.screenshotQuality.value,
+                        )
+                    }
+                ContextCompat.startForegroundService(context, oneShot)
             } else {
                 Toast.makeText(context, toastScreenCaptureDenied, Toast.LENGTH_SHORT).show()
             }
         }
 
+    /** Runs after the user dismisses the API 31+ BLUETOOTH_CONNECT sheet (grant or deny). */
+    var pendingBluetoothContinuation by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val bluetoothConnectLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) {
+            MobileAdsInitializer.initializeIfReady(context)
+            pendingBluetoothContinuation?.invoke()
+            pendingBluetoothContinuation = null
+        }
+
+    /**
+     * API 31+: [BLUETOOTH_CONNECT] is runtime; GMS/AdMob may touch the stack before capture.
+     * If already granted (or API 30 or below), runs [action] immediately; otherwise shows the system
+     * picker once, then continues (recording is not blocked if the user taps Deny).
+     */
+    fun gateBluetoothAndRun(action: () -> Unit) {
+        if (Build.VERSION.SDK_INT < 31 || permissionManager.isBluetoothConnectGranted()) {
+            action()
+        } else {
+            pendingBluetoothContinuation = action
+            bluetoothConnectLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+    }
+
     fun startBufferFlow() {
-        bufferProjectionLauncher.launch(
-            MediaProjectionIntents.createScreenCaptureIntent(
-                context,
-                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-            ),
-        )
+        gateBluetoothAndRun {
+            bufferProjectionLauncher.launch(
+                MediaProjectionIntents.createScreenCaptureIntent(
+                    context,
+                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+                ),
+            )
+        }
     }
 
     val storagePermissionLauncher =
@@ -395,7 +452,7 @@ fun FabRecordingBridge(
         if (!allPermissionsGranted) {
             showPermissionDialog = true
         } else {
-            checkAudioAndProceed()
+            gateBluetoothAndRun { checkAudioAndProceed() }
         }
     }
 
@@ -409,11 +466,13 @@ fun FabRecordingBridge(
     LaunchedEffect(pendingScreenshotProjection, allPermissionsGranted, setupStep) {
         if (pendingScreenshotProjection && allPermissionsGranted && setupStep == RecordingFlowPermissionStep.IDLE) {
             pendingScreenshotProjection = false
-            startMediaProjection(
-                context,
-                screenshotProjectionLauncher,
-                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-            )
+            gateBluetoothAndRun {
+                startMediaProjection(
+                    context,
+                    screenshotProjectionLauncher,
+                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
+                )
+            }
         }
     }
 

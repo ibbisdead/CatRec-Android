@@ -9,6 +9,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
@@ -182,7 +183,11 @@ object EditorVideoTransform {
             outFile.delete()
 
             val editedItems = uris.map { EditedMediaItem.Builder(MediaItem.fromUri(it)).build() }
-            val sequence = EditedMediaItemSequence.Builder(editedItems).build()
+            val sequence =
+                EditedMediaItemSequence
+                    .Builder(setOf(C.TRACK_TYPE_AUDIO, C.TRACK_TYPE_VIDEO))
+                    .addItems(editedItems)
+                    .build()
             val composition: Composition = Composition.Builder(sequence).build()
             val cacheOut2 = File(context.cacheDir, "merge_tc_${System.currentTimeMillis()}.mp4")
             val ok =
