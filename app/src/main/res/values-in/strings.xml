@@ -1,0 +1,649 @@
+<resources>
+    <!-- App -->
+    <string name="app_name">CatRec - Perekam Layar</string>
+
+    <string name="brand_catrect">CatRec</string>
+    <string name="faq_content_description">Bantuan dan dukungan</string>
+    <string name="capture_mode_recording">Rekaman</string>
+    <string name="capture_mode_clipper">Alat pemotong</string>
+    <string name="capture_mode_gif">Rekaman GIF</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">Pertanyaan Umum</string>
+    <string name="faq_intro">Temukan jawaban berdasarkan kategori. Ketuk pertanyaan untuk memperluas. Jika Anda masih memerlukan bantuan, gunakan Hubungi kami di bawah.</string>
+    <string name="faq_contact_us">Hubungi kami</string>
+    <string name="feedback_title">Kirim masukan</string>
+    <string name="feedback_issue_section_title">Apa yang salah?</string>
+    <string name="feedback_description_title">Detail</string>
+    <string name="feedback_description_hint">Harap jelaskan apa yang terjadi, kapan dimulainya, dan apa yang sudah Anda coba (misalnya menurunkan resolusi, menghidupkan ulang ponsel). Detail lebih lanjut membantu kami memperbaikinya lebih cepat.</string>
+    <string name="feedback_screenshots_title">Tangkapan layar</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">Tambahkan hingga 5 gambar (pesan kesalahan, layar Pengaturan, halaman baterai, dll.).</string>
+    <string name="feedback_add_screenshots">Tambahkan gambar</string>
+    <string name="feedback_send">Mengirim</string>
+    <string name="feedback_send_note">Buka aplikasi email Anda dengan pesan ke %1$s — ketuk Kirim ke sana untuk mengirim.</string>
+    <string name="feedback_send_chooser_title">Kirim email</string>
+    <string name="feedback_no_email_app">Tidak ada aplikasi email yang ditemukan. Instal Gmail atau Outlook, atau salin detail dari layar berikutnya jika ditampilkan.</string>
+    <string name="feedback_select_issue">Silakan pilih jenis masalah.</string>
+    <string name="feedback_description_too_short">Harap tambahkan sedikit lebih detail (setidaknya satu kalimat) agar kami dapat membantu.</string>
+    <string name="feedback_issue_recording_stopped">Perekaman berhenti secara acak</string>
+    <string name="feedback_issue_crash">Aplikasi mogok</string>
+    <string name="feedback_issue_no_sound">Tidak ada masalah suara/audio</string>
+    <string name="feedback_issue_video_black">Layar hitam / video beku</string>
+    <string name="feedback_issue_cant_start">Tidak dapat mulai merekam</string>
+    <string name="feedback_issue_overlay">Kontrol mengambang/hamparan</string>
+    <string name="feedback_issue_gif_export">GIF atau ekspor file</string>
+    <string name="feedback_issue_battery_oem">Baterai / latar belakang (Xiaomi, dll.)</string>
+    <string name="feedback_issue_storage">Penyimpanan / tidak dapat menemukan file</string>
+    <string name="feedback_issue_quality">Kualitas / lag / gagap</string>
+    <string name="feedback_issue_other">Lainnya</string>
+
+    <!-- Bottom Nav Tabs -->
+    <string name="tab_screenshots">Tangkapan Layar</string>
+    <string name="tab_recordings">Rekaman</string>
+    <string name="tab_settings">Pengaturan</string>
+    <string name="tab_support">Dukungan</string>
+    <string name="tab_editor">Editor</string>
+    <string name="fab_start_recording">Catatan</string>
+    <string name="storage_indicator_format">%1$s terpakai · %2$s gratis</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">Kualitas rekaman</string>
+    <string name="settings_open_audio_menu">Pengaturan audio</string>
+    <string name="settings_open_audio_menu_sub">Mikrofon, audio internal, bitrate, saluran…</string>
+    <string name="settings_open_video_menu">Pengaturan Video &amp; GIF</string>
+    <string name="settings_open_video_menu_sub">Prasetel GIF, resolusi, FPS, bitrate, encoder…</string>
+
+    <string name="support_section_help">Membantu</string>
+    <string name="support_send_feedback">Kirim masukan</string>
+    <string name="support_send_feedback_desc">Sama seperti Hubungi kami di FAQ — laporkan bug atau saran</string>
+
+    <!-- Common Actions -->
+    <string name="action_cancel">Batal</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_share">Bagikan</string>
+    <string name="action_open">Buka</string>
+    <string name="action_edit">Sunting</string>
+    <string name="consent_analytics_title">Analisis penggunaan</string>
+    <string name="consent_analytics_message">Bantu kami meningkatkan CatRec dengan mengizinkan penggunaan opsional dan analisis kerusakan. Iklan yang dipersonalisasi dikontrol secara terpisah di Pengaturan (diaktifkan secara default). Anda dapat mengubahnya kapan saja di Pengaturan.</string>
+    <string name="setting_usage_analytics">Analitik penggunaan</string>
+    <string name="setting_usage_analytics_desc">Statistik crash dan penggunaan untuk meningkatkan aplikasi</string>
+    <string name="setting_personalized_ads">Iklan yang dipersonalisasi</string>
+    <string name="setting_personalized_ads_on_desc">AdMob dapat menggunakan ID iklan Anda untuk iklan yang relevan</string>
+    <string name="setting_personalized_ads_off_desc">Hanya iklan yang tidak dipersonalisasi</string>
+    <string name="consent_accept">Mengizinkan</string>
+    <string name="consent_decline">Menolak</string>
+    <string name="action_apply">Terapkan</string>
+    <string name="action_pause">Jeda</string>
+    <string name="action_resume">Lanjutkan</string>
+
+    <!-- Recording Screen -->
+    <string name="recording_start">Mulai Rekam</string>
+
+    <!-- Settings Screen - Section Headers -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_section_controls">Kontrol</string>
+    <string name="setting_allow_background_title">Penggunaan baterai tanpa batasan</string>
+    <string name="setting_allow_background_desc">Mengurangi risiko perekaman, sesi siap tangkap, atau overlay terhenti saat Anda meninggalkan aplikasi. Membuka pengaturan baterai sistem.</string>
+    <string name="battery_opt_rationale_title">Cegah Gangguan Perekaman</string>
+    <string name="battery_opt_rationale_body">Perekaman layar memerlukan pemrosesan latar belakang yang tidak terputus. Setel penggunaan baterai CatRec ke &quot;Tidak dibatasi&quot; di pengaturan sistem.</string>
+    <string name="battery_opt_oem_note">Perangkat Anda (%s) menggunakan manajemen baterai agresif yang dapat mematikan aplikasi latar belakang.</string>
+    <string name="battery_opt_btn_grant">Berikan Baterai Tidak Dibatasi</string>
+    <string name="battery_opt_btn_oem_settings">Buka Pengaturan %s</string>
+    <string name="battery_opt_btn_learn_more">Panduan visual (dontkillmyapp.com)</string>
+    <string name="battery_opt_btn_not_now">Nanti Saja</string>
+    <string name="battery_opt_status_exempted">Baterai: Tidak Dibatasi ✓</string>
+    <string name="battery_opt_banner_text">Perangkat Anda mungkin menghentikan perekaman di latar belakang.</string>
+    <string name="battery_opt_banner_fix">Perbaiki</string>
+    <string name="settings_section_video">Video</string>
+    <string name="settings_section_gif_recorder">Perekam GIF</string>
+    <string name="settings_gif_recorder_desc">Mode GIF merekam video terlebih dahulu, lalu mengonversinya. Kualitas dan panjangnya mengikuti preset di bawah ini; penggeser video tetap tersimpan saat Anda beralih kembali ke Perekaman.</string>
+    <string name="setting_gif_preset">Prasetel kualitas GIF</string>
+    <string name="video_locked_by_gif_preset">Opsi video dikontrol oleh preset GIF saat mode GIF dipilih.</string>
+    <string name="gif_preset_small">Kecil (file lebih cepat dan lebih kecil)</string>
+    <string name="gif_preset_medium">Sedang</string>
+    <string name="gif_preset_hd">HD (file lebih besar)</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_section_overlay">Hamparan</string>
+    <string name="settings_section_screenshots">Tangkapan Layar</string>
+    <string name="settings_section_theme">Tema</string>
+    <string name="settings_section_language">Bahasa</string>
+    <string name="settings_section_storage">Penyimpanan</string>
+    <string name="settings_section_general">Umum</string>
+
+    <!-- Video Settings -->
+    <string name="setting_resolution">Resolusi</string>
+    <string name="setting_resolution_native">Asli</string>
+    <string name="setting_resolution_custom">Resolusi kustom…</string>
+    <string name="setting_resolution_custom_hint">mis. 1920x1080</string>
+    <string name="setting_fps">Kecepatan Bingkai (FPS)</string>
+    <string name="setting_bitrate">Bitrate Video</string>
+    <string name="setting_video_encoder">Encoder Video</string>
+    <string name="setting_orientation">Orientasi</string>
+    <string name="setting_orientation_auto">Otomatis</string>
+    <string name="setting_orientation_portrait">Potret</string>
+    <string name="setting_orientation_landscape">Lanskap</string>
+
+    <!-- Audio Settings -->
+    <string name="setting_microphone">Mikrofon</string>
+    <string name="setting_internal_audio">Audio Internal</string>
+    <string name="setting_audio_bitrate">Bitrate Audio</string>
+    <string name="setting_audio_sample_rate">Laju Sampel</string>
+    <string name="setting_audio_channels">Saluran</string>
+    <string name="setting_audio_channels_mono">Mono</string>
+    <string name="setting_audio_channels_stereo">Stereo</string>
+    <string name="setting_audio_encoder">Encoder Audio</string>
+    <string name="setting_separate_mic">Trek Mikrofon Terpisah</string>
+    <string name="setting_separate_mic_desc">Simpan mikrofon sebagai file audio terpisah</string>
+
+    <!-- Overlay Settings -->
+    <string name="setting_floating_controls">Kontrol Mengambang</string>
+    <string name="setting_hide_floating_while_recording">Sembunyikan Ikon Mengambang Saat Merekam</string>
+    <string name="settings_hide_floating_while_recording_desc">Sembunyikan gelembung kontrol mengambang saat rekaman sedang berlangsung</string>
+    <string name="setting_post_screenshot_options">Opsi Pasca Tangkapan Layar</string>
+    <string name="settings_post_screenshot_options_desc">Setelah tangkapan layar, tampilkan opsi untuk membagikan atau mengedit</string>
+    <string name="setting_record_single_app">Rekam Aplikasi Tunggal</string>
+    <string name="settings_record_single_app_desc">Di Android 14+, pilih satu jendela aplikasi atau layar penuh saat Anda memberikan tangkapan layar</string>
+    <string name="screenshot_post_edit">Sunting</string>
+    <string name="screenshot_post_action_failed">Tidak dapat membuka berbagi</string>
+    <string name="screenshot_post_tap_outside">Ketuk di luar untuk menutup</string>
+    <string name="image_editor_title">Sunting gambar</string>
+    <string name="image_editor_panel_rotate">Memutar</string>
+    <string name="image_editor_panel_crop">Tanaman</string>
+    <string name="image_editor_panel_draw">Menggambar</string>
+    <string name="image_editor_rotate_ccw">Putar ke kiri</string>
+    <string name="image_editor_rotate_cw">Putar ke kanan</string>
+    <string name="image_editor_saved">Gambar disimpan ke Pictures/CatRec/Screenshots</string>
+    <string name="image_editor_save_failed">Tidak dapat menyimpan gambar</string>
+    <string name="image_editor_load_failed">Tidak dapat memuat gambar</string>
+    <string name="tool_edit_image">Sunting gambar</string>
+    <string name="brush_line_width">Lebar garis</string>
+    <string name="brush_color_picker_hint">Pilih warna, sesuaikan ketebalan, lalu ketuk Terapkan.</string>
+    <string name="brush_color_back">Kembali</string>
+    <string name="brush_apply">Menerapkan</string>
+    <string name="brush_tool_pen">Menggambar</string>
+    <string name="brush_tool_eraser">Penghapus</string>
+    <string name="brush_tool_undo">Membatalkan pukulan terakhir</string>
+    <string name="brush_tool_square">Persegi panjang</string>
+    <string name="brush_tool_circle">Elips</string>
+    <string name="brush_tool_arrow">Anak panah</string>
+    <string name="brush_tool_mosaic">Daerah pikselasi</string>
+    <string name="brush_tool_colors">Warna dan lebar garis</string>
+    <string name="brush_panel_title">Stroke</string>
+    <string name="setting_camera_settings">Pengaturan Kamera</string>
+    <string name="setting_watermark">Tanda Air CatRec</string>
+    <string name="setting_watermark_size">Ukuran tanda air</string>
+    <string name="setting_watermark_opacity">Opasitas tanda air</string>
+
+    <!-- Camera Settings Dialog -->
+    <string name="camera_settings_title">@string/setting_camera_settings</string>
+    <string name="camera_enable">Aktifkan Kamera</string>
+    <string name="camera_enable_desc">Tampilkan overlay kamera saat merekam</string>
+    <string name="camera_lock_position">Kunci Posisi</string>
+    <string name="camera_facing">Kamera</string>
+    <string name="camera_facing_front">Depan</string>
+    <string name="camera_facing_rear">Belakang</string>
+    <string name="camera_aspect_ratio">Rasio Aspek</string>
+    <string name="camera_orientation">Orientasi</string>
+    <string name="camera_size">Ukuran</string>
+    <string name="camera_opacity">Opasitas</string>
+
+    <!-- Screenshot Settings -->
+    <string name="setting_screenshot_format">Format</string>
+    <string name="setting_screenshot_quality">Kualitas</string>
+
+    <!-- Theme Settings -->
+    <string name="setting_theme">Tema Aplikasi</string>
+    <string name="theme_system">Default Sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+
+    <!-- Language Settings -->
+    <string name="setting_language">Bahasa Aplikasi</string>
+    <string name="language_system">Default Sistem</string>
+    <string name="language_english">Bahasa inggris</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_chinese_simplified">中文（简体）</string>
+    <string name="language_chinese_traditional">中文（繁體）</string>
+    <string name="language_french">Perancis</string>
+    <string name="language_german">Jerman</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+    <string name="language_italian">Italia</string>
+    <string name="language_japanese">日本語</string>
+    <string name="language_korean">한국어</string>
+    <string name="language_portuguese">Portugis</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">Spanyol</string>
+    <string name="language_turkish">Turki</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+
+    <!-- Storage Settings -->
+    <string name="setting_save_location">Lokasi Simpan</string>
+    <string name="setting_save_location_default">Default (Film/CatRec)</string>
+    <string name="setting_filename_pattern">Pola Nama File</string>
+
+    <!-- General Settings -->
+    <string name="setting_countdown">Hitung Mundur</string>
+    <string name="setting_stop_behavior">Perilaku Berhenti</string>
+
+    <!-- Screenshots Screen -->
+    <string name="screenshots_empty_title">Belum Ada Tangkapan Layar</string>
+    <string name="screenshots_empty_desc">Ketuk tombol tangkap layar di overlay perekaman untuk menangkap layar</string>
+
+    <!-- Recordings Screen -->
+    <string name="recordings_empty_title">Belum Ada Rekaman</string>
+    <string name="recordings_empty_desc">Mulai merekam untuk melihat video Anda di sini</string>
+
+    <!-- Support Screen -->
+    <string name="support_subscribe_youtube">Berlangganan YouTube</string>
+    <string name="support_subscribe_youtube_desc">Ikuti \@ibbie untuk pembaruan</string>
+    <string name="support_remove_ads">Hapus Iklan — $1</string>
+    <string name="support_remove_ads_desc">Pembelian sekali, bebas iklan selamanya</string>
+    <string name="support_restore_purchases">Pulihkan pembelian</string>
+    <string name="support_restore_purchases_desc">Sinkronkan Hapus Iklan dan pembelian lainnya dari Google Play</string>
+    <string name="support_restore_purchases_toast">Memeriksa Google Play untuk pembelian Anda…</string>
+    <string name="support_play_promo_title">Kode promo (Hapus iklan)</string>
+    <string name="support_play_promo_desc">Membuka pembelian Google Play untuk Hapus iklan. Ketuk metode pembayaran → Tukarkan kode, masukkan kode, lalu selesaikan. Jika iklan masih ada, ketuk Pulihkan pembelian di bawah.</string>
+    <string name="support_ads_removed">Iklan Dihapus — Terima kasih!</string>
+    <string name="support_ads_removed_desc">Opsi premium tetap terbuka — tidak ada iklan untuk ditonton.</string>
+    <string name="support_watch_ad">Tonton Iklan</string>
+    <string name="support_donate">Belikan saya kopi ($1)</string>
+    <string name="support_donate_desc">Donasi sekali — menjaga CatRec tetap hidup</string>
+    <string name="support_share">Bagikan CatRec</string>
+    <string name="support_share_desc">Beritahu teman Anda tentang kami</string>
+    <string name="support_changelog">Catatan Perubahan</string>
+    <string name="support_changelog_desc">Lihat apa yang baru di versi ini</string>
+    <string name="support_credits">Ucapan terima kasih</string>
+    <string name="support_credits_desc">Penguji dan kreator yang membantu CatRec</string>
+    <string name="dialog_credits_title">Ucapan terima kasih</string>
+    <string name="credits_intro">Terima kasih kepada mereka yang telah menguji dan membagikan CatRec. Ketuk nama untuk membuka salurannya.</string>
+
+    <!-- Notifications -->
+    <string name="notif_screenshot_saved">Tangkapan layar tersimpan</string>
+
+    <!-- Errors / Toast -->
+    <string name="error_screenshot_no_projection">Mulai perekaman terlebih dahulu untuk mengambil tangkapan layar</string>
+    <string name="error_screenshot_capture_failed">Tidak dapat mengambil tangkapan layar. Coba lagi.</string>
+    <string name="toast_share_app">Coba CatRec - perekam layar paling keren!</string>
+
+    <!-- Actions (extra) -->
+    <string name="action_done">Selesai</string>
+    <string name="action_grant_now">Berikan Sekarang</string>
+    <string name="action_not_now">Tidak Sekarang</string>
+    <string name="action_rename">Ganti nama</string>
+    <string name="action_trim">Memangkas</string>
+    <string name="action_open_external">Buka secara eksternal</string>
+    <string name="action_loading">Memuat…</string>
+    <string name="action_watch_ad">Tonton iklan</string>
+    <string name="action_unlock">Buka kunci</string>
+    <string name="action_got_it">Mengerti</string>
+    <string name="action_leave_feedback">Tinggalkan Umpan Balik</string>
+    <string name="action_change">Ubah</string>
+    <string name="action_enable_anyway">Aktifkan tetap saja</string>
+    <string name="action_keep_performance_mode">Pertahankan mode performa</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">Notifikasi</string>
+    <string name="stop_behavior_shake">Kocok perangkat</string>
+    <string name="stop_behavior_screen_off">Layar dimatikan</string>
+    <string name="stop_behavior_pause_on_screen_off">Jeda saat layar mati</string>
+
+    <!-- Settings extras -->
+    <string name="settings_floating_controls_desc">Gelembung selalu terlihat — rekam dan tangkap dari aplikasi apa pun</string>
+    <string name="settings_show_touches">Tampilkan Sentuhan</string>
+    <string name="settings_show_touches_desc">Aktifkan di Opsi Pengembang</string>
+    <string name="toast_enable_show_taps">Aktifkan «Tampilkan ketukan» secara manual</string>
+    <string name="toast_overlay_permission">Harap berikan izin overlay</string>
+    <string name="setting_countdown_off">Nonaktif</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="other">%1$d detik</item>
+    </plurals>
+    <string name="setting_internal_audio_note">Hanya Android 10+</string>
+    <string name="gate_feature_separate_mic">Trek Mikrofon Terpisah</string>
+    <string name="gate_feature_camera_overlay">Pengaturan Overlay Kamera</string>
+    <string name="camera_status_enabled">Aktif — %1$s • %2$s</string>
+    <string name="state_disabled">Dinonaktifkan</string>
+    <string name="watermark_preview_active">Pratinjau langsung aktif — seret tanda air untuk memposisikan ulang</string>
+    <string name="watermark_preview_recording">Pratinjau tidak tersedia saat merekam</string>
+    <string name="watermark_preview_need_overlay">Berikan izin overlay untuk pratinjau langsung</string>
+    <string name="watermark_snap_dialog_title">Jepret ke posisi</string>
+    <string name="watermark_snap_custom">Kustom</string>
+    <string name="watermark_snap_corner_title">Jepret ke sudut</string>
+    <string name="watermark_snap_corner_desc">Atau seret di layar</string>
+    <string name="watermark_shape">Bentuk tanda air</string>
+    <string name="watermark_image">Gambar tanda air</string>
+    <string name="watermark_image_custom">Gambar kustom telah diatur</string>
+    <string name="watermark_image_default">Default (ikon aplikasi)</string>
+    <string name="watermark_reset_icon">Reset ke ikon default</string>
+    <string name="label_dp">%1$d dp</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">kbps</string>
+    <string name="label_hz">Hz</string>
+    <string name="perf_auto_low_end">Diaktifkan otomatis — perangkat low-end terdeteksi</string>
+    <string name="perf_quality_may_lag">Mode kualitas (mungkin lag di perangkat ini)</string>
+    <string name="perf_static_glass">Kaca statis — blur dinonaktifkan</string>
+    <string name="perf_dynamic_glass">Blur kaca dinamis diaktifkan</string>
+    <string name="setting_performance_mode">Mode Performa</string>
+    <string name="setting_adaptive_recording_performance">Kinerja rekaman adaptif</string>
+    <string name="setting_adaptive_recording_performance_summary">Otomatis mengurangi beban jika perangkat kesulitan saat merekam</string>
+    <string name="performance_fallback_active">Beralih ke profil rekaman yang lebih ringan demi stabilitas</string>
+    <string name="performance_warning_title">Peringatan performa</string>
+    <string name="performance_warning_body">Perangkat Anda memiliki RAM kurang dari 6 GB atau menjalankan Android 11 ke bawah. Mengaktifkan efek blur kaca real-time dapat menyebabkan UI menjadi lambat, terutama saat merekam.\n\nAktifkan Mode Kualitas tetap saja?</string>
+    <string name="accent_color_title">Warna aksen</string>
+    <string name="accent_gradient_color_2">Warna gradien 2</string>
+    <string name="accent_presets">Prasetel</string>
+    <string name="label_hex_code">Kode hex</string>
+    <string name="accent_hex_placeholder">FF0033</string>
+    <string name="accent_gradient_toggle">Aksen gradien</string>
+    <string name="accent_gradient_desc">Garis tepi berpendar dua warna</string>
+    <string name="accent_color_1">Warna 1</string>
+    <string name="accent_color_2">Warna 2</string>
+    <string name="setting_save_location_custom">Folder kustom telah diatur</string>
+    <string name="setting_auto_delete_title">Hapus otomatis rekaman lama</string>
+    <string name="setting_auto_delete_desc">Simpan 50 terakhir</string>
+    <string name="setting_keep_screen_on_title">Jaga layar tetap menyala</string>
+    <string name="setting_keep_screen_on_desc">Selama perekaman</string>
+    <string name="settings_section_privacy">Privasi</string>
+    <string name="dialog_custom_resolution_title">Resolusi Kustom</string>
+    <string name="dialog_custom_resolution_hint">Masukkan resolusi sebagai LEBAR×TINGGI (mis. 1920×1080)</string>
+    <string name="error_resolution_format">Format harus L×T (mis. 1920×1080)</string>
+    <string name="error_resolution_min">Resolusi minimum adalah 100×100</string>
+    <string name="error_resolution_max">Resolusi maksimum adalah 7680 di sisi mana pun</string>
+    <string name="dialog_resolution_title">Resolusi</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9 (ponsel tinggi)</string>
+    <string name="resolution_group_18_9">18:9 (2:1)</string>
+    <string name="resolution_group_21_9">21:9 (ultra-lebar)</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16 (potret)</string>
+    <string name="dialog_theme_title">Tema Aplikasi</string>
+    <string name="dialog_language_title">Bahasa Aplikasi</string>
+    <string name="dialog_filename_pattern">Pola Nama File</string>
+    <string name="dialog_countdown_timer">Timer Hitung Mundur</string>
+    <string name="countdown_none">Tidak ada</string>
+    <string name="countdown_3s">3 dtk</string>
+    <string name="countdown_5s">5 dtk</string>
+    <string name="countdown_10s">10 dtk</string>
+    <string name="countdown_20s">20 dtk</string>
+    <string name="countdown_30s">30 dtk</string>
+    <string name="dialog_video_encoder">Encoder Video</string>
+    <string name="dialog_audio_encoder">Encoder Audio</string>
+    <string name="dialog_audio_bitrate">Bitrate Audio</string>
+    <string name="dialog_sample_rate">Laju Sampel</string>
+    <string name="dialog_bitrate_title">Kecepatan bit</string>
+    <string name="dialog_fps_title">Frame Rate (FPS)</string>
+    <string name="dialog_screenshot_format">Format Tangkapan Layar</string>
+    <string name="dialog_camera_orientation">Orientasi kamera</string>
+    <string name="premium_feature_title">Fitur premium</string>
+    <string name="premium_feature_body">%1$s adalah fitur premium.</string>
+    <string name="premium_feature_watch_ad">Tonton iklan singkat untuk membukanya untuk sesi ini.</string>
+    <string name="premium_feature_tap_unlock">Ketuk Buka Kunci untuk mengaktifkannya untuk sesi ini.</string>
+    <string name="gate_high_fps">%1$s FPS</string>
+    <string name="camera_drag_hint">Seret lingkaran kamera untuk memposisikan ulang</string>
+    <string name="camera_lock_desc_short">Mencegah pergerakan yang tidak disengaja</string>
+    <string name="shape_square">Kotak</string>
+    <string name="shape_circle">Lingkaran</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">Kiri atas</string>
+    <string name="watermark_position_top_right">Kanan atas</string>
+    <string name="watermark_position_bottom_left">Kiri bawah</string>
+    <string name="watermark_position_bottom_right">Kanan bawah</string>
+    <string name="watermark_position_center">Tengah</string>
+
+    <!-- Recording screen -->
+    <string name="label_fps">FPS</string>
+    <string name="label_mbps">Mbps</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">Durasi Clipper</string>
+    <string name="dialog_clipper_duration_title">Durasi Clipper</string>
+    <string name="clipper_duration_1m">1 mnt</string>
+    <string name="clipper_duration_2m">2 mnt</string>
+    <string name="clipper_duration_3m">3 mnt</string>
+    <string name="clipper_duration_4m">4 mnt</string>
+    <string name="clipper_duration_5m">5 mnt</string>
+    <string name="perm_rationale_intro">CatRec memerlukan izin berikut untuk merekam layar Anda:</string>
+    <string name="perm_dialog_title">Izin diperlukan</string>
+    <string name="beta_title">Anda berada di Akses Awal</string>
+    <string name="beta_line_1">⚠️ Ini adalah rilis beta.</string>
+    <string name="beta_line_2">Anda mungkin mengalami bug, kerusakan, atau fitur yang belum selesai. Perangkat dan data Anda aman — rekaman disimpan secara lokal dan tidak ada yang diunggah.</string>
+    <string name="beta_line_3">Masukan Anda secara langsung membentuk aplikasi ini. Jika ada yang rusak atau terasa tidak beres, silakan laporkan — bahkan pesan singkat pun sangat membantu.</string>
+    <string name="beta_line_4">Terima kasih telah mencoba CatRec lebih awal. 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">Hapus rekaman?</string>
+    <string name="delete_recording_message">"%1$s" akan dihapus secara permanen.</string>
+    <string name="delete_screenshot_title">Hapus tangkapan layar?</string>
+    <string name="delete_screenshot_message">"%1$s" akan dihapus secara permanen.</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="other">%1$d dipilih</item>
+    </plurals>
+    <string name="multiselect_select_all">Pilih semua</string>
+    <string name="multiselect_deselect_all">Batalkan pilihan semua</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="other">Hapus %1$d item?</item>
+    </plurals>
+    <string name="multiselect_delete_message">File-file ini akan dihapus secara permanen.</string>
+    <string name="multiselect_share_recordings">Bagikan rekaman</string>
+    <string name="multiselect_share_screenshots">Bagikan tangkapan layar</string>
+    <string name="delete_generic_recording">Rekaman ini akan dihapus secara permanen.</string>
+    <string name="player_renamed_to">Berganti nama menjadi %1$s</string>
+    <string name="player_rename_failed">Gagal mengganti nama: %1$s</string>
+    <string name="player_delete_failed">Gagal menghapus: %1$s</string>
+    <string name="player_no_app_video">Tidak ditemukan aplikasi untuk membuka video</string>
+    <string name="player_video_unavailable">Video ini tidak lagi tersedia. Mungkin telah dihapus atau dipindahkan.</string>
+    <string name="player_rename_title">Ganti nama</string>
+    <string name="player_file_name_label">Nama berkas</string>
+    <string name="trim_title">Potong video</string>
+    <string name="trim_set_to_current">Setel ke saat ini</string>
+    <string name="trim_start_label">Mulai: %1$s</string>
+    <string name="trim_end_label">Akhir: %1$s</string>
+    <string name="trim_duration_summary">Durasi pemangkasan: %1$s (%2$s → %3$s)</string>
+    <string name="trim_too_short">Rentang pemangkasan terlalu pendek (min 0,5 detik)</string>
+    <string name="trim_saved_success">Trim berhasil disimpan</string>
+    <string name="trim_failed_retry">Pemangkasan gagal. Silakan coba lagi.</string>
+    <string name="trim_progress">Memangkas… %1$d%%</string>
+    <string name="trim_save">Pangkas &amp; simpan</string>
+    <string name="content_desc_back">Kembali</string>
+    <string name="content_desc_refresh">Menyegarkan</string>
+    <string name="content_desc_options">Pilihan</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">Pengeditan video</string>
+    <string name="tools_image_editing">Pengeditan gambar</string>
+    <string name="tool_video_trim">Pemangkasan video</string>
+    <string name="tool_compress">Kompres video</string>
+    <string name="tool_video_to_gif">Video ke GIF</string>
+    <string name="tool_merge_clips">Gabungkan klip</string>
+    <string name="editor_pick_video_title">Pilih video</string>
+    <string name="editor_pick_catrec">Rekaman CatRec</string>
+    <string name="editor_pick_storage">Video di perangkat</string>
+    <string name="editor_export">Ekspor</string>
+    <string name="editor_saving">Penghematan…</string>
+    <string name="editor_saved_ok">Disimpan ke Film/CatRec</string>
+    <string name="editor_failed">Tidak dapat menyelesaikan ekspor. Coba file atau kualitas lain.</string>
+    <string name="compress_title">Kompres</string>
+    <string name="compress_quality_label">Kualitas sasaran</string>
+    <string name="compress_quality_high">Tinggi</string>
+    <string name="compress_quality_medium">Sedang</string>
+    <string name="compress_quality_low">Rendah</string>
+    <string name="compress_resolution_label">Resolusi target (tinggi)</string>
+    <string name="compress_original">Ukuran asli</string>
+    <string name="compress_estimated">Perkiraan ukuran: ~%1$s</string>
+    <string name="compress_source">Sumber: %1$dx%2$d</string>
+    <string name="gif_title">Video ke GIF</string>
+    <string name="gif_fps">FPS: %1$d</string>
+    <string name="gif_quality_label">Kualitas GIF</string>
+    <string name="gif_quality_small">Berkas lebih kecil</string>
+    <string name="gif_quality_balanced">Seimbang</string>
+    <string name="gif_quality_sharper">Lebih tajam</string>
+    <string name="gif_convert">Buat GIF</string>
+    <string name="merge_title">Gabungkan klip</string>
+    <string name="merge_add_catrec">Tambahkan dari CatRec</string>
+    <string name="merge_clear_all">Hapus semuanya</string>
+    <string name="merge_run">Gabungkan &amp; simpan</string>
+    <string name="merge_need_two">Tambahkan setidaknya dua video (pesanan dipertahankan).</string>
+    <string name="merge_clip_label">Klip %1$d</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">Perekam Layar CatRec</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">Versi %1$s</string>
+    <string name="changelog_version_template">v%1$s</string>
+    <string name="support_section_support_dev">Dukung pengembang</string>
+    <string name="support_section_legal">Legal</string>
+    <string name="support_watch_ad_sub_loading">Memuat iklan…</string>
+    <string name="support_watch_ad_sub">Cara cepat untuk mendukung secara gratis</string>
+    <string name="support_toast_youtube">Tidak dapat membuka YouTube</string>
+    <string name="support_toast_ad_failed">Tidak dapat menampilkan iklan. Coba lagi nanti.</string>
+    <string name="support_toast_thanks_ad">Terima kasih telah menonton! 🐱</string>
+    <string name="support_toast_ad_loading">Iklan sedang dimuat, harap tunggu…</string>
+    <string name="support_toast_no_ad">Tidak ada iklan yang tersedia saat ini. Coba lagi nanti.</string>
+    <string name="support_toast_browser">Tidak dapat membuka browser</string>
+    <string name="billing_store_not_ready">Play Store belum siap. Periksa koneksi Anda dan coba lagi.</string>
+    <string name="billing_thanks_support_me">Terima kasih atas dukungan Anda! 🐱</string>
+    <string name="billing_pending">Pembelian tertunda — Anda akan mendapatkan akses setelah pembelian selesai.</string>
+    <string name="dialog_changelog_title">log perubahan</string>
+    <string name="support_privacy_policy">Kebijakan Privasi</string>
+    <string name="support_privacy_policy_desc">Bagaimana CatRec menangani data Anda</string>
+    <string name="support_terms_of_service">Ketentuan Layanan</string>
+    <string name="support_terms_of_service_desc">Aturan penggunaan dan penafian</string>
+    <string name="support_permissions_disclosure">Pengungkapan izin</string>
+    <string name="support_permissions_disclosure_desc">Mengapa setiap izin diperlukan</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">Pemberitahuan</string>
+    <string name="perm_rationale_notifications">Diperlukan untuk menampilkan kontrol perekaman dan status langsung dalam bayangan notifikasi saat merekam.</string>
+    <string name="perm_name_microphone">Mikropon</string>
+    <string name="perm_rationale_microphone">Diperlukan untuk menangkap audio mikrofon bersama rekaman layar Anda.</string>
+    <string name="perm_name_camera">Kamera</string>
+    <string name="perm_rationale_camera">Diperlukan untuk menampilkan hamparan kamera-dalam-gambar di atas rekaman layar Anda.</string>
+    <string name="perm_name_overlay">Tampilkan di atas aplikasi lain</string>
+    <string name="perm_rationale_overlay">Diperlukan untuk menampilkan gelembung kontrol mengambang dan hamparan kamera di atas aplikasi lain selama perekaman.</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">Layanan latar depan saat merekam: tangkapan layar (MediaProjection) dengan audio mikrofon opsional dan notifikasi persisten.</string>
+    <string name="service_description_overlay">Layanan latar depan saat overlay mengambang ditampilkan: pratinjau kamera picture-in-picture dengan notifikasi persisten.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">Rekaman layar</string>
+    <string name="notif_channel_recording_complete">Perekaman selesai</string>
+    <string name="notif_channel_rolling_buffer">Penyangga bergulir</string>
+    <string name="notif_ready_title">CatRec sudah siap</string>
+    <string name="notif_ready_text">Ketuk tombol hamparan ● untuk mulai merekam</string>
+    <string name="notif_action_revoke">Menarik kembali</string>
+    <string name="notif_preparing">Mempersiapkan…</string>
+    <string name="notif_recording_starting_in">Perekaman dimulai pada %1$d…</string>
+    <string name="notif_recording_paused">Perekaman dijeda</string>
+    <string name="notif_recording_muted">Merekam (dibisukan)…</string>
+    <string name="notif_recording_in_progress">Perekaman sedang berlangsung…</string>
+    <string name="notif_title_short">Rek Cat</string>
+    <string name="notif_action_stop">Berhenti</string>
+    <string name="notif_action_pause">Berhenti sebentar</string>
+    <string name="notif_action_resume">Melanjutkan</string>
+    <string name="notif_action_mute">Bisu</string>
+    <string name="notif_action_unmute">Membunyikan</string>
+    <string name="notif_action_show_controls">Tampilkan kontrol</string>
+    <string name="notif_buffer_title">CatRec — Penyangga bergulir</string>
+    <string name="notif_buffer_starting">Memulai penyanggaan…</string>
+    <string name="notif_buffer_buffering">Buffer %1$d detik terakhir…</string>
+    <string name="notif_buffer_save_clip">Simpan klip</string>
+    <string name="notif_post_title">Perekaman selesai</string>
+    <string name="notif_post_text">Ketuk untuk membuka rekaman Anda</string>
+    <string name="notif_post_open">Membuka</string>
+    <string name="notif_post_share">Membagikan</string>
+    <string name="notif_post_delete">Menghapus</string>
+    <string name="share_recording_title">Bagikan rekaman</string>
+    <string name="toast_video_encoder_failed">Tidak dapat memulai pengkode video. Coba resolusi lebih rendah atau pengkode lain di Pengaturan.</string>
+    <string name="toast_recording_stopped_projection">Perekaman dihentikan: aplikasi yang diambil ditutup atau dipindahkan ke latar belakang</string>
+    <string name="toast_recording_failed_no_video">Perekaman gagal: tidak ada video yang diambil</string>
+    <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF — rekaman MP4 Anda disimpan.</string>
+    <string name="toast_gif_saved">GIF disimpan ke Gambar/CatRec/GIF</string>
+    <string name="toast_separate_mic_failed">Tidak dapat membuat file audio terpisah — mikrofon akan direkam dalam video</string>
+    <string name="toast_internal_audio_silent">Audio internal tidak bersuara — aplikasi yang sedang direkam mungkin tidak mengizinkan pengambilan audio. Coba rekam audio mikrofon saja.</string>
+    <string name="recording_has_separate_audio">Memiliki trek audio terpisah</string>
+    <string name="toast_buffer_start_failed">Penyangga gagal dimulai: %1$s</string>
+    <string name="toast_clip_empty">Klip kosong – simpan buffering lebih lama</string>
+    <string name="toast_clip_saved">Klip disimpan!</string>
+    <string name="toast_clip_save_failed">Penyimpanan klip gagal: %1$s</string>
+    <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif — ketuk untuk kembali ke aplikasi</string>
+    <string name="tile_record_label">Catatan CatRec</string>
+    <string name="tile_clipper_label">Pemotong CatRec</string>
+    <string name="notif_channel_camera_overlay">Hamparan kamera</string>
+    <string name="notif_channel_camera_overlay_desc">Ditampilkan saat overlay kamera aktif</string>
+    <string name="notif_camera_in_use_title">Kamera sedang digunakan</string>
+    <string name="notif_channel_app_controls">Kontrol cepat</string>
+    <string name="notif_channel_app_controls_desc">Pintasan perekaman, tangkapan layar, dan hamparan</string>
+    <string name="notif_channel_recording_interrupted">Perekaman terputus</string>
+    <string name="notif_channel_recording_interrupted_desc">Ditampilkan jika sistem menghentikan CatRec saat penangkapan aktif</string>
+    <string name="notif_recording_interrupted_title">Penangkapan dihentikan</string>
+    <string name="notif_recording_interrupted_text">CatRec ditutup atau dimulai ulang oleh sistem saat perekaman atau penangkapan klip aktif. File terakhir Anda mungkin tidak lengkap. Buka CatRec untuk mulai lagi.</string>
+    <string name="notif_app_controls_title">Rek Cat</string>
+    <string name="notif_app_controls_text_idle">Menganggur — ketuk tindakan di bawah</string>
+    <string name="notif_action_screenshot">Tangkapan layar</string>
+    <string name="notif_action_overlay_hide">Sembunyikan hamparan</string>
+    <string name="notif_action_overlay_show">Tampilkan hamparan</string>
+    <string name="notif_action_overlay_enable_in_settings">Hamparan tidak aktif</string>
+    <string name="tile_subtitle_recording">Rekaman…</string>
+    <string name="tile_subtitle_buffering">Penyangga…</string>
+    <string name="tile_subtitle_ready">Siap</string>
+    <string name="tile_subtitle_tap_open">Ketuk untuk membuka aplikasi</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">Izin rekam layar ditolak</string>
+    <string name="toast_no_email_app">Aplikasi email tidak ditemukan</string>
+    <string name="share_screenshot_chooser_title">Bagikan tangkapan layar</string>
+    <string name="recordings_header_format">PERPUSTAKAAN · %1$d</string>
+    <string name="screenshots_header_format">TANGKAPAN LAYAR · %1$d</string>
+    <string name="countdown_subtitle">Memulai rekaman…</string>
+    <string name="toast_recorder_start_failed">Gagal memulai rekaman: %1$s</string>
+    <string name="format_jpeg">jpeg</string>
+    <string name="format_png">PNG</string>
+    <string name="format_webp">WebP</string>
+    <string name="content_desc_more_options">Opsi lainnya</string>
+    <string name="content_desc_rewind_10">Mundur 10 detik</string>
+    <string name="content_desc_forward_10">Maju 10 detik</string>
+    <string name="beta_feedback_email_subject">Masukan beta CatRec</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>Perekaman layar dengan dukungan codec H.264 dan H.265 (HEVC).</item>
+        <item>Rolling Clipper buffer (1–5 menit, dapat dikonfigurasi) dengan penggabungan segmen yang mulus dan preset durasi yang cepat</item>
+        <item>Tombol Simpan Klip saat Clipper sedang berjalan</item>
+        <item>Pilihan resolusi luas untuk semua rasio aspek, ditambah input khusus</item>
+        <item>Pelacakan orientasi otomatis selama perekaman</item>
+        <item>Penghitung waktu mundur sebelum perekaman dimulai</item>
+        <item>Opsi tetap aktifkan layar selama perekaman</item>
+        <item>Audio: mikrofon, audio internal, atau campuran; track mikrofon terpisah opsional dengan ekspor yang andal</item>
+        <item>Pengaturan audio lanjutan: bitrate, sample rate, saluran, encoder; pengkodean stereo dan CBR yang akurat</item>
+        <item>Mode perekaman GIF dengan preset kualitas</item>
+        <item>Hamparan kontrol mengambang: jeda, hentikan, bisu, tangkapan layar, akses klip</item>
+        <item>Hamparan tersedia kapan saja; mulai merekam atau memotong dari overlay</item>
+        <item>Otorisasi perekaman overlay dengan satu ketukan — permintaan izin berulang yang minimal</item>
+        <item>Alat kuas pada hamparan mengambang</item>
+        <item>Hamparan kamera dengan pratinjau kamera wajah langsung</item>
+        <item>Hamparan tanda air: gambar khusus, bentuk, opacity, posisi, snap-to-corner; default cocok dengan ikon aplikasi</item>
+        <item>Tangkapan layar dengan pengaturan format dan kualitas; menangkap dari overlay</item>
+        <item>Alur berbagi/edit pasca-tangkapan layar (opsional)</item>
+        <item>Perpustakaan rekaman dengan thumbnail; pemangkas dalam aplikasi; menggabungkan klip; video ke GIF; editor gambar dan alat potong</item>
+        <item>Pemutar video dalam aplikasi</item>
+        <item>Warna aksen: preset, gradien, dan hex; tema dinamis di seluruh UI</item>
+        <item>Tema terang dan gelap dengan kontras tema terang yang ditingkatkan</item>
+        <item>Mode kinerja untuk perangkat kelas bawah</item>
+        <item>Pengaturan terorganisir: Kontrol, Kualitas rekaman, Hamparan, Tema, Bahasa, Penyimpanan, dan banyak lagi</item>
+        <item>Pintasan pengaturan untuk memungkinkan penggunaan baterai tanpa batas untuk perekaman latar belakang yang andal</item>
+        <item>16+ bahasa dengan terjemahan yang konsisten</item>
+        <item>Pemilih mode RECORD / CLIPPER dengan indikator status yang jelas</item>
+        <item>Ubin Pengaturan Cepat: CatRec Record dan CatRec Clipper</item>
+        <item>Merekam pemberitahuan dengan tindakan; dukungan sesi pengambilan siap pakai</item>
+        <item>Analisis keikutsertaan opsional untuk meningkatkan stabilitas</item>
+        <item>Kontrol privasi: tombol analitik dan personalisasi iklan</item>
+        <item>Layar dukungan: log perubahan, tautan legal, dan dukungan berhadiah opsional</item>
+    </string-array>
+</resources>

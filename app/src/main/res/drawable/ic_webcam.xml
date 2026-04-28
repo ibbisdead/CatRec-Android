@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Modern webcam: a circular lens body on a small trapezoidal stand. Orange body
+  with a light-blue inner lens highlight. Used by OverlayAction.CAMERA in the
+  radial overlay menu.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Neck connecting body to stand (orange) -->
+    <path
+        android:fillColor="#ff4444"
+        android:pathData="M11,15.5 L13,15.5 L13,18 L11,18 Z" />
+
+    <!-- Trapezoidal stand / base (orange, rounded) -->
+    <path
+        android:fillColor="#FF4444"
+        android:pathData="M6.5,18 L17.5,18 C18.6,18 19.2,19.4 18.5,20.3 L18.2,20.7 C17.9,21.1 17.4,21.3 16.9,21.3 L7.1,21.3 C6.6,21.3 6.1,21.1 5.8,20.7 L5.5,20.3 C4.8,19.4 5.4,18 6.5,18 Z" />
+
+    <!-- Outer camera body (orange circle) -->
+    <path
+        android:fillColor="#FF4444"
+        android:pathData="M12,9 m-7,0 a7,7 0,1 0,14 0 a7,7 0,1 0,-14 0" />
+
+    <!-- Inner lens ring (light blue) -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M12,9 m-4.4,0 a4.4,4.4 0,1 0,8.8 0 a4.4,4.4 0,1 0,-8.8 0" />
+
+    <!-- Inner glass pupil (orange) -->
+    <path
+        android:fillColor="#FF4444"
+        android:pathData="M12,9 m-2.4,0 a2.4,2.4 0,1 0,4.8 0 a2.4,2.4 0,1 0,-4.8 0" />
+
+    <!-- Light-blue lens highlight / catchlight in the upper-left -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M10.5,7.6 m-0.9,0 a0.9,0.9 0,1 0,1.8 0 a0.9,0.9 0,1 0,-1.8 0" />
+
+    <!-- Tiny recording indicator dot to the top-right of the body (light blue) -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M18.5,4.5 m-0.9,0 a0.9,0.9 0,1 0,1.8 0 a0.9,0.9 0,1 0,-1.8 0" />
+</vector>

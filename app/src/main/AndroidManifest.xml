@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="31" />
+    <!-- Android 14+: base FGS permission plus one FOREGROUND_SERVICE_* per type used by our services (see ScreenRecordService, OverlayService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- API 33+: granular media permissions that replace READ_EXTERNAL_STORAGE.
+         READ_MEDIA_VIDEO + READ_MEDIA_IMAGES are needed so MediaStore queries show own recordings
+         and screenshots after a fresh install or reinstall (OEMs often clear MediaStore on uninstall).
+         READ_MEDIA_AUDIO covers mic-sidecar files indexed under Music/Recordings/CatRec.
+         API 34+: READ_MEDIA_VISUAL_USER_SELECTED is declared so the system can offer the
+         "Select photos and videos" partial-access option; the app accepts both full and partial
+         visual access (our files are app-owned and always visible via MediaStore regardless). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
+        tools:targetApi="34" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Overlay Permissions -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" />
+
+    <queries>
+        <!-- AdMob / GMS: package + explicit service intents for Android 11+ visibility (reduces
+             ServiceBindIntentUtils "Dynamic lookup for intent failed" for ads.* on some builds). -->
+        <package android:name="com.google.android.gms" />
+        <intent>
+            <action android:name="com.google.android.gms.ads.service.START" />
+        </intent>
+        <intent>
+            <action android:name="com.google.android.gms.ads.service.CACHE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".CatRecApplication"
+        android:enableOnBackInvokedCallback="true"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:localeConfig="@xml/locale_config"
+        android:theme="@style/Theme.CatRecScreenRecorcer"
+        tools:targetApi="36">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7741372232895726~5682529172" />
+
+        <activity
+            android:name=".service.ScreenshotPostActionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".service.OverlayRecordProjectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".service.OverlayScreenshotProjectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".service.ScreenshotAfterShadeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CatRec.Transparent"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTop"
+            android:taskAffinity="" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+            android:theme="@style/Theme.CatRecScreenRecorcer">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.ScreenRecordService"
+            android:enabled="true"
+            android:exported="false"
+            android:description="@string/service_description_screen_record"
+            android:foregroundServiceType="mediaProjection|microphone" />
+
+        <service
+            android:name=".service.OverlayService"
+            android:enabled="true"
+            android:exported="false"
+            android:description="@string/service_description_overlay"
+            android:foregroundServiceType="camera" />
+            
+        <service
+            android:name=".service.RecordTileService"
+            android:label="CatRec Record"
+            android:icon="@mipmap/ic_launcher"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".service.ClipperTileService"
+            android:label="CatRec Clipper"
+            android:icon="@mipmap/ic_launcher"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".service.RecordingActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ibbie.catrec_screenrecorcer.DELETE_RECORDING" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.RecordingInterruptedRetryReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ibbie.catrec_screenrecorcer.action.RECORDING_INTERRUPT_RETRY" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".service.CatRecControlReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.ibbie.catrec_screenrecorcer.CONTROL_RECORD_TOGGLE" />
+                <action android:name="com.ibbie.catrec_screenrecorcer.CONTROL_SCREENSHOT_OR_PAUSE" />
+                <action android:name="com.ibbie.catrec_screenrecorcer.CONTROL_OVERLAY_TOGGLE" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+            
+    </application>
+
+</manifest>

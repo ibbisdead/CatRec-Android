@@ -1,0 +1,50 @@
+CatRec — Foreground service core use cases (Google Play / persistent notification policy)
+============================================================================================
+
+This document describes why each foreground-capable service exists and what user-visible work
+it performs. Use it when completing Play Console declarations for foreground service permissions
+and notification-based features.
+
+--------------------------------------------------------------------------------------------
+1) com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
+--------------------------------------------------------------------------------------------
+Manifest foreground service types: mediaProjection | microphone
+Runtime types (bitmask): FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION, and when the user has
+enabled microphone (or internal) audio capture and RECORD_AUDIO is granted,
+FOREGROUND_SERVICE_TYPE_MICROPHONE OR’ed in.
+
+Core use case:
+- Screen capture and screen recording using the user-approved MediaProjection session, so the
+  capture pipeline (virtual display, encoder, optional rolling buffer / clipper) can run
+  reliably while the user sees a persistent, dismissible-system-controlled notification.
+- Optional microphone audio mixed into the recording when the user turns that on in settings.
+
+Why foreground:
+- Android requires a foreground service with a visible notification for ongoing MediaProjection
+  and for long-running capture/encode work so users understand that capture is active and can
+  return to controls or stop capture from the notification.
+
+--------------------------------------------------------------------------------------------
+2) com.ibbie.catrec_screenrecorcer.service.OverlayService
+--------------------------------------------------------------------------------------------
+Manifest foreground service type: camera
+
+Core use case:
+- Optional face-cam (CameraX preview) shown as a system overlay on top of other apps during
+  recording, so the user can position a small camera bubble while the main capture runs in
+  ScreenRecordService.
+
+Why foreground:
+- When the camera preview overlay is shown, the service promotes to a typed camera foreground
+  service so the camera pipeline remains eligible to run with a clear ongoing notification,
+  consistent with Android 14+ foreground service type rules and user expectations during
+  capture.
+
+--------------------------------------------------------------------------------------------
+3) Other Service subclasses (no startForeground in app code)
+--------------------------------------------------------------------------------------------
+- com.ibbie.catrec_screenrecorcer.service.RecordTileService (Quick Settings tile)
+- com.ibbie.catrec_screenrecorcer.service.ClipperTileService (Quick Settings tile)
+
+These extend TileService and only start or bind to other components; they do not call
+startForeground() themselves and are not declared with android:foregroundServiceType.

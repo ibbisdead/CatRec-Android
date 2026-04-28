@@ -1,0 +1,29 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Keep Firebase/Google services keys out of version control
+google-services.json
+
+# Store signing outputs locally; do not commit release binaries
+app/release/
+
+# Local IDE / tooling
+.cursor/
+.cursorrules
+.kotlin/
+
+tmp_count.txt
+**/__pycache__/

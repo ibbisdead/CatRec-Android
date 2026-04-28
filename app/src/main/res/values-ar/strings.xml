@@ -1,0 +1,664 @@
+<resources>
+    <!-- App -->
+    <string name="app_name">CatRec - مسجل الشاشة</string>
+
+    <string name="brand_catrect">CatRec</string>
+    <string name="faq_content_description">المساعدة والدعم</string>
+    <string name="capture_mode_recording">تسجيل</string>
+    <string name="capture_mode_clipper">مجز</string>
+    <string name="capture_mode_gif">تسجيل GIF</string>
+
+    <!-- FAQ & feedback -->
+    <string name="faq_title">التعليمات</string>
+    <string name="faq_intro">البحث عن الإجابات حسب الفئة. انقر على سؤال للتوسيع. إذا كنت لا تزال بحاجة إلى المساعدة، استخدم اتصل بنا أدناه.</string>
+    <string name="faq_contact_us">اتصل بنا</string>
+    <string name="feedback_title">إرسال ردود الفعل</string>
+    <string name="feedback_issue_section_title">ما الخطأ الذي حدث؟</string>
+    <string name="feedback_description_title">تفاصيل</string>
+    <string name="feedback_description_hint">يرجى وصف ما حدث، ومتى بدأ، وما جربته بالفعل (على سبيل المثال، دقة منخفضة، إعادة تشغيل الهاتف). المزيد من التفاصيل تساعدنا على إصلاحها بشكل أسرع.</string>
+    <string name="feedback_screenshots_title">لقطات الشاشة</string>
+    <string name="feedback_screenshots_count">%1$d / %2$d</string>
+    <string name="feedback_screenshots_hint">أضف ما يصل إلى 5 صور (رسائل الخطأ، شاشات الإعدادات، صفحة البطارية، وما إلى ذلك).</string>
+    <string name="feedback_add_screenshots">إضافة الصور</string>
+    <string name="feedback_send">يرسل</string>
+    <string name="feedback_send_note">يفتح تطبيق البريد الإلكتروني الخاص بك برسالة إلى %1$s — اضغط على "إرسال" هناك للتسليم.</string>
+    <string name="feedback_send_chooser_title">إرسال البريد الإلكتروني</string>
+    <string name="feedback_no_email_app">لم يتم العثور على تطبيق البريد الإلكتروني. قم بتثبيت Gmail أو Outlook، أو انسخ التفاصيل من الشاشة التالية إذا ظهرت.</string>
+    <string name="feedback_select_issue">الرجاء تحديد نوع المشكلة.</string>
+    <string name="feedback_description_too_short">يرجى إضافة المزيد من التفاصيل (جملة على الأقل) حتى نتمكن من المساعدة.</string>
+    <string name="feedback_issue_recording_stopped">توقف التسجيل بشكل عشوائي</string>
+    <string name="feedback_issue_crash">تعطل التطبيق</string>
+    <string name="feedback_issue_no_sound">لا توجد مشاكل في الصوت / الصوت</string>
+    <string name="feedback_issue_video_black">شاشة سوداء / فيديو مجمد</string>
+    <string name="feedback_issue_cant_start">لا يمكن بدء التسجيل</string>
+    <string name="feedback_issue_overlay">الضوابط العائمة / تراكب</string>
+    <string name="feedback_issue_gif_export">GIF أو تصدير الملف</string>
+    <string name="feedback_issue_battery_oem">البطارية / الخلفية (شاومي، الخ.)</string>
+    <string name="feedback_issue_storage">التخزين / لا يمكن العثور على الملفات</string>
+    <string name="feedback_issue_quality">الجودة / التأخر / التلعثم</string>
+    <string name="feedback_issue_other">آخر</string>
+
+    <!-- Bottom Nav Tabs -->
+    <string name="tab_screenshots">لقطات الشاشة</string>
+    <string name="tab_recordings">التسجيلات</string>
+    <string name="tab_settings">الإعدادات</string>
+    <string name="tab_support">الدعم</string>
+    <string name="tab_editor">محرر</string>
+    <string name="fab_start_recording">سِجِلّ</string>
+    <string name="storage_indicator_format">تم استخدام %1$s · %2$s مجانًا</string>
+    <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
+
+    <string name="settings_section_recording_quality">جودة التسجيل</string>
+    <string name="settings_open_audio_menu">إعدادات الصوت</string>
+    <string name="settings_open_audio_menu_sub">الميكروفون، الصوت الداخلي، معدل البت، القنوات…</string>
+    <string name="settings_open_video_menu">إعدادات الفيديو و GIF</string>
+    <string name="settings_open_video_menu_sub">إعدادات GIF المسبقة، الدقة، FPS، معدل البت، برنامج التشفير…</string>
+
+    <string name="support_section_help">يساعد</string>
+    <string name="support_send_feedback">إرسال ردود الفعل</string>
+    <string name="support_send_feedback_desc">مثل اتصل بنا في الأسئلة الشائعة - أبلغ عن الأخطاء أو الاقتراحات</string>
+
+    <!-- Common Actions -->
+    <string name="action_cancel">إلغاء</string>
+    <string name="action_close">إغلاق</string>
+    <string name="action_save">حفظ</string>
+    <string name="action_delete">حذف</string>
+    <string name="action_share">مشاركة</string>
+    <string name="action_open">فتح</string>
+    <string name="action_edit">تعديل</string>
+    <string name="consent_analytics_title">تحليلات الاستخدام</string>
+    <string name="consent_analytics_message">ساعدنا على تحسين CatRec من خلال السماح بتحليلات الاستخدام والأعطال الاختيارية. يمكنك تغيير هذا في أي وقت من الإعدادات.</string>
+    <string name="setting_usage_analytics">تحليلات الاستخدام</string>
+    <string name="setting_usage_analytics_desc">إحصاءات الأعطال والاستخدام لتحسين التطبيق</string>
+    <string name="setting_personalized_ads">الإعلانات المخصصة</string>
+    <string name="setting_personalized_ads_on_desc">قد يستخدم AdMob معرّف إعلانك لعرض إعلانات ذات صلة</string>
+    <string name="setting_personalized_ads_off_desc">إعلانات غير مخصصة فقط</string>
+    <string name="consent_accept">السماح</string>
+    <string name="consent_decline">رفض</string>
+    <string name="action_apply">تطبيق</string>
+    <string name="action_pause">إيقاف مؤقت</string>
+    <string name="action_resume">استئناف</string>
+
+    <!-- Recording Screen -->
+    <string name="recording_start">بدء التسجيل</string>
+
+    <!-- Settings Screen - Section Headers -->
+    <string name="settings_title">الإعدادات</string>
+    <string name="settings_section_controls">التحكم</string>
+    <string name="setting_allow_background_title">استخدام البطارية دون قيود</string>
+    <string name="setting_allow_background_desc">يقلل احتمال إيقاف التسجيل أو الجلسة الجاهزة أو الطبقة العائمة عند مغادرة التطبيق. يفتح إعدادات البطارية.</string>
+    <string name="battery_opt_rationale_title">منع انقطاع التسجيل</string>
+    <string name="battery_opt_rationale_body">يتطلب تسجيل الشاشة معالجة مستمرة في الخلفية. لمنع النظام من إيقاف تسجيلك، يُرجى ضبط استخدام البطارية لـ CatRec على &quot;غير مقيّد&quot; في إعدادات النظام.</string>
+    <string name="battery_opt_oem_note">يستخدم جهازك (%s) إدارة بطارية متشددة قد تُنهي التطبيقات في الخلفية. نوصي بشدة بفتح إعدادات الجهاز المحددة أدناه أيضاً.</string>
+    <string name="battery_opt_btn_grant">منح بطارية غير مقيّدة</string>
+    <string name="battery_opt_btn_oem_settings">فتح إعدادات %s</string>
+    <string name="battery_opt_btn_learn_more">دليل مرئي (dontkillmyapp.com)</string>
+    <string name="battery_opt_btn_not_now">ليس الآن</string>
+    <string name="battery_opt_status_exempted">البطارية: غير مقيّدة ✓</string>
+    <string name="battery_opt_banner_text">قد يوقف جهازك التسجيلات في الخلفية.</string>
+    <string name="battery_opt_banner_fix">إصلاح</string>
+    <string name="settings_section_video">الفيديو</string>
+    <string name="settings_section_gif_recorder">مسجل GIF</string>
+    <string name="settings_gif_recorder_desc">يقوم وضع GIF بتسجيل الفيديو أولاً، ثم يقوم بتحويله. الجودة والطول يتبعان الإعداد المسبق أدناه؛ تظل أشرطة تمرير الفيديو محفوظة عند التبديل مرة أخرى إلى التسجيل.</string>
+    <string name="setting_gif_preset">جودة GIF محددة مسبقًا</string>
+    <string name="video_locked_by_gif_preset">يتم التحكم في خيارات الفيديو من خلال إعداد GIF المسبق أثناء تحديد وضع GIF.</string>
+    <string name="gif_preset_small">صغير (ملف أسرع وأصغر)</string>
+    <string name="gif_preset_medium">واسطة</string>
+    <string name="gif_preset_hd">HD (ملف أكبر)</string>
+    <string name="settings_section_audio">الصوت</string>
+    <string name="settings_section_overlay">التراكب</string>
+    <string name="settings_section_screenshots">لقطات الشاشة</string>
+    <string name="settings_section_theme">المظهر</string>
+    <string name="settings_section_language">اللغة</string>
+    <string name="settings_section_storage">التخزين</string>
+    <string name="settings_section_general">عام</string>
+
+    <!-- Video Settings -->
+    <string name="setting_resolution">الدقة</string>
+    <string name="setting_resolution_native">أصلية</string>
+    <string name="setting_resolution_custom">دقة مخصصة…</string>
+    <string name="setting_resolution_custom_hint">مثال: 1920x1080</string>
+    <string name="setting_fps">معدل الإطارات (FPS)</string>
+    <string name="setting_bitrate">معدل نقل بيانات الفيديو</string>
+    <string name="setting_video_encoder">مشفر الفيديو</string>
+    <string name="setting_orientation">الاتجاه</string>
+    <string name="setting_orientation_auto">تلقائي</string>
+    <string name="setting_orientation_portrait">عمودي</string>
+    <string name="setting_orientation_landscape">أفقي</string>
+
+    <!-- Audio Settings -->
+    <string name="setting_microphone">الميكروفون</string>
+    <string name="setting_internal_audio">الصوت الداخلي</string>
+    <string name="setting_audio_bitrate">معدل نقل بيانات الصوت</string>
+    <string name="setting_audio_sample_rate">معدل أخذ العينات</string>
+    <string name="setting_audio_channels">القنوات</string>
+    <string name="setting_audio_channels_mono">أحادي</string>
+    <string name="setting_audio_channels_stereo">ستيريو</string>
+    <string name="setting_audio_encoder">مشفر الصوت</string>
+    <string name="setting_separate_mic">مسار ميكروفون منفصل</string>
+    <string name="setting_separate_mic_desc">حفظ الميكروفون كملف صوتي منفصل</string>
+
+    <!-- Overlay Settings -->
+    <string name="setting_floating_controls">تحكم عائم</string>
+    <string name="setting_hide_floating_while_recording">إخفاء الأيقونة العائمة أثناء التسجيل</string>
+    <string name="settings_hide_floating_while_recording_desc">إخفاء فقاعة التحكم العائمة أثناء التسجيل</string>
+    <string name="setting_post_screenshot_options">خيارات ما بعد لقطة الشاشة</string>
+    <string name="settings_post_screenshot_options_desc">بعد التقاط لقطة الشاشة، قم بإظهار خيارات المشاركة أو التعديل</string>
+    <string name="setting_record_single_app">سجل تطبيقًا واحدًا</string>
+    <string name="settings_record_single_app_desc">في نظام التشغيل Android 14+، اختر نافذة تطبيق واحدة أو ملء الشاشة عندما تمنح ميزة التقاط الشاشة</string>
+    <string name="screenshot_post_edit">يحرر</string>
+    <string name="screenshot_post_action_failed">تعذر فتح المشاركة</string>
+    <string name="screenshot_post_tap_outside">اضغط بالخارج للإغلاق</string>
+    <string name="image_editor_title">تحرير الصورة</string>
+    <string name="image_editor_panel_rotate">تناوب</string>
+    <string name="image_editor_panel_crop">اقتصاص</string>
+    <string name="image_editor_panel_draw">يرسم</string>
+    <string name="image_editor_rotate_ccw">تدوير لليسار</string>
+    <string name="image_editor_rotate_cw">تدوير لليمين</string>
+    <string name="image_editor_saved">تم حفظ الصورة في الصور/CatRec/لقطات الشاشة</string>
+    <string name="image_editor_save_failed">تعذر حفظ الصورة</string>
+    <string name="image_editor_load_failed">تعذر تحميل الصورة</string>
+    <string name="tool_edit_image">تحرير الصورة</string>
+    <string name="brush_line_width">عرض الخط</string>
+    <string name="brush_color_picker_hint">اختر لونًا، واضبط السُمك، ثم اضغط على "تطبيق".</string>
+    <string name="brush_color_back">خلف</string>
+    <string name="brush_apply">يتقدم</string>
+    <string name="brush_tool_pen">يرسم</string>
+    <string name="brush_tool_eraser">ممحاة</string>
+    <string name="brush_tool_undo">التراجع عن السكتة الدماغية الأخيرة</string>
+    <string name="brush_tool_square">المستطيل</string>
+    <string name="brush_tool_circle">القطع الناقص</string>
+    <string name="brush_tool_arrow">سهم</string>
+    <string name="brush_tool_mosaic">منطقة البيكسلات</string>
+    <string name="brush_tool_colors">اللون وعرض الخط</string>
+    <string name="brush_panel_title">سكتة دماغية</string>
+    <string name="setting_camera_settings">إعدادات الكاميرا</string>
+    <string name="setting_watermark">علامة CatRec المائية</string>
+    <string name="setting_watermark_size">حجم العلامة المائية</string>
+    <string name="setting_watermark_opacity">شفافية العلامة المائية</string>
+
+    <!-- Camera Settings Dialog -->
+    <string name="camera_settings_title">@string/setting_camera_settings</string>
+    <string name="camera_enable">تفعيل الكاميرا</string>
+    <string name="camera_enable_desc">إظهار تراكب الكاميرا أثناء التسجيل</string>
+    <string name="camera_lock_position">قفل الموضع</string>
+    <string name="camera_facing">الكاميرا</string>
+    <string name="camera_facing_front">أمامية</string>
+    <string name="camera_facing_rear">خلفية</string>
+    <string name="camera_aspect_ratio">نسبة العرض إلى الارتفاع</string>
+    <string name="camera_orientation">الاتجاه</string>
+    <string name="camera_size">الحجم</string>
+    <string name="camera_opacity">الشفافية</string>
+
+    <!-- Screenshot Settings -->
+    <string name="setting_screenshot_format">التنسيق</string>
+    <string name="setting_screenshot_quality">الجودة</string>
+
+    <!-- Theme Settings -->
+    <string name="setting_theme">مظهر التطبيق</string>
+    <string name="theme_system">افتراضي النظام</string>
+    <string name="theme_light">فاتح</string>
+    <string name="theme_dark">داكن</string>
+
+    <!-- Language Settings -->
+    <string name="setting_language">لغة التطبيق</string>
+    <string name="language_system">افتراضي النظام</string>
+    <string name="language_english">إنجليزي</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_chinese_simplified">中文(简体)</string>
+    <string name="language_chinese_traditional">中文(繁體)</string>
+    <string name="language_french">الفرنسية</string>
+    <string name="language_german">الألمانية</string>
+    <string name="language_hindi">الهندية</string>
+    <string name="language_indonesian">البهاسا الاندونيسية</string>
+    <string name="language_italian">إيطاليانو</string>
+    <string name="language_japanese">日本語</string>
+    <string name="language_korean">شكرا</string>
+    <string name="language_portuguese">البرتغالية</string>
+    <string name="language_russian">الروسية</string>
+    <string name="language_spanish">الاسبانية</string>
+    <string name="language_turkish">تركية</string>
+    <string name="language_vietnamese">تينغ فيت</string>
+
+    <!-- Storage Settings -->
+    <string name="setting_save_location">مكان الحفظ</string>
+    <string name="setting_save_location_default">افتراضي (Movies/CatRec)</string>
+    <string name="setting_filename_pattern">نمط اسم الملف</string>
+
+    <!-- General Settings -->
+    <string name="setting_countdown">العد التنازلي</string>
+    <string name="setting_stop_behavior">سلوك الإيقاف</string>
+
+    <!-- Screenshots Screen -->
+    <string name="screenshots_empty_title">لا توجد لقطات شاشة بعد</string>
+    <string name="screenshots_empty_desc">اضغط على زر لقطة الشاشة في تراكب التسجيل لالتقاط الشاشة</string>
+
+    <!-- Recordings Screen -->
+    <string name="recordings_empty_title">لا توجد تسجيلات بعد</string>
+    <string name="recordings_empty_desc">ابدأ التسجيل لترى مقاطع الفيديو هنا</string>
+
+    <!-- Support Screen -->
+    <string name="support_subscribe_youtube">اشترك في يوتيوب</string>
+    <string name="support_subscribe_youtube_desc">تابع \@ibbie للتحديثات</string>
+    <string name="support_remove_ads">إزالة الإعلانات — 1$</string>
+    <string name="support_remove_ads_desc">شراء لمرة واحدة، بدون إعلانات للأبد</string>
+    <string name="support_restore_purchases">استعادة المشتريات</string>
+    <string name="support_restore_purchases_desc">مزامنة إزالة الإعلانات والمشتريات الأخرى من Google Play</string>
+    <string name="support_restore_purchases_toast">جارٍ التحقق من Google Play بحثًا عن مشترياتك…</string>
+    <string name="support_play_promo_title">رمز ترويجي (إزالة الإعلانات)</string>
+    <string name="support_play_promo_desc">يفتح شاشة شراء Google Play لإزالة الإعلانات. انقر طريقة الدفع ← استرداد الرمز، أدخل الرمز ثم أكمل. إذا بقيت الإعلانات، انقر استعادة المشتريات أدناه.</string>
+    <string name="support_ads_removed">تمت إزالة الإعلانات — شكراً!</string>
+    <string name="support_ads_removed_desc">تظل الخيارات المميزة مفتوحة — ولا توجد إعلانات لمشاهدتها.</string>
+    <string name="support_watch_ad">مشاهدة إعلان</string>
+    <string name="support_donate">اشترِ لي قهوة (1$)</string>
+    <string name="support_donate_desc">تبرع لمرة واحدة — يبقي CatRec حياً</string>
+    <string name="support_share">شارك CatRec</string>
+    <string name="support_share_desc">أخبر أصدقاءك عنا</string>
+    <string name="support_changelog">سجل التغييرات</string>
+    <string name="support_changelog_desc">اطلع على الجديد في هذا الإصدار</string>
+    <string name="support_credits">شكر وتقدير</string>
+    <string name="support_credits_desc">المختبرون والمبدعون الذين ساعدوا CatRec</string>
+    <string name="dialog_credits_title">شكر وتقدير</string>
+    <string name="credits_intro">شكرًا لهؤلاء على تجربة ومشاركة CatRec. اضغط على الاسم لفتح القناة.</string>
+
+    <!-- Notifications -->
+    <string name="notif_screenshot_saved">تم حفظ لقطة الشاشة</string>
+
+    <!-- Errors / Toast -->
+    <string name="error_screenshot_no_projection">ابدأ التسجيل أولاً لالتقاط لقطات الشاشة</string>
+    <string name="error_screenshot_capture_failed">تعذر التقاط لقطة الشاشة. حاول ثانية.</string>
+    <string name="toast_share_app">جرب CatRec - أفضل مسجل شاشة!</string>
+
+    <!-- Actions (extra) -->
+    <string name="action_done">تم</string>
+    <string name="action_grant_now">منح الآن</string>
+    <string name="action_not_now">ليس الآن</string>
+    <string name="action_rename">إعادة تسمية</string>
+    <string name="action_trim">قص</string>
+    <string name="action_open_external">فتح خارجياً</string>
+    <string name="action_loading">جارٍ التحميل…</string>
+    <string name="action_watch_ad">مشاهدة الإعلان</string>
+    <string name="action_unlock">فتح</string>
+    <string name="action_got_it">فهمت</string>
+    <string name="action_leave_feedback">اترك تقييم للخدمة</string>
+    <string name="action_change">تغيير</string>
+    <string name="action_enable_anyway">تمكين على أي حال</string>
+    <string name="action_keep_performance_mode">الإبقاء على وضع الأداء</string>
+
+    <!-- Stop behavior (stable keys use string resources for labels only) -->
+    <string name="stop_behavior_notification">الإشعار</string>
+    <string name="stop_behavior_shake">هز الجهاز</string>
+    <string name="stop_behavior_screen_off">إطفاء الشاشة</string>
+    <string name="stop_behavior_pause_on_screen_off">إيقاف مؤقت عند إطفاء الشاشة</string>
+
+    <!-- Settings extras -->
+    <string name="settings_floating_controls_desc">فقاعة دائمة — سجّل والتقط لقطات شاشة من أي تطبيق</string>
+    <string name="settings_show_touches">إظهار اللمسات</string>
+    <string name="settings_show_touches_desc">تفعيله في خيارات المطور</string>
+    <string name="toast_enable_show_taps">فعّل «إظهار النقرات» يدوياً</string>
+    <string name="toast_overlay_permission">يرجى منح إذن التراكب</string>
+    <string name="setting_countdown_off">لا يوجد</string>
+    <plurals name="setting_countdown_seconds">
+        <item quantity="zero">%1$d ثوانٍ</item>
+        <item quantity="one">%1$d ثوانٍ</item>
+        <item quantity="two">%1$d ثوانٍ</item>
+        <item quantity="few">%1$d ثوانٍ</item>
+        <item quantity="many">%1$d ثوانٍ</item>
+        <item quantity="other">%1$d ثوانٍ</item>
+    </plurals>
+    <string name="setting_internal_audio_note">أندرويد 10 وأعلى فقط</string>
+    <string name="gate_feature_separate_mic">مسار ميكروفون منفصل</string>
+    <string name="gate_feature_camera_overlay">إعدادات تراكب الكاميرا</string>
+    <string name="camera_status_enabled">مفعّل — %1$s • %2$s</string>
+    <string name="state_disabled">معطّل</string>
+    <string name="watermark_preview_active">المعاينة المباشرة نشطة — اسحب العلامة المائية لتغيير موضعها</string>
+    <string name="watermark_preview_recording">المعاينة غير متاحة أثناء التسجيل</string>
+    <string name="watermark_preview_need_overlay">امنح إذن التراكب لرؤية المعاينة المباشرة</string>
+    <string name="watermark_snap_dialog_title">التثبيت في موضع</string>
+    <string name="watermark_snap_custom">مخصص</string>
+    <string name="watermark_snap_corner_title">التثبيت في زاوية</string>
+    <string name="watermark_snap_corner_desc">أو اسحب على الشاشة</string>
+    <string name="watermark_shape">شكل العلامة المائية</string>
+    <string name="watermark_image">صورة العلامة المائية</string>
+    <string name="watermark_image_custom">صورة مخصصة مُعيَّنة</string>
+    <string name="watermark_image_default">افتراضية (أيقونة التطبيق)</string>
+    <string name="watermark_reset_icon">إعادة تعيين الأيقونة الافتراضية</string>
+    <string name="label_dp">%1$d dp</string>
+    <string name="label_percent">%1$d%%</string>
+    <string name="label_kbps">كيلو بايت في الثانية</string>
+    <string name="label_hz">هرتز</string>
+    <string name="perf_auto_low_end">مُفعَّل تلقائياً — جهاز منخفض الأداء</string>
+    <string name="perf_quality_may_lag">وضع الجودة (قد يتسبب في تأخر على هذا الجهاز)</string>
+    <string name="perf_static_glass">زجاج ثابت — الضبابية معطّلة</string>
+    <string name="perf_dynamic_glass">الضبابية الزجاجية الديناميكية مفعّلة</string>
+    <string name="setting_performance_mode">وضع الأداء</string>
+    <string name="setting_adaptive_recording_performance">أداء التسجيل التكيفي</string>
+    <string name="setting_adaptive_recording_performance_summary">يقلل الحمل تلقائياً إذا واجه الجهاز صعوبة أثناء التسجيل</string>
+    <string name="performance_fallback_active">تم التبديل إلى ملف تعريف تسجيل أخف لزيادة الاستقرار</string>
+    <string name="performance_warning_title">تحذير الأداء</string>
+    <string name="performance_warning_body">جهازك يحتوي على أقل من 6 جيجابايت من الذاكرة أو يعمل بنظام Android 11 أو أقل. قد يؤدي تمكين تأثيرات الضبابية الزجاجية في الوقت الفعلي إلى تأخر في الواجهة، خاصةً أثناء التسجيل.\n\nهل تريد تمكين وضع الجودة على أي حال؟</string>
+    <string name="accent_color_title">لون التمييز</string>
+    <string name="accent_gradient_color_2">لون التدرج 2</string>
+    <string name="accent_presets">ألوان جاهزة</string>
+    <string name="label_hex_code">رمز Hex</string>
+    <string name="accent_hex_placeholder">FF0033</string>
+    <string name="accent_gradient_toggle">تدرج لوني</string>
+    <string name="accent_gradient_desc">وهج ثنائي اللون</string>
+    <string name="accent_color_1">اللون 1</string>
+    <string name="accent_color_2">اللون 2</string>
+    <string name="setting_save_location_custom">مجلد مخصص مُعيَّنة</string>
+    <string name="setting_auto_delete_title">حذف التسجيلات القديمة تلقائياً</string>
+    <string name="setting_auto_delete_desc">الاحتفاظ بآخر 50 تسجيلاً</string>
+    <string name="setting_keep_screen_on_title">إبقاء الشاشة مضاءة</string>
+    <string name="setting_keep_screen_on_desc">أثناء التسجيل</string>
+    <string name="settings_section_privacy">الخصوصية</string>
+    <string name="dialog_custom_resolution_title">دقة مخصصة</string>
+    <string name="dialog_custom_resolution_hint">أدخل الدقة بالصيغة العرض×الارتفاع (مثال: 1920×1080)</string>
+    <string name="error_resolution_format">يجب أن يكون التنسيق العرض×الارتفاع (مثال: 1920×1080)</string>
+    <string name="error_resolution_min">أدنى دقة هي 100×100</string>
+    <string name="error_resolution_max">أقصى دقة هي 7680 على أي جانب</string>
+    <string name="dialog_resolution_title">الدقة</string>
+    <string name="resolution_group_16_9">16:9</string>
+    <string name="resolution_group_20_9">20:9 (هاتف طويل)</string>
+    <string name="resolution_group_18_9">18:9 (2:1)</string>
+    <string name="resolution_group_21_9">21:9 (عريض جداً)</string>
+    <string name="resolution_group_4_3">4:3</string>
+    <string name="resolution_group_9_16">9:16 (عمودي)</string>
+    <string name="dialog_theme_title">مظهر التطبيق</string>
+    <string name="dialog_language_title">لغة التطبيق</string>
+    <string name="dialog_filename_pattern">نمط اسم الملف</string>
+    <string name="dialog_countdown_timer">مؤقت العد التنازلي</string>
+    <string name="countdown_none">لا يوجد</string>
+    <string name="countdown_3s">3 ث</string>
+    <string name="countdown_5s">5 ث</string>
+    <string name="countdown_10s">10 ث</string>
+    <string name="countdown_20s">20 ث</string>
+    <string name="countdown_30s">30 ث</string>
+    <string name="dialog_video_encoder">مشفر الفيديو</string>
+    <string name="dialog_audio_encoder">مشفر الصوت</string>
+    <string name="dialog_audio_bitrate">معدل نقل بيانات الصوت</string>
+    <string name="dialog_sample_rate">معدل أخذ العينات</string>
+    <string name="dialog_bitrate_title">معدل نقل البيانات</string>
+    <string name="dialog_fps_title">معدل الإطارات (FPS)</string>
+    <string name="dialog_screenshot_format">تنسيق لقطة الشاشة</string>
+    <string name="dialog_camera_orientation">اتجاه الكاميرا</string>
+    <string name="premium_feature_title">ميزة متميزة</string>
+    <string name="premium_feature_body">%1$s ميزة متميزة.</string>
+    <string name="premium_feature_watch_ad">شاهد إعلاناً قصيراً لفتحها لهذه الجلسة.</string>
+    <string name="premium_feature_tap_unlock">اضغط فتح لتفعيلها لهذه الجلسة.</string>
+    <string name="gate_high_fps">%1$s إطارًا في الثانية</string>
+    <string name="camera_drag_hint">اسحب دائرة الكاميرا لتغيير موضعها</string>
+    <string name="camera_lock_desc_short">منع الحركة غير المقصودة</string>
+    <string name="shape_square">مربع</string>
+    <string name="shape_circle">دائرة</string>
+    <string name="ratio_16_9">16:9</string>
+    <string name="ratio_4_3">4:3</string>
+    <string name="watermark_position_top_left">أعلى اليسار</string>
+    <string name="watermark_position_top_right">أعلى اليمين</string>
+    <string name="watermark_position_bottom_left">أسفل اليسار</string>
+    <string name="watermark_position_bottom_right">أسفل اليمين</string>
+    <string name="watermark_position_center">في المنتصف</string>
+
+    <!-- Recording screen -->
+    <string name="label_fps">إطارا في الثانية</string>
+    <string name="label_mbps">ميغابت في الثانية</string>
+    <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
+    <string name="setting_clipper_duration">مدة Clipper</string>
+    <string name="dialog_clipper_duration_title">مدة Clipper</string>
+    <string name="clipper_duration_1m">1 د</string>
+    <string name="clipper_duration_2m">2 د</string>
+    <string name="clipper_duration_3m">3 د</string>
+    <string name="clipper_duration_4m">4 د</string>
+    <string name="clipper_duration_5m">5 د</string>
+    <string name="perm_rationale_intro">يحتاج CatRec إلى الأذونات التالية لتسجيل شاشتك:</string>
+    <string name="perm_dialog_title">الأذونات مطلوبة</string>
+    <string name="beta_title">أنت في وصول مبكر</string>
+    <string name="beta_line_1">⚠️  هذا إصدار تجريبي.</string>
+    <string name="beta_line_2">قد تواجه أخطاء أو توقفات أو ميزات غير مكتملة. جهازك وبياناتك آمنة — تُحفظ التسجيلات محلياً ولا يُرفع أي شيء.</string>
+    <string name="beta_line_3">ملاحظاتك تُشكّل هذا التطبيق مباشرةً. إذا حدث خطأ أو شيء يبدو غير طبيعي، يرجى الإبلاغ عنه — حتى رسالة قصيرة تساعد كثيراً.</string>
+    <string name="beta_line_4">شكراً لتجربة CatRec مبكراً. 🐱</string>
+
+    <!-- Recordings / screenshots / player -->
+    <string name="delete_recording_title">حذف التسجيل؟</string>
+    <string name="delete_recording_message">سيُحذف «%1$s» نهائياً.</string>
+    <string name="delete_screenshot_title">حذف لقطة الشاشة؟</string>
+    <string name="delete_screenshot_message">ستُحذف «%1$s» نهائياً.</string>
+    <plurals name="multiselect_selected_count">
+        <item quantity="zero">تم تحديد %1$d</item>
+        <item quantity="one">تم تحديد %1$d</item>
+        <item quantity="two">تم تحديد %1$d</item>
+        <item quantity="few">تم تحديد %1$d</item>
+        <item quantity="many">تم تحديد %1$d</item>
+        <item quantity="other">تم تحديد %1$d</item>
+    </plurals>
+    <string name="multiselect_select_all">حدد الكل</string>
+    <string name="multiselect_deselect_all">قم بإلغاء تحديد الكل</string>
+    <plurals name="multiselect_delete_title">
+        <item quantity="zero">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="one">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="two">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="few">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="many">هل تريد حذف %1$d من العناصر؟</item>
+        <item quantity="other">هل تريد حذف %1$d من العناصر؟</item>
+    </plurals>
+    <string name="multiselect_delete_message">سيتم حذف هذه الملفات نهائيًا.</string>
+    <string name="multiselect_share_recordings">مشاركة التسجيلات</string>
+    <string name="multiselect_share_screenshots">مشاركة لقطات الشاشة</string>
+    <string name="delete_generic_recording">سيُحذف هذا التسجيل نهائياً.</string>
+    <string name="player_renamed_to">تمت إعادة التسمية إلى %1$s</string>
+    <string name="player_rename_failed">فشلت إعادة التسمية: %1$s</string>
+    <string name="player_delete_failed">فشل الحذف: %1$s</string>
+    <string name="player_no_app_video">لم يُعثر على تطبيق لفتح الفيديو</string>
+    <string name="player_video_unavailable">هذا الفيديو لم يعد متاحًا. ربما تم حذفه أو نقله.</string>
+    <string name="player_rename_title">إعادة التسمية</string>
+    <string name="player_file_name_label">اسم الملف</string>
+    <string name="trim_title">قص الفيديو</string>
+    <string name="trim_set_to_current">تعيين إلى الحالي</string>
+    <string name="trim_start_label">البداية: %1$s</string>
+    <string name="trim_end_label">النهاية: %1$s</string>
+    <string name="trim_duration_summary">مدة القص: %1$s  (%2$s → %3$s)</string>
+    <string name="trim_too_short">نطاق القص قصير جداً (الحد الأدنى 0.5 ث)</string>
+    <string name="trim_saved_success">تم حفظ القص بنجاح</string>
+    <string name="trim_failed_retry">فشل القص. يرجى المحاولة مجدداً.</string>
+    <string name="trim_progress">جارٍ القص… %1$d%%</string>
+    <string name="trim_save">قص وحفظ</string>
+    <string name="content_desc_back">رجوع</string>
+    <string name="content_desc_refresh">تحديث</string>
+    <string name="content_desc_options">خيارات</string>
+
+    <!-- Tools / Editor -->
+    <string name="tools_video_editing">تحرير الفيديو</string>
+    <string name="tools_image_editing">تحرير الصور</string>
+    <string name="tool_video_trim">تقليم الفيديو</string>
+    <string name="tool_compress">ضغط الفيديو</string>
+    <string name="tool_video_to_gif">فيديو إلى GIF</string>
+    <string name="tool_merge_clips">دمج المقاطع</string>
+    <string name="editor_pick_video_title">اختر فيديو</string>
+    <string name="editor_pick_catrec">تسجيلات كاتريك</string>
+    <string name="editor_pick_storage">مقاطع الفيديو على الجهاز</string>
+    <string name="editor_export">يصدّر</string>
+    <string name="editor_saving">توفير…</string>
+    <string name="editor_saved_ok">تم الحفظ في الأفلام/CatRec</string>
+    <string name="editor_failed">تعذر إكمال التصدير. جرب ملفًا أو جودة أخرى.</string>
+    <string name="compress_title">ضغط</string>
+    <string name="compress_quality_label">جودة الهدف</string>
+    <string name="compress_quality_high">عالي</string>
+    <string name="compress_quality_medium">واسطة</string>
+    <string name="compress_quality_low">قليل</string>
+    <string name="compress_resolution_label">دقة الهدف (الارتفاع)</string>
+    <string name="compress_original">الحجم الأصلي</string>
+    <string name="compress_estimated">الحجم المقدر: ~%1$s</string>
+    <string name="compress_source">المصدر: %1$dx%2$d</string>
+    <string name="gif_title">فيديو إلى GIF</string>
+    <string name="gif_fps">عدد الإطارات في الثانية: %1$d</string>
+    <string name="gif_quality_label">جودة GIF</string>
+    <string name="gif_quality_small">ملف أصغر</string>
+    <string name="gif_quality_balanced">متوازن</string>
+    <string name="gif_quality_sharper">أكثر وضوحا</string>
+    <string name="gif_convert">إنشاء GIF</string>
+    <string name="merge_title">دمج المقاطع</string>
+    <string name="merge_add_catrec">أضف من CatRec</string>
+    <string name="merge_clear_all">مسح الكل</string>
+    <string name="merge_run">دمج وحفظ</string>
+    <string name="merge_need_two">أضف مقطعي فيديو على الأقل (يتم الاحتفاظ بالترتيب).</string>
+    <string name="merge_clip_label">المقطع %1$d</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+
+    <!-- Support (extra) -->
+    <string name="support_app_headline">CatRec مسجل الشاشة</string>
+    <!-- Arg: BuildConfig.VERSION_NAME -->
+    <string name="support_version_label">الإصدار %1$s</string>
+    <string name="changelog_version_template">الخامس%1$s</string>
+    <string name="support_section_support_dev">دعم المطور</string>
+    <string name="support_section_legal">قانوني</string>
+    <string name="support_watch_ad_sub_loading">جارٍ تحميل الإعلان…</string>
+    <string name="support_watch_ad_sub">طريقة سريعة للدعم مجاناً</string>
+    <string name="support_toast_youtube">تعذّر فتح يوتيوب</string>
+    <string name="support_toast_ad_failed">تعذّر عرض الإعلان. حاول مجدداً لاحقاً.</string>
+    <string name="support_toast_thanks_ad">شكراً على المشاهدة! 🐱</string>
+    <string name="support_toast_ad_loading">الإعلان يتحمّل، يرجى الانتظار…</string>
+    <string name="support_toast_no_ad">لا يوجد إعلان الآن. حاول مجدداً لاحقاً.</string>
+    <string name="support_toast_browser">تعذّر فتح المتصفح</string>
+    <string name="billing_store_not_ready">متجر Play ليس جاهزًا بعد. تحقق من اتصالك وحاول مرة أخرى.</string>
+    <string name="billing_thanks_support_me">شكرا لدعمكم! 🐱</string>
+    <string name="billing_pending">عملية الشراء معلقة — ستتمكن من الوصول إليها عند اكتمالها.</string>
+    <string name="dialog_changelog_title">سجل التغييرات</string>
+    <string name="support_privacy_policy">سياسة الخصوصية</string>
+    <string name="support_privacy_policy_desc">كيف تتعامل CatRec مع بياناتك</string>
+    <string name="support_terms_of_service">شروط الخدمة</string>
+    <string name="support_terms_of_service_desc">قواعد الاستخدام وإخلاء المسؤولية</string>
+    <string name="support_permissions_disclosure">إفصاح الأذونات</string>
+    <string name="support_permissions_disclosure_desc">سبب الحاجة إلى كل إذن</string>
+
+    <!-- Permissions manager -->
+    <string name="perm_name_notifications">الإشعارات</string>
+    <string name="perm_rationale_notifications">مطلوب لعرض تحكم التسجيل والحالة المباشرة في لوحة الإشعارات أثناء التسجيل.</string>
+    <string name="perm_name_microphone">الميكروفون</string>
+    <string name="perm_rationale_microphone">مطلوب لالتقاط صوت الميكروفون مع تسجيل الشاشة.</string>
+    <string name="perm_name_camera">الكاميرا</string>
+    <string name="perm_rationale_camera">مطلوب لعرض تراكب الكاميرا داخل الصورة أعلى تسجيل الشاشة.</string>
+    <string name="perm_name_overlay">العرض فوق تطبيقات أخرى</string>
+    <string name="perm_rationale_overlay">مطلوب لعرض فقاعة التحكم العائمة وتراكب الكاميرا فوق التطبيقات الأخرى أثناء التسجيل.</string>
+    <string name="perm_name_media_library">Photos, videos &amp; music</string>
+    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+
+    <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
+    <string name="service_description_screen_record">خدمة أمامية أثناء التسجيل: التقاط الشاشة (MediaProjection) مع صوت ميكروفون اختياري وإشعار دائم.</string>
+    <string name="service_description_overlay">خدمة أمامية أثناء عرض الطبقة العائمة: معاينة الكاميرا داخل الصورة مع إشعار دائم.</string>
+
+    <!-- Notifications (service) -->
+    <string name="notif_channel_screen_recording">تسجيل الشاشة</string>
+    <string name="notif_channel_recording_complete">اكتمل التسجيل</string>
+    <string name="notif_channel_rolling_buffer">المخزن المتداول</string>
+    <string name="notif_ready_title">CatRec جاهز</string>
+    <string name="notif_ready_text">اضغط زر التراكب ● لبدء التسجيل</string>
+    <string name="notif_action_revoke">إلغاء</string>
+    <string name="notif_preparing">جارٍ التحضير…</string>
+    <string name="notif_recording_starting_in">يبدأ التسجيل خلال %1$d…</string>
+    <string name="notif_recording_paused">التسجيل متوقف مؤقتاً</string>
+    <string name="notif_recording_muted">يسجّل (صامت)…</string>
+    <string name="notif_recording_in_progress">التسجيل جارٍ…</string>
+    <string name="notif_title_short">كاتريك</string>
+    <string name="notif_action_stop">إيقاف</string>
+    <string name="notif_action_pause">إيقاف مؤقت</string>
+    <string name="notif_action_resume">استئناف</string>
+    <string name="notif_action_mute">كتم</string>
+    <string name="notif_action_unmute">إلغاء الكتم</string>
+    <string name="notif_action_show_controls">إظهار التحكم</string>
+    <string name="notif_buffer_title">CatRec — المخزن المتداول</string>
+    <string name="notif_buffer_starting">جارٍ بدء المخزن…</string>
+    <string name="notif_buffer_buffering">تخزين آخر %1$d ث…</string>
+    <string name="notif_buffer_save_clip">حفظ المقطع</string>
+    <string name="notif_post_title">انتهى التسجيل</string>
+    <string name="notif_post_text">اضغط لفتح تسجيلك</string>
+    <string name="notif_post_open">فتح</string>
+    <string name="notif_post_share">مشاركة</string>
+    <string name="notif_post_delete">حذف</string>
+    <string name="share_recording_title">مشاركة التسجيل</string>
+    <string name="toast_video_encoder_failed">تعذر تشغيل مرمّز الفيديو. جرّب دقة أقل أو مرمّزاً مختلفاً من الإعدادات.</string>
+    <string name="toast_recording_stopped_projection">توقف التسجيل: أُغلق التطبيق المُصوَّر أو انتقل إلى الخلفية</string>
+    <string name="toast_recording_failed_no_video">فشل التسجيل: لم يُلتقط أي فيديو</string>
+    <string name="toast_gif_transcode_failed">تعذر إنشاء ملف GIF — تم الاحتفاظ بتسجيل MP4 الخاص بك.</string>
+    <string name="toast_gif_saved">تم حفظ ملف GIF في الصور/CatRec/GIF</string>
+    <string name="toast_separate_mic_failed">تعذّر إنشاء ملف صوتي منفصل — سيُسجَّل الميكروفون في الفيديو بدلاً من ذلك</string>
+    <string name="toast_internal_audio_silent">الصوت الداخلي صامت - قد لا يسمح التطبيق الذي يتم تسجيله بالتقاط الصوت. حاول تسجيل صوت الميكروفون بدلاً من ذلك.</string>
+    <string name="recording_has_separate_audio">يحتوي على مسار صوتي منفصل</string>
+    <string name="toast_buffer_start_failed">فشل بدء المخزن: %1$s</string>
+    <string name="toast_clip_empty">المقطع فارغ — استمر في التخزين لفترة أطول</string>
+    <string name="toast_clip_saved">تم حفظ المقطع!</string>
+    <string name="toast_clip_save_failed">فشل حفظ المقطع: %1$s</string>
+    <string name="notif_camera_overlay_text">تراكب كاميرا CatRec نشط — اضغط للعودة إلى التطبيق</string>
+    <string name="tile_record_label">سجل كاتريك</string>
+    <string name="tile_clipper_label">كاتريك كليبر</string>
+    <string name="notif_channel_camera_overlay">تراكب الكاميرا</string>
+    <string name="notif_channel_camera_overlay_desc">يظهر أثناء نشاط تراكب الكاميرا</string>
+    <string name="notif_camera_in_use_title">الكاميرا قيد الاستخدام</string>
+    <string name="notif_channel_app_controls">ضوابط سريعة</string>
+    <string name="notif_channel_app_controls_desc">اختصارات التسجيل ولقطة الشاشة والتراكب</string>
+    <string name="notif_channel_recording_interrupted">توقف التسجيل</string>
+    <string name="notif_channel_recording_interrupted_desc">يُعرض إذا أوقف النظام CatRec أثناء التقاط نشط</string>
+    <string name="notif_recording_interrupted_title">توقف الالتقاط</string>
+    <string name="notif_recording_interrupted_text">أغلق النظام CatRec أو أعاد تشغيله أثناء التسجيل أو التقاط المقاطع. قد يكون ملفك الأخير غير مكتمل. افتح CatRec للبدء من جديد.</string>
+    <string name="notif_app_controls_title">كاتريك</string>
+    <string name="notif_app_controls_text_idle">خامل - اضغط على الإجراء أدناه</string>
+    <string name="notif_action_screenshot">لقطة الشاشة</string>
+    <string name="notif_action_overlay_hide">إخفاء التراكب</string>
+    <string name="notif_action_overlay_show">إظهار التراكب</string>
+    <string name="notif_action_overlay_enable_in_settings">تراكب قبالة</string>
+    <string name="tile_subtitle_recording">جارٍ التسجيل…</string>
+    <string name="tile_subtitle_buffering">جارٍ التخزين…</string>
+    <string name="tile_subtitle_ready">جاهز</string>
+    <string name="tile_subtitle_tap_open">اضغط لفتح التطبيق</string>
+
+    <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
+    <string name="toast_screen_capture_denied">تم رفض إذن تسجيل الشاشة</string>
+    <string name="toast_no_email_app">لم يتم العثور على تطبيق بريد</string>
+    <string name="share_screenshot_chooser_title">مشاركة لقطة الشاشة</string>
+    <string name="recordings_header_format">المكتبة · %1$d</string>
+    <string name="screenshots_header_format">لقطات الشاشة · %1$d</string>
+    <string name="countdown_subtitle">جارٍ بدء التسجيل…</string>
+    <string name="toast_recorder_start_failed">تعذّر بدء التسجيل: %1$s</string>
+    <string name="format_jpeg">جبيغ</string>
+    <string name="format_png">PNG</string>
+    <string name="format_webp">ويب بي</string>
+    <string name="content_desc_more_options">المزيد من الخيارات</string>
+    <string name="content_desc_rewind_10">إرجاع 10 ثوانٍ</string>
+    <string name="content_desc_forward_10">تقديم 10 ثوانٍ</string>
+    <string name="beta_feedback_email_subject">ملاحظات CatRec التجريبية</string>
+    <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v100_items">
+        <item>تسجيل الشاشة مع دعم برامج الترميز H.264 وH.265 (HEVC).</item>
+        <item>المخزن المؤقت Rolling Clipper (من 1 إلى 5 دقائق، قابل للتكوين) مع خياطة مقطعية سلسة وإعدادات مسبقة للمدة السريعة</item>
+        <item>زر حفظ المقطع أثناء تشغيل Clipper</item>
+        <item>مجموعة واسعة من الدقة لجميع نسب العرض إلى الارتفاع، بالإضافة إلى الإدخال المخصص</item>
+        <item>تتبع الاتجاه التلقائي أثناء التسجيل</item>
+        <item>مؤقت العد التنازلي قبل بدء التسجيل</item>
+        <item>خيار إبقاء الشاشة قيد التشغيل أثناء التسجيل</item>
+        <item>الصوت: ميكروفون، صوت داخلي، أو مختلط؛ مسار ميكروفون منفصل اختياري مع تصدير موثوق</item>
+        <item>إعدادات الصوت المتقدمة: معدل البت، معدل العينة، القنوات، التشفير؛ ستيريو دقيق وترميز CBR</item>
+        <item>وضع تسجيل GIF مع إعدادات مسبقة الجودة</item>
+        <item>تراكب عناصر التحكم العائمة: الإيقاف المؤقت، والإيقاف، وكتم الصوت، ولقطة الشاشة، والوصول إلى المقطع</item>
+        <item>التراكب متاح في أي وقت؛ ابدأ التسجيل أو القص من التراكب</item>
+        <item>بنقرة واحدة تسمح بتسجيل التراكب - الحد الأدنى من مطالبات الإذن المتكررة</item>
+        <item>أداة الفرشاة على التراكب العائم</item>
+        <item>تراكب الكاميرا مع معاينة كاميرا الوجه المباشرة</item>
+        <item>تراكب العلامة المائية: صور مخصصة، الشكل، العتامة، الموضع، الإضافة إلى الزاوية؛ التطابقات الافتراضية مع أيقونة التطبيق</item>
+        <item>لقطات الشاشة مع إعدادات التنسيق والجودة؛ التقاط من التراكب</item>
+        <item>تدفق مشاركة/تحرير ما بعد لقطة الشاشة (اختياري)</item>
+        <item>مكتبة التسجيلات مع الصور المصغرة. أداة تشذيب داخل التطبيق؛ دمج المقاطع؛ الفيديو إلى GIF؛ محرر الصور وأدوات المحاصيل</item>
+        <item>مشغل فيديو داخل التطبيق</item>
+        <item>لون التمييز: الإعدادات المسبقة، والتدرجات، والست عشري؛ موضوع ديناميكي عبر واجهة المستخدم</item>
+        <item>السمات الفاتحة والداكنة مع تباين محسّن للموضوعات الفاتحة</item>
+        <item>وضع الأداء للأجهزة المنخفضة النهاية</item>
+        <item>الإعدادات المنظمة: عناصر التحكم وجودة التسجيل والتراكب والموضوع واللغة والتخزين والمزيد</item>
+        <item>اختصار الإعدادات للسماح بالاستخدام غير المحدود للبطارية للتسجيل الموثوق في الخلفية</item>
+        <item>أكثر من 16 لغة مع ترجمات متسقة</item>
+        <item>محدد وضع التسجيل / المقص مع مؤشر الحالة الواضح</item>
+        <item>مربعات الإعدادات السريعة: CatRec Record وCatRec Clipper</item>
+        <item>تسجيل الإخطار مع الإجراءات. دعم جلسة الالتقاط المجهزة</item>
+        <item>تحليلات الاشتراك الاختيارية لتحسين الاستقرار</item>
+        <item>ضوابط الخصوصية: تبديل التحليلات وتخصيص الإعلانات</item>
+        <item>شاشة الدعم: سجل التغيير، والروابط القانونية، والدعم الاختياري بمكافأة</item>
+    </string-array>
+</resources>

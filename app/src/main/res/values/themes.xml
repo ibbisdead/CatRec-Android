@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CatRecScreenRecorcer" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Pre-set before Compose/enableEdgeToEdge() renders its first frame,
+             so Activity.recreate() (e.g. after a language change) never flashes
+             white bars in the status-bar or navigation-bar regions. -->
+        <item name="android:windowBackground">@color/cyber_black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
+    <!-- AppCompatActivity (e.g. ScreenshotPostActionActivity) requires an AppCompat/MaterialComponents theme.
+         Plain android:Theme.Translucent.* crashes in AppCompatDelegateImpl.createSubDecor (Crashlytics 6c117401…). -->
+    <style name="Theme.CatRec.Transparent" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+    </style>
+</resources>

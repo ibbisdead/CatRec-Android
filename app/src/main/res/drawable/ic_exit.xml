@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Rounded, bold "X" close glyph. Two orange strokes with rounded caps matching
+  the weight of the other redesigned icons. The red circle background is gone;
+  the icon is now a clean neutral cross that picks up the theme orange.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- First stroke: top-left to bottom-right -->
+    <path
+        android:strokeColor="#FF4444"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M6,6 L18,18" />
+
+    <!-- Second stroke: top-right to bottom-left -->
+    <path
+        android:strokeColor="#FF4444"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M18,6 L6,18" />
+</vector>

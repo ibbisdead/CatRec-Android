@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Heavy, stylized directional arrow with a significantly lengthened stem.
+  Orange body (stem + head outline) with a light-blue inner highlight on the
+  arrow tip to carry the two-tone identity.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+
+    <!-- Long stem (red, thick with rounded caps) -->
+    <path
+        android:fillColor="#FF4444"
+        android:pathData="M216,800L160,744L624,280L360,280L360,200L760,200L760,600L680,600L680,336L216,800Z" />
+</vector>
