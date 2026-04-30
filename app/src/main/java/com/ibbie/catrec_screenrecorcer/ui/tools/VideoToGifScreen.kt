@@ -24,6 +24,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.service.GifExportPipeline
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
@@ -39,6 +40,8 @@ import androidx.core.net.toUri
 fun VideoToGifScreen(
     encodedUri: String,
     navController: NavController,
+    colorMode: String = ColorMode.STANDARD,
+    forceRec709Compatibility: Boolean = false,
 ) {
     val context = LocalContext.current
     val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
@@ -284,6 +287,8 @@ fun VideoToGifScreen(
                                                 endMs = endMs,
                                                 maxColors = exportPreset.maxColors,
                                                 paletteDither = exportPreset.paletteDither,
+                                                colorMode = colorMode,
+                                                forceRec709Compatibility = forceRec709Compatibility,
                                             )
                                         }
                                     isWorking = false

@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Запись экрана</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Частота кадров (FPS)</string>
     <string name="setting_bitrate">Битрейт видео</string>
     <string name="setting_video_encoder">Видеокодек</string>
+    <string name="setting_color_mode">Цветовой режим</string>
+    <string name="setting_color_mode_standard">Стандартный (Rec.709)</string>
+    <string name="setting_color_mode_full">Полный диапазон</string>
+    <string name="dialog_color_mode">Цветовой режим</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Коррекция яркости Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">Применяет небольшое повышение гаммы после исправления метаданных. Может немного снизить скорость экспорта.</string>
+    <string name="rec709_brightness_correction_off">Выкл.</string>
+    <string name="rec709_brightness_correction_low">Низкая коррекция яркости</string>
+    <string name="rec709_brightness_correction_medium">Средняя коррекция яркости</string>
     <string name="setting_orientation">Ориентация</string>
     <string name="setting_orientation_auto">Авто</string>
     <string name="setting_orientation_portrait">Портрет</string>
@@ -410,12 +421,6 @@
     <string name="clipper_duration_5m">5 мин</string>
     <string name="perm_rationale_intro">CatRec необходимы следующие разрешения для записи вашего экрана:</string>
     <string name="perm_dialog_title">Требуются разрешения</string>
-    <string name="beta_title">Вы в раннем доступе</string>
-    <string name="beta_line_1">⚠️ Это бета-версия.</string>
-    <string name="beta_line_2">Вы можете столкнуться с ошибками, сбоями или незавершенными функциями. Ваше устройство и данные в безопасности — записи сохраняются локально и ничего не загружается.</string>
-    <string name="beta_line_3">Ваши отзывы напрямую влияют на это приложение. Если что-то сломалось или показалось неправильным, сообщите об этом — даже короткое сообщение очень поможет.</string>
-    <string name="beta_line_4">Благодарим вас за раннюю попытку попробовать CatRec. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Удалить запись?</string>
     <string name="delete_recording_message">«%1$s» будет удален без возможности восстановления.</string>
@@ -618,8 +623,33 @@
     <string name="content_desc_more_options">Дополнительные параметры</string>
     <string name="content_desc_rewind_10">Назад на 10 секунд</string>
     <string name="content_desc_forward_10">Вперёд на 10 секунд</string>
-    <string name="beta_feedback_email_subject">Отзыв о бета-версии CatRec</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Принудительные метаданные Rec.709 (BT.709) для устройств только с кодированием HEVC (например, Poco X7 Pro), чтобы цвет при воспроизведении интерпретировался верно.</item>
+        <item>Новые параметры цветокоррекции Rec.709 в Настройках для настройки яркости и совместимости с устройством.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Добавлены настраиваемые цветовые профили REC.709 (BT.709) и полного диапазона для кодирования видео в соответствии с распространённой практикой вещания и мастеринга.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Исправлена проблема, из‑за которой внутренний звук переставал записываться на некоторых устройствах</item>
+        <item>Исправлен экспорт GIF‑записей с очень низкой частотой кадров</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Полностью переработан интерфейс оверлея записи и внутренняя логика для большей надёжности и отзывчивости</item>
+        <item>Обновлены все значки оверлея и уведомлений для более чистого и единообразного стиля</item>
+        <item>Устранены проблемы совместимости OEM на устройствах Xiaomi, Samsung и Nothing</item>
+        <item>Улучшена обработка сбоев записи с восстановлением при неподдерживаемых разрешениях и кодеках и автоматическим переходом на совместимые настройки</item>
+        <item>Дополнены недостающие строки локализации для всех поддерживаемых языков</item>
+        <item>Исправлено некорректное кадрирование изображений и улучшено качество GIF‑записи</item>
+        <item>Режим записи с адаптацией к производительности автоматически снижает качество на слабых устройствах, чтобы уменьшить потери кадров и ошибки кодера</item>
+        <item>Диапазон таймера обратного отсчёта расширен до 30 секунд</item>
+        <item>Улучшена общая производительность приложения</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>Запись экрана с поддержкой кодеков H.264 и H.265 (HEVC).</item>

@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - स्क्रीन रिकॉर्डर</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">फ्रेम रेट (FPS)</string>
     <string name="setting_bitrate">वीडियो बिटरेट</string>
     <string name="setting_video_encoder">वीडियो एन्कोडर</string>
+    <string name="setting_color_mode">रंग मोड</string>
+    <string name="setting_color_mode_standard">मानक (Rec.709)</string>
+    <string name="setting_color_mode_full">पूर्ण श्रेणी</string>
+    <string name="dialog_color_mode">रंग मोड</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 चमक सुधार</string>
+    <string name="setting_rec709_brightness_correction_summary">मेटाडेटा सुधार के बाद हल्का गामा लिफ्ट लागू करता है। निर्यात की गति थोड़ी कम हो सकती है।</string>
+    <string name="rec709_brightness_correction_off">बंद</string>
+    <string name="rec709_brightness_correction_low">कम चमक सुधार</string>
+    <string name="rec709_brightness_correction_medium">मध्यम चमक सुधार</string>
     <string name="setting_orientation">दिशा</string>
     <string name="setting_orientation_auto">स्वचालित</string>
     <string name="setting_orientation_portrait">पोर्ट्रेट</string>
@@ -408,12 +419,6 @@
     <string name="clipper_duration_5m">5 मिनट</string>
     <string name="perm_rationale_intro">आपकी स्क्रीन रिकॉर्ड करने के लिए CatRec को निम्नलिखित अनुमतियों की आवश्यकता है:</string>
     <string name="perm_dialog_title">अनुमतियाँ आवश्यक हैं</string>
-    <string name="beta_title">आप प्रारंभिक पहुंच में हैं</string>
-    <string name="beta_line_1">⚠️ यह एक बीटा रिलीज़ है।</string>
-    <string name="beta_line_2">आपको बग, क्रैश या अधूरी सुविधाओं का सामना करना पड़ सकता है। आपका डिवाइस और डेटा सुरक्षित है - रिकॉर्डिंग स्थानीय रूप से सहेजी जाती है और कुछ भी अपलोड नहीं किया जाता है।</string>
-    <string name="beta_line_3">आपकी प्रतिक्रिया सीधे तौर पर इस ऐप को आकार देती है। यदि कोई चीज़ टूटती है या महसूस होती है, तो कृपया इसकी रिपोर्ट करें - यहां तक ​​कि एक छोटा संदेश भी बहुत मदद करता है।</string>
-    <string name="beta_line_4">कैटरेक को जल्दी आज़माने के लिए धन्यवाद। 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">रिकॉर्डिंग हटाएँ?</string>
     <string name="delete_recording_message">"%1$s" स्थायी रूप से हटा दिया जाएगा।</string>
@@ -612,8 +617,33 @@
     <string name="content_desc_more_options">अधिक विकल्प</string>
     <string name="content_desc_rewind_10">10 सेकंड पीछे</string>
     <string name="content_desc_forward_10">10 सेकंड आगे</string>
-    <string name="beta_feedback_email_subject">CatRec बीटा प्रतिक्रिया</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Poco X7 Pro जैसे केवल HEVC एन्कोडिंग वाले डिवाइसों पर Rec.709 (BT.709) मेटाडेटा लागू करें ताकि प्लेबैक पर रंग सही व्याख्या हों।</item>
+        <item>सेटिंग्स में उज्ज्वलता और डिवाइस अनुकूलता को समायोजित करने के लिए नए Rec.709 रंग सुधार विकल्प।</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>REC.709 (BT.709) और फ़ुल-रेंज कलर प्रोफ़ाइल विकल्प जोड़े गए, ताकि एन्कोड किया गया वीडियो प्रसारण और मास्टरिंग में प्रचलित रंग मानकों के अनुरूप हो सके।</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>कुछ डिवाइसों पर आंतरिक ऑडियो रिकॉर्ड न होने की समस्या ठीक की गई</item>
+        <item>GIF रिकॉर्डिंग एक्सपोर्ट में बहुत कम फ्रेम दर दिखने की समस्या ठीक की गई</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>बेहतर विश्वसनीयता और प्रतिक्रिया के लिए रिकॉर्डिंग ओवरले UI और अंतर्निहित लॉजिक को आधार से फिर से बनाया गया</item>
+        <item>सभी ओवरले और नोटिफिकेशन आइकन को साफ़ और एक समान दिखने के लिए फिर से डिज़ाइन किया गया</item>
+        <item>Xiaomi, Samsung और Nothing डिवाइस पर OEM-विशिष्ट संगतता समस्याएँ हल की गईं</item>
+        <item>असमर्थित रिज़ॉल्यूशन और कोडेक पर स्वचालित संगत विन्यास पर वापस जाने के साथ रिकॉर्डिंग विफलता हैंडलिंग को फिर से तैयार किया गया</item>
+        <item>सभी समर्थित भाषाओं में लुप्त लोकलाइज़ेशन स्ट्रिंग पूरी की गईं</item>
+        <item>गलत इमेज क्रॉपिंग ठीक की और GIF रिकॉर्डिंग गुणवत्ता में सुधार किया गया</item>
+        <item>प्रदर्शन-अनुकूल रिकॉर्डिंग मोड जो कमज़ोर डिवाइस पर स्वचालित रूप से गुणवत्ता समायोजित कर फ्रेम ड्रॉप और एन्कोडर त्रुटियाँ कम करता है</item>
+        <item>काउंटडाउन टाइमर की सीमा 30 सेकंड तक बढ़ाई गई</item>
+        <item>कुल ऐप प्रदर्शन में सुधार किया गया</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>H.264 और H.265 (HEVC) कोडेक समर्थन के साथ स्क्रीन रिकॉर्डिंग</item>

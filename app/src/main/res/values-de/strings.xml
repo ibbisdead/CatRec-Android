@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Bildschirmrekorder</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Bildrate (FPS)</string>
     <string name="setting_bitrate">Video-Bitrate</string>
     <string name="setting_video_encoder">Video-Encoder</string>
+    <string name="setting_color_mode">Farbmodus</string>
+    <string name="setting_color_mode_standard">Standard (Rec.709)</string>
+    <string name="setting_color_mode_full">Voller Bereich</string>
+    <string name="dialog_color_mode">Farbmodus</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709-Helligkeitskorrektur</string>
+    <string name="setting_rec709_brightness_correction_summary">Wendet nach der Metadatenreparatur eine leichte Gamma-Anhebung an. Kann den Export etwas verlangsamen.</string>
+    <string name="rec709_brightness_correction_off">Aus</string>
+    <string name="rec709_brightness_correction_low">Niedrige Helligkeitskorrektur</string>
+    <string name="rec709_brightness_correction_medium">Mittlere Helligkeitskorrektur</string>
     <string name="setting_orientation">Ausrichtung</string>
     <string name="setting_orientation_auto">Automatisch</string>
     <string name="setting_orientation_portrait">Hochformat</string>
@@ -408,12 +419,6 @@
     <string name="clipper_duration_5m">5 Min.</string>
     <string name="perm_rationale_intro">CatRec benötigt die folgenden Berechtigungen, um Ihren Bildschirm aufzuzeichnen:</string>
     <string name="perm_dialog_title">Berechtigungen erforderlich</string>
-    <string name="beta_title">Sie befinden sich im Early Access</string>
-    <string name="beta_line_1">⚠️ Dies ist eine Beta-Version.</string>
-    <string name="beta_line_2">Möglicherweise stoßen Sie auf Fehler, Abstürze oder nicht abgeschlossene Funktionen. Ihr Gerät und Ihre Daten sind sicher – Aufnahmen werden lokal gespeichert und nichts hochgeladen.</string>
-    <string name="beta_line_3">Ihr Feedback prägt diese App direkt. Wenn etwas kaputt geht oder sich nicht anfühlt, melden Sie es bitte – schon eine kurze Nachricht hilft enorm.</string>
-    <string name="beta_line_4">Vielen Dank, dass Sie CatRec frühzeitig ausprobiert haben. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Aufnahme löschen?</string>
     <string name="delete_recording_message">„%1$s“ wird dauerhaft gelöscht.</string>
@@ -612,8 +617,33 @@
     <string name="content_desc_more_options">Weitere Optionen</string>
     <string name="content_desc_rewind_10">10 Sekunden zurück</string>
     <string name="content_desc_forward_10">10 Sekunden vor</string>
-    <string name="beta_feedback_email_subject">CatRec Beta-Feedback</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Erzwingt Rec.709-(BT.709)-Metadaten auf rein HEVC-fähigen Geräten wie dem Poco X7 Pro, damit die Farbdarstellung beim Abspielen korrekt ausgewertet wird.</item>
+        <item>Neue Rec.709-Farbkorrekturoptionen in den Einstellungen zur Feinjustierung von Helligkeit und Gerätekompatibilität.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Auswählbare Farbprofile REC.709 (BT.709) und Full Range, damit kodiertes Video gängigen Broadcast- und Mastering-Farbraumpraktiken entspricht.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Ein Problem behoben, durch das internes Audio auf bestimmten Geräten nicht mehr aufgenommen wurde</item>
+        <item>Behoben: GIF-Aufnahmeexporte mit sehr niedriger Bildrate</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Aufnahme-Overlay-Oberfläche und zugrundeliegende Logik komplett neu aufgebaut für mehr Zuverlässigkeit und Reaktionsfähigkeit</item>
+        <item>Alle Overlay- und Benachrichtigungssymbole neu gestaltet für eine klarere, konsistentere Bildsprache</item>
+        <item>Herstellerspezifische Kompatibilitätsprobleme bei Xiaomi-, Samsung- und Nothing-Geräten behoben</item>
+        <item>Aufnahmefehlerbehandlung überarbeitet: bei nicht unterstützten Auflösungen und Codecs auf manchen Geräten automatischer Fallback auf kompatible Konfigurationen</item>
+        <item>Fehlende Lokalisierungsstrings in allen unterstützten Sprachen ergänzt</item>
+        <item>Falsches Bildzuschneiden behoben und GIF-Aufnahmequalität verbessert</item>
+        <item>Leistungsadaptive Aufnahme passt Qualität schwächeren Geräten automatisch an, um Bildausfälle und Encoder-Fehler zu vermeiden</item>
+        <item>Countdown-Timer bis auf 30 Sekunden erweiterbar</item>
+        <item>Gesamtleistung der App verbessert</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>Bildschirmaufzeichnung mit H.264- und H.265 (HEVC)-Codec-Unterstützung</item>

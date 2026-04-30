@@ -102,6 +102,8 @@ fun SupportScreen(
 
     var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
     var isAdLoading by remember { mutableStateOf(false) }
+    /** Set when reward callback fires; thanks toast runs after focus reset on dismiss. */
+    var supportRewardEarned by remember { mutableStateOf(false) }
 
     fun loadRewardedAd() {
         if (adsDisabled || isAdLoading) return
@@ -128,6 +130,7 @@ fun SupportScreen(
         if (adsDisabled) {
             rewardedAd = null
             isAdLoading = false
+            supportRewardEarned = false
         } else {
             loadRewardedAd()
         }
@@ -136,6 +139,7 @@ fun SupportScreen(
     DisposableEffect(adsDisabled) {
         onDispose {
             rewardedAd = null
+            supportRewardEarned = false
         }
     }
 
@@ -271,15 +275,21 @@ fun SupportScreen(
                         val ad = rewardedAd
                         when {
                             ad != null && activity != null -> {
+                                supportRewardEarned = false
                                 ad.fullScreenContentCallback =
                                     object : FullScreenContentCallback() {
                                         override fun onAdDismissedFullScreenContent() {
                                             activity.resetWindowFocusAfterFullscreenOverlay()
+                                            if (supportRewardEarned) {
+                                                Toast.makeText(context, toastSupportThanksAd, Toast.LENGTH_SHORT).show()
+                                            }
+                                            supportRewardEarned = false
                                             rewardedAd = null
                                             loadRewardedAd()
                                         }
 
                                         override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                            supportRewardEarned = false
                                             activity.resetWindowFocusAfterFullscreenOverlay()
                                             rewardedAd = null
                                             loadRewardedAd()
@@ -287,7 +297,7 @@ fun SupportScreen(
                                         }
                                     }
                                 ad.show(activity) {
-                                    Toast.makeText(context, toastSupportThanksAd, Toast.LENGTH_SHORT).show()
+                                    supportRewardEarned = true
                                 }
                             }
                             isAdLoading ->
@@ -447,6 +457,9 @@ fun SupportScreen(
     }
 
     if (showChangelogDialog) {
+        val changelog111Items = stringArrayResource(R.array.changelog_v111_items).toList()
+        val changelog110Items = stringArrayResource(R.array.changelog_v110_items).toList()
+        val changelog107Items = stringArrayResource(R.array.changelog_v107_items).toList()
         val changelog106Items = stringArrayResource(R.array.changelog_v106_items).toList()
         val changelog100Items = stringArrayResource(R.array.changelog_v100_items).toList()
         AlertDialog(
@@ -458,8 +471,26 @@ fun SupportScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_template, "1.0.6"),
+                        version = stringResource(R.string.changelog_version_template, "1.1.1"),
                         label = stringResource(R.string.changelog_label_latest),
+                        changes = changelog111Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.1.0"),
+                        label = null,
+                        changes = changelog110Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.0.7"),
+                        label = null,
+                        changes = changelog107Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.0.6"),
+                        label = null,
                         changes = changelog106Items,
                     )
                     Spacer(Modifier.height(24.dp))

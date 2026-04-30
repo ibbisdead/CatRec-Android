@@ -279,6 +279,12 @@ class DefaultRecordingSessionRepository(
             )
             putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, snap.saveLocationUri)
             putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, snap.videoEncoder)
+            putExtra(ScreenRecordService.EXTRA_COLOR_MODE, snap.colorMode)
+            putExtra(ScreenRecordService.EXTRA_FORCE_REC709, snap.forceRec709Compatibility)
+            putExtra(
+                ScreenRecordService.EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION,
+                snap.rec709CompatBrightnessCorrection,
+            )
             putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, snap.floatingControls)
             putExtra(
                 ScreenRecordService.EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING,
@@ -330,6 +336,12 @@ class DefaultRecordingSessionRepository(
             putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, snap.audioEncoder)
             putExtra(ScreenRecordService.EXTRA_RESOLUTION, snap.resolution)
             putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, snap.videoEncoder)
+            putExtra(ScreenRecordService.EXTRA_COLOR_MODE, snap.colorMode)
+            putExtra(ScreenRecordService.EXTRA_FORCE_REC709, snap.forceRec709Compatibility)
+            putExtra(
+                ScreenRecordService.EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION,
+                snap.rec709CompatBrightnessCorrection,
+            )
             putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, snap.clipperDurationMinutes)
             putExtra(ScreenRecordService.EXTRA_COUNTDOWN, snap.countdown)
         }

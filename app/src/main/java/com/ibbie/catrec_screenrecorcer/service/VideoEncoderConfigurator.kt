@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.Log
 import android.view.Surface
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import kotlin.math.roundToInt
 
 /**
@@ -116,12 +117,47 @@ internal object VideoEncoderConfigurator {
         val codecName: String?,
     )
 
+    /**
+     * Applies SDR color metadata to [format] so the encoded bitstream carries explicit signal-
+     * range and colour-space information.  Without these tags, most hardware encoders silently
+     * produce full-range output (0–255 luma) while players assume limited range (16–235),
+     * causing a washed-out / low-contrast appearance.
+     *
+     * Keys are available from API 24 onwards; on older devices the calls are no-ops because the
+     * encoder will simply ignore unknown integer keys rather than throwing.
+     *
+     * [colorMode] "Standard" → Rec.709 limited range (corrects the gray/washed look; default).
+     * [colorMode] "Full"     → Rec.709 full range  (use when target player expects full-range).
+     */
+    private fun applyColorMetadata(format: MediaFormat, colorMode: String) {
+        if (Build.VERSION.SDK_INT < 24) return
+        try {
+            // BT.709 primaries — standard for SDR screen content on every modern display.
+            format.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT709)
+
+            // SDR transfer function — no HDR / PQ / HLG.
+            format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
+
+            // Range: limited (16–235) corrects the washed-out look; full (0–255) for edge cases.
+            val range = if (colorMode == ColorMode.FULL) {
+                MediaFormat.COLOR_RANGE_FULL
+            } else {
+                MediaFormat.COLOR_RANGE_LIMITED
+            }
+            format.setInteger(MediaFormat.KEY_COLOR_RANGE, range)
+        } catch (e: Exception) {
+            // Some encoders reject unknown keys at configure time; log and continue gracefully.
+            Log.w(TAG, "applyColorMetadata: key rejected by encoder (ignored): ${e.message}")
+        }
+    }
+
     private fun buildConfigFormat(
         mimeType: String,
         width: Int,
         height: Int,
         fps: Int,
         bitrate: Int,
+        colorMode: String,
         withProfile: Boolean,
         withAdvancedHints: Boolean,
     ): MediaFormat =
@@ -130,6 +166,8 @@ internal object VideoEncoderConfigurator {
             setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
             setInteger(MediaFormat.KEY_FRAME_RATE, fps)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            // Explicitly tag colour space so players render correct contrast and saturation.
+            applyColorMetadata(this, colorMode)
             if (withAdvancedHints) {
                 setFloat(MediaFormat.KEY_OPERATING_RATE, fps.toFloat())
                 setInteger(MediaFormat.KEY_PRIORITY, 0)
@@ -205,7 +243,10 @@ internal object VideoEncoderConfigurator {
     }
 
     /**
-     * @param avcOnly when true, skips HEVC entirely (e.g. after [MediaCodec.start] failed on HEVC).
+     * @param avcOnly   when true, skips HEVC entirely (e.g. after [MediaCodec.start] failed on HEVC).
+     * @param colorMode [ColorMode.STANDARD] (Rec.709 limited-range, default) or [ColorMode.FULL]
+     *                  (full-range). Controls [MediaFormat] colour-metadata keys applied before
+     *                  [MediaCodec.configure] so the bitstream carries correct SDR tagging.
      */
     fun configureScreenCaptureVideoEncoder(
         logTag: String,
@@ -215,6 +256,7 @@ internal object VideoEncoderConfigurator {
         fps: Int,
         bitrate: Int,
         avcOnly: Boolean,
+        colorMode: String = ColorMode.STANDARD,
     ): ConfiguredVideoEncoder {
         val wantHevcFirst =
             !avcOnly &&
@@ -281,6 +323,7 @@ internal object VideoEncoderConfigurator {
                             encH,
                             fps,
                             bitrate,
+                            colorMode,
                             attempt.withProfile,
                             attempt.withAdvancedHints,
                         )

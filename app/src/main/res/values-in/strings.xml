@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Perekam Layar</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Kecepatan Bingkai (FPS)</string>
     <string name="setting_bitrate">Bitrate Video</string>
     <string name="setting_video_encoder">Encoder Video</string>
+    <string name="setting_color_mode">Mode Warna</string>
+    <string name="setting_color_mode_standard">Standar (Rec.709)</string>
+    <string name="setting_color_mode_full">Rentang Penuh</string>
+    <string name="dialog_color_mode">Mode Warna</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Koreksi kecerahan Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">Menerapkan sedikit peningkatan gamma setelah perbaikan metadata. Dapat sedikit mengurangi kecepatan ekspor.</string>
+    <string name="rec709_brightness_correction_off">Nonaktif</string>
+    <string name="rec709_brightness_correction_low">Koreksi kecerahan rendah</string>
+    <string name="rec709_brightness_correction_medium">Koreksi kecerahan sedang</string>
     <string name="setting_orientation">Orientasi</string>
     <string name="setting_orientation_auto">Otomatis</string>
     <string name="setting_orientation_portrait">Potret</string>
@@ -407,12 +418,6 @@
     <string name="clipper_duration_5m">5 mnt</string>
     <string name="perm_rationale_intro">CatRec memerlukan izin berikut untuk merekam layar Anda:</string>
     <string name="perm_dialog_title">Izin diperlukan</string>
-    <string name="beta_title">Anda berada di Akses Awal</string>
-    <string name="beta_line_1">⚠️ Ini adalah rilis beta.</string>
-    <string name="beta_line_2">Anda mungkin mengalami bug, kerusakan, atau fitur yang belum selesai. Perangkat dan data Anda aman — rekaman disimpan secara lokal dan tidak ada yang diunggah.</string>
-    <string name="beta_line_3">Masukan Anda secara langsung membentuk aplikasi ini. Jika ada yang rusak atau terasa tidak beres, silakan laporkan — bahkan pesan singkat pun sangat membantu.</string>
-    <string name="beta_line_4">Terima kasih telah mencoba CatRec lebih awal. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Hapus rekaman?</string>
     <string name="delete_recording_message">"%1$s" akan dihapus secara permanen.</string>
@@ -609,8 +614,33 @@
     <string name="content_desc_more_options">Opsi lainnya</string>
     <string name="content_desc_rewind_10">Mundur 10 detik</string>
     <string name="content_desc_forward_10">Maju 10 detik</string>
-    <string name="beta_feedback_email_subject">Masukan beta CatRec</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Memaksakan metadata Rec.709 (BT.709) pada perangkat yang hanya mendukung pengkodean HEVC seperti Poco X7 Pro agar warna saat pemutaran ditafsirkan benar.</item>
+        <item>Opsi koreksi warna Rec.709 baru di Pengaturan untuk menyesuaikan kecerahan dan kompatibilitas perangkat.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Profil warna REC.709 (BT.709) dan rentang penuh yang dapat dipilih agar video terenkode selaras dengan praktik warna siaran dan mastering yang umum dipakai.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Memperbaiki masalah yang menyebabkan audio internal tidak lagi direkam di beberapa perangkat</item>
+        <item>Memperbaiki ekspor rekaman GIF yang tampil dengan laju frame sangat rendah</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Membangun ulang UI overlay rekaman dan logika dasarnya untuk keandalan dan respons lebih baik</item>
+        <item>Mendesain ulang semua ikon overlay dan notifikasi agar lebih bersih dan konsisten</item>
+        <item>Menyelesaikan masalah kompatibilitas OEM pada perangkat Xiaomi, Samsung, dan Nothing</item>
+        <item>Menangani kegagalan rekaman ulang dengan pemulihan dari resolusi dan codec yang tidak didukung serta fallback otomatis ke konfigurasi yang kompatibel</item>
+        <item>Melengkapi string lokalisasi yang hilang di semua bahasa yang didukung</item>
+        <item>Memperbaiki pemotongan gambar yang salah dan meningkatkan kualitas rekaman GIF</item>
+        <item>Mode rekaman adaptif kinerja yang menyesuaikan kualitas secara otomatis pada perangkat lemah untuk mengurangi frame hilang dan kesalahan pengkode</item>
+        <item>Memperpanjang rentang penghitung mundur hingga 30 detik</item>
+        <item>Meningkatkan kinerja aplikasi secara keseluruhan</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>Perekaman layar dengan dukungan codec H.264 dan H.265 (HEVC).</item>

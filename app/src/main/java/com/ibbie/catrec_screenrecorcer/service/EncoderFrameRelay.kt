@@ -338,6 +338,7 @@ internal class EncoderFrameRelay(
 
     private fun drawBitmapToEncoder(bitmap: Bitmap) {
         val surface = encoderInputSurface
+
         val mode = useCanvas
         if (mode != false) {
             try {
@@ -478,6 +479,9 @@ private class EglBitmapBlitter(
             ByteBuffer.allocateDirect(16 * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().apply {
                 put(
                     floatArrayOf(
+                        // Bitmap/Canvas coordinates are top-left origin.  The texture V coordinate
+                        // therefore runs 0 at the top edge and 1 at the bottom edge so GLES fallback
+                        // matches the hardware-canvas path without mirroring or vertical flip.
                         -1f,
                         -1f,
                         0f,
@@ -620,8 +624,7 @@ private class EglBitmapBlitter(
             varying vec2 vTexCoord;
             uniform sampler2D uTexture;
             void main() {
-              vec2 uv = vec2(vTexCoord.x, 1.0 - vTexCoord.y);
-              gl_FragColor = texture2D(uTexture, uv);
+              gl_FragColor = texture2D(uTexture, vTexCoord);
             }
         """
     }

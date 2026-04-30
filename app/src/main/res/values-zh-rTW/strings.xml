@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - 螢幕錄製</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">幀率（FPS）</string>
     <string name="setting_bitrate">影片位元率</string>
     <string name="setting_video_encoder">影片編碼器</string>
+    <string name="setting_color_mode">色彩模式</string>
+    <string name="setting_color_mode_standard">標準 (Rec.709)</string>
+    <string name="setting_color_mode_full">全範圍</string>
+    <string name="dialog_color_mode">色彩模式</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 亮度校正</string>
+    <string name="setting_rec709_brightness_correction_summary">在修復中繼資料後套用輕微的 Gamma 提升。可能會稍微降低匯出速度。</string>
+    <string name="rec709_brightness_correction_off">關閉</string>
+    <string name="rec709_brightness_correction_low">低亮度校正</string>
+    <string name="rec709_brightness_correction_medium">中等亮度校正</string>
     <string name="setting_orientation">方向</string>
     <string name="setting_orientation_auto">自動</string>
     <string name="setting_orientation_portrait">直向</string>
@@ -407,12 +418,6 @@
     <string name="clipper_duration_5m">5 分鐘</string>
     <string name="perm_rationale_intro">CatRec 需要以下權限來錄製您的螢幕：</string>
     <string name="perm_dialog_title">所需權限</string>
-    <string name="beta_title">您正處於搶先體驗階段</string>
-    <string name="beta_line_1">⚠️ 這是測試版。</string>
-    <string name="beta_line_2">您可能會遇到錯誤、崩潰或未完成的功能。您的裝置和資料是安全的—錄音保存在本地，不會上傳任何內容。</string>
-    <string name="beta_line_3">您的回饋直接塑造了這個應用程式。如果出現問題或感覺不對勁，請報告 - 即使是一條短信也會有很大幫助。</string>
-    <string name="beta_line_4">感謝您儘早嘗試 CatRec。 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">刪除錄音？</string>
     <string name="delete_recording_message">“%1$s”將永久刪除。</string>
@@ -609,8 +614,33 @@
     <string name="content_desc_more_options">更多選項</string>
     <string name="content_desc_rewind_10">倒退 10 秒</string>
     <string name="content_desc_forward_10">快進 10 秒</string>
-    <string name="beta_feedback_email_subject">CatRec 測試版意見回饋</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>在僅支援 HEVC 編碼的裝置（例如 Poco X7 Pro）上強制 Rec.709（BT.709）後設資料，讓播放時色彩能被正確解讀。</item>
+        <item>設定中新增 Rec.709 色彩校正選項，可調整亮度並改善裝置相容性。</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>新增可選的 REC.709（BT.709）與全範圍（full range）色彩描述檔，讓編碼後的影片更符合常見的廣播與母帶調色實務。</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>修正部分裝置無法再錄製內部音訊的問題</item>
+        <item>修正 GIF 錄製匯出畫面影格率顯得過低的問題</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>從頭重建錄製覆蓋介面與底層邏輯，提升可靠性與反應速度</item>
+        <item>重新設計所有覆蓋與通知圖示，視覺更清晰一致</item>
+        <item>解決小米、三星與 Nothing 等裝置上的 OEM 相容性問題</item>
+        <item>改善錄製失敗處理：在不支援的解析度或編碼格式下自動回退到相容設定</item>
+        <item>補齊所有支援語言中缺失的本地化字串</item>
+        <item>修正錯誤的影像裁剪並改進 GIF 錄製品質</item>
+        <item>效能自適應錄製模式：在低效能裝置上自動調整畫質，減少掉幀與編碼錯誤</item>
+        <item>將倒數計時範圍延長至最長 30 秒</item>
+        <item>提升應用程式整體效能</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>支援 H.264 和 H.265 (HEVC) 編解碼器的螢幕錄製</item>

@@ -53,8 +53,10 @@ import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
 import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
 import com.ibbie.catrec_screenrecorcer.data.AdGate
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.components.*
@@ -87,6 +89,9 @@ fun SettingsScreen(
     val resolution by viewModel.resolution.collectAsState()
     val videoEncoder by viewModel.videoEncoder.collectAsState()
     val recordingOrientation by viewModel.recordingOrientation.collectAsState()
+    val colorMode by viewModel.colorMode.collectAsState()
+    val forceRec709Compatibility by viewModel.forceRec709Compatibility.collectAsState()
+    val rec709CompatBrightnessCorrection by viewModel.rec709CompatBrightnessCorrection.collectAsState()
     val isGifCaptureMode by viewModel.isGifCaptureMode.collectAsState()
     val adaptivePerformanceEnabled by viewModel.adaptivePerformanceEnabled.collectAsState()
     val gifRecorderPresetId by viewModel.gifRecorderPresetId.collectAsState()
@@ -238,6 +243,8 @@ fun SettingsScreen(
     var showResolutionDialog by remember { mutableStateOf(false) }
     var showCustomResolutionDialog by remember { mutableStateOf(false) }
     var showVideoEncoderDialog by remember { mutableStateOf(false) }
+    var showColorModeDialog by remember { mutableStateOf(false) }
+    var showRec709BrightnessCorrectionDialog by remember { mutableStateOf(false) }
     var showOrientationDialog by remember { mutableStateOf(false) }
     var showAudioBitrateDialog by remember { mutableStateOf(false) }
     var showAudioSampleRateDialog by remember { mutableStateOf(false) }
@@ -484,6 +491,46 @@ fun SettingsScreen(
                 viewModel.setVideoEncoder(it)
             },
             onDismiss = { showVideoEncoderDialog = false },
+        )
+    }
+    if (showColorModeDialog) {
+        val colorModeOptions = listOf(
+            ColorMode.STANDARD,
+            ColorMode.FULL,
+        )
+        val colorModeLabels = listOf(
+            stringResource(R.string.setting_color_mode_standard),
+            stringResource(R.string.setting_color_mode_full),
+        )
+        SingleChoiceDialog(
+            title = stringResource(R.string.setting_color_mode),
+            options = colorModeOptions,
+            optionLabels = colorModeLabels,
+            selectedOption = colorMode,
+            onOptionSelected = { viewModel.setColorMode(it) },
+            onDismiss = { showColorModeDialog = false },
+        )
+    }
+    if (showRec709BrightnessCorrectionDialog) {
+        val correctionOptions =
+            listOf(
+                Rec709CompatBrightnessCorrection.OFF,
+                Rec709CompatBrightnessCorrection.LOW,
+                Rec709CompatBrightnessCorrection.MEDIUM,
+            )
+        val correctionLabels =
+            listOf(
+                stringResource(R.string.rec709_brightness_correction_off),
+                stringResource(R.string.rec709_brightness_correction_low),
+                stringResource(R.string.rec709_brightness_correction_medium),
+            )
+        SingleChoiceDialog(
+            title = stringResource(R.string.setting_rec709_brightness_correction),
+            options = correctionOptions,
+            optionLabels = correctionLabels,
+            selectedOption = rec709CompatBrightnessCorrection,
+            onOptionSelected = { viewModel.setRec709CompatBrightnessCorrection(it) },
+            onDismiss = { showRec709BrightnessCorrectionDialog = false },
         )
     }
     if (showOrientationDialog) {
@@ -1724,6 +1771,46 @@ fun SettingsScreen(
                 ) {
                     if (!videoLocked) showVideoEncoderDialog = true
                 }
+                val colorModeDisplay = when (colorMode) {
+                    ColorMode.FULL -> stringResource(R.string.setting_color_mode_full)
+                    else -> stringResource(R.string.setting_color_mode_standard)
+                }
+                ClickableSettingItem(
+                    Icons.Default.Palette,
+                    stringResource(R.string.setting_color_mode),
+                    colorModeDisplay,
+                    enabled = !videoLocked,
+                ) {
+                    if (!videoLocked) showColorModeDialog = true
+                }
+                if (colorMode == ColorMode.STANDARD) {
+                    SwitchSettingItem(
+                        icon = Icons.Default.Tune,
+                        title = stringResource(R.string.setting_force_rec709_compat),
+                        subtitle = stringResource(R.string.setting_force_rec709_compat_summary),
+                        checked = forceRec709Compatibility,
+                        enabled = !videoLocked,
+                        onCheckedChange = { viewModel.setForceRec709Compatibility(it) },
+                    )
+                }
+                if (colorMode == ColorMode.STANDARD && forceRec709Compatibility) {
+                    val correctionDisplay =
+                        when (rec709CompatBrightnessCorrection) {
+                            Rec709CompatBrightnessCorrection.LOW ->
+                                stringResource(R.string.rec709_brightness_correction_low)
+                            Rec709CompatBrightnessCorrection.MEDIUM ->
+                                stringResource(R.string.rec709_brightness_correction_medium)
+                            else -> stringResource(R.string.rec709_brightness_correction_off)
+                        }
+                    ClickableSettingItem(
+                        Icons.Default.BrightnessMedium,
+                        stringResource(R.string.setting_rec709_brightness_correction),
+                        "$correctionDisplay\n${stringResource(R.string.setting_rec709_brightness_correction_summary)}",
+                        enabled = !videoLocked,
+                    ) {
+                        if (!videoLocked) showRec709BrightnessCorrectionDialog = true
+                    }
+                }
                 ClickableSettingItem(
                     Icons.Default.ScreenRotation,
                     stringResource(R.string.setting_orientation),
@@ -2190,6 +2277,8 @@ private fun AdGateDialog(
     val context = LocalContext.current
     val activity = context as? Activity
     val accent = LocalAccentColor.current
+    /** Earned before dismiss; unlock runs only after [resetWindowFocusAfterFullscreenOverlay] in dismiss callback. */
+    var rewardEarned by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -2220,19 +2309,25 @@ private fun AdGateDialog(
             Button(
                 onClick = {
                     if (ad != null && activity != null) {
+                        rewardEarned = false
                         ad.fullScreenContentCallback =
                             object : FullScreenContentCallback() {
                                 override fun onAdDismissedFullScreenContent() {
                                     activity.resetWindowFocusAfterFullscreenOverlay()
+                                    if (rewardEarned) {
+                                        rewardEarned = false
+                                        onUnlocked()
+                                    }
                                 }
 
                                 override fun onAdFailedToShowFullScreenContent(e: AdError) {
+                                    rewardEarned = false
                                     activity.resetWindowFocusAfterFullscreenOverlay()
-                                    // Ad couldn't show — unlock anyway as fallback
-                                    onUnlocked()
                                 }
                             }
-                        ad.show(activity) { onUnlocked() }
+                        ad.show(activity) {
+                            rewardEarned = true
+                        }
                     } else {
                         // No ad loaded yet (not on Play Store / test build) — unlock directly
                         onUnlocked()
@@ -2264,13 +2359,16 @@ fun SingleChoiceDialog(
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     onDismiss: () -> Unit,
+    /** Optional display labels; when provided, index-matched to [options] for localised display. */
+    optionLabels: List<String>? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                options.forEach { option ->
+                options.forEachIndexed { index, option ->
+                    val label = optionLabels?.getOrNull(index) ?: option
                     Row(
                         modifier =
                             Modifier
@@ -2280,7 +2378,7 @@ fun SingleChoiceDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(selected = option == selectedOption, onClick = { onOptionSelected(option); onDismiss() })
-                        Text(option, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
+                        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
                     }
                 }
             }

@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import android.util.Log
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
@@ -26,6 +27,15 @@ object GifExportPipeline {
      * Converts [mp4Uri] to an animated GIF via FFmpeg using a 2-pass palettegen + paletteuse pipeline.
      * Writes the final output to Pictures/CatRec/GIFs in the gallery.
      * This function is suspendable and will cancel FFmpeg execution if the coroutine is cancelled.
+     *
+     * @param colorMode [ColorMode.STANDARD] (default) adds an explicit limited→full range expansion
+     *   inside both FFmpeg filter passes. This is necessary when the source MP4 was encoded with
+     *   [android.media.MediaFormat.COLOR_RANGE_LIMITED] tagging (Rec.709 mode) so the GIF palette
+     *   is built from full-range (0–255) pixel values rather than the raw limited-range (16–235)
+     *   signal, which would produce a dark or washed-out animated GIF.
+     *   [ColorMode.FULL] skips the expansion (source already encodes full-range data 0–255).
+     * @param forceRec709Compatibility Metadata-only repair mode for [ColorMode.STANDARD]. It does
+     *   not change pixels, so GIF range handling remains the same as normal STANDARD recordings.
      */
     suspend fun transcodeMp4ToGif(
         context: Context,
@@ -36,6 +46,8 @@ object GifExportPipeline {
         endMs: Long = Long.MAX_VALUE,
         maxColors: Int = 256,
         paletteDither: GifPaletteDither = GifPaletteDither.BAYER_MEDIUM,
+        colorMode: String = ColorMode.STANDARD,
+        forceRec709Compatibility: Boolean = false,
     ): Boolean {
         val cacheDir = context.cacheDir
         val inputFile = copyInputToCacheIfNeeded(context, mp4Uri) ?: return false
@@ -79,16 +91,24 @@ object GifExportPipeline {
             val fps = outputFps.coerceIn(1, 60)
             val colors = maxColors.coerceIn(2, 256)
 
+            // STANDARD expands limited (16–235) → full (0–255) so the GIF palette is built from
+            // correct full-range RGB values. Compatibility mode is metadata-only and must not
+            // suppress this step.
+            val scaleRange = if (colorMode == ColorMode.FULL) "" else ":in_range=limited:out_range=full"
+            if (forceRec709Compatibility && colorMode == ColorMode.STANDARD) {
+                Log.d(TAG, "GIF pipeline: Rec.709 compatibility is metadata-only; keeping STANDARD range expansion")
+            }
+
             // Pass 1: generate palette
             // [0:v] makes the video input explicit so FFmpeg never guesses the stream mapping.
-            val pass1Filter = "[0:v]fps=$fps,scale=min(iw\\,$w):-2:flags=lanczos,palettegen=max_colors=$colors:stats_mode=full"
+            val pass1Filter = "[0:v]fps=$fps,scale=min(iw\\,$w):-2:flags=lanczos$scaleRange,palettegen=max_colors=$colors:stats_mode=full"
             // -lavfi instead of -vf so the explicit [0:v] label is parsed as a filtergraph.
             // -frames:v 1 -update 1 writes a single PNG (avoids "image sequence pattern" warning).
             val pass1Cmd =
                 "-y -i \"${inputFile.absolutePath}\" $timeArgs -lavfi \"$pass1Filter\" " +
                     "-frames:v 1 -update 1 \"${paletteFile.absolutePath}\""
 
-            Log.d(TAG, "Pass 1: $pass1Cmd")
+            Log.d(TAG, "Pass 1 [colorMode=$colorMode]: $pass1Cmd")
             val pass1Ok = executeFfmpegAsync(pass1Cmd)
             if (!pass1Ok || !paletteFile.exists() || paletteFile.length() == 0L) {
                 Log.e(TAG, "Pass 1 failed or palette not generated.")
@@ -98,7 +118,7 @@ object GifExportPipeline {
             // Pass 2: generate gif
             // [0:v] = video input, [1:v] = palette PNG; explicit labels remove any FFmpeg stream-mapping ambiguity.
             val paletteUse = paletteUseOptions(paletteDither)
-            val pass2Filter = "[0:v]fps=$fps,scale=min(iw\\,$w):-2:flags=lanczos[x];[x][1:v]paletteuse=$paletteUse"
+            val pass2Filter = "[0:v]fps=$fps,scale=min(iw\\,$w):-2:flags=lanczos$scaleRange[x];[x][1:v]paletteuse=$paletteUse"
             val pass2Cmd = "-y -i \"${inputFile.absolutePath}\" -i \"${paletteFile.absolutePath}\" $timeArgs -lavfi \"$pass2Filter\" -f gif -loop 0 \"${outFile.absolutePath}\""
 
             Log.d(TAG, "Pass 2: $pass2Cmd")

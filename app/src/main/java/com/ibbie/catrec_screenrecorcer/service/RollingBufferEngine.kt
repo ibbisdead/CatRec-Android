@@ -1,6 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.service
 
 import android.annotation.SuppressLint
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -53,6 +54,7 @@ class RollingBufferEngine(
     audioMode: AudioMode,
     private val mediaProjection: MediaProjection,
     private val encoderType: String,
+    private val colorMode: String = ColorMode.STANDARD,
     private val audioBitrate: Int = 128_000,
     private val audioSampleRate: Int = 44_100,
     private val audioChannelCount: Int = 1,
@@ -845,6 +847,7 @@ class RollingBufferEngine(
                 fps = fps,
                 bitrate = bitrate,
                 avcOnly = avcOnly || forceAvcHint,
+                colorMode = colorMode,
             )
         videoEncoder = result.codec
         inputSurface = result.inputSurface

@@ -4,6 +4,14 @@ All notable changes to CatRec Screen Recorder are documented here.
 
 ---
 
+## [1.1.1] — 2026-05-01
+
+### Added / Fixed
+- Force Rec.709 (BT.709) tagging/metadata for recordings on **HEVC-only** devices (for example **Poco X7 Pro**) so players interpret color correctly instead of stretching or washing out the image.
+- **Rec.709 color correction** options in Settings to tune brightness and device-specific compatibility alongside the selectable Rec.709 / full-range profiles.
+
+---
+
 ## [1.0.6] — 2026-04-26
 
 ### Changed

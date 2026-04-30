@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Screen Recorder</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Frame Rate (FPS)</string>
     <string name="setting_bitrate">Video Bitrate</string>
     <string name="setting_video_encoder">Video Encoder</string>
+    <string name="setting_color_mode">Renk Modu</string>
+    <string name="setting_color_mode_standard">Standart (Rec.709)</string>
+    <string name="setting_color_mode_full">Tam Aralık</string>
+    <string name="dialog_color_mode">Renk Modu</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 parlaklık düzeltmesi</string>
+    <string name="setting_rec709_brightness_correction_summary">Meta veri onarımından sonra hafif bir gama artışı uygular. Dışa aktarma hızını biraz azaltabilir.</string>
+    <string name="rec709_brightness_correction_off">Kapalı</string>
+    <string name="rec709_brightness_correction_low">Düşük parlaklık düzeltmesi</string>
+    <string name="rec709_brightness_correction_medium">Orta parlaklık düzeltmesi</string>
     <string name="setting_orientation">Orientation</string>
     <string name="setting_orientation_auto">Auto</string>
     <string name="setting_orientation_portrait">Portrait</string>
@@ -408,12 +419,6 @@
     <string name="clipper_duration_5m">5 min</string>
     <string name="perm_rationale_intro">CatRec\'in ekranınızı kaydetmek için aşağıdaki izinlere ihtiyacı vardır:</string>
     <string name="perm_dialog_title">Gerekli izinler</string>
-    <string name="beta_title">Erken Erişimdesiniz</string>
-    <string name="beta_line_1">⚠️ Bu bir beta sürümdür.</string>
-    <string name="beta_line_2">Hatalar, çökmeler veya tamamlanmamış özelliklerle karşılaşabilirsiniz. Cihazınız ve verileriniz güvende; kayıtlar yerel olarak kaydedilir ve hiçbir şey yüklenmez.</string>
-    <string name="beta_line_3">Geri bildiriminiz doğrudan bu uygulamayı şekillendirir. Bir şey kırılırsa veya bozulursa lütfen bildirin; kısa bir mesaj bile çok yardımcı olur.</string>
-    <string name="beta_line_4">CatRec\'i erken denediğiniz için teşekkür ederiz. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Kayıt silinsin mi?</string>
     <string name="delete_recording_message">"%1$s" kalıcı olarak silinecek.</string>
@@ -612,8 +617,33 @@
     <string name="content_desc_more_options">More options</string>
     <string name="content_desc_rewind_10">Rewind 10 seconds</string>
     <string name="content_desc_forward_10">Forward 10 seconds</string>
-    <string name="beta_feedback_email_subject">CatRec feedback</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Yalnızca HEVC kodlamayı destekleyen cihazlarda (ör. Poco X7 Pro) Rec.709 (BT.709) meta verilerini zorlayarak oynatmada rengin doğru yorumlanmasını sağlar.</item>
+        <item>Parlaklığı ve cihaz uyumluluğunu ayarlamak için Ayarlar’da yeni Rec.709 renk düzeltme seçenekleri.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>REC.709 (BT.709) ve tam aralık renk profilleri seçilebilir; kodlanan video, yayın ve mastering alanında yaygın renk uygulamalarıyla uyumlu olabilir.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Bazı cihazlarda dahili sesin artık kaydedilmemesine neden olan sorun giderildi</item>
+        <item>GIF kaydı dışa aktarımlarının çok düşük kare hızında görünmesi düzeltildi</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Daha iyi güvenilirlik ve tepki için kayıt yer paylaşımı arayüzü ve alt mantık sıfırdan yeniden oluşturuldu</item>
+        <item>Daha temiz ve tutarlı bir görsel dil için tüm yer paylaşımı ve bildirim simgeleri yeniden tasarlandı</item>
+        <item>Xiaomi, Samsung ve Nothing cihazlarında OEM\'ye özgü uyumluluk sorunları giderildi</item>
+        <item>Desteklenmeyen çözünürlük ve codec\'lerde otomatik uyumlu yapılandırmaya geçişle kayıt hatası işleme yeniden düzenlendi</item>
+        <item>Tüm desteklenen dillerde eksik yerelleştirme dizeleri tamamlandı</item>
+        <item>Yanlış görüntü kırpma düzeltildi ve GIF kayıt kalitesi iyileştirildi</item>
+        <item>Düşük performanslı cihazlarda kare düşmesini ve kodlayıcı hatalarını azaltmak için kaliteyi otomatik ayarlayan performansa uyumlu kayıt modu</item>
+        <item>Geri sayım zamanlayıcısı 30 saniyeye kadar genişletildi</item>
+        <item>Genel uygulama performansı iyileştirildi</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>H.264 ve H.265 (HEVC) codec desteğiyle ekran kaydı</item>

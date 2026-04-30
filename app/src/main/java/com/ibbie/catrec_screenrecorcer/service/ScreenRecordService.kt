@@ -57,10 +57,13 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
+import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineEventBus
@@ -188,6 +191,15 @@ class ScreenRecordService :
         const val EXTRA_FILENAME_PATTERN = "EXTRA_FILENAME_PATTERN"
         const val EXTRA_RESOLUTION = "EXTRA_RESOLUTION"
         const val EXTRA_VIDEO_ENCODER = "EXTRA_VIDEO_ENCODER"
+        const val EXTRA_COLOR_MODE = "EXTRA_COLOR_MODE"
+
+        /**
+         * When true (and [EXTRA_COLOR_MODE] is "Standard"), the finalized MP4 is stream-copy
+         * remuxed so AVC/HEVC bitstream metadata explicitly advertises Rec.709 limited range.
+         * Pixel data is not modified. Default false.
+         */
+        const val EXTRA_FORCE_REC709 = "EXTRA_FORCE_REC709"
+        const val EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION = "EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION"
         const val EXTRA_COUNTDOWN = "EXTRA_COUNTDOWN"
         const val EXTRA_KEEP_SCREEN_ON = "EXTRA_KEEP_SCREEN_ON"
         const val EXTRA_RECORDING_ORIENTATION = "EXTRA_RECORDING_ORIENTATION"
@@ -298,6 +310,26 @@ class ScreenRecordService :
     private var mainForegroundActive = false
     private var wakeLock: PowerManager.WakeLock? = null
 
+    /**
+     * Cached color-mode snapshot from [com.ibbie.catrec_screenrecorcer.CatRecApplication].
+     * Used as a validated fallback when [EXTRA_COLOR_MODE] is absent or invalid in an Intent.
+     */
+    private val cachedColorModeFromApp: String
+        get() = (application as? CatRecApplication)?.settingsConfigCache?.current()?.colorMode
+            ?: ColorMode.STANDARD
+
+    /**
+     * Cached force-rec709 snapshot from [com.ibbie.catrec_screenrecorcer.CatRecApplication].
+     * Used as a fallback when [EXTRA_FORCE_REC709] is absent from an Intent.
+     */
+    private val cachedForceRec709FromApp: Boolean
+        get() = (application as? CatRecApplication)?.settingsConfigCache?.current()?.forceRec709Compatibility
+            ?: false
+
+    private val cachedRec709CompatBrightnessCorrectionFromApp: String
+        get() = (application as? CatRecApplication)?.settingsConfigCache?.current()?.rec709CompatBrightnessCorrection
+            ?: Rec709CompatBrightnessCorrection.OFF
+
     private var resultCode: Int = 0
     private var resultData: Intent? = null
     private var screenDensity: Int = 0
@@ -334,6 +366,9 @@ class ScreenRecordService :
     private var filenamePattern: String = "yyyyMMdd_HHmmss"
     private var resolutionSetting: String = "Native"
     private var videoEncoder: String = "H.264"
+    private var colorMode: String = ColorMode.STANDARD
+    private var forceRec709Compatibility: Boolean = false
+    private var rec709CompatBrightnessCorrection: String = Rec709CompatBrightnessCorrection.OFF
     private var keepScreenOn: Boolean = false
     private var countdownValue: Int = 0
     private var recordingOrientationSetting: String = "Auto"
@@ -613,6 +648,13 @@ class ScreenRecordService :
                 filenamePattern = intent.getStringExtra(EXTRA_FILENAME_PATTERN) ?: "yyyyMMdd_HHmmss"
                 resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
                 videoEncoder = intent.getStringExtra(EXTRA_VIDEO_ENCODER) ?: "H.264"
+                colorMode = ColorMode.resolve(intent.getStringExtra(EXTRA_COLOR_MODE), cachedColorModeFromApp)
+                forceRec709Compatibility = intent.getBooleanExtra(EXTRA_FORCE_REC709, cachedForceRec709FromApp)
+                rec709CompatBrightnessCorrection =
+                    Rec709CompatBrightnessCorrection.resolve(
+                        intent.getStringExtra(EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION),
+                        cachedRec709CompatBrightnessCorrectionFromApp,
+                    )
                 countdownValue = intent.getIntExtra(EXTRA_COUNTDOWN, 0).coerceIn(0, 60)
                 keepScreenOn = intent.getBooleanExtra(EXTRA_KEEP_SCREEN_ON, false)
                 recordingOrientationSetting = intent.getStringExtra(EXTRA_RECORDING_ORIENTATION) ?: "Auto"
@@ -730,6 +772,13 @@ class ScreenRecordService :
                     audioEncoderType = intent.getStringExtra(EXTRA_AUDIO_ENCODER) ?: "AAC-LC"
                     resolutionSetting = intent.getStringExtra(EXTRA_RESOLUTION) ?: "Native"
                     videoEncoder = intent.getStringExtra(EXTRA_VIDEO_ENCODER) ?: "H.264"
+                    colorMode = ColorMode.resolve(intent.getStringExtra(EXTRA_COLOR_MODE), cachedColorModeFromApp)
+                    forceRec709Compatibility = intent.getBooleanExtra(EXTRA_FORCE_REC709, cachedForceRec709FromApp)
+                    rec709CompatBrightnessCorrection =
+                        Rec709CompatBrightnessCorrection.resolve(
+                            intent.getStringExtra(EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION),
+                            cachedRec709CompatBrightnessCorrectionFromApp,
+                        )
                     clipperDurationMinutes = intent.getIntExtra(EXTRA_CLIPPER_DURATION_MINUTES, 1).coerceIn(1, 5)
                     countdownValue = intent.getIntExtra(EXTRA_COUNTDOWN, 0).coerceIn(0, 60)
                     applySessionConfigFromIntent(intent)
@@ -1457,6 +1506,7 @@ class ScreenRecordService :
             val stopB = ArrayList(repo.stopBehavior.first())
             val saveLoc = repo.saveLocationUri.first()
             val vidEnc = repo.videoEncoder.first()
+            val colMode = repo.colorMode.first()
             val fnPat = repo.filenamePattern.first()
             val cd = repo.countdown.first()
             val kso = repo.keepScreenOn.first()
@@ -1503,6 +1553,9 @@ class ScreenRecordService :
                 stopBehaviors = stopB
                 saveLocationUri = saveLoc
                 videoEncoder = vidEnc
+                colorMode = colMode
+                forceRec709Compatibility = repo.forceRec709Compatibility.first()
+                rec709CompatBrightnessCorrection = repo.rec709CompatBrightnessCorrection.first()
                 filenamePattern = fnPat
                 countdownValue = cd.coerceIn(0, 60)
                 keepScreenOn = kso
@@ -1533,6 +1586,7 @@ class ScreenRecordService :
             val audioEnc = repo.audioEncoder.first()
             val floatCtl = repo.floatingControls.first()
             val vidEnc = repo.videoEncoder.first()
+            val colMode = repo.colorMode.first()
             val resVal = repo.resolution.first()
             val clipMin = repo.clipperDurationMinutes.first()
             val cd = repo.countdown.first()
@@ -1549,6 +1603,9 @@ class ScreenRecordService :
                 cachedFloatingControlsForNotification = floatCtl
                 FloatingControlsNotificationCache.update(floatCtl)
                 videoEncoder = vidEnc
+                colorMode = colMode
+                forceRec709Compatibility = repo.forceRec709Compatibility.first()
+                rec709CompatBrightnessCorrection = repo.rec709CompatBrightnessCorrection.first()
                 resolutionSetting = resVal
                 clipperDurationMinutes = clipMin
                 countdownValue = cd.coerceIn(0, 60)
@@ -1823,6 +1880,7 @@ class ScreenRecordService :
                         mediaProjection = mediaProjection!!,
                         outputFileDescriptor = pfd.fileDescriptor,
                         encoderType = videoEncoder,
+                        colorMode = colorMode,
                         audioBitrate = audioBitrate,
                         audioSampleRate = audioSampleRate,
                         audioChannelCount = channelCount,
@@ -2291,6 +2349,10 @@ class ScreenRecordService :
         val snapshotGifFps = gifOutputFps
         val snapshotGifMaxColors = gifMaxColors
         val snapshotGifPaletteDitherKind = gifPaletteDither
+        // Snapshot at stop time so GIF export uses the same color mode as the encoded MP4.
+        val snapshotColorMode = colorMode
+        val snapshotForceRec709 = forceRec709Compatibility
+        val snapshotRec709BrightnessCorrection = rec709CompatBrightnessCorrection
         isGifSession = false
         gifMaxDurationSec = 0
 
@@ -2327,7 +2389,26 @@ class ScreenRecordService :
             if (hadOutput) {
                 val tempVid = currentTempRecordingFile
                 if (savedUri != null && tempVid != null) {
-                    commitTempFileToUri(tempVid, savedUri)
+                    val finalVideoFile =
+                        Rec709MetadataRepair.repairIfNeeded(
+                            context = this@ScreenRecordService,
+                            inputFile = tempVid,
+                            colorMode = snapshotColorMode,
+                            forceRec709Compatibility = snapshotForceRec709,
+                            brightnessCorrection =
+                                if (snapshotGifSession) {
+                                    Rec709CompatBrightnessCorrection.OFF
+                                } else {
+                                    snapshotRec709BrightnessCorrection
+                                },
+                        )
+                    commitTempFileToUri(finalVideoFile, savedUri)
+                    if (finalVideoFile != tempVid) {
+                        try {
+                            finalVideoFile.delete()
+                        } catch (_: Exception) {
+                        }
+                    }
                     try {
                         tempVid.delete()
                     } catch (_: Exception) {
@@ -2357,6 +2438,8 @@ class ScreenRecordService :
                             snapshotGifFps,
                             maxColors = snapshotGifMaxColors,
                             paletteDither = snapshotGifPaletteDitherKind,
+                            colorMode = snapshotColorMode,
+                            forceRec709Compatibility = snapshotForceRec709,
                         )
                     if (gifOk) {
                         try {
@@ -2569,6 +2652,7 @@ class ScreenRecordService :
                         audioMode = audioMode,
                         mediaProjection = mediaProjection!!,
                         encoderType = videoEncoder,
+                        colorMode = colorMode,
                         audioBitrate = audioBitrate,
                         audioSampleRate = audioSampleRate,
                         audioChannelCount = channelCount,
@@ -2682,6 +2766,9 @@ class ScreenRecordService :
 
     private fun saveClip() {
         if (!isBufferRunning) return
+        val snapshotColorMode = colorMode
+        val snapshotForceRec709 = forceRec709Compatibility
+        val snapshotRec709BrightnessCorrection = rec709CompatBrightnessCorrection
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -2699,6 +2786,14 @@ class ScreenRecordService :
                     tempFile.delete()
                     return@launch
                 }
+                val finalClipFile =
+                    Rec709MetadataRepair.repairIfNeeded(
+                        context = this@ScreenRecordService,
+                        inputFile = tempFile,
+                        colorMode = snapshotColorMode,
+                        forceRec709Compatibility = snapshotForceRec709,
+                        brightnessCorrection = snapshotRec709BrightnessCorrection,
+                    )
 
                 // Copy to MediaStore so the clip appears in the gallery
                 val contentValues =
@@ -2716,7 +2811,7 @@ class ScreenRecordService :
                 val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, contentValues)
                 if (uri != null) {
                     contentResolver.openOutputStream(uri)?.use { out ->
-                        tempFile.inputStream().use { it.copyTo(out) }
+                        finalClipFile.inputStream().use { it.copyTo(out) }
                     }
                     if (Build.VERSION.SDK_INT >= 29) {
                         contentResolver.update(
@@ -2725,6 +2820,12 @@ class ScreenRecordService :
                             null,
                             null,
                         )
+                    }
+                }
+                if (finalClipFile != tempFile) {
+                    try {
+                        finalClipFile.delete()
+                    } catch (_: Exception) {
                     }
                 }
                 tempFile.delete()

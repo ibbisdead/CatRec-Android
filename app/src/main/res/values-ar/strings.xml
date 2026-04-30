@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - مسجل الشاشة</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">معدل الإطارات (FPS)</string>
     <string name="setting_bitrate">معدل نقل بيانات الفيديو</string>
     <string name="setting_video_encoder">مشفر الفيديو</string>
+    <string name="setting_color_mode">وضع الألوان</string>
+    <string name="setting_color_mode_standard">قياسي (Rec.709)</string>
+    <string name="setting_color_mode_full">نطاق كامل</string>
+    <string name="dialog_color_mode">وضع الألوان</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">تصحيح سطوع Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">يطبق رفع غاما خفيفًا بعد إصلاح البيانات الوصفية. قد يقلل سرعة التصدير قليلًا.</string>
+    <string name="rec709_brightness_correction_off">إيقاف</string>
+    <string name="rec709_brightness_correction_low">تصحيح سطوع منخفض</string>
+    <string name="rec709_brightness_correction_medium">تصحيح سطوع متوسط</string>
     <string name="setting_orientation">الاتجاه</string>
     <string name="setting_orientation_auto">تلقائي</string>
     <string name="setting_orientation_portrait">عمودي</string>
@@ -412,12 +423,6 @@
     <string name="clipper_duration_5m">5 د</string>
     <string name="perm_rationale_intro">يحتاج CatRec إلى الأذونات التالية لتسجيل شاشتك:</string>
     <string name="perm_dialog_title">الأذونات مطلوبة</string>
-    <string name="beta_title">أنت في وصول مبكر</string>
-    <string name="beta_line_1">⚠️  هذا إصدار تجريبي.</string>
-    <string name="beta_line_2">قد تواجه أخطاء أو توقفات أو ميزات غير مكتملة. جهازك وبياناتك آمنة — تُحفظ التسجيلات محلياً ولا يُرفع أي شيء.</string>
-    <string name="beta_line_3">ملاحظاتك تُشكّل هذا التطبيق مباشرةً. إذا حدث خطأ أو شيء يبدو غير طبيعي، يرجى الإبلاغ عنه — حتى رسالة قصيرة تساعد كثيراً.</string>
-    <string name="beta_line_4">شكراً لتجربة CatRec مبكراً. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">حذف التسجيل؟</string>
     <string name="delete_recording_message">سيُحذف «%1$s» نهائياً.</string>
@@ -624,8 +629,33 @@
     <string name="content_desc_more_options">المزيد من الخيارات</string>
     <string name="content_desc_rewind_10">إرجاع 10 ثوانٍ</string>
     <string name="content_desc_forward_10">تقديم 10 ثوانٍ</string>
-    <string name="beta_feedback_email_subject">ملاحظات CatRec التجريبية</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>فرض بيانات وصفية REC.709 (‏BT.709)‎ على الأجهزة التي تدعم ترميز HEVC فقط مثل ‏Poco X7 Pro‏ حتى يُفسَّر لون العرض بشكل صحيح.</item>
+        <item>خيارات جديدة لتصحيح ألوان Rec.709 في الإعدادات لضبط السطوع وتوافق الجهاز.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>تمت إضافة ملفّات تعريف ألوان اختيارية: REC.709 (‏BT.709)‎ والمدى الكامل، لتمكين ترميز فيديو يتوافق مع ممارسات الألوان السائدة في البثّ وإعداد الملف النهائي.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>إصلاح مشكلة تسببت في توقف تسجيل الصوت الداخلي على بعض الأجهزة</item>
+        <item>إصلاح ظهور صادرات تسجيل GIF بمعدل إطارات منخفض جدًا</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>إعادة بناء واجهة تراكب التسجيل والمنطق الأساسي من الصفر لموثوقية وسرعة استجابة أفضل</item>
+        <item>إعادة تصميم جميع أيقونات التراكب والإشعارات لمظهر بصري أنظف وأكثر اتساقًا</item>
+        <item>حل مشكلات توافق خاصة بكل شركة تصنيع على أجهزة Xiaomi وسامسونج وNothing</item>
+        <item>تحسين معالجة أخطاء التسجيل مع استرداد تلقائي عند عدم دعم الدقة أو الترميز مع الرجوع إلى إعدادات متوافقة</item>
+        <item>استكمال السلاسل المترجمة الناقصة في جميع اللغات المدعومة</item>
+        <item>إصلاح قص الصورة الخاطئ وتحسين جودة تسجيل GIF</item>
+        <item>وضع تسجيل متكيف مع الأداء يعدّل الجودة تلقائيًا على الأجهزة الأقل قدرة لتقليل فقد الإطارات وأخطاء الترميز</item>
+        <item>تمديد نطاق مؤقت العد التنازلي حتى 30 ثانية</item>
+        <item>تحسين الأداء العام للتطبيق</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>تسجيل الشاشة مع دعم برامج الترميز H.264 وH.265 (HEVC).</item>

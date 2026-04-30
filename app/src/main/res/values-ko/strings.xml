@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - 화면 녹화</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">프레임 레이트 (FPS)</string>
     <string name="setting_bitrate">비디오 비트레이트</string>
     <string name="setting_video_encoder">비디오 인코더</string>
+    <string name="setting_color_mode">색상 모드</string>
+    <string name="setting_color_mode_standard">표준 (Rec.709)</string>
+    <string name="setting_color_mode_full">전체 범위</string>
+    <string name="dialog_color_mode">색상 모드</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 밝기 보정</string>
+    <string name="setting_rec709_brightness_correction_summary">메타데이터 복구 후 약한 감마 보정을 적용합니다. 내보내기 속도가 약간 느려질 수 있습니다.</string>
+    <string name="rec709_brightness_correction_off">끄기</string>
+    <string name="rec709_brightness_correction_low">낮은 밝기 보정</string>
+    <string name="rec709_brightness_correction_medium">중간 밝기 보정</string>
     <string name="setting_orientation">방향</string>
     <string name="setting_orientation_auto">자동</string>
     <string name="setting_orientation_portrait">세로</string>
@@ -407,12 +418,6 @@
     <string name="clipper_duration_5m">5분</string>
     <string name="perm_rationale_intro">CatRec은 화면을 녹화하려면 다음 권한이 필요합니다:</string>
     <string name="perm_dialog_title">필요한 권한</string>
-    <string name="beta_title">앞서 해보기를 진행 중입니다.</string>
-    <string name="beta_line_1">⚠️ 베타 버전입니다.</string>
-    <string name="beta_line_2">버그, 충돌 또는 완료되지 않은 기능이 발생할 수 있습니다. 귀하의 장치와 데이터는 안전합니다. 녹음 내용은 로컬에 저장되며 아무것도 업로드되지 않습니다.</string>
-    <string name="beta_line_3">여러분의 피드백이 이 앱을 직접 형성합니다. 뭔가 고장나거나 기분이 좋지 않으면 신고해 주세요. 짧은 메시지라도 큰 도움이 됩니다.</string>
-    <string name="beta_line_4">CatRec을 일찍 사용해 주셔서 감사합니다. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">녹음을 삭제하시겠습니까?</string>
     <string name="delete_recording_message">"%1$s"이(가) 영구적으로 삭제됩니다.</string>
@@ -609,8 +614,33 @@
     <string name="content_desc_more_options">추가 옵션</string>
     <string name="content_desc_rewind_10">10초 되감기</string>
     <string name="content_desc_forward_10">10초 빨리 감기</string>
-    <string name="beta_feedback_email_subject">CatRec 베타 피드백</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Poco X7 Pro처럼 HEVC 인코딩만 지원하는 기기에서 Rec.709(BT.709) 메타데이터를 강제해 재생 시 색이 올바르게 해석되도록 했습니다.</item>
+        <item>설정에 Rec.709 색 보정 옵션을 추가해 밝기와 기기 호환성을 조절할 수 있습니다.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>REC.709(BT.709) 및 풀 레인지 컬러 프로파일을 선택할 수 있어, 일반적인 방송·마스터링 색 재현 관행에 맞춘 인코딩이 가능합니다.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>일부 기기에서 내부 오디오가 더 이상 녹음되지 않던 문제 수정</item>
+        <item>GIF 녹화 내보내기에서 프레임 속도가 매우 낮게 보이던 문제 수정</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>안정성과 반응성을 높이기 위해 녹화 오버레이 UI와 내부 로직을 처음부터 재구축</item>
+        <item>더 깔끔하고 일관된 시각 언어를 위해 모든 오버레이 및 알림 아이콘 재디자인</item>
+        <item>Xiaomi, Samsung, Nothing 기기의 OEM별 호환성 문제 해결</item>
+        <item>지원되지 않는 해상도·코덱에서 자동으로 호환 설정으로 복구되도록 녹화 실패 처리 개편</item>
+        <item>지원되는 모든 언어에서 누락된 현지화 문자열 완료</item>
+        <item>잘못된 이미지 자르기 수정 및 GIF 녹화 품질 개선</item>
+        <item>저사양 기기에서 프레임 드롭과 인코더 오류를 줄이도록 품질을 자동 조정하는 성능 적응 녹화 모드</item>
+        <item>카운트다운 타이머 범위를 최대 30초까지 확장</item>
+        <item>전반적인 앱 성능 향상</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>H.264 및 H.265(HEVC) 코덱 지원으로 화면 녹화</item>

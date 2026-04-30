@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Ghi Màn Hình</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Tốc độ khung hình (FPS)</string>
     <string name="setting_bitrate">Tốc độ bit video</string>
     <string name="setting_video_encoder">Bộ mã hóa video</string>
+    <string name="setting_color_mode">Chế độ màu</string>
+    <string name="setting_color_mode_standard">Tiêu chuẩn (Rec.709)</string>
+    <string name="setting_color_mode_full">Phạm vi đầy đủ</string>
+    <string name="dialog_color_mode">Chế độ màu</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Sửa độ sáng Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">Áp dụng tăng gamma nhẹ sau khi sửa siêu dữ liệu. Có thể làm giảm nhẹ tốc độ xuất.</string>
+    <string name="rec709_brightness_correction_off">Tắt</string>
+    <string name="rec709_brightness_correction_low">Sửa độ sáng thấp</string>
+    <string name="rec709_brightness_correction_medium">Sửa độ sáng trung bình</string>
     <string name="setting_orientation">Hướng</string>
     <string name="setting_orientation_auto">Tự động</string>
     <string name="setting_orientation_portrait">Dọc</string>
@@ -407,12 +418,6 @@
     <string name="clipper_duration_5m">5 phút</string>
     <string name="perm_rationale_intro">CatRec cần có các quyền sau để ghi lại màn hình của bạn:</string>
     <string name="perm_dialog_title">Yêu cầu quyền</string>
-    <string name="beta_title">Bạn đang ở chế độ Truy cập sớm</string>
-    <string name="beta_line_1">⚠️ Đây là phiên bản beta.</string>
-    <string name="beta_line_2">Bạn có thể gặp lỗi, treo máy hoặc các tính năng chưa hoàn thiện. Thiết bị và dữ liệu của bạn được an toàn — các bản ghi được lưu cục bộ và không có gì được tải lên.</string>
-    <string name="beta_line_3">Phản hồi của bạn trực tiếp định hình ứng dụng này. Nếu có điều gì đó xảy ra hoặc cảm thấy không ổn, vui lòng báo cáo nó - ngay cả một tin nhắn ngắn cũng giúp ích rất nhiều.</string>
-    <string name="beta_line_4">Cảm ơn bạn đã dùng thử CatRec sớm. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Xóa bản ghi?</string>
     <string name="delete_recording_message">"%1$s" sẽ bị xóa vĩnh viễn.</string>
@@ -609,8 +614,33 @@
     <string name="content_desc_more_options">Tùy chọn khác</string>
     <string name="content_desc_rewind_10">Tua lại 10 giây</string>
     <string name="content_desc_forward_10">Tua tới 10 giây</string>
-    <string name="beta_feedback_email_subject">Phản hồi beta CatRec</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Buộc metadata Rec.709 (BT.709) trên thiết bị chỉ hỗ trợ mã hóa HEVC như Poco X7 Pro để màu khi phát được hiểu thị đúng.</item>
+        <item>Tùy chọn hiệu chỉnh màu Rec.709 mới trong Cài đặt để tinh chỉnh độ sáng và khả năng tương thích thiết bị.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Thêm hồ sơ màu REC.709 (BT.709) và dải đầy đủ (full range) tùy chọn để video mã hóa phù hợp với thông lệ màu phát sóng và hậu kỳ thông dụng.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Sửa lỗi khiến âm thanh nội bộ không còn được ghi trên một số thiết bị</item>
+        <item>Sửa lỗi xuất GIF ghi màn hình có tốc độ khung hình rất thấp</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Xây dựng lại hoàn toàn giao diện overlay ghi và logic nền để tăng độ tin cậy và độ phản hồi</item>
+        <item>Thiết kế lại toàn bộ biểu tượng overlay và thông báo cho ngôn ngữ hình ảnh gọn và nhất quán hơn</item>
+        <item>Giải quyết các vấn đề tương thích riêng của OEM trên thiết bị Xiaomi, Samsung và Nothing</item>
+        <item>Làm lại xử lý lỗi ghi với khôi phục khi độ phân giải hoặc codec không được hỗ trợ và chuyển tự động sang cấu hình tương thích</item>
+        <item>Hoàn thiện các chuỗi bản địa hóa còn thiếu cho mọi ngôn ngữ được hỗ trợ</item>
+        <item>Sửa cắt ảnh sai và cải thiện chất lượng ghi GIF</item>
+        <item>Chế độ ghi thích ứng hiệu năng tự điều chỉnh chất lượng trên thiết bị yếu để giảm rơi khung và lỗi bộ mã hóa</item>
+        <item>Mở rộng phạm vi đếm ngược tối đa 30 giây</item>
+        <item>Cải thiện hiệu năng tổng thể của ứng dụng</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>Ghi màn hình với hỗ trợ codec H.264 và H.265 (HEVC)</item>

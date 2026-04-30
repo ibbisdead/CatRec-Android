@@ -12,26 +12,18 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -47,11 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -100,11 +90,8 @@ fun FabRecordingBridge(
 ) {
     val context = LocalContext.current
     val toastScreenCaptureDenied = stringResource(R.string.toast_screen_capture_denied)
-    val betaFeedbackEmailSubject = stringResource(R.string.beta_feedback_email_subject)
-    val toastNoEmailApp = stringResource(R.string.toast_no_email_app)
     val lifecycleOwner = LocalLifecycleOwner.current
     val permissionManager = remember { PermissionManager(context) }
-    val accent = LocalAccentColor.current
 
     var allPermissionsGranted by remember { mutableStateOf(permissionManager.areAllGranted()) }
     var missingPermissions by remember { mutableStateOf(permissionManager.getMissingPermissions()) }
@@ -132,16 +119,12 @@ fun FabRecordingBridge(
         consumeScreenshotExtra(activity)
     }
 
-    var showBetaNotice by remember { mutableStateOf(false) }
     LaunchedEffect(allPermissionsGranted) {
         if (!allPermissionsGranted) {
-            showBetaNotice = false
             return@LaunchedEffect
         }
         // Idle controls notification: post after POST_NOTIFICATIONS (or Settings) allows it.
         AppControlNotification.refresh(context.applicationContext)
-        val alreadyShown = viewModel.betaNoticePersistedValue()
-        showBetaNotice = !alreadyShown
         // On aggressive-killer OEMs, nudge once if battery is not yet exempted.
         if (BatteryOptimizationHelper.isAggressiveKiller() &&
             !BatteryOptimizationHelper.isExempted(context)
@@ -495,28 +478,6 @@ fun FabRecordingBridge(
         )
     }
 
-    if (showBetaNotice) {
-        BetaNoticeDialog(
-            accent = accent,
-            onFeedback = {
-                viewModel.setBetaNoticeShown(true)
-                try {
-                    context.startActivity(
-                        Intent(Intent.ACTION_SENDTO, "mailto:".toUri()).apply {
-                            putExtra(Intent.EXTRA_EMAIL, arrayOf("ibbiedead@gmail.com"))
-                            putExtra(Intent.EXTRA_SUBJECT, betaFeedbackEmailSubject)
-                        },
-                    )
-                } catch (_: Exception) {
-                    Toast.makeText(context, toastNoEmailApp, Toast.LENGTH_SHORT).show()
-                }
-            },
-            onDismiss = {
-                viewModel.setBetaNoticeShown(true)
-            },
-        )
-    }
-
     if (showBatteryRationaleDialog) {
         BatteryOptimizationRationaleDialog(
             onDismiss = { showBatteryRationaleDialog = false },
@@ -605,74 +566,3 @@ private fun PermissionRationaleDialog(
     )
 }
 
-@Composable
-private fun BetaNoticeDialog(
-    accent: Color,
-    onFeedback: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color(0xFF0E0E0E),
-        shape = RoundedCornerShape(20.dp),
-        icon = {
-            Icon(
-                Icons.Default.BugReport,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(36.dp),
-            )
-        },
-        title = {
-            Text(
-                stringResource(R.string.beta_title),
-                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Text(
-                    stringResource(R.string.beta_line_1),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = accent,
-                )
-                Text(
-                    stringResource(R.string.beta_line_2),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFCCCCCC),
-                )
-                HorizontalDivider(color = Color(0xFF2A2A2A))
-                Text(
-                    stringResource(R.string.beta_line_3),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFCCCCCC),
-                )
-                Text(
-                    stringResource(R.string.beta_line_4),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF888888),
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = onFeedback,
-                colors = ButtonDefaults.buttonColors(containerColor = accent),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text(stringResource(R.string.action_leave_feedback), color = Color.Black, fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_got_it), color = Color(0xFF888888))
-            }
-        },
-    )
-}

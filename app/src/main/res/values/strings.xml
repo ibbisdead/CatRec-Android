@@ -123,6 +123,17 @@
     <string name="setting_fps">Frame Rate (FPS)</string>
     <string name="setting_bitrate">Video Bitrate</string>
     <string name="setting_video_encoder">Video Encoder</string>
+    <string name="setting_color_mode">Color Mode</string>
+    <string name="setting_color_mode_standard">Standard (Rec.709)</string>
+    <string name="setting_color_mode_full">Full Range</string>
+    <string name="dialog_color_mode">Color Mode</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 brightness correction</string>
+    <string name="setting_rec709_brightness_correction_summary">Applies a mild gamma lift after metadata repair. May slightly reduce export speed.</string>
+    <string name="rec709_brightness_correction_off">Off</string>
+    <string name="rec709_brightness_correction_low">Low brightness correction</string>
+    <string name="rec709_brightness_correction_medium">Medium brightness correction</string>
     <string name="setting_orientation">Orientation</string>
     <string name="setting_orientation_auto">Auto</string>
     <string name="setting_orientation_portrait">Portrait</string>
@@ -415,12 +426,6 @@
     <string name="clipper_duration_5m">5 min</string>
     <string name="perm_rationale_intro">CatRec needs the following permissions to record your screen:</string>
     <string name="perm_dialog_title">Permissions required</string>
-    <string name="beta_title">You\'re in Early Access</string>
-    <string name="beta_line_1">⚠️  This is a beta release.</string>
-    <string name="beta_line_2">You may encounter bugs, crashes, or unfinished features. Your device and data are safe — recordings are saved locally and nothing is uploaded.</string>
-    <string name="beta_line_3">Your feedback directly shapes this app. If something breaks or feels off, please report it — even a short message helps enormously.</string>
-    <string name="beta_line_4">Thank you for trying CatRec early. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Delete recording?</string>
     <string name="delete_recording_message">\"%1$s\" will be permanently deleted.</string>
@@ -628,8 +633,21 @@
     <string name="content_desc_more_options">More options</string>
     <string name="content_desc_rewind_10">Rewind 10 seconds</string>
     <string name="content_desc_forward_10">Forward 10 seconds</string>
-    <string name="beta_feedback_email_subject">CatRec feedback</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Force Rec.709 (BT.709) metadata on HEVC-only devices such as Poco X7 Pro so playback color is interpreted correctly.</item>
+        <item>New Rec.709 color correction options in Settings to tune brightness and device compatibility.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Introduced selectable REC.709 (BT.709) and full-range color profiles so encoded video can align with widely used broadcast and mastering color practices.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Fixed an issue causing internal audio to no longer be recorded on certain devices</item>
+        <item>Fixed GIF recording exports appearing at very low frame rates</item>
+    </string-array>
 
     <string-array name="changelog_v106_items">
         <item>Rebuilt the recording overlay UI and underlying logic from the ground up for improved reliability and responsiveness</item>

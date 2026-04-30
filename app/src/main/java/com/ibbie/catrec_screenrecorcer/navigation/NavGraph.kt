@@ -76,6 +76,7 @@ import androidx.navigation.navArgument
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.scaledForCompactWidth
 import com.ibbie.catrec_screenrecorcer.ui.components.BannerAdRow
@@ -565,7 +566,14 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                             arguments = listOf(navArgument("videoUri") { type = NavType.StringType }),
                         ) { backStackEntry ->
                             val encodedUri = backStackEntry.arguments?.getString("videoUri") ?: ""
-                            VideoToGifScreen(encodedUri = encodedUri, navController = navController)
+                            val gifColorMode by sharedViewModel.colorMode.collectAsState()
+                            val gifForceRec709 by sharedViewModel.forceRec709Compatibility.collectAsState()
+                            VideoToGifScreen(
+                                encodedUri = encodedUri,
+                                navController = navController,
+                                colorMode = ColorMode.resolve(gifColorMode, ColorMode.STANDARD),
+                                forceRec709Compatibility = gifForceRec709,
+                            )
                         }
                         composable(Screen.MergeVideos.route) {
                             MergeVideosScreen(navController = navController)

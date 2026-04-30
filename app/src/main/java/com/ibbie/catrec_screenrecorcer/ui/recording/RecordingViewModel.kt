@@ -8,8 +8,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.PreparedPausedSavingState
+import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
@@ -74,6 +76,17 @@ class RecordingViewModel(
     val videoEncoder: StateFlow<String> = settingsRepository.videoEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "H.264")
     val resolution: StateFlow<String> = settingsRepository.resolution.stateIn(viewModelScope, SharingStarted.Lazily, "Native")
     val recordingOrientation: StateFlow<String> = settingsRepository.recordingOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
+    val colorMode: StateFlow<String> = settingsRepository.colorMode.stateIn(
+        viewModelScope, SharingStarted.Lazily, ColorMode.STANDARD,
+    )
+    val forceRec709Compatibility: StateFlow<Boolean> =
+        settingsRepository.forceRec709Compatibility.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val rec709CompatBrightnessCorrection: StateFlow<String> =
+        settingsRepository.rec709CompatBrightnessCorrection.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            Rec709CompatBrightnessCorrection.OFF,
+        )
 
     // Audio
     val recordAudio: StateFlow<Boolean> = settingsRepository.recordAudio.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -219,13 +232,6 @@ class RecordingViewModel(
     val personalizedAdsEnabled: StateFlow<Boolean> =
         settingsRepository.personalizedAdsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
 
-    // Onboarding (StateFlow defaults false before DataStore loads; use [betaNoticePersistedValue] for gating.)
-    val betaNoticeShown: StateFlow<Boolean> =
-        settingsRepository.betaNoticeShown.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-    /** Reads the persisted flag so the beta dialog is not shown on every cold start (avoids stateIn initial false). */
-    suspend fun betaNoticePersistedValue(): Boolean = settingsRepository.betaNoticeShown.first()
-
     // Accent Color
     val accentColor: StateFlow<String> = settingsRepository.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, "FF0033")
     val accentColor2: StateFlow<String> = settingsRepository.accentColor2.stateIn(viewModelScope, SharingStarted.Lazily, "FF8C00")
@@ -246,6 +252,13 @@ class RecordingViewModel(
     fun setBitrate(value: Float) = viewModelScope.launch { settingsRepository.setBitrate(value) }
 
     fun setVideoEncoder(value: String) = viewModelScope.launch { settingsRepository.setVideoEncoder(value) }
+
+    fun setColorMode(value: String) = viewModelScope.launch { settingsRepository.setColorMode(value) }
+
+    fun setForceRec709Compatibility(value: Boolean) = viewModelScope.launch { settingsRepository.setForceRec709Compatibility(value) }
+
+    fun setRec709CompatBrightnessCorrection(value: String) =
+        viewModelScope.launch { settingsRepository.setRec709CompatBrightnessCorrection(value) }
 
     fun setResolution(value: String) = viewModelScope.launch { settingsRepository.setResolution(value) }
 
@@ -409,9 +422,6 @@ class RecordingViewModel(
                 adsSdkEnabled = !settingsRepository.adsDisabled.first(),
             )
         }
-
-    // Setters — Onboarding
-    fun setBetaNoticeShown(value: Boolean) = viewModelScope.launch { settingsRepository.setBetaNoticeShown(value) }
 
     // Setters — Accent Color
     fun setAccentColor(value: String) = viewModelScope.launch { settingsRepository.setAccentColor(value) }

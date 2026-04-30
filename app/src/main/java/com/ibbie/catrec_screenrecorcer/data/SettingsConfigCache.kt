@@ -75,6 +75,9 @@ class SettingsConfigCache(
         val screenshotFormat: String,
         val screenshotQuality: Int,
         val clipperDurationMinutes: Int,
+        val colorMode: String,
+        val forceRec709Compatibility: Boolean,
+        val rec709CompatBrightnessCorrection: String,
     ) {
         companion object {
             /** Matches [SettingsRepository] Flow defaults. Used when the cache has not warmed yet. */
@@ -120,6 +123,9 @@ class SettingsConfigCache(
                 screenshotFormat = "JPEG",
                 screenshotQuality = 90,
                 clipperDurationMinutes = 1,
+                colorMode = ColorMode.STANDARD,
+                forceRec709Compatibility = false,
+                rec709CompatBrightnessCorrection = Rec709CompatBrightnessCorrection.OFF,
             )
         }
     }
@@ -210,6 +216,9 @@ class SettingsConfigCache(
             screenshotFormat = screenshotFormat.first(),
             screenshotQuality = screenshotQuality.first(),
             clipperDurationMinutes = clipperDurationMinutes.first(),
+            colorMode = colorMode.first(),
+            forceRec709Compatibility = forceRec709Compatibility.first(),
+            rec709CompatBrightnessCorrection = rec709CompatBrightnessCorrection.first(),
         )
     }
 
@@ -245,13 +254,30 @@ class SettingsConfigCache(
         val misc = combine(keepScreenOn, watermarkXFraction, watermarkYFraction, screenshotFormat, screenshotQuality) { a, b, c, d, e ->
             MiscPart(a, b, c, d, e)
         }
-        val tail = combine(clipperDurationMinutes, captureMode) { a, _ -> a }
+        val tail =
+            combine(
+                clipperDurationMinutes,
+                captureMode,
+                colorMode,
+                forceRec709Compatibility,
+                rec709CompatBrightnessCorrection,
+            ) { a, _, c, d, e ->
+                TailPart(a, c, d, e)
+            }
 
         val groupA = combine(video, audioFlags, audio2, camera, camera2) { v, af, a2, c, c2 ->
             GroupA(v, af, a2, c, c2)
         }
         val groupB = combine(watermark, storageControls, misc, tail) { w, sc, m, t ->
-            GroupB(w, sc, m, t)
+            GroupB(
+                w,
+                sc,
+                m,
+                t.clipperDurationMinutes,
+                t.colorMode,
+                t.forceRec709Compatibility,
+                t.rec709CompatBrightnessCorrection,
+            )
         }
         combine(groupA, groupB) { a, b ->
             Snapshot(
@@ -296,6 +322,9 @@ class SettingsConfigCache(
                 screenshotFormat = b.misc.screenshotFormat,
                 screenshotQuality = b.misc.screenshotQuality,
                 clipperDurationMinutes = b.tailClipperDurationMinutes,
+                colorMode = b.tailColorMode,
+                forceRec709Compatibility = b.tailForceRec709Compatibility,
+                rec709CompatBrightnessCorrection = b.tailRec709CompatBrightnessCorrection,
             )
         }
     }
@@ -363,11 +392,20 @@ class SettingsConfigCache(
         val camera: CameraPart,
         val camera2: Camera2Part,
     )
+    private data class TailPart(
+        val clipperDurationMinutes: Int,
+        val colorMode: String,
+        val forceRec709Compatibility: Boolean,
+        val rec709CompatBrightnessCorrection: String,
+    )
     private data class GroupB(
         val watermark: WatermarkPart,
         val storage: StorageControlsPart,
         val misc: MiscPart,
         val tailClipperDurationMinutes: Int,
+        val tailColorMode: String,
+        val tailForceRec709Compatibility: Boolean,
+        val tailRec709CompatBrightnessCorrection: String,
     )
 
     companion object {

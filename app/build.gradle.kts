@@ -24,16 +24,15 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 27
         targetSdk = 36
-        versionCode = 18
-        versionName = "1.0.6"
+        versionCode = 21
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
-        // ABI set is controlled by splits { abi { include(...) } } below.
-        // arm64-v8a + armeabi-v7a only — x86_64 omitted (emulator-only; modern emulators
-        // run ARM binaries via hardware-assisted translation).
+        // Native ABIs: arm64-v8a + armeabi-v7a come from dependencies (FFmpegKit, etc.).
+        // APK sideload is a universal ARM APK; Play delivers ABI splits via bundle.abi below.
     }
 
     buildTypes {
@@ -72,15 +71,13 @@ android {
             useLegacyPackaging = false
         }
     }
-    // APK builds: produce one APK per ABI instead of a fat universal APK.
-    // Sideload the arm64-v8a variant for ~99% of real devices.
-    // No universalApk — the AAB (Play Store) covers all device splits automatically.
+    // ABI splits must stay OFF here: release bundle + shrinkResources + minifyReleaseWithR8
+    // otherwise AGP emits multiple shrunk-resources-proto-format-* files and buildReleasePreBundle fails
+    // (https://issuetracker.google.com/issues/402800800). Play still ships per-ABI slices via [bundle.abi]
+    // below; sideload builds get one universal APK (both ARM ABIs), slightly larger than a single-ABI APK.
     splits {
         abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a")
-            isUniversalApk = false
+            isEnable = false
         }
     }
 

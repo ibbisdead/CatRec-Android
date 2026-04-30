@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - 画面録画</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">フレームレート（FPS）</string>
     <string name="setting_bitrate">ビデオビットレート</string>
     <string name="setting_video_encoder">ビデオエンコーダー</string>
+    <string name="setting_color_mode">カラーモード</string>
+    <string name="setting_color_mode_standard">標準（Rec.709）</string>
+    <string name="setting_color_mode_full">フルレンジ</string>
+    <string name="dialog_color_mode">カラーモード</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 明るさ補正</string>
+    <string name="setting_rec709_brightness_correction_summary">メタデータ修復後に軽いガンマ補正を適用します。エクスポート速度が少し低下する場合があります。</string>
+    <string name="rec709_brightness_correction_off">オフ</string>
+    <string name="rec709_brightness_correction_low">低い明るさ補正</string>
+    <string name="rec709_brightness_correction_medium">中程度の明るさ補正</string>
     <string name="setting_orientation">向き</string>
     <string name="setting_orientation_auto">自動</string>
     <string name="setting_orientation_portrait">縦向き</string>
@@ -407,12 +418,6 @@
     <string name="clipper_duration_5m">5分</string>
     <string name="perm_rationale_intro">CatRec で画面を記録するには、次の権限が必要です。</string>
     <string name="perm_dialog_title">必要な権限</string>
-    <string name="beta_title">早期アクセス中です</string>
-    <string name="beta_line_1">⚠️これはベータ版です。</string>
-    <string name="beta_line_2">バグ、クラッシュ、未完成の機能が発生する可能性があります。デバイスとデータは安全です。録画はローカルに保存され、何もアップロードされません。</string>
-    <string name="beta_line_3">あなたのフィードバックがこのアプリを直接形作ります。何かが壊れたり、気分が悪くなったりした場合は、報告してください。短いメッセージでも非常に役立ちます。</string>
-    <string name="beta_line_4">CatRec を早めにお試しいただきありがとうございます。 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">録音を削除しますか?</string>
     <string name="delete_recording_message">「%1$s」は完全に削除されます。</string>
@@ -609,8 +614,33 @@
     <string name="content_desc_more_options">その他のオプション</string>
     <string name="content_desc_rewind_10">10秒戻る</string>
     <string name="content_desc_forward_10">10秒進む</string>
-    <string name="beta_feedback_email_subject">CatRec ベータフィードバック</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>HEVCのみのエンコードに対応する端末（例：Poco X7 Pro）で Rec.709（BT.709）メタデータを強制し、再生時の色解釈を正しくします。</item>
+        <item>設定に Rec.709 の色彩補正オプションを追加し、明るさと端末との相性を調整できるようにしました。</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>REC.709（BT.709）およびフルレンジのカラープロファイルを選択可能にし、一般的な放送・マスタリングのカラー運用に合わせたエンコードができるようにしました。</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>一部デバイスで内部音声が録音されなくなる問題を修正</item>
+        <item>GIF録画の書き出しでフレームレートが極端に低く見える問題を修正</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>信頼性と応答性の向上のため、録画オーバーレイUIと内部ロジックを一から再構築</item>
+        <item>よりすっきりした統一感のある見た目にするため、すべてのオーバーレイと通知アイコンを再設計</item>
+        <item>Xiaomi、Samsung、Nothing向けのOEM固有の互換性問題を解消</item>
+        <item>非対応の解像度やコーデックでも自動的に互換設定へフォールバックできるよう録画失敗処理を刷新</item>
+        <item>対応言語すべてで不足していたローカライズ文字列を補完</item>
+        <item>画像トリミングの不具合を修正しGIF録画品質を改善</item>
+        <item>性能に応じて画質を自動調整し、フレーム落ちやエンコードエラーを抑える適応型録画モード</item>
+        <item>カウントダウンタイマーを最大30秒まで拡張</item>
+        <item>アプリ全体のパフォーマンスを改善</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>H.264 および H.265 (HEVC) コーデックをサポートした画面録画</item>

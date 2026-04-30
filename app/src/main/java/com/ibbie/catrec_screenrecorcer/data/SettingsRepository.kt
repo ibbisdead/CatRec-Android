@@ -46,6 +46,28 @@ class SettingsRepository(
         val RESOLUTION = stringPreferencesKey("resolution")
         val RECORDING_ORIENTATION = stringPreferencesKey("recording_orientation")
 
+        /**
+         * Color output mode for the video encoder.
+         * "Standard" → Rec.709 limited-range SDR (corrects washed-out / gray recordings).
+         * "Full"     → Full-range SDR (use only when the target player expects full range).
+         */
+        val COLOR_MODE = stringPreferencesKey("color_mode")
+
+        /**
+         * When true (and [COLOR_MODE] == "Standard"), the finalized MP4 is repaired with an
+         * FFmpeg stream-copy metadata pass so AVC/HEVC bitstream metadata explicitly advertises
+         * Rec.709 limited range. Pixel data is not modified.
+         * Defaults false; only needed on problem devices.
+         */
+        val FORCE_REC709_COMPATIBILITY = booleanPreferencesKey("force_rec709_compatibility")
+
+        /**
+         * Optional post-repair gamma lift for devices where metadata-only Rec.709 compatibility
+         * output is slightly dark. Applies only to Standard + Force Rec.709 compatibility and
+         * re-encodes video, so OFF is the default.
+         */
+        val REC709_COMPAT_BRIGHTNESS_CORRECTION = stringPreferencesKey("rec709_compat_brightness_correction")
+
         // Audio
         val RECORD_AUDIO = booleanPreferencesKey("record_audio")
         val INTERNAL_AUDIO = booleanPreferencesKey("internal_audio")
@@ -146,9 +168,6 @@ class SettingsRepository(
          */
         val ADS_DISABLED = booleanPreferencesKey("ads_disabled_entitlement")
 
-        // Onboarding
-        val BETA_NOTICE_SHOWN = booleanPreferencesKey("beta_notice_shown")
-
         // Accent Color
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
         val ACCENT_COLOR_2 = stringPreferencesKey("accent_color_2")
@@ -161,6 +180,12 @@ class SettingsRepository(
     val videoEncoder: Flow<String> = context.dataStore.data.map { it[VIDEO_ENCODER] ?: "H.264" }
     val resolution: Flow<String> = context.dataStore.data.map { it[RESOLUTION] ?: "Native" }
     val recordingOrientation: Flow<String> = context.dataStore.data.map { it[RECORDING_ORIENTATION] ?: "Auto" }
+    val colorMode: Flow<String> = context.dataStore.data.map { it[COLOR_MODE] ?: ColorMode.STANDARD }
+    val forceRec709Compatibility: Flow<Boolean> = context.dataStore.data.map { it[FORCE_REC709_COMPATIBILITY] ?: false }
+    val rec709CompatBrightnessCorrection: Flow<String> =
+        context.dataStore.data.map {
+            Rec709CompatBrightnessCorrection.resolve(it[REC709_COMPAT_BRIGHTNESS_CORRECTION])
+        }
 
     // Audio
     val recordAudio: Flow<Boolean> = context.dataStore.data.map { it[RECORD_AUDIO] ?: false }
@@ -255,17 +280,28 @@ class SettingsRepository(
     /** True after remove-ads purchase (or while a pending remove-ads flow completes — Play is source of truth on next sync). */
     val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
 
-    /**
-     * Default true for GA (1.0+): skip legacy beta onboarding for new installs.
-     */
-    val betaNoticeShown: Flow<Boolean> = context.dataStore.data.map { it[BETA_NOTICE_SHOWN] ?: true }
-
     // Accent Color
     val accentColor: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR] ?: "FF0033" }
     val accentColor2: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR_2] ?: "FF8C00" }
     val accentUseGradient: Flow<Boolean> = context.dataStore.data.map { it[ACCENT_USE_GRADIENT] ?: false }
 
     // Setters — Video
+    suspend fun setColorMode(value: String) {
+        val v = if (ColorMode.isValid(value)) value else ColorMode.STANDARD
+        context.dataStore.edit { it[COLOR_MODE] = v }
+    }
+
+    suspend fun setForceRec709Compatibility(value: Boolean) {
+        context.dataStore.edit { it[FORCE_REC709_COMPATIBILITY] = value }
+    }
+
+    suspend fun setRec709CompatBrightnessCorrection(value: String) {
+        context.dataStore.edit {
+            it[REC709_COMPAT_BRIGHTNESS_CORRECTION] =
+                Rec709CompatBrightnessCorrection.resolve(value)
+        }
+    }
+
     suspend fun setFps(value: Float) {
         context.dataStore.edit { it[FPS] = value }
     }
@@ -526,11 +562,6 @@ class SettingsRepository(
 
     suspend fun setAdsDisabled(value: Boolean) {
         context.dataStore.edit { it[ADS_DISABLED] = value }
-    }
-
-    // Setters — Onboarding
-    suspend fun setBetaNoticeShown(value: Boolean) {
-        context.dataStore.edit { it[BETA_NOTICE_SHOWN] = value }
     }
 
     // Setters — Accent Color

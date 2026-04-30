@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <!-- App -->
     <string name="app_name">CatRec - Grabador de Pantalla</string>
 
@@ -121,6 +121,17 @@
     <string name="setting_fps">Velocidad de Fotogramas (FPS)</string>
     <string name="setting_bitrate">Tasa de Bits del Video</string>
     <string name="setting_video_encoder">Codificador de Video</string>
+    <string name="setting_color_mode">Modo de color</string>
+    <string name="setting_color_mode_standard">Estándar (Rec.709)</string>
+    <string name="setting_color_mode_full">Rango completo</string>
+    <string name="dialog_color_mode">Modo de color</string>
+    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
+    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
+    <string name="setting_rec709_brightness_correction">Corrección de brillo Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">Aplica un ligero aumento de gamma después de reparar los metadatos. Puede reducir ligeramente la velocidad de exportación.</string>
+    <string name="rec709_brightness_correction_off">Desactivado</string>
+    <string name="rec709_brightness_correction_low">Corrección de brillo baja</string>
+    <string name="rec709_brightness_correction_medium">Corrección de brillo media</string>
     <string name="setting_orientation">Orientación</string>
     <string name="setting_orientation_auto">Automático</string>
     <string name="setting_orientation_portrait">Vertical</string>
@@ -409,12 +420,6 @@
     <string name="clipper_duration_5m">5 minutos</string>
     <string name="perm_rationale_intro">CatRec necesita los siguientes permisos para grabar su pantalla:</string>
     <string name="perm_dialog_title">Permisos requeridos</string>
-    <string name="beta_title">Estás en acceso anticipado</string>
-    <string name="beta_line_1">⚠️ Esta es una versión beta.</string>
-    <string name="beta_line_2">Es posible que encuentre errores, fallas o funciones sin terminar. Su dispositivo y sus datos están seguros: las grabaciones se guardan localmente y no se carga nada.</string>
-    <string name="beta_line_3">Sus comentarios dan forma directamente a esta aplicación. Si algo se rompe o se siente mal, infórmalo; incluso un mensaje breve ayuda enormemente.</string>
-    <string name="beta_line_4">Gracias por probar CatRec temprano. 🐱</string>
-
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">¿Eliminar grabación?</string>
     <string name="delete_recording_message">"%1$s" se eliminará permanentemente.</string>
@@ -615,8 +620,33 @@
     <string name="content_desc_more_options">Más opciones</string>
     <string name="content_desc_rewind_10">Retroceder 10 segundos</string>
     <string name="content_desc_forward_10">Avanzar 10 segundos</string>
-    <string name="beta_feedback_email_subject">Comentarios beta de CatRec</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v111_items">
+        <item>Fuerza metadatos Rec.709 (BT.709) en dispositivos que solo admiten codificación HEVC (por ejemplo, Poco X7 Pro) para que el color en reproducción se interprete correctamente.</item>
+        <item>Nuevas opciones de corrección de color Rec.709 en Ajustes para ajustar brillo y compatibilidad del dispositivo.</item>
+    </string-array>
+
+    <string-array name="changelog_v110_items">
+        <item>Perfiles de color REC.709 (BT.709) y de rango completo opcionales para que el vídeo codificado se alinee con prácticas habituales de color en emisión y postproducción.</item>
+    </string-array>
+
+    <string-array name="changelog_v107_items">
+        <item>Se solucionó un problema por el que el audio interno dejaba de grabarse en algunos dispositivos</item>
+        <item>Se solucionó que las exportaciones de grabación GIF mostraran una velocidad de fotogramas muy baja</item>
+    </string-array>
+
+    <string-array name="changelog_v106_items">
+        <item>Interfaz de superposición de grabación y lógica interna rehechas desde cero para mayor fiabilidad y fluidez</item>
+        <item>Iconos de superposición y notificación rediseñados para un estilo visual más limpio y uniforme</item>
+        <item>Problemas de compatibilidad específicos de OEM en dispositivos Xiaomi, Samsung y Nothing resueltos</item>
+        <item>Gestión de fallos de grabación mejorada con recuperación ante resoluciones y códecs no compatibles y cambio automático a configuraciones compatibles</item>
+        <item>Cadenas de localización faltantes completadas en todos los idiomas admitidos</item>
+        <item>Corregido el recorte incorrecto de imágenes y mejorada la calidad de grabación GIF</item>
+        <item>Modo de grabación adaptativo al rendimiento que ajusta la calidad en dispositivos poco potentes para evitar pérdidas de fotogramas y errores del codificador</item>
+        <item>Rango del temporizador de cuenta atrás ampliado hasta 30 segundos</item>
+        <item>Rendimiento general de la aplicación mejorado</item>
+    </string-array>
 
     <string-array name="changelog_v100_items">
         <item>Grabación de pantalla con soporte para códecs H.264 y H.265 (HEVC)</item>
