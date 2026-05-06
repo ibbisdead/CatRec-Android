@@ -61,7 +61,7 @@ class RollingBufferEngine(
     private val audioEncoderType: String = "AAC-LC",
     /** Completed segments kept (each [SEGMENT_DURATION_MS]); oldest evicted when over limit. */
     maxSegmentsLimit: Int = maxSegmentsForClipperMinutes(1),
-    /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
+    /** Invoked on the audio-capture thread when playback capture returns sustained silence ([SILENCE_TIMEOUT_MS]). */
     private val onInternalAudioSilence: (() -> Unit)? = null,
     /**
      * Invoked at most once on fatal encoder or muxer errors (drain threads).
@@ -348,6 +348,15 @@ class RollingBufferEngine(
         frameRelay?.adaptiveSkipModulo = modulo
     }
 
+    /**
+     * Resizes the capture [VirtualDisplay] + [ImageReader] to [newW]×[newH] without changing
+     * the encoder output resolution.  Call this when the OS reports a content-size change
+     * (rotation, fold) so stale pixels no longer contaminate the captured frames.
+     */
+    fun resizeCaptureSource(newW: Int, newH: Int) {
+        frameRelay?.resizeCaptureSource(newW, newH)
+    }
+
     fun attachAdaptivePerformance(
         sink: AdaptiveRecordingSignalSink?,
         signalsEnabled: Boolean,
@@ -631,10 +640,15 @@ class RollingBufferEngine(
                     val silentMs = now - internalSilentStartMs
                     Log.w(
                         TAG,
-                        "Internal audio silent for ${silentMs}ms — " +
-                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}",
+                        "Playback capture: sustained silence for ${silentMs}ms (all-zero PCM); " +
+                            "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}. " +
+                            "Foreground app may block capture or use an unsupported audio path.",
                     )
-                    AppLogger.w(TAG, "Buffer internal audio silence timeout after ${silentMs}ms")
+                    AppLogger.w(
+                        TAG,
+                        "Buffer playback capture silence timeout after ${silentMs}ms " +
+                            "(${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT})",
+                    )
                     logAnalyticsEvent(
                         "silent_timeout",
                         mapOf(

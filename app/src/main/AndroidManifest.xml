@@ -139,28 +139,6 @@
             android:description="@string/service_description_overlay"
             android:foregroundServiceType="camera" />
             
-        <service
-            android:name=".service.RecordTileService"
-            android:label="CatRec Record"
-            android:icon="@drawable/ic_qs_record"
-            android:exported="true"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".service.ClipperTileService"
-            android:label="CatRec Clipper"
-            android:icon="@drawable/ic_qs_clipper"
-            android:exported="true"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-        </service>
-
         <receiver
             android:name=".service.RecordingActionReceiver"
             android:exported="false">

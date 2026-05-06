@@ -567,15 +567,13 @@
     <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF \u2014 rekaman MP4 Anda disimpan.</string>
     <string name="toast_gif_saved">GIF disimpan ke Gambar/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">Tidak dapat membuat file audio terpisah \u2014 mikrofon akan direkam dalam video</string>
-    <string name="toast_internal_audio_silent">Audio internal tidak bersuara \u2014 aplikasi yang sedang direkam mungkin tidak mengizinkan pengambilan audio. Coba rekam audio mikrofon saja.</string>
+    <string name="toast_internal_audio_silent">Tidak ada audio internal terdeteksi. Aplikasi ini mungkin memblokir penangkapan audio atau menggunakan jalur audio yang tidak didukung.</string>
     <string name="recording_has_separate_audio">Memiliki trek audio terpisah</string>
     <string name="toast_buffer_start_failed">Penyangga gagal dimulai: %1$s</string>
     <string name="toast_clip_empty">Klip kosong \u2013 simpan buffering lebih lama</string>
     <string name="toast_clip_saved">Klip disimpan!</string>
     <string name="toast_clip_save_failed">Penyimpanan klip gagal: %1$s</string>
     <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif \u2014 ketuk untuk kembali ke aplikasi</string>
-    <string name="tile_record_label">Catatan CatRec</string>
-    <string name="tile_clipper_label">Pemotong CatRec</string>
     <string name="notif_channel_camera_overlay">Hamparan kamera</string>
     <string name="notif_channel_camera_overlay_desc">Ditampilkan saat overlay kamera aktif</string>
     <string name="notif_camera_in_use_title">Kamera sedang digunakan</string>
@@ -591,10 +589,6 @@
     <string name="notif_action_overlay_hide">Sembunyikan hamparan</string>
     <string name="notif_action_overlay_show">Tampilkan hamparan</string>
     <string name="notif_action_overlay_enable_in_settings">Hamparan tidak aktif</string>
-    <string name="tile_subtitle_recording">Rekaman\u2026</string>
-    <string name="tile_subtitle_buffering">Penyangga\u2026</string>
-    <string name="tile_subtitle_ready">Siap</string>
-    <string name="tile_subtitle_tap_open">Ketuk untuk membuka aplikasi</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Izin rekam layar ditolak</string>

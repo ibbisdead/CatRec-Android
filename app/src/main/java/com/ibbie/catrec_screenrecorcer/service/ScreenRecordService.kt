@@ -398,6 +398,35 @@ class ScreenRecordService :
     private val mainHandler = Handler(Looper.getMainLooper())
     private var gifAutoStopRunnable: Runnable? = null
 
+    // ── Capture-source resize (rotation / fold) ─────────────────────────────────
+    /**
+     * Last known captured-content dimensions.  Updated when [triggerCaptureResize] fires so we
+     * only call [EncoderFrameRelay.resizeCaptureSource] when the size actually changes.
+     */
+    private var captureContentW: Int = -1
+    private var captureContentH: Int = -1
+
+    /**
+     * Pre-API-34 fallback: detects display-size changes (rotation) via [DisplayManager].
+     * On API 34+, [MediaProjection.Callback.onCapturedContentResize] is the primary trigger.
+     */
+    private val captureResizeDisplayListener =
+        object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {}
+            override fun onDisplayRemoved(displayId: Int) {}
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId != android.view.Display.DEFAULT_DISPLAY) return
+                val (w, h) = currentDisplaySizePx()
+                if (w == captureContentW && h == captureContentH) return
+                Log.i(
+                    LOG_TAG,
+                    "captureResizeDisplayListener: display changed ${captureContentW}x${captureContentH} → ${w}x${h}",
+                )
+                triggerCaptureResize(w, h)
+            }
+        }
+    private var captureResizeListenerRegistered = false
+
     // Tells the service to revoke projection after the next stop completes
     private var revokeAfterStop = false
 
@@ -1472,6 +1501,15 @@ class ScreenRecordService :
 
         mediaProjection?.registerCallback(
             object : MediaProjection.Callback() {
+                @RequiresApi(34)
+                override fun onCapturedContentResize(
+                    width: Int,
+                    height: Int,
+                ) {
+                    super.onCapturedContentResize(width, height)
+                    logCapturedContentResize(width, height, "prepared")
+                }
+
                 override fun onStop() {
                     super.onStop()
                     Log.w(
@@ -2179,6 +2217,15 @@ class ScreenRecordService :
 
             mediaProjection?.registerCallback(
                 object : MediaProjection.Callback() {
+                    @RequiresApi(34)
+                    override fun onCapturedContentResize(
+                        width: Int,
+                        height: Int,
+                    ) {
+                        super.onCapturedContentResize(width, height)
+                        logCapturedContentResize(width, height, "recording")
+                    }
+
                     override fun onStop() {
                         super.onStop()
                         // The OS revoked the projection — most commonly because the user navigated
@@ -2307,8 +2354,8 @@ class ScreenRecordService :
                         separateMicFileDescriptor = micPfd?.fileDescriptor,
                         adaptivePreferAvcForPrepare = forceAvc,
                         onInternalAudioSilence = {
-                            // Fired on the audio-capture thread after SILENCE_TIMEOUT_MS of all-zero
-                            // PCM from internal audio. Show a clear UI message and log for diagnostics.
+                            // Fired on the audio-capture thread after prolonged all-zero PCM from
+                            // AudioPlaybackCapture (capture initialized and reads OK). Recording continues.
                             Handler(Looper.getMainLooper()).post {
                                 Toast
                                     .makeText(
@@ -2319,13 +2366,12 @@ class ScreenRecordService :
                             }
                             Log.w(
                                 LOG_TAG,
-                                "Internal audio silence detected — " +
+                                "Playback capture: sustained silence (all-zero PCM); " +
                                     "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}. " +
-                                    "The captured app may block playback capture (capture policy ALLOW_CAPTURE_BY_NONE) " +
-                                    "or this OEM restricts AudioPlaybackCapture on Android ${Build.VERSION.SDK_INT}.",
+                                    "Foreground app may block capture or use an unsupported audio path.",
                             )
                             FirebaseCrashlytics.getInstance().log(
-                                "Internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
+                                "Playback capture sustained silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
                             )
                         },
                         onFatalVideoEncodeError = { detail ->
@@ -2338,6 +2384,7 @@ class ScreenRecordService :
                 perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isRecorderRunning = true
+                    registerCaptureResizeListener()
                     setCaptureSessionDiskFlag(true)
                     RecordingState.setRecording(true)
                     RecordingState.setRecordingPaused(false)
@@ -2533,6 +2580,68 @@ class ScreenRecordService :
             display.getRealMetrics(dm)
             Pair(dm.widthPixels, dm.heightPixels)
         }
+    }
+
+    /**
+     * API 34+: OS reports logical captured-content size changes (rotation, fold, etc.).
+     * Logs the event and delegates to [triggerCaptureResize] so the capture VirtualDisplay /
+     * ImageReader is rebuilt at the new content dimensions — eliminating stale-pixel ghosting.
+     * The encoder output resolution stays fixed; letterboxing adapts automatically.
+     */
+    private fun logCapturedContentResize(
+        contentW: Int,
+        contentH: Int,
+        contextLabel: String,
+    ) {
+        Log.i(
+            LOG_TAG,
+            "onCapturedContentResize[$contextLabel] capturedContent=${contentW}x${contentH} " +
+                "encoderStable=${displayWidth}x${displayHeight}",
+        )
+        triggerCaptureResize(contentW, contentH)
+    }
+
+    /**
+     * Resizes the active engine's capture source (VirtualDisplay + ImageReader) to [newW]×[newH].
+     * Called from both the API-34+ [MediaProjection.Callback] and the pre-34 [DisplayManager]
+     * listener.  Debouncing is handled inside [EncoderFrameRelay.resizeCaptureSource].
+     */
+    private fun triggerCaptureResize(newW: Int, newH: Int) {
+        captureContentW = newW
+        captureContentH = newH
+        recorderEngine?.resizeCaptureSource(newW, newH)
+        rollingBufferEngine?.resizeCaptureSource(newW, newH)
+    }
+
+    /**
+     * Registers the pre-API-34 [DisplayManager.DisplayListener] and seeds [captureContentW] /
+     * [captureContentH] with the current display size so the first [onDisplayChanged] only fires
+     * when the display actually changes (not spuriously on registration).
+     */
+    private fun registerCaptureResizeListener() {
+        if (Build.VERSION.SDK_INT >= 34) return // onCapturedContentResize handles it
+        if (captureResizeListenerRegistered) return
+        val (w, h) = currentDisplaySizePx()
+        captureContentW = w
+        captureContentH = h
+        val dm = getSystemService(DISPLAY_SERVICE) as DisplayManager
+        dm.registerDisplayListener(captureResizeDisplayListener, mainHandler)
+        captureResizeListenerRegistered = true
+        Log.d(LOG_TAG, "captureResizeDisplayListener registered seed=${w}x${h}")
+    }
+
+    /** Unregisters the pre-API-34 display listener if it was registered. */
+    private fun unregisterCaptureResizeListener() {
+        if (!captureResizeListenerRegistered) return
+        try {
+            val dm = getSystemService(DISPLAY_SERVICE) as DisplayManager
+            dm.unregisterDisplayListener(captureResizeDisplayListener)
+        } catch (_: Exception) {
+        }
+        captureResizeListenerRegistered = false
+        captureContentW = -1
+        captureContentH = -1
+        Log.d(LOG_TAG, "captureResizeDisplayListener unregistered")
     }
 
     /**
@@ -3022,6 +3131,15 @@ class ScreenRecordService :
             }
             mediaProjection?.registerCallback(
                 object : MediaProjection.Callback() {
+                    @RequiresApi(34)
+                    override fun onCapturedContentResize(
+                        width: Int,
+                        height: Int,
+                    ) {
+                        super.onCapturedContentResize(width, height)
+                        logCapturedContentResize(width, height, "buffer")
+                    }
+
                     override fun onStop() {
                         super.onStop()
                         RecordingEngineEventBus.tryEmit(
@@ -3106,11 +3224,12 @@ class ScreenRecordService :
                             }
                             Log.w(
                                 LOG_TAG,
-                                "Buffer: internal audio silence detected — " +
-                                    "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}",
+                                "Buffer playback capture: sustained silence (all-zero PCM); " +
+                                    "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}. " +
+                                    "Foreground app may block capture or use an unsupported audio path.",
                             )
                             FirebaseCrashlytics.getInstance().log(
-                                "Buffer internal audio silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
+                                "Buffer playback capture sustained silence: ${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT}",
                             )
                         },
                         onFatalRecordingError = { fatalKind, detail ->
@@ -3123,6 +3242,7 @@ class ScreenRecordService :
                 perfController?.startSession()
                 withContext(Dispatchers.Main) {
                     isBufferRunning = true
+                    registerCaptureResizeListener()
                     setCaptureSessionDiskFlag(true)
                     RecordingState.setBuffering(true)
                     durationTimerJob?.cancel()
@@ -3284,6 +3404,7 @@ class ScreenRecordService :
     }
 
     private fun cleanupBuffer() {
+        unregisterCaptureResizeListener()
         captureDimensionsFromSessionConfig = false
         setCaptureSessionDiskFlag(false)
         if (isPrepared) {
@@ -3897,6 +4018,7 @@ class ScreenRecordService :
                 "cleanup: isSaving=false prepared=$isPrepared revokeAfterStop=$revokeAfterStop lastSavedUri=$lastSavedRecordingUri",
             )
         }
+        unregisterCaptureResizeListener()
         startService(Intent(this, OverlayService::class.java).apply { action = OverlayService.ACTION_HIDE_OVERLAYS })
         try {
             unregisterReceiver(screenOffReceiver)

@@ -570,15 +570,13 @@
     <string name="toast_gif_transcode_failed">GIF olu\u015Fturulamad\u0131; MP4 kayd\u0131n\u0131z sakland\u0131.</string>
     <string name="toast_gif_saved">GIF, Resimler/CatRec/GIF\'lere kaydedildi</string>
     <string name="toast_separate_mic_failed">Ayr\u0131 ses dosyas\u0131 olu\u015Fturulamad\u0131; bunun yerine videoya mikrofon kaydedilecek</string>
-    <string name="toast_internal_audio_silent">Dahili ses sessiz; kaydedilen uygulama ses yakalamaya izin vermeyebilir. Bunun yerine mikrofon sesini kaydetmeyi deneyin.</string>
+    <string name="toast_internal_audio_silent">Dahili ses algılanmadı. Bu uygulama ses yakalamayı engelliyor veya desteklenmeyen bir ses yolu kullanıyor olabilir.</string>
     <string name="recording_has_separate_audio">Ayr\u0131 ses par\u00E7as\u0131 var</string>
     <string name="toast_buffer_start_failed">Arabellek ba\u015Flat\u0131lamad\u0131: %1$s</string>
     <string name="toast_clip_empty">Klip bo\u015F; ara belle\u011Fe almaya daha uzun s\u00FCre devam edin</string>
     <string name="toast_clip_saved">Klip kaydedildi!</string>
     <string name="toast_clip_save_failed">Klip kaydedilemedi: %1$s</string>
     <string name="notif_camera_overlay_text">CatRec kamera katman\u0131 etkin; uygulamaya d\u00F6nmek i\u00E7in dokunun</string>
-    <string name="tile_record_label">CatRec Kayd\u0131</string>
-    <string name="tile_clipper_label">CatRec K\u0131rpma Makinesi</string>
     <string name="notif_channel_camera_overlay">Kamera katman\u0131</string>
     <string name="notif_channel_camera_overlay_desc">Kamera katman\u0131 etkinken g\u00F6sterilir</string>
     <string name="notif_camera_in_use_title">Kullan\u0131lan kamera</string>
@@ -594,10 +592,6 @@
     <string name="notif_action_overlay_hide">Kaplamay\u0131 gizle</string>
     <string name="notif_action_overlay_show">Yer payla\u015F\u0131m\u0131n\u0131 g\u00F6ster</string>
     <string name="notif_action_overlay_enable_in_settings">Yer payla\u015F\u0131m\u0131 kapal\u0131</string>
-    <string name="tile_subtitle_recording">Kay\u0131t\u2026</string>
-    <string name="tile_subtitle_buffering">Ara belle\u011Fe al\u0131n\u0131yor\u2026</string>
-    <string name="tile_subtitle_ready">Haz\u0131r</string>
-    <string name="tile_subtitle_tap_open">Uygulamay\u0131 a\u00E7mak i\u00E7in dokunun</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>

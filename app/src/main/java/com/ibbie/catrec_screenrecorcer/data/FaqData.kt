@@ -247,7 +247,7 @@ object FaqData {
 
                                 **Workaround:** enable **Microphone** and place the phone where the speaker is audible (not ideal but works for some games).
 
-                                If you see a **“internal audio silent”** toast, the system delivered only zeros — the app is doing its job; the restriction is upstream.
+                                If you see a **\u201cNo internal audio detected\u201d** toast, playback capture is running but the system delivered only zeros; CatRec did not fail to initialize capture \u2014 the restriction is usually the foreground app or the audio route.
                                 """.trimIndent(),
                         ),
                         FaqItem(

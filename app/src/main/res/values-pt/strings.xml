@@ -573,15 +573,13 @@
     <string name="toast_gif_transcode_failed">N\u00E3o foi poss\u00EDvel criar GIF \u2013 sua grava\u00E7\u00E3o MP4 foi mantida.</string>
     <string name="toast_gif_saved">GIF salvo em Imagens/CatRec/GIFs</string>
     <string name="toast_separate_mic_failed">N\u00E3o foi poss\u00EDvel criar um arquivo de \u00E1udio separado \u2013 o microfone ser\u00E1 gravado no v\u00EDdeo</string>
-    <string name="toast_internal_audio_silent">O \u00E1udio interno est\u00E1 silencioso \u2014 o aplicativo que est\u00E1 sendo gravado pode n\u00E3o permitir a captura de \u00E1udio. Tente gravar o \u00E1udio do microfone.</string>
+    <string name="toast_internal_audio_silent">Nenhum áudio interno detectado. Este app pode bloquear a captura de áudio ou usar um caminho de áudio não suportado.</string>
     <string name="recording_has_separate_audio">Possui trilha de \u00E1udio separada</string>
     <string name="toast_buffer_start_failed">Falha no in\u00EDcio do buffer: %1$s</string>
     <string name="toast_clip_empty">O clipe est\u00E1 vazio \u2013 mantenha o buffer por mais tempo</string>
     <string name="toast_clip_saved">Clipe salvo!</string>
     <string name="toast_clip_save_failed">Falha ao salvar clipe: %1$s</string>
     <string name="notif_camera_overlay_text">A sobreposi\u00E7\u00E3o da c\u00E2mera CatRec est\u00E1 ativa \u2013 toque para retornar ao aplicativo</string>
-    <string name="tile_record_label">Registro CatRec</string>
-    <string name="tile_clipper_label">Clipper CatRec</string>
     <string name="notif_channel_camera_overlay">Sobreposi\u00E7\u00E3o de c\u00E2mera</string>
     <string name="notif_channel_camera_overlay_desc">Mostra enquanto a sobreposi\u00E7\u00E3o da c\u00E2mera est\u00E1 ativa</string>
     <string name="notif_camera_in_use_title">C\u00E2mera em uso</string>
@@ -597,10 +595,6 @@
     <string name="notif_action_overlay_hide">Ocultar sobreposi\u00E7\u00E3o</string>
     <string name="notif_action_overlay_show">Mostrar sobreposi\u00E7\u00E3o</string>
     <string name="notif_action_overlay_enable_in_settings">Sobreposi\u00E7\u00E3o desativada</string>
-    <string name="tile_subtitle_recording">Grava\u00E7\u00E3o\u2026</string>
-    <string name="tile_subtitle_buffering">Buffer\u2026</string>
-    <string name="tile_subtitle_ready">Preparar</string>
-    <string name="tile_subtitle_tap_open">Toque para abrir o aplicativo</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>

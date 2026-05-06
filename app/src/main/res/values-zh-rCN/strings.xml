@@ -567,15 +567,13 @@
     <string name="toast_gif_transcode_failed">\u65E0\u6CD5\u521B\u5EFA GIF \u2014 \u60A8\u7684 MP4 \u5F55\u97F3\u5DF2\u4FDD\u7559\u3002</string>
     <string name="toast_gif_saved">GIF \u4FDD\u5B58\u5230 Pictures/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">\u65E0\u6CD5\u521B\u5EFA\u5355\u72EC\u7684\u97F3\u9891\u6587\u4EF6 - \u9EA6\u514B\u98CE\u5C06\u5F55\u5236\u5728\u89C6\u9891\u4E2D</string>
-    <string name="toast_internal_audio_silent">\u5185\u90E8\u97F3\u9891\u65E0\u58F0 - \u6B63\u5728\u5F55\u5236\u7684\u5E94\u7528\u7A0B\u5E8F\u53EF\u80FD\u4E0D\u5141\u8BB8\u97F3\u9891\u6355\u83B7\u3002\u5C1D\u8BD5\u5F55\u5236\u9EA6\u514B\u98CE\u97F3\u9891\u3002</string>
+    <string name="toast_internal_audio_silent">未检测到内部音频。此应用可能会阻止音频捕获或使用不受支持的音频路径。</string>
     <string name="recording_has_separate_audio">\u6709\u72EC\u7ACB\u7684\u97F3\u8F68</string>
     <string name="toast_buffer_start_failed">\u7F13\u51B2\u533A\u542F\u52A8\u5931\u8D25\uFF1A%1$s</string>
     <string name="toast_clip_empty">\u526A\u8F91\u4E3A\u7A7A \u2013 \u4FDD\u6301\u7F13\u51B2\u65F6\u95F4\u66F4\u957F</string>
     <string name="toast_clip_saved">\u526A\u8F91\u5DF2\u4FDD\u5B58\uFF01</string>
     <string name="toast_clip_save_failed">\u526A\u8F91\u4FDD\u5B58\u5931\u8D25\uFF1A%1$s</string>
     <string name="notif_camera_overlay_text">CatRec \u76F8\u673A\u53E0\u52A0\u5C42\u5904\u4E8E\u6D3B\u52A8\u72B6\u6001 \u2014 \u70B9\u51FB\u5373\u53EF\u8FD4\u56DE\u5E94\u7528\u7A0B\u5E8F</string>
-    <string name="tile_record_label">\u732B\u5F55\u8BB0\u5F55</string>
-    <string name="tile_clipper_label">CatRec \u526A\u8F91\u5668</string>
     <string name="notif_channel_camera_overlay">\u76F8\u673A\u53E0\u52A0</string>
     <string name="notif_channel_camera_overlay_desc">\u5F53\u76F8\u673A\u53E0\u52A0\u5C42\u5904\u4E8E\u6D3B\u52A8\u72B6\u6001\u65F6\u663E\u793A</string>
     <string name="notif_camera_in_use_title">\u76F8\u673A\u4F7F\u7528\u4E2D</string>
@@ -591,10 +589,6 @@
     <string name="notif_action_overlay_hide">\u9690\u85CF\u53E0\u52A0\u5C42</string>
     <string name="notif_action_overlay_show">\u663E\u793A\u53E0\u52A0\u5C42</string>
     <string name="notif_action_overlay_enable_in_settings">\u53E0\u52A0\u5173\u95ED</string>
-    <string name="tile_subtitle_recording">\u8BB0\u5F55\u2026</string>
-    <string name="tile_subtitle_buffering">\u7F13\u51B2\u4E2D\u2026</string>
-    <string name="tile_subtitle_ready">\u51C6\u5907\u597D</string>
-    <string name="tile_subtitle_tap_open">\u70B9\u51FB\u6253\u5F00\u5E94\u7528\u7A0B\u5E8F</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">\u5DF2\u62D2\u7EDD\u5C4F\u5E55\u5F55\u5236\u6743\u9650</string>

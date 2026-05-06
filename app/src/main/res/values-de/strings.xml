@@ -570,15 +570,13 @@
     <string name="toast_gif_transcode_failed">GIF konnte nicht erstellt werden \u2013 Ihre MP4-Aufnahme wurde beibehalten.</string>
     <string name="toast_gif_saved">GIF wird unter Bilder/CatRec/GIFs gespeichert</string>
     <string name="toast_separate_mic_failed">Es konnte keine separate Audiodatei erstellt werden \u2013 stattdessen wird das Mikrofon im Video aufgezeichnet</string>
-    <string name="toast_internal_audio_silent">Interner Ton ist stumm \u2013 die App, die aufgezeichnet wird, erlaubt m\u00F6glicherweise keine Audioaufnahme. Versuchen Sie stattdessen, Mikrofon-Audio aufzunehmen.</string>
+    <string name="toast_internal_audio_silent">Kein internes Audiosignal erkannt. Diese App blockiert möglicherweise die Audioaufnahme oder nutzt einen nicht unterstützten Audiopfad.</string>
     <string name="recording_has_separate_audio">Verf\u00FCgt \u00FCber eine separate Audiospur</string>
     <string name="toast_buffer_start_failed">Pufferstart fehlgeschlagen: %1$s</string>
     <string name="toast_clip_empty">Der Clip ist leer \u2013 l\u00E4nger puffern</string>
     <string name="toast_clip_saved">Clip gespeichert!</string>
     <string name="toast_clip_save_failed">Clip-Speicherung fehlgeschlagen: %1$s</string>
     <string name="notif_camera_overlay_text">CatRec-Kamera-Overlay ist aktiv \u2013 tippen Sie, um zur App zur\u00FCckzukehren</string>
-    <string name="tile_record_label">CatRec-Datensatz</string>
-    <string name="tile_clipper_label">CatRec Clipper</string>
     <string name="notif_channel_camera_overlay">Kamera-Overlay</string>
     <string name="notif_channel_camera_overlay_desc">Wird angezeigt, w\u00E4hrend das Kamera-Overlay aktiv ist</string>
     <string name="notif_camera_in_use_title">Kamera im Einsatz</string>
@@ -594,10 +592,6 @@
     <string name="notif_action_overlay_hide">Overlay ausblenden</string>
     <string name="notif_action_overlay_show">Overlay anzeigen</string>
     <string name="notif_action_overlay_enable_in_settings">Overlay aus</string>
-    <string name="tile_subtitle_recording">Aufnahme\u2026</string>
-    <string name="tile_subtitle_buffering">Pufferung\u2026</string>
-    <string name="tile_subtitle_ready">Bereit</string>
-    <string name="tile_subtitle_tap_open">Tippen Sie, um die App zu \u00F6ffnen</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Bildschirmaufnahme-Berechtigung verweigert</string>

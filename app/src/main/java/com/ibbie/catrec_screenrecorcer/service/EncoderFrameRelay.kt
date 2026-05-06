@@ -2,6 +2,8 @@ package com.ibbie.catrec_screenrecorcer.service
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.hardware.display.DisplayManager
@@ -28,9 +30,12 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import androidx.core.graphics.createBitmap
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
  * Feeds a single [VirtualDisplay] into [encoderInputSurface] so [MediaProjection.createVirtualDisplay]
@@ -59,6 +64,20 @@ internal class EncoderFrameRelay(
     private val bitmapDstRect = Rect()
     private var eglBlitter: EglBitmapBlitter? = null
     private var useCanvas: Boolean? = null
+
+    /** Last captured frame size (from [Bitmap] after [imageToBitmap]); used for rotation/size logs. */
+    private var lastRelayCaptureW = -1
+    private var lastRelayCaptureH = -1
+
+    private val encoderDrawPaint =
+        Paint().apply {
+            isAntiAlias = true
+            isDither = true
+            isFilterBitmap = true
+        }
+
+    private val drawSrcRect = Rect()
+    private val drawDstRect = Rect()
 
     /**
      * Pairs a screenshot callback with the [frameGeneration] value observed when it was armed so
@@ -110,6 +129,20 @@ internal class EncoderFrameRelay(
 
     private var adaptiveFrameOrdinal = 0
     private var lastSlowSignalWallMs = 0L
+
+    /**
+     * Pending capture-source resize dimensions (written from any thread, consumed on relay thread).
+     * Negative values mean no pending resize. The [resizeCaptureRunnable] is debounced so rapid
+     * successive resize triggers (e.g., fold+rotate) coalesce into a single rebuild.
+     */
+    private val pendingResizeW = AtomicInteger(-1)
+    private val pendingResizeH = AtomicInteger(-1)
+
+    private val resizeCaptureRunnable = Runnable {
+        val w = pendingResizeW.getAndSet(-1)
+        val h = pendingResizeH.getAndSet(-1)
+        if (w > 0 && h > 0) doResizeCaptureSource(w, h)
+    }
 
     /**
      * Guards [ImageReader] / [VirtualDisplay] lifecycle and CPU bitmap buffers only.
@@ -180,6 +213,9 @@ internal class EncoderFrameRelay(
                 relayThread
             }
         relayHandler?.removeCallbacks(processLatestFrameRunnable)
+        relayHandler?.removeCallbacks(resizeCaptureRunnable)
+        pendingResizeW.set(-1)
+        pendingResizeH.set(-1)
         framePipelineBusy.set(false)
         pendingWhileBusy.set(false)
         adaptiveSignalSink = null
@@ -202,6 +238,8 @@ internal class EncoderFrameRelay(
             eglBlitter = null
             useCanvas = null
             pendingScreenshot.set(null)
+            lastRelayCaptureW = -1
+            lastRelayCaptureH = -1
         }
         relayThread = null
         relayHandler = null
@@ -220,6 +258,89 @@ internal class EncoderFrameRelay(
         // request with a frame acquired AFTER this arm point. Any pass already in flight
         // (acquired BEFORE we were called) is rejected, guaranteeing no stale frame.
         pendingScreenshot.set(ScreenshotRequest(frameGeneration.get(), callback))
+    }
+
+    /**
+     * Resizes the capture [VirtualDisplay] and [ImageReader] to [newW] × [newH] so that
+     * SurfaceFlinger fills the **entire** new surface (no stale portrait pixels bleed into a
+     * landscape frame or vice-versa).  The encoder output dimensions remain fixed; the
+     * letterbox logic in [drawBitmapToEncoder] automatically adapts to any captured size.
+     *
+     * Safe to call from any thread.  Work is posted and debounced on the relay thread so
+     * rapid successive calls (e.g. foldable fold + rotation) coalesce into one rebuild.
+     */
+    fun resizeCaptureSource(newW: Int, newH: Int) {
+        val w = newW.coerceIn(16, 4096)
+        val h = newH.coerceIn(16, 4096)
+        pendingResizeW.set(w)
+        pendingResizeH.set(h)
+        val handler = relayHandler ?: return
+        handler.removeCallbacks(resizeCaptureRunnable)
+        handler.postDelayed(resizeCaptureRunnable, CAPTURE_RESIZE_DEBOUNCE_MS)
+    }
+
+    /**
+     * Executed on the relay thread after [CAPTURE_RESIZE_DEBOUNCE_MS] of quiet.
+     *
+     * Root cause this fixes: when the device rotates, the VirtualDisplay retains its original
+     * dimensions.  SurfaceFlinger scales the rotated screen into only *part* of the surface;
+     * the rest of the buffer keeps stale pixels from the previous orientation.  Those stale
+     * pixels survive [copyPixelsFromBuffer] and appear in the recorded video as ghost trails.
+     *
+     * By resizing the [VirtualDisplay] and recreating the [ImageReader] to match the actual
+     * content dimensions, we ensure SurfaceFlinger fills the entire surface on every frame.
+     */
+    private fun doResizeCaptureSource(newW: Int, newH: Int) {
+        synchronized(frameLock) {
+            val vd = virtualDisplay ?: return
+            val oldReader = imageReader ?: return
+            if (newW == oldReader.width && newH == oldReader.height) {
+                Log.d(TAG, "doResizeCaptureSource: dims unchanged ${newW}x${newH}, skipping")
+                return
+            }
+            Log.i(
+                TAG,
+                "doResizeCaptureSource: ${oldReader.width}x${oldReader.height} → ${newW}x${newH} " +
+                    "encoderFixed=${width}x${height}",
+            )
+            val newReader =
+                try {
+                    ImageReader.newInstance(newW, newH, PixelFormat.RGBA_8888, FRAME_READER_MAX_IMAGES)
+                } catch (e: Exception) {
+                    Log.e(TAG, "doResizeCaptureSource: ImageReader.newInstance(${newW}x${newH}) failed", e)
+                    return
+                }
+            try {
+                vd.resize(newW, newH, dpi)
+                vd.setSurface(newReader.surface)
+            } catch (e: Exception) {
+                Log.e(TAG, "doResizeCaptureSource: VirtualDisplay resize/setSurface failed", e)
+                try {
+                    newReader.close()
+                } catch (_: Exception) {
+                }
+                return
+            }
+            newReader.setOnImageAvailableListener({ scheduleProcessLatestFrame() }, relayHandler)
+            try {
+                oldReader.setOnImageAvailableListener(null, null)
+            } catch (_: Exception) {
+            }
+            try {
+                oldReader.close()
+            } catch (_: Exception) {
+            }
+            imageReader = newReader
+            // Scratch bitmaps sized for the old capture dimensions; discard so they are
+            // reallocated with the new dimensions on the very next frame.
+            scratchRowBitmap?.recycle()
+            scratchRowBitmap = null
+            reuseCropBitmap?.recycle()
+            reuseCropBitmap = null
+            reuseCropCanvas = null
+            lastRelayCaptureW = -1
+            lastRelayCaptureH = -1
+        }
     }
 
     private fun scheduleProcessLatestFrame() {
@@ -338,13 +459,24 @@ internal class EncoderFrameRelay(
 
     private fun drawBitmapToEncoder(bitmap: Bitmap) {
         val surface = encoderInputSurface
+        val bw = bitmap.width
+        val bh = bitmap.height
+        val box = letterboxDest(bw, bh)
+        maybeLogCaptureSizeChange(bw, bh, box)
 
         val mode = useCanvas
         if (mode != false) {
             try {
                 val canvas = surface.lockHardwareCanvas()
                 try {
-                    canvas.drawBitmap(bitmap, 0f, 0f, null)
+                    // Encoder surface buffers may retain previous frames; always clear before draw so
+                    // letterbox/pillarbox (and any transient capture-size mismatch) stays solid black.
+                    canvas.drawColor(Color.BLACK)
+                    if (bw > 0 && bh > 0) {
+                        drawSrcRect.set(0, 0, bw, bh)
+                        drawDstRect.set(box.dx, box.dy, box.dx + box.dw, box.dy + box.dh)
+                        canvas.drawBitmap(bitmap, drawSrcRect, drawDstRect, encoderDrawPaint)
+                    }
                 } finally {
                     surface.unlockCanvasAndPost(canvas)
                 }
@@ -357,6 +489,47 @@ internal class EncoderFrameRelay(
         }
         val blitter = eglBlitter ?: EglBitmapBlitter(surface, width, height).also { eglBlitter = it }
         blitter.draw(bitmap)
+    }
+
+    private data class LetterboxDest(
+        val dx: Int,
+        val dy: Int,
+        val dw: Int,
+        val dh: Int,
+        val scale: Float,
+    )
+
+    private fun letterboxDest(
+        bw: Int,
+        bh: Int,
+    ): LetterboxDest {
+        val outW = width.coerceAtLeast(1)
+        val outH = height.coerceAtLeast(1)
+        if (bw <= 0 || bh <= 0) {
+            return LetterboxDest(0, 0, outW, outH, 1f)
+        }
+        val scale = min(outW.toFloat() / bw, outH.toFloat() / bh)
+        val dw = (bw * scale).roundToInt().coerceIn(1, outW)
+        val dh = (bh * scale).roundToInt().coerceIn(1, outH)
+        val dx = (outW - dw) / 2
+        val dy = (outH - dh) / 2
+        return LetterboxDest(dx, dy, dw, dh, scale)
+    }
+
+    private fun maybeLogCaptureSizeChange(
+        bw: Int,
+        bh: Int,
+        box: LetterboxDest,
+    ) {
+        if (bw == lastRelayCaptureW && bh == lastRelayCaptureH) return
+        Log.i(
+            TAG,
+            "relay_capture_resize old=${lastRelayCaptureW}x${lastRelayCaptureH} new=${bw}x${bh} " +
+                "encoder=${width}x${height} scale=${box.scale} dest=${box.dx},${box.dy} ${box.dw}x${box.dh} " +
+                "fullFrameClearedBeforeDraw=true",
+        )
+        lastRelayCaptureW = bw
+        lastRelayCaptureH = bh
     }
 
     private fun imageToBitmap(image: Image): Bitmap {
@@ -408,6 +581,12 @@ internal class EncoderFrameRelay(
          * Increase to 3 if QA finds producer underruns on specific OEMs.
          */
         private const val FRAME_READER_MAX_IMAGES = 2
+
+        /**
+         * Debounce window for [resizeCaptureSource].  Coalesces rapid rotation/fold events into
+         * a single [doResizeCaptureSource] call so we don't thrash the ImageReader.
+         */
+        private const val CAPTURE_RESIZE_DEBOUNCE_MS = 300L
 
         /**
          * Drop acquired frames older than this (nanoseconds, [SystemClock.elapsedRealtimeNanos]
@@ -506,9 +685,22 @@ private class EglBitmapBlitter(
 
     fun draw(bitmap: Bitmap) {
         if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) return
-        GLES20.glViewport(0, 0, width, height)
+        val bw = bitmap.width
+        val bh = bitmap.height
+        val outW = width.coerceAtLeast(1)
+        val outH = height.coerceAtLeast(1)
+        GLES20.glViewport(0, 0, outW, outH)
         GLES20.glClearColor(0f, 0f, 0f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+        if (bw > 0 && bh > 0) {
+            val scale = min(outW.toFloat() / bw, outH.toFloat() / bh)
+            val dw = (bw * scale).roundToInt().coerceIn(1, outW)
+            val dh = (bh * scale).roundToInt().coerceIn(1, outH)
+            val dx = (outW - dw) / 2
+            val dyTop = (outH - dh) / 2
+            val glY = outH - dyTop - dh
+            GLES20.glViewport(dx, glY, dw, dh)
+        }
         GLES20.glUseProgram(program)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId)
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)

@@ -573,15 +573,13 @@
     <string name="toast_gif_transcode_failed">Impossible de cr\u00E9er un GIF\u00A0: votre enregistrement MP4 a \u00E9t\u00E9 conserv\u00E9.</string>
     <string name="toast_gif_saved">GIF enregistr\u00E9 dans Images/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">Impossible de cr\u00E9er un fichier audio s\u00E9par\u00E9\u00A0: le micro sera enregistr\u00E9 dans la vid\u00E9o \u00E0 la place</string>
-    <string name="toast_internal_audio_silent">L\'audio interne est silencieux\u00A0: l\'application en cours d\'enregistrement peut ne pas autoriser la capture audio. Essayez plut\u00F4t d\u2019enregistrer l\u2019audio du micro.</string>
+    <string name="toast_internal_audio_silent">Aucun signal audio interne détecté. Cette application peut bloquer la capture audio ou utiliser une piste audio non prise en charge.</string>
     <string name="recording_has_separate_audio">A une piste audio s\u00E9par\u00E9e</string>
     <string name="toast_buffer_start_failed">\u00C9chec du d\u00E9marrage du tampon\u00A0: %1$s</string>
     <string name="toast_clip_empty">Le clip est vide \u2013 continuez \u00E0 le mettre en m\u00E9moire tampon plus longtemps</string>
     <string name="toast_clip_saved">Clip enregistr\u00E9\u00A0!</string>
     <string name="toast_clip_save_failed">\u00C9chec de l\'enregistrement du clip\u00A0: %1$s</string>
     <string name="notif_camera_overlay_text">La superposition de la cam\u00E9ra CatRec est active\u00A0: appuyez pour revenir \u00E0 l\'application</string>
-    <string name="tile_record_label">Enregistrement CatRec</string>
-    <string name="tile_clipper_label">Tondeuse CatRec</string>
     <string name="notif_channel_camera_overlay">Superposition de cam\u00E9ra</string>
     <string name="notif_channel_camera_overlay_desc">S\'affiche lorsque la superposition de cam\u00E9ra est active</string>
     <string name="notif_camera_in_use_title">Cam\u00E9ra en cours d\'utilisation</string>
@@ -597,10 +595,6 @@
     <string name="notif_action_overlay_hide">Masquer la superposition</string>
     <string name="notif_action_overlay_show">Afficher la superposition</string>
     <string name="notif_action_overlay_enable_in_settings">Superposition d\u00E9sactiv\u00E9e</string>
-    <string name="tile_subtitle_recording">Enregistrement\u2026</string>
-    <string name="tile_subtitle_buffering">Mise en m\u00E9moire tampon\u2026</string>
-    <string name="tile_subtitle_ready">Pr\u00EAt</string>
-    <string name="tile_subtitle_tap_open">Appuyez pour ouvrir l\'application</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Autorisation d\u2019enregistrement d\u2019\u00E9cran refus\u00E9e</string>

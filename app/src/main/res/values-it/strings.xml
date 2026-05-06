@@ -573,15 +573,13 @@
     <string name="toast_gif_transcode_failed">Impossibile creare la GIF: la tua registrazione MP4 \u00E8 stata conservata.</string>
     <string name="toast_gif_saved">GIF salvata in Immagini/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">Impossibile creare un file audio separato: il microfono verr\u00E0 invece registrato nel video</string>
-    <string name="toast_internal_audio_silent">L\'audio interno \u00E8 silenzioso: l\'app in fase di registrazione potrebbe non consentire l\'acquisizione dell\'audio. Prova invece a registrare l\'audio del microfono.</string>
+    <string name="toast_internal_audio_silent">Nessun audio interno rilevato. Questa app potrebbe bloccare l\'acquisizione audio o usare un percorso audio non supportato.</string>
     <string name="recording_has_separate_audio">Ha una traccia audio separata</string>
     <string name="toast_buffer_start_failed">Avvio del buffer non riuscito: %1$s</string>
     <string name="toast_clip_empty">La clip \u00E8 vuota: mantieni il buffering pi\u00F9 a lungo</string>
     <string name="toast_clip_saved">Clip salvata!</string>
     <string name="toast_clip_save_failed">Salvataggio clip non riuscito: %1$s</string>
     <string name="notif_camera_overlay_text">L\'overlay della fotocamera CatRec \u00E8 attivo: tocca per tornare all\'app</string>
-    <string name="tile_record_label">Registrazione CatRec</string>
-    <string name="tile_clipper_label">CatRec Clipper</string>
     <string name="notif_channel_camera_overlay">Sovrapposizione della fotocamera</string>
     <string name="notif_channel_camera_overlay_desc">Viene visualizzato mentre la sovrapposizione della fotocamera \u00E8 attiva</string>
     <string name="notif_camera_in_use_title">Fotocamera in uso</string>
@@ -597,10 +595,6 @@
     <string name="notif_action_overlay_hide">Nascondi sovrapposizione</string>
     <string name="notif_action_overlay_show">Mostra sovrapposizione</string>
     <string name="notif_action_overlay_enable_in_settings">Sovrapposizione disattivata</string>
-    <string name="tile_subtitle_recording">Registrazione\u2026</string>
-    <string name="tile_subtitle_buffering">Bufferizzazione\u2026</string>
-    <string name="tile_subtitle_ready">Pronto</string>
-    <string name="tile_subtitle_tap_open">Tocca per aprire l\'app</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>

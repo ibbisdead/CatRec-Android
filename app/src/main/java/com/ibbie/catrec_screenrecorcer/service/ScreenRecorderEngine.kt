@@ -46,7 +46,7 @@ class ScreenRecorderEngine(
     private val audioChannelCount: Int = 1,
     private val audioEncoderType: String = "AAC-LC",
     private val separateMicFileDescriptor: FileDescriptor? = null,
-    /** Invoked on the audio-capture thread when internal audio stays silent for SILENCE_TIMEOUT_MS. */
+    /** Invoked on the audio-capture thread when playback capture returns sustained silence ([SILENCE_TIMEOUT_MS]). */
     private val onInternalAudioSilence: (() -> Unit)? = null,
     /** Invoked at most once when the video encoder drain path hits a fatal error (encoder thread). */
     private val onFatalVideoEncodeError: ((String) -> Unit)? = null,
@@ -580,6 +580,15 @@ class ScreenRecorderEngine(
 
     fun setAdaptiveSkipModulo(modulo: Int) {
         frameRelay?.adaptiveSkipModulo = modulo
+    }
+
+    /**
+     * Resizes the capture [VirtualDisplay] + [ImageReader] to [newW]×[newH] without changing
+     * the encoder output resolution.  Call this when the OS reports a content-size change
+     * (rotation, fold) so stale pixels no longer contaminate the captured frames.
+     */
+    fun resizeCaptureSource(newW: Int, newH: Int) {
+        frameRelay?.resizeCaptureSource(newW, newH)
     }
 
     fun attachAdaptivePerformance(
@@ -1156,13 +1165,13 @@ class ScreenRecorderEngine(
                     val silentMs = now - internalSilentStartMs
                     Log.w(
                         TAG,
-                        "Internal audio silent for ${silentMs}ms — " +
+                        "Playback capture: sustained silence for ${silentMs}ms (all-zero PCM); " +
                             "brand=${Build.BRAND} model=${Build.MODEL} API=${Build.VERSION.SDK_INT}. " +
-                            "Likely capture policy block or OEM restriction.",
+                            "Foreground app may block capture or use an unsupported audio path.",
                     )
                     AppLogger.w(
                         TAG,
-                        "Internal audio silence timeout after ${silentMs}ms " +
+                        "Playback capture silence timeout after ${silentMs}ms " +
                             "(${Build.BRAND} ${Build.MODEL} API ${Build.VERSION.SDK_INT})",
                     )
                     logAnalyticsEvent(

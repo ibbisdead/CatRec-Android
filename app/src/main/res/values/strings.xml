@@ -596,15 +596,13 @@
     <string name="toast_gif_transcode_failed">Could not create GIF — your MP4 recording was kept.</string>
     <string name="toast_gif_saved">GIF saved to Pictures/CatRec/GIFs</string>
     <string name="toast_separate_mic_failed">Could not create separate audio file — mic will be recorded in the video instead</string>
-    <string name="toast_internal_audio_silent">Internal audio is silent — the app being recorded may not allow audio capture. Try recording mic audio instead.</string>
+    <string name="toast_internal_audio_silent">No internal audio detected. This app may block audio capture or use an unsupported audio path.</string>
     <string name="recording_has_separate_audio">Has separate audio track</string>
     <string name="toast_buffer_start_failed">Buffer start failed: %1$s</string>
     <string name="toast_clip_empty">Clip is empty – keep buffering longer</string>
     <string name="toast_clip_saved">Clip saved!</string>
     <string name="toast_clip_save_failed">Clip save failed: %1$s</string>
     <string name="notif_camera_overlay_text">CatRec camera overlay is active — tap to return to app</string>
-    <string name="tile_record_label">CatRec Record</string>
-    <string name="tile_clipper_label">CatRec Clipper</string>
     <string name="notif_channel_camera_overlay">Camera overlay</string>
     <string name="notif_channel_camera_overlay_desc">Shows while the camera overlay is active</string>
     <string name="notif_camera_in_use_title">Camera in use</string>
@@ -627,11 +625,6 @@
     <string name="notif_cc_home" translatable="false">Home</string>
     <string name="notif_cc_close" translatable="false">Exit</string>
     <string name="notif_cc_stop" translatable="false">Stop</string>
-    <string name="tile_subtitle_recording">Recording…</string>
-    <string name="tile_subtitle_buffering">Buffering…</string>
-    <string name="tile_subtitle_ready">Ready</string>
-    <string name="tile_subtitle_tap_open">Tap to open app</string>
-
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>
     <string name="toast_no_email_app">No email app found</string>
@@ -715,7 +708,6 @@
         <item>Settings shortcut to review battery optimization for more reliable background recording</item>
         <item>16+ languages with consistent translations</item>
         <item>RECORD / CLIPPER mode selector with clear status indicator</item>
-        <item>Quick Settings tiles: CatRec Record and CatRec Clipper</item>
         <item>Recording notification with actions; prepared-capture session support</item>
         <item>Optional opt-in analytics to improve stability</item>
         <item>Privacy controls: analytics and ad personalization toggles</item>
