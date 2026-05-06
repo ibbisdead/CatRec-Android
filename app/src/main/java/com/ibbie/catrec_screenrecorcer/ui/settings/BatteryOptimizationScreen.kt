@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryAlert
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.SettingsPower
 import androidx.compose.material3.Button
@@ -264,38 +263,6 @@ fun BatteryOptimizationBanner(
             ) {
                 Text("✕", style = MaterialTheme.typography.labelSmall)
             }
-        }
-    }
-}
-
-/**
- * Small status chip shown in SettingsScreen when the app is already exempted.
- */
-@Composable
-fun BatteryOptimizationStatusChip(modifier: Modifier = Modifier) {
-    val accent = Color(0xFF4CAF50)
-    Surface(
-        color = accent.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(14.dp),
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text = stringResource(R.string.battery_opt_status_exempted),
-                style = MaterialTheme.typography.labelSmall,
-                color = accent,
-                fontWeight = FontWeight.SemiBold,
-            )
         }
     }
 }

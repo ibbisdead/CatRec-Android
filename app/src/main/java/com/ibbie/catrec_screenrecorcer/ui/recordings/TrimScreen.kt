@@ -69,6 +69,7 @@ fun TrimScreen(
     when (mediaReadable.value) {
         null -> {
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
@@ -93,6 +94,7 @@ fun TrimScreen(
         }
         false -> {
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },
@@ -186,6 +188,7 @@ fun TrimScreen(
             val endMs = (endFraction * durationMs).toLong()
 
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.trim_title), fontWeight = FontWeight.Bold) },

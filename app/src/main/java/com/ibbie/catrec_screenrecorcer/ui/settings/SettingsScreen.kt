@@ -1,8 +1,9 @@
 package com.ibbie.catrec_screenrecorcer.ui.settings
 
-import android.app.Activity
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
@@ -16,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -34,6 +36,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
@@ -44,21 +47,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.rewarded.RewardedAd
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.ibbie.catrec_screenrecorcer.R
-import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
-import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
-import com.ibbie.catrec_screenrecorcer.data.AdGate
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
-import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionInvalidReason
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionPreset
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionPresetKind
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionValidation
 import com.ibbie.catrec_screenrecorcer.ui.components.*
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
@@ -67,6 +66,10 @@ import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.core.net.toUri
 import androidx.core.graphics.toColorInt
+import androidx.core.content.ContextCompat
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
+import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -80,95 +83,11 @@ fun SettingsScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
     val resources = LocalResources.current
     val accent = LocalAccentColor.current
-
-    // Video
-    val fps by viewModel.fps.collectAsState()
-    val bitrate by viewModel.bitrate.collectAsState()
-    val resolution by viewModel.resolution.collectAsState()
-    val videoEncoder by viewModel.videoEncoder.collectAsState()
-    val recordingOrientation by viewModel.recordingOrientation.collectAsState()
-    val colorMode by viewModel.colorMode.collectAsState()
-    val forceRec709Compatibility by viewModel.forceRec709Compatibility.collectAsState()
-    val rec709CompatBrightnessCorrection by viewModel.rec709CompatBrightnessCorrection.collectAsState()
-    val isGifCaptureMode by viewModel.isGifCaptureMode.collectAsState()
-    val adaptivePerformanceEnabled by viewModel.adaptivePerformanceEnabled.collectAsState()
-    val gifRecorderPresetId by viewModel.gifRecorderPresetId.collectAsState()
-
-    // Audio
-    val recordAudio by viewModel.recordAudio.collectAsState()
-    val internalAudio by viewModel.internalAudio.collectAsState()
-    val audioBitrate by viewModel.audioBitrate.collectAsState()
-    val audioSampleRate by viewModel.audioSampleRate.collectAsState()
-    val audioChannels by viewModel.audioChannels.collectAsState()
-    val audioEncoder by viewModel.audioEncoder.collectAsState()
-    val separateMicRecording by viewModel.separateMicRecording.collectAsState()
-
-    // Controls
-    val floatingControls by viewModel.floatingControls.collectAsState()
-    val hideFloatingIconWhileRecording by viewModel.hideFloatingIconWhileRecording.collectAsState()
-    val postScreenshotOptions by viewModel.postScreenshotOptions.collectAsState()
-    val recordSingleAppEnabled by viewModel.recordSingleAppEnabled.collectAsState()
-    val touchOverlay by viewModel.touchOverlay.collectAsState()
-    val countdown by viewModel.countdown.collectAsState()
-    val clipperDurationMinutes by viewModel.clipperDurationMinutes.collectAsState()
-    val stopBehavior by viewModel.stopBehavior.collectAsState()
-
-    // Camera Overlay
-    val cameraOverlay by viewModel.cameraOverlay.collectAsState()
-    val cameraOverlaySize by viewModel.cameraOverlaySize.collectAsState()
-    val cameraXFraction by viewModel.cameraXFraction.collectAsState()
-    val cameraYFraction by viewModel.cameraYFraction.collectAsState()
-    val cameraLockPosition by viewModel.cameraLockPosition.collectAsState()
-    val cameraFacing by viewModel.cameraFacing.collectAsState()
-    val cameraAspectRatio by viewModel.cameraAspectRatio.collectAsState()
-    val cameraOpacity by viewModel.cameraOpacity.collectAsState()
-
-    // Watermark
-    val showWatermark by viewModel.showWatermark.collectAsState()
-    val watermarkImageUri by viewModel.watermarkImageUri.collectAsState()
-    val watermarkShape by viewModel.watermarkShape.collectAsState()
-    val watermarkOpacity by viewModel.watermarkOpacity.collectAsState()
-    val watermarkSize by viewModel.watermarkSize.collectAsState()
-    val watermarkXFraction by viewModel.watermarkXFraction.collectAsState()
-    val watermarkYFraction by viewModel.watermarkYFraction.collectAsState()
-    val watermarkLocation by viewModel.watermarkLocation.collectAsState()
-
-    // Screenshots
-    val screenshotFormat by viewModel.screenshotFormat.collectAsState()
-    val screenshotQuality by viewModel.screenshotQuality.collectAsState()
-
-    // Theme & Language
-    val appTheme by viewModel.appTheme.collectAsState()
-    val appLanguage by viewModel.appLanguage.collectAsState()
-
-    // UI Mode
-    val performanceMode by viewModel.performanceMode.collectAsState()
+    val uiState by viewModel.settingsUiState.collectAsState()
     val isLowEndDevice = rememberIsLowEndDevice()
-
-    // Accent Color
-    val accentHex by viewModel.accentColor.collectAsState()
-    val accentHex2 by viewModel.accentColor2.collectAsState()
-    val accentGradient by viewModel.accentUseGradient.collectAsState()
-
-    // Storage
-    val saveLocationUri by viewModel.saveLocationUri.collectAsState()
-    val filenamePattern by viewModel.filenamePattern.collectAsState()
-    val autoDelete by viewModel.autoDelete.collectAsState()
-
-    // General
-    val keepScreenOn by viewModel.keepScreenOn.collectAsState()
-
-    // Privacy
-    val analyticsEnabled by viewModel.analyticsEnabled.collectAsState()
-    val personalizedAdsEnabled by viewModel.personalizedAdsEnabled.collectAsState()
-
-    /** Remove-ads purchase — bypasses all rewarded-ad gates ([AdGate]). */
-    val adsDisabled by viewModel.adsDisabled.collectAsState()
-
-    val isRecording by RecordingState.isRecording.collectAsState()
-    val scrollState = rememberScrollState()
     val canDrawOverlays = Settings.canDrawOverlays(context)
 
     var batteryOptimizationIgnored by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
@@ -188,17 +107,17 @@ fun SettingsScreen(
         )
 
     // Watermark live preview
-    if (showWatermark && canDrawOverlays && !isRecording) {
+    if (uiState.showWatermark && canDrawOverlays && !uiState.isRecording) {
         DisposableEffect(Unit) {
             context.startService(
                 Intent(context, OverlayService::class.java).apply {
                     action = OverlayService.ACTION_SHOW_WATERMARK_PREVIEW
-                    putExtra(OverlayService.EXTRA_WATERMARK_SIZE, watermarkSize)
-                    putExtra(OverlayService.EXTRA_WATERMARK_OPACITY, watermarkOpacity)
-                    putExtra(OverlayService.EXTRA_WATERMARK_SHAPE, watermarkShape)
-                    putExtra(OverlayService.EXTRA_WATERMARK_IMAGE_URI, watermarkImageUri)
-                    putExtra(OverlayService.EXTRA_WATERMARK_X_FRACTION, watermarkXFraction)
-                    putExtra(OverlayService.EXTRA_WATERMARK_Y_FRACTION, watermarkYFraction)
+                    putExtra(OverlayService.EXTRA_WATERMARK_SIZE, uiState.watermarkSize)
+                    putExtra(OverlayService.EXTRA_WATERMARK_OPACITY, uiState.watermarkOpacity)
+                    putExtra(OverlayService.EXTRA_WATERMARK_SHAPE, uiState.watermarkShape)
+                    putExtra(OverlayService.EXTRA_WATERMARK_IMAGE_URI, uiState.watermarkImageUri)
+                    putExtra(OverlayService.EXTRA_WATERMARK_X_FRACTION, uiState.watermarkXFraction)
+                    putExtra(OverlayService.EXTRA_WATERMARK_Y_FRACTION, uiState.watermarkYFraction)
                 },
             )
             OverlayService.onPreviewPositionChanged = { x, y ->
@@ -214,14 +133,14 @@ fun SettingsScreen(
                 OverlayService.onPreviewPositionChanged = null
             }
         }
-        LaunchedEffect(watermarkSize, watermarkOpacity, watermarkShape, watermarkImageUri, watermarkXFraction, watermarkYFraction) {
+        LaunchedEffect(uiState.watermarkSize, uiState.watermarkOpacity, uiState.watermarkShape, uiState.watermarkImageUri, uiState.watermarkXFraction, uiState.watermarkYFraction) {
             OverlayService.updatePreviewIfActive(
-                watermarkSize,
-                watermarkOpacity,
-                watermarkShape,
-                watermarkImageUri,
-                watermarkXFraction,
-                watermarkYFraction,
+                uiState.watermarkSize,
+                uiState.watermarkOpacity,
+                uiState.watermarkShape,
+                uiState.watermarkImageUri,
+                uiState.watermarkXFraction,
+                uiState.watermarkYFraction,
             )
         }
     }
@@ -235,6 +154,30 @@ fun SettingsScreen(
                 )
                 viewModel.setSaveLocationUri(uri.toString())
             }
+        }
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
+            if (uri != null) {
+                try {
+                    context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (
+                    _: Exception,
+                ) {
+                }
+                navController.navigate("crop/${Uri.encode(uri.toString())}")
+            }
+        }
+    val permissionManager = remember { PermissionManager(context) }
+    var pendingEnableMicrophone by remember { mutableStateOf(false) }
+    var pendingEnableInternalAudio by remember { mutableStateOf(false) }
+    val microphonePermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            permissionManager.saveAudioGranted(granted)
+            if (granted && pendingEnableMicrophone) viewModel.setRecordAudio(true)
+            if (granted && pendingEnableInternalAudio) viewModel.setInternalAudio(true)
+            pendingEnableMicrophone = false
+            pendingEnableInternalAudio = false
         }
 
     // Dialog states
@@ -257,99 +200,37 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showScreenshotFormatDialog by remember { mutableStateOf(false) }
     var showCameraSettingsDialog by remember { mutableStateOf(false) }
+    var showWatermarkLocDialog2 by remember { mutableStateOf(false) }
     var showLagWarningDialog by remember { mutableStateOf(false) }
     var showAccentPickerDialog by remember { mutableStateOf(false) }
     var accentPickingSecond by remember { mutableStateOf(false) }
-    var accentHexInput by remember(accentHex) { mutableStateOf(accentHex) }
-    var accentHex2Input by remember(accentHex2) { mutableStateOf(accentHex2) }
+    var accentHexInput by remember(uiState.accentHex) { mutableStateOf(uiState.accentHex) }
+    var accentHex2Input by remember(uiState.accentHex2) { mutableStateOf(uiState.accentHex2) }
 
     var showAudioMenuSheet by remember { mutableStateOf(false) }
     var showVideoMenuSheet by remember { mutableStateOf(false) }
     val audioMenuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val videoMenuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // ── Ad Gate ───────────────────────────────────────────────────────────────
-    // Tracks which feature is pending unlock and what to do once unlocked.
-    var adGateFeature by remember { mutableStateOf("") }
-    var adGateFeatureName by remember { mutableStateOf("") }
-    var adGatePending by remember { mutableStateOf<(() -> Unit)?>(null) }
-    var showAdGateDialog by remember { mutableStateOf(false) }
-    var adGateAd by remember { mutableStateOf<RewardedAd?>(null) }
-    var adGateLoading by remember { mutableStateOf(false) }
-
-    fun loadAdGateAd() {
-        if (adGateLoading || adGateAd != null) return
-        adGateLoading = true
-        RewardedAd.load(
-            context.applicationContext,
-            // Replace with a dedicated ad unit ID for feature unlocks once live on Play Store.
-            "ca-app-pub-7741372232895726/8137302121",
-            AdMobAdRequestFactory.build(),
-            object : RewardedAdLoadCallback() {
-                override fun onAdLoaded(ad: RewardedAd) {
-                    adGateAd = ad
-                    adGateLoading = false
-                }
-
-                override fun onAdFailedToLoad(e: LoadAdError) {
-                    adGateAd = null
-                    adGateLoading = false
-                }
-            },
-        )
-    }
-
-    LaunchedEffect(Unit) { loadAdGateAd() }
-    DisposableEffect(Unit) { onDispose { adGateAd = null } }
-
-    /** Show the ad-gate dialog for [feature]. On unlock, [action] is invoked. */
-    fun gateFeature(
-        feature: String,
-        name: String,
-        action: () -> Unit,
-    ) {
-        if (AdGate.isUnlocked(feature, adsDisabled)) {
-            action()
-            return
+    val resolutionPresets =
+        remember(
+            configuration.orientation,
+            configuration.screenWidthDp,
+            configuration.screenHeightDp,
+            uiState.recordingOrientation,
+            uiState.videoEncoder,
+            uiState.fps,
+            isLowEndDevice,
+        ) {
+            RecordingResolutionSupport.generatePresets(
+                context = context,
+                recordingOrientation = uiState.recordingOrientation,
+                videoEncoder = uiState.videoEncoder,
+                fps = uiState.fps.toInt(),
+                lowEndDeviceProfile = isLowEndDevice,
+            )
         }
-        adGateFeature = feature
-        adGateFeatureName = name
-        adGatePending = action
-        showAdGateDialog = true
-    }
-
-    // Canonical English values (stored in DataStore / sent to encoder). Separator lines use "—" for grouping.
-    val resolutionOptions =
-        listOf(
-            "Native",
-            "— 16:9 —",
-            "3840x2160 (4K)",
-            "2560x1440 (2K)",
-            "1920x1080 (FHD)",
-            "1280x720 (HD)",
-            "854x480 (SD)",
-            "640x360",
-            "— 20:9 (Tall Phone) —",
-            "3200x1440",
-            "2400x1080",
-            "2520x1080",
-            "— 18:9 (2:1) —",
-            "2880x1440",
-            "2160x1080",
-            "— 21:9 (Ultrawide) —",
-            "2560x1080",
-            "3440x1440",
-            "— 4:3 —",
-            "1920x1440",
-            "1440x1080",
-            "1280x960",
-            "960x720",
-            "— 9:16 (Portrait) —",
-            "1080x1920",
-            "720x1280",
-            "1440x2560",
-            "Custom…",
-        )
+    val selectedResolutionSetting = RecordingResolutionSupport.normalizeSavedSetting(uiState.resolution)
 
     val languageLabelIds =
         listOf(
@@ -393,7 +274,7 @@ fun SettingsScreen(
         )
 
     val stopBehaviorSummary =
-        stopBehavior.joinToString(", ") { key ->
+        uiState.stopBehavior.joinToString(", ") { key ->
             when (key) {
                 StopBehaviorKeys.NOTIFICATION -> resources.getString(R.string.stop_behavior_notification)
                 StopBehaviorKeys.SHAKE -> resources.getString(R.string.stop_behavior_shake)
@@ -402,7 +283,7 @@ fun SettingsScreen(
                 else -> key
             }
         }
-    val langIdx = languageCodes.indexOf(appLanguage).takeIf { it >= 0 } ?: 0
+    val langIdx = languageCodes.indexOf(uiState.appLanguage).takeIf { it >= 0 } ?: 0
     val languageDisplay = stringResource(languageLabelIds.getOrElse(langIdx) { R.string.language_system })
 
     // ── Dialogs (all logic unchanged) ──────────────────────────────────────────
@@ -410,36 +291,14 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_fps_title),
             options = listOf("24", "30", "45", "60", "90", "120"),
-            selectedOption = "${fps.toInt()}",
+            selectedOption = "${uiState.fps.toInt()}",
             onOptionSelected = { selected ->
-                if ((selected == "90" || selected == "120") && !AdGate.isUnlocked(AdGate.HIGH_FPS, adsDisabled)) {
-                    gateFeature(
-                        AdGate.HIGH_FPS,
-                        resources.getString(R.string.gate_high_fps, selected),
-                    ) { viewModel.setFps(selected.toFloat()) }
-                } else {
-                    viewModel.setFps(selected.toFloat())
-                }
+                viewModel.setFps(selected.toFloat())
             },
             onDismiss = { showFpsDialog = false },
         )
     }
 
-    if (showAdGateDialog) {
-        AdGateDialog(
-            featureName = adGateFeatureName,
-            ad = adGateAd,
-            isAdLoading = adGateLoading,
-            onUnlocked = {
-                AdGate.unlock(adGateFeature)
-                adGatePending?.invoke()
-                adGatePending = null
-                adGateAd = null
-                loadAdGateAd()
-            },
-            onDismiss = { showAdGateDialog = false },
-        )
-    }
     if (showBitrateDialog) {
         val bitrateKeys = listOf(1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200)
         val mbpsLabel = stringResource(R.string.label_mbps)
@@ -447,7 +306,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_bitrate_title),
             options = bitrateLabels,
-            selectedOption = "${bitrate.toInt()} $mbpsLabel",
+            selectedOption = "${uiState.bitrate.toInt()} $mbpsLabel",
             onOptionSelected = { label ->
                 val idx = bitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setBitrate(bitrateKeys[idx].toFloat())
@@ -457,14 +316,13 @@ fun SettingsScreen(
     }
     if (showResolutionDialog) {
         ResolutionDialog(
-            options = resolutionOptions,
-            selectedOption = resolution,
+            presets = resolutionPresets,
+            selectedOption = selectedResolutionSetting,
             onOptionSelected = { sel ->
                 when {
-                    sel == "Custom…" -> {
+                    sel == RecordingResolutionSupport.CUSTOM_OPTION -> {
                         showCustomResolutionDialog = true
                     }
-                    sel.startsWith("—") -> {}
                     else -> {
                         viewModel.setResolution(sel)
                     }
@@ -475,9 +333,13 @@ fun SettingsScreen(
     }
     if (showCustomResolutionDialog) {
         CustomResolutionDialog(
-            current = if (resolution.contains("x") && !resolutionOptions.contains(resolution)) resolution else "",
+            current = RecordingResolutionSupport.parseSize(selectedResolutionSetting)?.setting ?: "",
+            videoEncoder = uiState.videoEncoder,
+            fps = uiState.fps.toInt(),
+            lowEndDeviceProfile = isLowEndDevice,
             onConfirm = {
                 viewModel.setResolution(it)
+                showCustomResolutionDialog = false
             },
             onDismiss = { showCustomResolutionDialog = false },
         )
@@ -486,7 +348,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_video_encoder),
             options = listOf("H.264", "H.265 (HEVC)"),
-            selectedOption = videoEncoder,
+            selectedOption = uiState.videoEncoder,
             onOptionSelected = {
                 viewModel.setVideoEncoder(it)
             },
@@ -506,7 +368,7 @@ fun SettingsScreen(
             title = stringResource(R.string.setting_color_mode),
             options = colorModeOptions,
             optionLabels = colorModeLabels,
-            selectedOption = colorMode,
+            selectedOption = uiState.colorMode,
             onOptionSelected = { viewModel.setColorMode(it) },
             onDismiss = { showColorModeDialog = false },
         )
@@ -528,7 +390,7 @@ fun SettingsScreen(
             title = stringResource(R.string.setting_rec709_brightness_correction),
             options = correctionOptions,
             optionLabels = correctionLabels,
-            selectedOption = rec709CompatBrightnessCorrection,
+            selectedOption = uiState.rec709CompatBrightnessCorrection,
             onOptionSelected = { viewModel.setRec709CompatBrightnessCorrection(it) },
             onDismiss = { showRec709BrightnessCorrectionDialog = false },
         )
@@ -544,7 +406,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.setting_orientation),
             options = orientLabels,
-            selectedOption = orientLabels[orientKeys.indexOf(recordingOrientation).coerceIn(0, orientLabels.lastIndex)],
+            selectedOption = orientLabels[orientKeys.indexOf(uiState.recordingOrientation).coerceIn(0, orientLabels.lastIndex)],
             onOptionSelected = { label ->
                 val idx = orientLabels.indexOf(label)
                 if (idx >= 0) viewModel.setRecordingOrientation(orientKeys[idx])
@@ -559,7 +421,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_audio_bitrate),
             options = audioBitrateLabels,
-            selectedOption = "$audioBitrate $kbpsLabel",
+            selectedOption = "${uiState.audioBitrate} $kbpsLabel",
             onOptionSelected = { label ->
                 val idx = audioBitrateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioBitrate(audioBitrateKeys[idx])
@@ -574,7 +436,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_sample_rate),
             options = sampleRateLabels,
-            selectedOption = "$audioSampleRate $hzLabel",
+            selectedOption = "${uiState.audioSampleRate} $hzLabel",
             onOptionSelected = { label ->
                 val idx = sampleRateLabels.indexOf(label)
                 if (idx >= 0) viewModel.setAudioSampleRate(sampleRateKeys[idx])
@@ -586,7 +448,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_audio_encoder),
             options = listOf("AAC-LC", "AAC-HE", "AAC-HE v2", "AAC-ELD"),
-            selectedOption = audioEncoder,
+            selectedOption = uiState.audioEncoder,
             onOptionSelected = {
                 viewModel.setAudioEncoder(it)
             },
@@ -607,7 +469,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_countdown_timer),
             options = countdownLabels,
-            selectedOption = countdownLabels[countdownKeys.indexOf(countdown).coerceIn(0, countdownLabels.lastIndex)],
+            selectedOption = countdownLabels[countdownKeys.indexOf(uiState.countdown).coerceIn(0, countdownLabels.lastIndex)],
             onOptionSelected = { label ->
                 val idx = countdownLabels.indexOf(label)
                 if (idx >= 0) viewModel.setCountdown(countdownKeys[idx])
@@ -619,7 +481,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_clipper_duration_title),
             options = clipperDurationLabels,
-            selectedOption = clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
+            selectedOption = clipperDurationLabels.getOrElse(uiState.clipperDurationMinutes - 1) { clipperDurationLabels.first() },
             onOptionSelected = { sel ->
                 val idx = clipperDurationLabels.indexOf(sel)
                 if (idx >= 0) viewModel.setClipperDurationMinutes(idx + 1)
@@ -646,7 +508,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(
-                                checked = stopBehavior.contains(key),
+                                checked = uiState.stopBehavior.contains(key),
                                 onCheckedChange = { viewModel.setStopBehavior(key) },
                             )
                             Text(stringResource(labelRes), modifier = Modifier.padding(start = 16.dp))
@@ -661,7 +523,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_filename_pattern),
             options = listOf("yyyyMMdd_HHmmss", "CatRec_Timestamp", "Date_Time"),
-            selectedOption = filenamePattern,
+            selectedOption = uiState.filenamePattern,
             onOptionSelected = {
                 viewModel.setFilenamePattern(it)
             },
@@ -691,7 +553,7 @@ fun SettingsScreen(
                                     }.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            RadioButton(selected = appTheme == theme, onClick = {
+                            RadioButton(selected = uiState.appTheme == theme, onClick = {
                                 viewModel.setAppTheme(theme)
                                 showThemeDialog = false
                             })
@@ -715,14 +577,14 @@ fun SettingsScreen(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .selectable(selected = appLanguage == code, onClick = {
+                                    .selectable(selected = uiState.appLanguage == code, onClick = {
                                         viewModel.setAppLanguageWithUiApply(context, code)
                                         showLanguageDialog = false
                                     })
                                     .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            RadioButton(selected = appLanguage == code, onClick = {
+                            RadioButton(selected = uiState.appLanguage == code, onClick = {
                                 viewModel.setAppLanguageWithUiApply(context, code)
                                 showLanguageDialog = false
                             })
@@ -745,7 +607,7 @@ fun SettingsScreen(
         SingleChoiceDialog(
             title = stringResource(R.string.dialog_screenshot_format),
             options = formatLabels,
-            selectedOption = formatLabels[formatKeys.indexOf(screenshotFormat).takeIf { it >= 0 } ?: 0],
+            selectedOption = formatLabels[formatKeys.indexOf(uiState.screenshotFormat).takeIf { it >= 0 } ?: 0],
             onOptionSelected = { label ->
                 val idx = formatLabels.indexOf(label)
                 if (idx >= 0) viewModel.setScreenshotFormat(formatKeys[idx])
@@ -756,15 +618,16 @@ fun SettingsScreen(
     if (showCameraSettingsDialog) {
         CameraSettingsDialog(
             viewModel = viewModel,
-            cameraOverlay = cameraOverlay,
-            cameraLockPosition = cameraLockPosition,
-            cameraFacing = cameraFacing,
-            cameraAspectRatio = cameraAspectRatio,
-            cameraOpacity = cameraOpacity,
-            cameraOverlaySize = cameraOverlaySize,
-            cameraXFraction = cameraXFraction,
-            cameraYFraction = cameraYFraction,
-            isRecording = isRecording,
+            cameraOverlay = uiState.cameraOverlay,
+            cameraLockPosition = uiState.cameraLockPosition,
+            cameraFacing = uiState.cameraFacing,
+            cameraAspectRatio = uiState.cameraAspectRatio,
+            cameraOpacity = uiState.cameraOpacity,
+            cameraOverlaySize = uiState.cameraOverlaySize,
+            cameraXFraction = uiState.cameraXFraction,
+            cameraYFraction = uiState.cameraYFraction,
+            cameraOrientation = uiState.cameraOrientation,
+            isRecording = uiState.isRecording,
             canDrawOverlays = canDrawOverlays,
             context = context,
             onDismiss = { showCameraSettingsDialog = false },
@@ -772,36 +635,38 @@ fun SettingsScreen(
     }
 
     // ── Main layout (no nested Scaffold: outer NavGraph already has the tab header) ──
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp)
-                .padding(top = 4.dp, bottom = 8.dp),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
     ) {
-        Text(
-            text = stringResource(R.string.settings_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-        )
+        item(key = "title/header", contentType = "header") {
+            Text(
+                text = stringResource(R.string.settings_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+            )
+        }
 
-        // ── CONTROLS ──────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        item(key = "settings_content", contentType = "settings_card") {
+            GlassCard(modifier = Modifier.fillMaxWidth()) {
+                // ── CONTROLS ──────────────────────────────────────────────────────
             GlassSectionHeader(stringResource(R.string.settings_section_controls))
             SwitchSettingItem(
                 Icons.Default.ControlCamera,
                 stringResource(R.string.setting_floating_controls),
                 stringResource(R.string.settings_floating_controls_desc),
-                floatingControls,
+                uiState.floatingControls,
             ) {
                 if (it && !Settings.canDrawOverlays(context)) {
                     Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                     context.startActivity(
                         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                             "package:${context.packageName}".toUri()),
@@ -827,83 +692,85 @@ fun SettingsScreen(
                 Icons.Default.VisibilityOff,
                 stringResource(R.string.setting_hide_floating_while_recording),
                 stringResource(R.string.settings_hide_floating_while_recording_desc),
-                hideFloatingIconWhileRecording,
+                uiState.hideFloatingIconWhileRecording,
             ) { viewModel.setHideFloatingIconWhileRecording(it) }
-            SwitchSettingItem(
-                Icons.Default.Share,
-                stringResource(R.string.setting_post_screenshot_options),
-                stringResource(R.string.settings_post_screenshot_options_desc),
-                postScreenshotOptions,
-            ) { viewModel.setPostScreenshotOptions(it) }
-            SwitchSettingItem(
-                Icons.Default.Apps,
-                stringResource(R.string.setting_record_single_app),
-                stringResource(R.string.settings_record_single_app_desc),
-                recordSingleAppEnabled,
-            ) { viewModel.setRecordSingleAppEnabled(it) }
-            SwitchSettingItem(
-                Icons.Default.TouchApp,
-                stringResource(R.string.settings_show_touches),
-                stringResource(R.string.settings_show_touches_desc),
-                touchOverlay,
-            ) {
-                viewModel.setTouchOverlay(it)
-                if (it) {
-                    try {
-                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
-                    } catch (_: Exception) {
+                SwitchSettingItem(
+                    Icons.Default.Share,
+                    stringResource(R.string.setting_post_screenshot_options),
+                    stringResource(R.string.settings_post_screenshot_options_desc),
+                    uiState.postScreenshotOptions,
+                ) { viewModel.setPostScreenshotOptions(it) }
+                SwitchSettingItem(
+                    Icons.Default.Apps,
+                    stringResource(R.string.setting_record_single_app),
+                    stringResource(R.string.settings_record_single_app_desc),
+                    uiState.recordSingleAppEnabled,
+                ) { viewModel.setRecordSingleAppEnabled(it) }
+                SwitchSettingItem(
+                    Icons.Default.TouchApp,
+                    stringResource(R.string.settings_show_touches),
+                    stringResource(R.string.settings_show_touches_desc),
+                    uiState.touchOverlay,
+                ) {
+                    viewModel.setTouchOverlay(it)
+                    if (it) {
+                        try {
+                            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+                        } catch (_: Exception) {
+                        }
+                        Toast.makeText(context, resources.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
                     }
-                    Toast.makeText(context, resources.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
                 }
-            }
-            ClickableSettingItem(
-                Icons.Default.Timer,
-                stringResource(R.string.setting_countdown),
-                if (countdown == 0) {
-                    stringResource(R.string.setting_countdown_off)
-                } else {
-                    pluralStringResource(R.plurals.setting_countdown_seconds, countdown, countdown)
-                },
-            ) { showCountdownDialog = true }
-            ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehaviorSummary) {
-                showStopDialog = true
-            }
-            ClickableSettingItem(
-                Icons.Default.ContentCut,
-                stringResource(R.string.setting_clipper_duration),
-                clipperDurationLabels.getOrElse(clipperDurationMinutes - 1) { clipperDurationLabels.first() },
-            ) { showClipperDurationDialog = true }
+                ClickableSettingItem(
+                    Icons.Default.Timer,
+                    stringResource(R.string.setting_countdown),
+                    if (uiState.countdown == 0) {
+                        stringResource(R.string.setting_countdown_off)
+                    } else {
+                        pluralStringResource(R.plurals.setting_countdown_seconds, uiState.countdown, uiState.countdown)
+                    },
+                ) { showCountdownDialog = true }
+                ClickableSettingItem(Icons.Default.StopCircle, stringResource(R.string.setting_stop_behavior), stopBehaviorSummary) {
+                    showStopDialog = true
+                }
+                ClickableSettingItem(
+                    Icons.Default.ContentCut,
+                    stringResource(R.string.setting_clipper_duration),
+                    clipperDurationLabels.getOrElse(uiState.clipperDurationMinutes - 1) { clipperDurationLabels.first() },
+                ) { showClipperDurationDialog = true }
             if (!batteryOptimizationIgnored) {
                 ClickableSettingItem(
                     Icons.Filled.PowerSettingsNew,
                     stringResource(R.string.setting_allow_background_title),
                     stringResource(R.string.setting_allow_background_desc),
                 ) { showBatteryRationaleDialog = true }
-            } else {
-                BatteryOptimizationStatusChip(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                )
             }
-            if (showBatteryRationaleDialog) {
-                BatteryOptimizationRationaleDialog(
-                    onDismiss = {
-                        showBatteryRationaleDialog = false
-                        batteryOptimizationIgnored = isIgnoringBatteryOptimizations(context)
-                    },
-                )
-            }
-        }
 
-        // ── Recording quality (open audio / video+GIF menus) ───────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── Recording quality (open audio / video+GIF menus) ───────────────
             GlassSectionHeader(stringResource(R.string.settings_section_recording_quality))
             ListItem(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .clickable { showAudioMenuSheet = true },
-                headlineContent = { Text(stringResource(R.string.settings_open_audio_menu)) },
-                supportingContent = { Text(stringResource(R.string.settings_open_audio_menu_sub)) },
+                headlineContent = {
+                    Text(
+                        stringResource(R.string.settings_open_audio_menu),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        stringResource(R.string.settings_open_audio_menu_sub),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 leadingContent = { Icon(Icons.Default.GraphicEq, null, tint = accent.copy(alpha = 0.7f)) },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
@@ -913,42 +780,52 @@ fun SettingsScreen(
                     Modifier
                         .fillMaxWidth()
                         .clickable { showVideoMenuSheet = true },
-                headlineContent = { Text(stringResource(R.string.settings_open_video_menu)) },
-                supportingContent = { Text(stringResource(R.string.settings_open_video_menu_sub)) },
+                headlineContent = {
+                    Text(
+                        stringResource(R.string.settings_open_video_menu),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        stringResource(R.string.settings_open_video_menu_sub),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 leadingContent = { Icon(Icons.Default.VideoSettings, null, tint = accent.copy(alpha = 0.7f)) },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
             )
-        }
 
-        // ── OVERLAY ───────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── OVERLAY ───────────────────────────────────────────────────────
             GlassSectionHeader(stringResource(R.string.settings_section_overlay))
             ClickableSettingItem(
                 Icons.Default.CameraAlt,
                 stringResource(R.string.setting_camera_settings),
-                if (cameraOverlay) {
-                    stringResource(R.string.camera_status_enabled, cameraAspectRatio, cameraFacing)
+                if (uiState.cameraOverlay) {
+                    stringResource(R.string.camera_status_enabled, uiState.cameraAspectRatio, uiState.cameraFacing)
                 } else {
                     stringResource(R.string.state_disabled)
                 },
+                isPro = true,
             ) {
-                if (!AdGate.isUnlocked(AdGate.CAMERA_SETTINGS, adsDisabled)) {
-                    gateFeature(AdGate.CAMERA_SETTINGS, resources.getString(R.string.gate_feature_camera_overlay)) {
-                        showCameraSettingsDialog = true
-                    }
-                } else {
-                    showCameraSettingsDialog = true
-                }
+                showCameraSettingsDialog = true
             }
 
             SwitchSettingItem(
                 Icons.AutoMirrored.Filled.BrandingWatermark,
                 stringResource(R.string.setting_watermark),
                 null,
-                showWatermark,
+                uiState.showWatermark,
+                isPro = true,
             ) {
                 if (it && !Settings.canDrawOverlays(context)) {
                     Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                     context.startActivity(
                         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
                     )
@@ -957,9 +834,9 @@ fun SettingsScreen(
                 }
             }
 
-            if (showWatermark) {
+        if (uiState.showWatermark) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
                     color = Color(0x33FF0033),
                     shape = MaterialTheme.shapes.small,
                 ) {
@@ -970,61 +847,21 @@ fun SettingsScreen(
                         Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            if (canDrawOverlays && !isRecording) {
+                            if (canDrawOverlays && !uiState.isRecording) {
                                 stringResource(R.string.watermark_preview_active)
-                            } else if (isRecording) {
+                            } else if (uiState.isRecording) {
                                 stringResource(R.string.watermark_preview_recording)
                             } else {
                                 stringResource(R.string.watermark_preview_need_overlay)
                             },
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFFCCAAAA),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
 
-                var showWatermarkLocDialog2 by remember { mutableStateOf(false) }
-                if (showWatermarkLocDialog2) {
-                    val snapKeys = listOf("Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center")
-                    val snapLabels =
-                        listOf(
-                            stringResource(R.string.watermark_position_top_left),
-                            stringResource(R.string.watermark_position_top_right),
-                            stringResource(R.string.watermark_position_bottom_left),
-                            stringResource(R.string.watermark_position_bottom_right),
-                            stringResource(R.string.watermark_position_center),
-                        )
-                    val selectedSnapLabel =
-                        if (watermarkLocation in snapKeys) {
-                            snapLabels[snapKeys.indexOf(watermarkLocation)]
-                        } else {
-                            stringResource(R.string.watermark_snap_custom)
-                        }
-                    SingleChoiceDialog(
-                        title = stringResource(R.string.watermark_snap_dialog_title),
-                        options = snapLabels,
-                        selectedOption = selectedSnapLabel,
-                        onOptionSelected = { label ->
-                            val idx = snapLabels.indexOf(label)
-                            if (idx < 0) return@SingleChoiceDialog
-                            val pos = snapKeys[idx]
-                            // Fractions are offset / (screen − watermark), so 0/1 are true corners for any size & DPI.
-                            val (x, y) =
-                                when (pos) {
-                                    "Top Left" -> Pair(0f, 0f)
-                                    "Top Right" -> Pair(1f, 0f)
-                                    "Bottom Left" -> Pair(0f, 1f)
-                                    "Bottom Right" -> Pair(1f, 1f)
-                                    else -> Pair(0.5f, 0.5f)
-                                }
-                            viewModel.setWatermarkXFraction(x)
-                            viewModel.setWatermarkYFraction(y)
-                            viewModel.setWatermarkLocation(pos)
-                            showWatermarkLocDialog2 = false
-                        },
-                        onDismiss = { showWatermarkLocDialog2 = false },
-                    )
-                }
                 ClickableSettingItem(
                     Icons.Default.Place,
                     stringResource(R.string.watermark_snap_corner_title),
@@ -1043,20 +880,24 @@ fun SettingsScreen(
                         )
                     },
                     trailingContent = {
-                        Box(Modifier.horizontalScroll(rememberScrollState())) {
-                            SingleChoiceSegmentedButtonRow {
-                                val shapeKeys = listOf("Square", "Circle")
-                                val shapeLabels =
-                                    listOf(
-                                        stringResource(R.string.shape_square),
-                                        stringResource(R.string.shape_circle),
+                        SingleChoiceSegmentedButtonRow {
+                            val shapeKeys = listOf("Square", "Circle")
+                            val shapeLabels =
+                                listOf(
+                                    stringResource(R.string.shape_square),
+                                    stringResource(R.string.shape_circle),
+                                )
+                            shapeKeys.forEachIndexed { idx, shape ->
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(idx, shapeKeys.size),
+                                    onClick = { viewModel.setWatermarkShape(shape) },
+                                    selected = uiState.watermarkShape == shape,
+                                ) {
+                                    Text(
+                                        shapeLabels[idx],
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
-                                shapeKeys.forEachIndexed { idx, shape ->
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(idx, shapeKeys.size),
-                                        onClick = { viewModel.setWatermarkShape(shape) },
-                                        selected = watermarkShape == shape,
-                                    ) { Text(shapeLabels[idx]) }
                                 }
                             }
                         }
@@ -1065,8 +906,8 @@ fun SettingsScreen(
 
                 GlassSlider(
                     stringResource(R.string.setting_watermark_size),
-                    safeStringResource(R.string.label_dp, watermarkSize),
-                    watermarkSize.toFloat(),
+                    safeStringResource(R.string.label_dp, uiState.watermarkSize),
+                    uiState.watermarkSize.toFloat(),
                     50f..300f,
                     49,
                 ) {
@@ -1074,30 +915,18 @@ fun SettingsScreen(
                 }
                 GlassSlider(
                     stringResource(R.string.setting_watermark_opacity),
-                    safeStringResource(R.string.label_percent, watermarkOpacity),
-                    watermarkOpacity.toFloat(),
+                    safeStringResource(R.string.label_percent, uiState.watermarkOpacity),
+                    uiState.watermarkOpacity.toFloat(),
                     10f..100f,
                     17,
                 ) {
                     viewModel.setWatermarkOpacity(it.toInt())
                 }
 
-                val imagePickerLauncher =
-                    rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
-                        if (uri != null) {
-                            try {
-                                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            } catch (
-                                _: Exception,
-                            ) {
-                            }
-                            navController.navigate("crop/${Uri.encode(uri.toString())}")
-                        }
-                    }
                 ClickableSettingItem(
                     Icons.Default.Image,
                     stringResource(R.string.watermark_image),
-                    if (watermarkImageUri != null) {
+                    if (uiState.watermarkImageUri != null) {
                         stringResource(
                             R.string.watermark_image_custom,
                         )
@@ -1105,29 +934,36 @@ fun SettingsScreen(
                         stringResource(R.string.watermark_image_default)
                     },
                 ) { imagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
-                if (watermarkImageUri != null) {
+                if (uiState.watermarkImageUri != null) {
                     ListItem(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .clickable { viewModel.setWatermarkImageUri(null) },
-                        headlineContent = { Text(stringResource(R.string.watermark_reset_icon)) },
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.watermark_reset_icon),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
                         leadingContent = { Icon(Icons.Default.RestartAlt, null, tint = accent.copy(alpha = 0.7f)) },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }
-            }
         }
 
-        // ── SCREENSHOTS ───────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── SCREENSHOTS ───────────────────────────────────────────────────
             GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
             val screenshotFormatDisplay =
-                when (screenshotFormat) {
+                when (uiState.screenshotFormat) {
                     "JPEG" -> stringResource(R.string.format_jpeg)
                     "PNG" -> stringResource(R.string.format_png)
                     "WebP" -> stringResource(R.string.format_webp)
-                    else -> screenshotFormat
+                    else -> uiState.screenshotFormat
                 }
             ClickableSettingItem(
                 Icons.Default.PhotoSizeSelectLarge,
@@ -1136,20 +972,21 @@ fun SettingsScreen(
             ) { showScreenshotFormatDialog = true }
             GlassSlider(
                 stringResource(R.string.setting_screenshot_quality),
-                "$screenshotQuality%",
-                screenshotQuality.toFloat(),
+                "${uiState.screenshotQuality}%",
+                uiState.screenshotQuality.toFloat(),
                 10f..100f,
                 17,
             ) {
                 viewModel.setScreenshotQuality(it.toInt())
             }
-        }
 
-        // ── THEME ─────────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── THEME ─────────────────────────────────────────────────────────
             GlassSectionHeader(stringResource(R.string.settings_section_theme))
             val themeDisplay =
-                when (appTheme) {
+                when (uiState.appTheme) {
                     "Light" -> stringResource(R.string.theme_light)
                     "Dark" -> stringResource(R.string.theme_dark)
                     else -> stringResource(R.string.theme_system)
@@ -1162,13 +999,13 @@ fun SettingsScreen(
 
             // ── Accent Color row ─────────────────────────────────────────
             val parsedAccent =
-                remember(accentHex) {
-                    runCatching { Color("#${accentHex.removePrefix("#").take(6)}".toColorInt()) }
+                remember(uiState.accentHex) {
+                    runCatching { Color("#${uiState.accentHex.removePrefix("#").take(6)}".toColorInt()) }
                         .getOrDefault(accent)
                 }
             val parsedAccent2 =
-                remember(accentHex2) {
-                    runCatching { Color("#${accentHex2.removePrefix("#").take(6)}".toColorInt()) }
+                remember(uiState.accentHex2) {
+                    runCatching { Color("#${uiState.accentHex2.removePrefix("#").take(6)}".toColorInt()) }
                         .getOrDefault(Color(0xFFFF8C00))
                 }
             SettingsListRow(
@@ -1176,17 +1013,24 @@ fun SettingsScreen(
                     Icon(Icons.Default.Palette, null, tint = accent.copy(alpha = 0.7f))
                 },
                 headlineContent = {
-                    Text(stringResource(R.string.accent_color_title), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        stringResource(R.string.accent_color_title),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
                 supportingContent = {
                     Text(
-                        if (accentGradient) {
-                            "#${accentHex.uppercase()}  →  #${accentHex2.uppercase()}"
+                        if (uiState.accentGradient) {
+                            "#${uiState.accentHex.uppercase()}  →  #${uiState.accentHex2.uppercase()}"
                         } else {
-                            "#${accentHex.uppercase()}"
+                            "#${uiState.accentHex.uppercase()}"
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 trailingContent = {
@@ -1203,7 +1047,7 @@ fun SettingsScreen(
                                     .background(parsedAccent)
                                     .border(1.dp, Color(0x44FFFFFF), CircleShape),
                         )
-                        if (accentGradient) {
+                        if (uiState.accentGradient) {
                             Box(
                                 modifier =
                                     Modifier
@@ -1214,7 +1058,13 @@ fun SettingsScreen(
                             )
                         }
                         TextButton(onClick = { showAccentPickerDialog = true }) {
-                            Text(stringResource(R.string.action_change), color = accent, style = MaterialTheme.typography.labelMedium)
+                            Text(
+                                stringResource(R.string.action_change),
+                                color = accent,
+                                style = MaterialTheme.typography.labelMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 },
@@ -1223,11 +1073,11 @@ fun SettingsScreen(
             // Performance Mode toggle
             val perfSubtitle =
                 when {
-                    isLowEndDevice && performanceMode ->
+                    isLowEndDevice && uiState.performanceMode ->
                         stringResource(R.string.perf_auto_low_end)
-                    isLowEndDevice && !performanceMode ->
+                    isLowEndDevice && !uiState.performanceMode ->
                         stringResource(R.string.perf_quality_may_lag)
-                    performanceMode -> stringResource(R.string.perf_static_glass)
+                    uiState.performanceMode -> stringResource(R.string.perf_static_glass)
                     else -> stringResource(R.string.perf_dynamic_glass)
                 }
             ListItem(
@@ -1241,23 +1091,30 @@ fun SettingsScreen(
                     )
                 },
                 headlineContent = {
-                    Text(stringResource(R.string.setting_performance_mode), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        stringResource(R.string.setting_performance_mode),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
                 supportingContent = {
                     Text(
                         perfSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color =
-                            if (isLowEndDevice && !performanceMode) {
+                            if (isLowEndDevice && !uiState.performanceMode) {
                                 accent.copy(alpha = 0.8f)
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 trailingContent = {
                     Switch(
-                        checked = performanceMode,
+                        checked = uiState.performanceMode,
                         onCheckedChange = { enabled ->
                             if (!enabled && isLowEndDevice) {
                                 // User is trying to enable blur on a low-end device → warn
@@ -1276,7 +1133,138 @@ fun SettingsScreen(
                     )
                 },
             )
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── LANGUAGE ──────────────────────────────────────────────────────
+            GlassSectionHeader(stringResource(R.string.settings_section_language))
+            ClickableSettingItem(
+                Icons.Default.Language,
+                stringResource(R.string.setting_language),
+                languageDisplay,
+            ) { showLanguageDialog = true }
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── STORAGE ───────────────────────────────────────────────────────
+            GlassSectionHeader(stringResource(R.string.settings_section_storage))
+            ClickableSettingItem(
+                Icons.Default.Folder,
+                stringResource(R.string.setting_save_location),
+                if (uiState.saveLocationUri != null) {
+                    stringResource(
+                        R.string.setting_save_location_custom,
+                    )
+                } else {
+                    stringResource(R.string.setting_save_location_default)
+                },
+            ) { folderPickerLauncher.launch(null) }
+            ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), uiState.filenamePattern) {
+                showPatternDialog = true
+            }
+            SwitchSettingItem(
+                Icons.Default.DeleteSweep,
+                stringResource(R.string.setting_auto_delete_title),
+                stringResource(R.string.setting_auto_delete_desc),
+                uiState.autoDelete,
+            ) {
+                viewModel.setAutoDelete(it)
+            }
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── GENERAL ───────────────────────────────────────────────────────
+            GlassSectionHeader(stringResource(R.string.settings_section_general))
+            SwitchSettingItem(
+                Icons.Default.Smartphone,
+                stringResource(R.string.setting_keep_screen_on_title),
+                stringResource(R.string.setting_keep_screen_on_desc),
+                uiState.keepScreenOn,
+            ) {
+                viewModel.setKeepScreenOn(it)
+            }
+
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                Spacer(Modifier.height(4.dp))
+                // ── PRIVACY ───────────────────────────────────────────────────────
+            GlassSectionHeader(stringResource(R.string.settings_section_privacy))
+            SwitchSettingItem(
+                Icons.Default.Analytics,
+                stringResource(R.string.setting_usage_analytics),
+                stringResource(R.string.setting_usage_analytics_desc),
+                uiState.analyticsEnabled,
+            ) { viewModel.setAnalyticsEnabled(it) }
+            SwitchSettingItem(
+                Icons.Default.PrivacyTip,
+                stringResource(R.string.setting_personalized_ads),
+                if (uiState.personalizedAdsEnabled) {
+                    stringResource(R.string.setting_personalized_ads_on_desc)
+                } else {
+                    stringResource(R.string.setting_personalized_ads_off_desc)
+                },
+                uiState.personalizedAdsEnabled,
+            ) { viewModel.setPersonalizedAdsEnabled(it) }
+            }
         }
+
+        item(key = "bottom_spacer", contentType = "spacer") {
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+
+    if (showBatteryRationaleDialog) {
+        BatteryOptimizationRationaleDialog(
+            onDismiss = {
+                showBatteryRationaleDialog = false
+                batteryOptimizationIgnored = isIgnoringBatteryOptimizations(context)
+            },
+        )
+    }
+    if (showWatermarkLocDialog2) {
+        val snapKeys = listOf("Top Left", "Top Right", "Bottom Left", "Bottom Right", "Center")
+        val snapLabels =
+            listOf(
+                stringResource(R.string.watermark_position_top_left),
+                stringResource(R.string.watermark_position_top_right),
+                stringResource(R.string.watermark_position_bottom_left),
+                stringResource(R.string.watermark_position_bottom_right),
+                stringResource(R.string.watermark_position_center),
+            )
+        val selectedSnapLabel =
+            if (uiState.watermarkLocation in snapKeys) {
+                snapLabels[snapKeys.indexOf(uiState.watermarkLocation)]
+            } else {
+                stringResource(R.string.watermark_snap_custom)
+            }
+        SingleChoiceDialog(
+            title = stringResource(R.string.watermark_snap_dialog_title),
+            options = snapLabels,
+            selectedOption = selectedSnapLabel,
+            onOptionSelected = { label ->
+                val idx = snapLabels.indexOf(label)
+                if (idx < 0) return@SingleChoiceDialog
+                val pos = snapKeys[idx]
+                // Fractions are offset / (screen − watermark), so 0/1 are true corners for any size & DPI.
+                val (x, y) =
+                    when (pos) {
+                        "Top Left" -> Pair(0f, 0f)
+                        "Top Right" -> Pair(1f, 0f)
+                        "Bottom Left" -> Pair(0f, 1f)
+                        "Bottom Right" -> Pair(1f, 1f)
+                        else -> Pair(0.5f, 0.5f)
+                    }
+                viewModel.setWatermarkXFraction(x)
+                viewModel.setWatermarkYFraction(y)
+                viewModel.setWatermarkLocation(pos)
+                showWatermarkLocDialog2 = false
+            },
+            onDismiss = { showWatermarkLocDialog2 = false },
+        )
+    }
 
         // Lag-warning dialog (shown when low-end user disables Performance Mode)
         if (showLagWarningDialog) {
@@ -1328,7 +1316,7 @@ fun SettingsScreen(
                 title = {
                     Text(
                         text =
-                            if (accentGradient && accentPickingSecond) {
+                            if (uiState.accentGradient && accentPickingSecond) {
                                 stringResource(R.string.accent_gradient_color_2)
                             } else {
                                 stringResource(R.string.accent_color_title)
@@ -1352,10 +1340,10 @@ fun SettingsScreen(
                                             .getOrDefault(accent)
                                     }
                                 val isSelected =
-                                    if (accentGradient && accentPickingSecond) {
-                                        accentHex2.equals(hex, true)
+                                    if (uiState.accentGradient && accentPickingSecond) {
+                                        uiState.accentHex2.equals(hex, true)
                                     } else {
-                                        accentHex.equals(hex, true)
+                                        uiState.accentHex.equals(hex, true)
                                     }
                                 Box(
                                     modifier =
@@ -1368,7 +1356,7 @@ fun SettingsScreen(
                                                 if (isSelected) Color.White else Color(0x44FFFFFF),
                                                 CircleShape,
                                             ).clickable {
-                                                if (accentGradient && accentPickingSecond) {
+                                                if (uiState.accentGradient && accentPickingSecond) {
                                                     accentHex2Input = hex
                                                     viewModel.setAccentColor2(hex)
                                                 } else {
@@ -1381,9 +1369,9 @@ fun SettingsScreen(
                         }
 
                         // Hex input
-                        val hexTarget = if (accentGradient && accentPickingSecond) accentHex2Input else accentHexInput
+                        val hexTarget = if (uiState.accentGradient && accentPickingSecond) accentHex2Input else accentHexInput
                         val hexSetter: (String) -> Unit = { v ->
-                            if (accentGradient && accentPickingSecond) accentHex2Input = v else accentHexInput = v
+                            if (uiState.accentGradient && accentPickingSecond) accentHex2Input = v else accentHexInput = v
                         }
                         Text(
                             stringResource(R.string.label_hex_code),
@@ -1401,7 +1389,7 @@ fun SettingsScreen(
                                         .take(6)
                                 hexSetter(clean)
                                 if (clean.length == 6) {
-                                    if (accentGradient && accentPickingSecond) {
+                                    if (uiState.accentGradient && accentPickingSecond) {
                                         viewModel.setAccentColor2(clean)
                                     } else {
                                         viewModel.setAccentColor(clean)
@@ -1429,7 +1417,7 @@ fun SettingsScreen(
                                 )
                             }
                             Switch(
-                                checked = accentGradient,
+                                checked = uiState.accentGradient,
                                 onCheckedChange = {
                                     viewModel.setAccentUseGradient(it)
                                     if (it) accentPickingSecond = false
@@ -1444,7 +1432,7 @@ fun SettingsScreen(
                             )
                         }
 
-                        if (accentGradient) {
+                        if (uiState.accentGradient) {
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 val c1 =
                                     remember(accentHexInput) {
@@ -1484,80 +1472,6 @@ fun SettingsScreen(
             )
         }
 
-        // ── LANGUAGE ──────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-            GlassSectionHeader(stringResource(R.string.settings_section_language))
-            ClickableSettingItem(
-                Icons.Default.Language,
-                stringResource(R.string.setting_language),
-                languageDisplay,
-            ) { showLanguageDialog = true }
-        }
-
-        // ── STORAGE ───────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-            GlassSectionHeader(stringResource(R.string.settings_section_storage))
-            ClickableSettingItem(
-                Icons.Default.Folder,
-                stringResource(R.string.setting_save_location),
-                if (saveLocationUri != null) {
-                    stringResource(
-                        R.string.setting_save_location_custom,
-                    )
-                } else {
-                    stringResource(R.string.setting_save_location_default)
-                },
-            ) { folderPickerLauncher.launch(null) }
-            ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), filenamePattern) {
-                showPatternDialog = true
-            }
-            SwitchSettingItem(
-                Icons.Default.DeleteSweep,
-                stringResource(R.string.setting_auto_delete_title),
-                stringResource(R.string.setting_auto_delete_desc),
-                autoDelete,
-            ) {
-                viewModel.setAutoDelete(it)
-            }
-        }
-
-        // ── GENERAL ───────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-            GlassSectionHeader(stringResource(R.string.settings_section_general))
-            SwitchSettingItem(
-                Icons.Default.Smartphone,
-                stringResource(R.string.setting_keep_screen_on_title),
-                stringResource(R.string.setting_keep_screen_on_desc),
-                keepScreenOn,
-            ) {
-                viewModel.setKeepScreenOn(it)
-            }
-        }
-
-        // ── PRIVACY ───────────────────────────────────────────────────────
-        GlassCard(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-            GlassSectionHeader(stringResource(R.string.settings_section_privacy))
-            SwitchSettingItem(
-                Icons.Default.Analytics,
-                stringResource(R.string.setting_usage_analytics),
-                stringResource(R.string.setting_usage_analytics_desc),
-                analyticsEnabled,
-            ) { viewModel.setAnalyticsEnabled(it) }
-            SwitchSettingItem(
-                Icons.Default.PrivacyTip,
-                stringResource(R.string.setting_personalized_ads),
-                if (personalizedAdsEnabled) {
-                    stringResource(R.string.setting_personalized_ads_on_desc)
-                } else {
-                    stringResource(R.string.setting_personalized_ads_off_desc)
-                },
-                personalizedAdsEnabled,
-            ) { viewModel.setPersonalizedAdsEnabled(it) }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-
     if (showAudioMenuSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAudioMenuSheet = false },
@@ -1583,25 +1497,41 @@ fun SettingsScreen(
                     Icons.Default.Mic,
                     stringResource(R.string.setting_microphone),
                     null,
-                    recordAudio,
-                ) { viewModel.setRecordAudio(it) }
+                    uiState.recordAudio,
+                ) {
+                    if (it && !permissionManager.isAudioGranted()) {
+                        pendingEnableMicrophone = true
+                        pendingEnableInternalAudio = false
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        viewModel.setRecordAudio(it)
+                    }
+                }
                 SwitchSettingItem(
                     Icons.Default.MusicNote,
                     stringResource(R.string.setting_internal_audio),
                     stringResource(R.string.setting_internal_audio_note),
-                    internalAudio,
+                    uiState.internalAudio,
                 ) {
-                    viewModel.setInternalAudio(it)
+                    if (it && !permissionManager.isAudioGranted()) {
+                        pendingEnableInternalAudio = true
+                        pendingEnableMicrophone = false
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        viewModel.setInternalAudio(it)
+                    }
                 }
                 ClickableSettingItem(
                     Icons.Default.GraphicEq,
                     stringResource(R.string.setting_audio_bitrate),
-                    "$audioBitrate ${stringResource(R.string.label_kbps)}",
+                    "${uiState.audioBitrate} ${stringResource(R.string.label_kbps)}",
                 ) { showAudioBitrateDialog = true }
                 ClickableSettingItem(
                     Icons.Default.Audiotrack,
                     stringResource(R.string.setting_audio_sample_rate),
-                    "$audioSampleRate ${stringResource(R.string.label_hz)}",
+                    "${uiState.audioSampleRate} ${stringResource(R.string.label_hz)}",
                 ) { showAudioSampleRateDialog = true }
                 SettingsListRow(
                     leadingContent = { Icon(Icons.Default.SettingsVoice, contentDescription = null, tint = accent.copy(alpha = 0.7f)) },
@@ -1613,19 +1543,23 @@ fun SettingsScreen(
                         )
                     },
                     trailingContent = {
-                        Box(Modifier.horizontalScroll(rememberScrollState())) {
-                            SingleChoiceSegmentedButtonRow {
-                                listOf(
-                                    stringResource(R.string.setting_audio_channels_mono) to "Mono",
-                                    stringResource(R.string.setting_audio_channels_stereo) to "Stereo",
-                                ).forEachIndexed { idx, pair ->
-                                    val label = pair.first
-                                    val value = pair.second
-                                    SegmentedButton(
-                                        shape = SegmentedButtonDefaults.itemShape(idx, 2),
-                                        onClick = { viewModel.setAudioChannels(value) },
-                                        selected = audioChannels == value,
-                                    ) { Text(label) }
+                        SingleChoiceSegmentedButtonRow {
+                            listOf(
+                                stringResource(R.string.setting_audio_channels_mono) to "Mono",
+                                stringResource(R.string.setting_audio_channels_stereo) to "Stereo",
+                            ).forEachIndexed { idx, pair ->
+                                val label = pair.first
+                                val value = pair.second
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(idx, 2),
+                                    onClick = { viewModel.setAudioChannels(value) },
+                                    selected = uiState.audioChannels == value,
+                                ) {
+                                    Text(
+                                        label,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                             }
                         }
@@ -1634,28 +1568,21 @@ fun SettingsScreen(
                 ClickableSettingItem(
                     Icons.Default.Tune,
                     stringResource(R.string.setting_audio_encoder),
-                    audioEncoder,
+                    uiState.audioEncoder,
                 ) { showAudioEncoderDialog = true }
                 SwitchSettingItem(
                     Icons.AutoMirrored.Filled.CallSplit,
                     stringResource(R.string.setting_separate_mic),
                     stringResource(R.string.setting_separate_mic_desc),
-                    separateMicRecording,
-                ) { newValue ->
-                    if (newValue && !AdGate.isUnlocked(AdGate.SEPARATE_MIC, adsDisabled)) {
-                        gateFeature(AdGate.SEPARATE_MIC, resources.getString(R.string.gate_feature_separate_mic)) {
-                            viewModel.setSeparateMicRecording(true)
-                        }
-                    } else {
-                        viewModel.setSeparateMicRecording(newValue)
-                    }
-                }
+                    uiState.separateMicRecording,
+                    isPro = true,
+                ) { newValue -> viewModel.setSeparateMicRecording(newValue) }
             }
         }
     }
 
     if (showVideoMenuSheet) {
-        val videoLocked = isGifCaptureMode
+        val videoLocked = uiState.isGifCaptureMode
         ModalBottomSheet(
             onDismissRequest = { showVideoMenuSheet = false },
             sheetState = videoMenuSheetState,
@@ -1685,7 +1612,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.titleSmall,
                 )
                 GifRecordingPresets.all.forEach { preset ->
-                    val selected = gifRecorderPresetId == preset.id
+                    val selected = uiState.gifRecorderPresetId == preset.id
                     ListItem(
                         modifier =
                             Modifier
@@ -1719,30 +1646,31 @@ fun SettingsScreen(
                     )
                 }
                 val resolutionDisplay =
-                    when (resolution) {
-                        "Native" -> stringResource(R.string.setting_resolution_native)
-                        "Custom…" -> stringResource(R.string.setting_resolution_custom)
-                        else -> resolution
-                    }
+                    resolutionPresets
+                        .firstOrNull { it.setting == selectedResolutionSetting }
+                        ?.let { resolutionPresetLabel(it) }
+                        ?: RecordingResolutionSupport.parseSize(selectedResolutionSetting)?.setting
+                        ?: stringResource(R.string.setting_resolution_native)
                 val orientationDisplay =
-                    when (recordingOrientation) {
+                    when (uiState.recordingOrientation) {
                         "Auto" -> stringResource(R.string.setting_orientation_auto)
                         "Portrait" -> stringResource(R.string.setting_orientation_portrait)
                         "Landscape" -> stringResource(R.string.setting_orientation_landscape)
-                        else -> recordingOrientation
+                        else -> uiState.recordingOrientation
                     }
                 ClickableSettingItem(
                     Icons.Default.Speed,
                     stringResource(R.string.setting_fps),
-                    "${fps.toInt()} ${stringResource(R.string.label_fps)}",
+                    "${uiState.fps.toInt()} ${stringResource(R.string.label_fps)}",
                     enabled = !videoLocked,
+                    isPro = true,
                 ) {
                     if (!videoLocked) showFpsDialog = true
                 }
                 ClickableSettingItem(
                     Icons.Default.DataUsage,
                     stringResource(R.string.setting_bitrate),
-                    "${bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
+                    "${uiState.bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
                     enabled = !videoLocked,
                 ) {
                     if (!videoLocked) showBitrateDialog = true
@@ -1751,7 +1679,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Tune,
                     title = stringResource(R.string.setting_adaptive_recording_performance),
                     subtitle = stringResource(R.string.setting_adaptive_recording_performance_summary),
-                    checked = adaptivePerformanceEnabled,
+                    checked = uiState.adaptivePerformanceEnabled,
                     enabled = !videoLocked,
                     onCheckedChange = { viewModel.setAdaptivePerformanceEnabled(it) },
                 )
@@ -1766,12 +1694,12 @@ fun SettingsScreen(
                 ClickableSettingItem(
                     Icons.Default.VideoSettings,
                     stringResource(R.string.setting_video_encoder),
-                    videoEncoder,
+                    uiState.videoEncoder,
                     enabled = !videoLocked,
                 ) {
                     if (!videoLocked) showVideoEncoderDialog = true
                 }
-                val colorModeDisplay = when (colorMode) {
+                val colorModeDisplay = when (uiState.colorMode) {
                     ColorMode.FULL -> stringResource(R.string.setting_color_mode_full)
                     else -> stringResource(R.string.setting_color_mode_standard)
                 }
@@ -1783,19 +1711,19 @@ fun SettingsScreen(
                 ) {
                     if (!videoLocked) showColorModeDialog = true
                 }
-                if (colorMode == ColorMode.STANDARD) {
+                if (uiState.colorMode == ColorMode.STANDARD) {
                     SwitchSettingItem(
                         icon = Icons.Default.Tune,
                         title = stringResource(R.string.setting_force_rec709_compat),
                         subtitle = stringResource(R.string.setting_force_rec709_compat_summary),
-                        checked = forceRec709Compatibility,
+                        checked = uiState.forceRec709Compatibility,
                         enabled = !videoLocked,
                         onCheckedChange = { viewModel.setForceRec709Compatibility(it) },
                     )
                 }
-                if (colorMode == ColorMode.STANDARD && forceRec709Compatibility) {
+                if (uiState.colorMode == ColorMode.STANDARD && uiState.forceRec709Compatibility) {
                     val correctionDisplay =
-                        when (rec709CompatBrightnessCorrection) {
+                        when (uiState.rec709CompatBrightnessCorrection) {
                             Rec709CompatBrightnessCorrection.LOW ->
                                 stringResource(R.string.rec709_brightness_correction_low)
                             Rec709CompatBrightnessCorrection.MEDIUM ->
@@ -1837,6 +1765,7 @@ private fun CameraSettingsDialog(
     cameraOverlaySize: Int,
     cameraXFraction: Float,
     cameraYFraction: Float,
+    cameraOrientation: String,
     isRecording: Boolean,
     canDrawOverlays: Boolean,
     context: Context,
@@ -1847,7 +1776,43 @@ private fun CameraSettingsDialog(
     var showCameraFacingDialog by remember { mutableStateOf(false) }
     var showCameraAspectDialog by remember { mutableStateOf(false) }
     var showCameraOrientationDialog by remember { mutableStateOf(false) }
-    val cameraOrientation by viewModel.cameraOrientation.collectAsState()
+    var pendingEnableCamera by remember { mutableStateOf(false) }
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            if (granted && pendingEnableCamera) {
+                if (!canDrawOverlays) {
+                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                    context.startActivity(
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+                    )
+                } else {
+                    viewModel.setCameraOverlay(true)
+                }
+            }
+            pendingEnableCamera = false
+        }
+
+    fun setCameraOverlayChecked(checked: Boolean) {
+        if (checked &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+        ) {
+            pendingEnableCamera = true
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            return
+        }
+        if (checked && !canDrawOverlays) {
+            Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+            context.startActivity(
+                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+            )
+        } else {
+            viewModel.setCameraOverlay(checked)
+        }
+    }
 
     if (showCameraFacingDialog) {
         val facingKeys = listOf("Front", "Rear")
@@ -1909,27 +1874,34 @@ private fun CameraSettingsDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.camera_settings_title), fontWeight = FontWeight.Bold) },
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.camera_settings_title), fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(6.dp))
+                ProBadge()
+            }
+        },
         text = {
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
                 ListItem(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { viewModel.setCameraOverlay(!cameraOverlay) },
-                    headlineContent = { Text(stringResource(R.string.camera_enable)) },
-                    supportingContent = { Text(stringResource(R.string.camera_enable_desc)) },
+                            .clickable { setCameraOverlayChecked(!cameraOverlay) },
+                    headlineContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.camera_enable))
+                            Spacer(Modifier.width(8.dp))
+                            ProBadge()
+                        }
+                    },
+                    supportingContent = {
+                        Text(stringResource(R.string.camera_enable_desc))
+                    },
                     leadingContent = { Icon(Icons.Default.CameraAlt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     trailingContent = {
                         Switch(checked = cameraOverlay, onCheckedChange = {
-                            if (it && !canDrawOverlays) {
-                                Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-                                context.startActivity(
-                                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
-                                )
-                            } else {
-                                viewModel.setCameraOverlay(it)
-                            }
+                            setCameraOverlayChecked(it)
                         })
                     },
                 )
@@ -2131,15 +2103,32 @@ private fun SettingsListRow(
     }
 }
 
+@Composable
+private fun resolutionPresetLabel(preset: RecordingResolutionPreset): String {
+    val title =
+        when (preset.kind) {
+            RecordingResolutionPresetKind.NATIVE -> stringResource(R.string.setting_resolution_native)
+            RecordingResolutionPresetKind.UHD_4K -> stringResource(R.string.resolution_preset_4k)
+            RecordingResolutionPresetKind.QHD_2K -> stringResource(R.string.resolution_preset_2k)
+            RecordingResolutionPresetKind.TIER_1080 -> stringResource(R.string.resolution_preset_1080)
+            RecordingResolutionPresetKind.TIER_720 -> stringResource(R.string.resolution_preset_720)
+            RecordingResolutionPresetKind.TIER_480 -> stringResource(R.string.resolution_preset_480)
+        }
+    return "$title (${preset.size.setting})"
+}
+
 // ── Custom Resolution Dialog ───────────────────────────────────────────────────
 
 @Composable
 private fun CustomResolutionDialog(
     current: String,
+    videoEncoder: String,
+    fps: Int,
+    lowEndDeviceProfile: Boolean,
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    LocalContext.current
+    val context = LocalContext.current
     val resources = LocalResources.current
     var text by remember { mutableStateOf(current) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -2158,8 +2147,8 @@ private fun CustomResolutionDialog(
                 OutlinedTextField(
                     value = text,
                     onValueChange = { input ->
-                        val filtered = input.filter { it.isDigit() || it == 'x' }.lowercase()
-                        val xCount = filtered.count { it == 'x' }
+                        val filtered = input.filter { it.isDigit() || it == '-' || it == 'x' || it == 'X' || it == '\u00D7' }.lowercase()
+                        val xCount = filtered.count { it == 'x' || it == '\u00D7' }
                         text = if (xCount <= 1) filtered else text
                         error = null
                     },
@@ -2174,17 +2163,36 @@ private fun CustomResolutionDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                val parts = text.split("x")
-                val w = parts.getOrNull(0)?.toIntOrNull()
-                val h = parts.getOrNull(1)?.toIntOrNull()
-                when {
-                    parts.size != 2 || w == null || h == null ->
-                        error = resources.getString(R.string.error_resolution_format)
-                    w < 100 || h < 100 ->
-                        error = resources.getString(R.string.error_resolution_min)
-                    w > 7680 || h > 7680 ->
-                        error = resources.getString(R.string.error_resolution_max)
-                    else -> onConfirm("${w}x$h")
+                when (
+                    val validation =
+                        RecordingResolutionSupport.validateCustomResolution(
+                            input = text,
+                            context = context,
+                            videoEncoder = videoEncoder,
+                            fps = fps,
+                            lowEndDeviceProfile = lowEndDeviceProfile,
+                        )
+                ) {
+                    is RecordingResolutionValidation.Valid -> onConfirm(validation.size.setting)
+                    is RecordingResolutionValidation.Invalid -> {
+                        error =
+                            when (validation.reason) {
+                                RecordingResolutionInvalidReason.REQUIRED ->
+                                    resources.getString(R.string.error_resolution_required)
+                                RecordingResolutionInvalidReason.POSITIVE_NUMBERS ->
+                                    resources.getString(R.string.error_resolution_positive)
+                                RecordingResolutionInvalidReason.EVEN_DIMENSIONS ->
+                                    resources.getString(R.string.error_resolution_even)
+                                RecordingResolutionInvalidReason.BELOW_MINIMUM ->
+                                    resources.getString(R.string.error_resolution_min)
+                                RecordingResolutionInvalidReason.EXCEEDS_SAFE_MAXIMUM ->
+                                    resources.getString(R.string.error_resolution_max)
+                                RecordingResolutionInvalidReason.UNSUPPORTED_BY_ENCODER ->
+                                    resources.getString(R.string.error_resolution_encoder_unsupported)
+                                RecordingResolutionInvalidReason.TOO_LARGE_FOR_PROFILE ->
+                                    resources.getString(R.string.error_resolution_too_large_for_profile)
+                            }
+                    }
                 }
             }) { Text(stringResource(R.string.action_apply)) }
         },
@@ -2196,7 +2204,7 @@ private fun CustomResolutionDialog(
 
 @Composable
 private fun ResolutionDialog(
-    options: List<String>,
+    presets: List<RecordingResolutionPreset>,
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -2207,146 +2215,59 @@ private fun ResolutionDialog(
         title = { Text(stringResource(R.string.dialog_resolution_title)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                options.forEach { option ->
-                    when {
-                        option.startsWith("—") -> {
-                            val label =
-                                when (option) {
-                                    "— 16:9 —" -> stringResource(R.string.resolution_group_16_9)
-                                    "— 20:9 (Tall Phone) —" -> stringResource(R.string.resolution_group_20_9)
-                                    "— 18:9 (2:1) —" -> stringResource(R.string.resolution_group_18_9)
-                                    "— 21:9 (Ultrawide) —" -> stringResource(R.string.resolution_group_21_9)
-                                    "— 4:3 —" -> stringResource(R.string.resolution_group_4_3)
-                                    "— 9:16 (Portrait) —" -> stringResource(R.string.resolution_group_9_16)
-                                    else -> option.trim('—', ' ')
-                                }
-                            Text(
-                                label,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = accent,
-                                modifier = Modifier.padding(start = 8.dp, top = 12.dp, bottom = 4.dp),
-                            )
-                        }
-                        option == "Custom…" -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().clickable { onOptionSelected(option); onDismiss() }.padding(vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
-                                Text(
-                                    stringResource(R.string.setting_resolution_custom),
-                                    modifier = Modifier.padding(start = 16.dp),
-                                    color = accent,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
-                        }
-                        else -> {
-                            val isSelected = selectedOption == option
-                            val displayText = if (option == "Native") stringResource(R.string.setting_resolution_native) else option
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .selectable(selected = isSelected, onClick = { onOptionSelected(option); onDismiss() })
-                                        .padding(vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(selected = isSelected, onClick = { onOptionSelected(option); onDismiss() })
-                                Text(displayText, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
-                            }
-                        }
+                presets.forEach { preset ->
+                    val isSelected = selectedOption == preset.setting
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(selected = isSelected, onClick = { onOptionSelected(preset.setting); onDismiss() })
+                                .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = isSelected, onClick = { onOptionSelected(preset.setting); onDismiss() })
+                        Text(
+                            resolutionPresetLabel(preset),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp),
+                        )
                     }
+                }
+
+                val customSelected =
+                    RecordingResolutionSupport.parseSize(selectedOption) != null &&
+                        presets.none { it.setting == selectedOption }
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION); onDismiss() }
+                            .padding(vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (customSelected) {
+                        RadioButton(
+                            selected = true,
+                            onClick = { onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION); onDismiss() },
+                        )
+                    } else {
+                        Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
+                    }
+                    val customText =
+                        RecordingResolutionSupport.parseSize(selectedOption)
+                            ?.takeIf { customSelected }
+                            ?.let { "${stringResource(R.string.setting_resolution_custom)} (${it.setting})" }
+                            ?: stringResource(R.string.setting_resolution_custom)
+                    Text(
+                        customText,
+                        modifier = Modifier.padding(start = 16.dp),
+                        color = accent,
+                        fontWeight = FontWeight.Medium,
+                    )
                 }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    )
-}
-
-// ── Ad Gate Dialog ─────────────────────────────────────────────────────────────
-
-@Composable
-private fun AdGateDialog(
-    featureName: String,
-    ad: RewardedAd?,
-    isAdLoading: Boolean,
-    onUnlocked: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val context = LocalContext.current
-    val activity = context as? Activity
-    val accent = LocalAccentColor.current
-    /** Earned before dismiss; unlock runs only after [resetWindowFocusAfterFullscreenOverlay] in dismiss callback. */
-    var rewardEarned by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                Icons.Default.PlayCircle,
-                null,
-                tint = accent,
-                modifier = Modifier.size(40.dp),
-            )
-        },
-        title = { Text(stringResource(R.string.premium_feature_title), fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.premium_feature_body, featureName))
-                Text(
-                    if (ad != null) {
-                        stringResource(R.string.premium_feature_watch_ad)
-                    } else {
-                        stringResource(R.string.premium_feature_tap_unlock)
-                    },
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (ad != null && activity != null) {
-                        rewardEarned = false
-                        ad.fullScreenContentCallback =
-                            object : FullScreenContentCallback() {
-                                override fun onAdDismissedFullScreenContent() {
-                                    activity.resetWindowFocusAfterFullscreenOverlay()
-                                    if (rewardEarned) {
-                                        rewardEarned = false
-                                        onUnlocked()
-                                    }
-                                }
-
-                                override fun onAdFailedToShowFullScreenContent(e: AdError) {
-                                    rewardEarned = false
-                                    activity.resetWindowFocusAfterFullscreenOverlay()
-                                }
-                            }
-                        ad.show(activity) {
-                            rewardEarned = true
-                        }
-                    } else {
-                        // No ad loaded yet (not on Play Store / test build) — unlock directly
-                        onUnlocked()
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = accent),
-            ) {
-                Text(
-                    when {
-                        isAdLoading -> stringResource(R.string.action_loading)
-                        ad != null -> stringResource(R.string.action_watch_ad)
-                        else -> stringResource(R.string.action_unlock)
-                    },
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
     )
 }
 
@@ -2394,6 +2315,7 @@ fun SwitchSettingItem(
     subtitle: String? = null,
     checked: Boolean,
     enabled: Boolean = true,
+    isPro: Boolean = false,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val accent = LocalAccentColor.current
@@ -2404,10 +2326,30 @@ fun SwitchSettingItem(
                 .clickable(enabled = enabled) {
                     if (enabled) onCheckedChange(!checked)
                 },
-        headlineContent = { Text(title) },
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    modifier = Modifier.weight(1f, fill = false),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (isPro) {
+                    Spacer(Modifier.width(8.dp))
+                    ProBadge()
+                }
+            }
+        },
         supportingContent =
             if (subtitle != null) {
-                { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                {
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             } else {
                 null
             },
@@ -2436,6 +2378,7 @@ fun ClickableSettingItem(
     title: String,
     subtitle: String? = null,
     enabled: Boolean = true,
+    isPro: Boolean = false,
     onClick: () -> Unit,
 ) {
     val accent = LocalAccentColor.current
@@ -2445,10 +2388,30 @@ fun ClickableSettingItem(
                 .fillMaxWidth()
                 .alpha(if (enabled) 1f else 0.5f)
                 .clickable(enabled = enabled, onClick = onClick),
-        headlineContent = { Text(title) },
+        headlineContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    modifier = Modifier.weight(1f, fill = false),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (isPro) {
+                    Spacer(Modifier.width(8.dp))
+                    ProBadge()
+                }
+            }
+        },
         supportingContent =
             if (subtitle != null) {
-                { Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                {
+                    Text(
+                        subtitle,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             } else {
                 null
             },

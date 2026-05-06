@@ -142,7 +142,7 @@
         <service
             android:name=".service.RecordTileService"
             android:label="CatRec Record"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@drawable/ic_qs_record"
             android:exported="true"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
@@ -153,7 +153,7 @@
         <service
             android:name=".service.ClipperTileService"
             android:label="CatRec Clipper"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@drawable/ic_qs_clipper"
             android:exported="true"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>

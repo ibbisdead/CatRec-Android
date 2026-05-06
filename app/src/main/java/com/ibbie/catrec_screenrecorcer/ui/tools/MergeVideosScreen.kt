@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.CallMerge
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -24,9 +25,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.service.EditorVideoTransform
+import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
+import com.ibbie.catrec_screenrecorcer.ui.components.ProBadge
+import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
+import com.ibbie.catrec_screenrecorcer.ui.components.logProGateCheck
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingEntry
 import com.ibbie.catrec_screenrecorcer.ui.recordings.loadAppRecordings
 import kotlinx.coroutines.Dispatchers
@@ -48,10 +54,43 @@ fun MergeVideosScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val repository = remember { SettingsRepository(context) }
     val saveLocationUri by repository.saveLocationUri.collectAsState(initial = null)
+    val adsDisabled by repository.adsDisabled.collectAsState(initial = false)
+    val proUnlockedUntilMillis by repository.proFeaturesUnlockedUntilMillis.collectAsState(initial = 0L)
+    val billing = remember(context) { (context.applicationContext as CatRecApplication).billingManager }
 
     val clips = remember { mutableStateListOf<Uri>() }
     var showCatRecSheet by remember { mutableStateOf(false) }
     var merging by remember { mutableStateOf(false) }
+    var showProDialog by remember { mutableStateOf(false) }
+
+    fun hasProAccess(): Boolean = adsDisabled || proUnlockedUntilMillis > System.currentTimeMillis()
+
+    fun runMerge() {
+        if (clips.size < 2) {
+            Toast.makeText(context, toastMergeNeedTwo, Toast.LENGTH_SHORT).show()
+            return
+        }
+        merging = true
+        scope.launch {
+            val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+            val name = "Merged_$ts.mp4"
+            val out = EditorVideoTransform.mergeVideos(context, clips.toList(), name)
+            merging = false
+            if (out != null) {
+                Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
+                navController.popBackStack()
+            } else {
+                Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    LaunchedEffect(adsDisabled) {
+        if (adsDisabled && showProDialog && !merging) {
+            showProDialog = false
+            runMerge()
+        }
+    }
 
     val pickMulti =
         rememberLauncherForActivityResult(
@@ -61,9 +100,16 @@ fun MergeVideosScreen(navController: NavController) {
         }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.merge_title), fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.merge_title), fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(6.dp))
+                        ProBadge()
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
@@ -152,18 +198,12 @@ fun MergeVideosScreen(navController: NavController) {
                         Toast.makeText(context, toastMergeNeedTwo, Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    merging = true
-                    scope.launch {
-                        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                        val name = "Merged_$ts.mp4"
-                        val out = EditorVideoTransform.mergeVideos(context, clips.toList(), name)
-                        merging = false
-                        if (out != null) {
-                            Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
-                            navController.popBackStack()
-                        } else {
-                            Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
-                        }
+                    val features = listOf(ProFeature.MERGE_CLIPS)
+                    logProGateCheck(features, adsDisabled, proUnlockedUntilMillis)
+                    if (hasProAccess()) {
+                        runMerge()
+                    } else {
+                        showProDialog = true
                     }
                 },
                 enabled = !merging && clips.size >= 2,
@@ -181,7 +221,11 @@ fun MergeVideosScreen(navController: NavController) {
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.editor_saving))
                 } else {
+                    Icon(Icons.AutoMirrored.Filled.CallMerge, null, Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.merge_run))
+                    Spacer(Modifier.width(8.dp))
+                    ProBadge()
                 }
             }
         }
@@ -209,5 +253,23 @@ fun MergeVideosScreen(navController: NavController) {
                 }
             }
         }
+    }
+    if (showProDialog) {
+        ProUnlockDialog(
+            title = stringResource(R.string.pro_feature),
+            body = stringResource(R.string.pro_tools_body),
+            watchButtonText = stringResource(R.string.pro_unlock_watch_ad),
+            showRemoveAds = true,
+            triggeredFeatures = listOf(ProFeature.MERGE_CLIPS),
+            onUnlocked = {
+                showProDialog = false
+                runMerge()
+            },
+            onRemoveAds = {
+                val activity = context as? android.app.Activity
+                if (activity != null) billing.launchRemoveAdsPurchase(activity)
+            },
+            onDismiss = { showProDialog = false },
+        )
     }
 }

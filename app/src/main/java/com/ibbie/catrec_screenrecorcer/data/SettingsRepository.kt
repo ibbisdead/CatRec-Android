@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
 import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
@@ -163,10 +164,11 @@ class SettingsRepository(
         val FIREBASE_ANONYMOUS_USER_ID = stringPreferencesKey("firebase_anonymous_user_id")
 
         /**
-         * When true, all ad-gated premium features are treated as unlocked (see [com.ibbie.catrec_screenrecorcer.data.AdGate]).
+         * When true, all Pro feature gates are treated as unlocked.
          * Synced from Play Billing for [com.ibbie.catrec_screenrecorcer.billing.BillingProductIds.REMOVE_ADS] and persisted for fast UI/offline.
          */
         val ADS_DISABLED = booleanPreferencesKey("ads_disabled_entitlement")
+        val PRO_FEATURES_UNLOCKED_UNTIL_MILLIS = longPreferencesKey("pro_features_unlocked_until_millis")
 
         // Accent Color
         val ACCENT_COLOR = stringPreferencesKey("accent_color")
@@ -178,7 +180,7 @@ class SettingsRepository(
     val fps: Flow<Float> = context.dataStore.data.map { it[FPS] ?: 30f }
     val bitrate: Flow<Float> = context.dataStore.data.map { it[BITRATE] ?: 10f }
     val videoEncoder: Flow<String> = context.dataStore.data.map { it[VIDEO_ENCODER] ?: "H.264" }
-    val resolution: Flow<String> = context.dataStore.data.map { it[RESOLUTION] ?: "Native" }
+    val resolution: Flow<String> = context.dataStore.data.map { RecordingResolutionSupport.normalizeSavedSetting(it[RESOLUTION]) }
     val recordingOrientation: Flow<String> = context.dataStore.data.map { it[RECORDING_ORIENTATION] ?: "Auto" }
     val colorMode: Flow<String> = context.dataStore.data.map { it[COLOR_MODE] ?: ColorMode.STANDARD }
     val forceRec709Compatibility: Flow<Boolean> = context.dataStore.data.map { it[FORCE_REC709_COMPATIBILITY] ?: false }
@@ -279,11 +281,79 @@ class SettingsRepository(
 
     /** True after remove-ads purchase (or while a pending remove-ads flow completes — Play is source of truth on next sync). */
     val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
+    val proFeaturesUnlockedUntilMillis: Flow<Long> =
+        context.dataStore.data.map { it[PRO_FEATURES_UNLOCKED_UNTIL_MILLIS] ?: 0L }
 
     // Accent Color
     val accentColor: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR] ?: "FF0033" }
     val accentColor2: Flow<String> = context.dataStore.data.map { it[ACCENT_COLOR_2] ?: "FF8C00" }
     val accentUseGradient: Flow<Boolean> = context.dataStore.data.map { it[ACCENT_USE_GRADIENT] ?: false }
+
+    val settingsSnapshot: Flow<SettingsUiState> =
+        context.dataStore.data.map { prefs ->
+            val captureMode = prefs[CAPTURE_MODE]?.takeIf(CaptureMode::isValid) ?: CaptureMode.RECORD
+            SettingsUiState(
+                fps = prefs[FPS] ?: 30f,
+                bitrate = prefs[BITRATE] ?: 10f,
+                resolution = RecordingResolutionSupport.normalizeSavedSetting(prefs[RESOLUTION]),
+                videoEncoder = prefs[VIDEO_ENCODER] ?: "H.264",
+                recordingOrientation = prefs[RECORDING_ORIENTATION] ?: "Auto",
+                colorMode = prefs[COLOR_MODE]?.takeIf(ColorMode::isValid) ?: ColorMode.STANDARD,
+                forceRec709Compatibility = prefs[FORCE_REC709_COMPATIBILITY] ?: false,
+                rec709CompatBrightnessCorrection =
+                    Rec709CompatBrightnessCorrection.resolve(prefs[REC709_COMPAT_BRIGHTNESS_CORRECTION]),
+                isGifCaptureMode = captureMode == CaptureMode.GIF,
+                adaptivePerformanceEnabled = prefs[ADAPTIVE_RECORDING_PERFORMANCE] ?: false,
+                gifRecorderPresetId = prefs[GIF_RECORDER_PRESET_ID] ?: GifRecordingPresets.default.id,
+                recordAudio = prefs[RECORD_AUDIO] ?: false,
+                internalAudio = prefs[INTERNAL_AUDIO] ?: false,
+                audioBitrate = prefs[AUDIO_BITRATE] ?: 128,
+                audioSampleRate = prefs[AUDIO_SAMPLE_RATE] ?: 44100,
+                audioChannels = prefs[AUDIO_CHANNELS] ?: "Mono",
+                audioEncoder = prefs[AUDIO_ENCODER] ?: "AAC-LC",
+                separateMicRecording = prefs[SEPARATE_MIC_RECORDING] ?: false,
+                floatingControls = prefs[FLOATING_CONTROLS] ?: false,
+                hideFloatingIconWhileRecording = prefs[HIDE_FLOATING_ICON_WHILE_RECORDING] ?: false,
+                postScreenshotOptions = prefs[POST_SCREENSHOT_OPTIONS] ?: false,
+                recordSingleAppEnabled = prefs[RECORD_SINGLE_APP_ENABLED] ?: false,
+                touchOverlay = prefs[TOUCH_OVERLAY] ?: false,
+                countdown = prefs[COUNTDOWN] ?: 0,
+                clipperDurationMinutes = (prefs[CLIPPER_DURATION_MINUTES] ?: 1).coerceIn(1, 5),
+                stopBehavior = StopBehaviorKeys.migrateSet(prefs[STOP_BEHAVIOR]),
+                cameraOverlay = prefs[CAMERA_OVERLAY] ?: false,
+                cameraOverlaySize = prefs[CAMERA_OVERLAY_SIZE] ?: 120,
+                cameraXFraction = prefs[CAMERA_X_FRACTION] ?: 0.05f,
+                cameraYFraction = prefs[CAMERA_Y_FRACTION] ?: 0.1f,
+                cameraLockPosition = prefs[CAMERA_LOCK_POSITION] ?: false,
+                cameraFacing = prefs[CAMERA_FACING] ?: "Front",
+                cameraAspectRatio = prefs[CAMERA_ASPECT_RATIO] ?: "Circle",
+                cameraOpacity = prefs[CAMERA_OPACITY] ?: 100,
+                cameraOrientation = prefs[CAMERA_ORIENTATION] ?: "Auto",
+                showWatermark = prefs[SHOW_WATERMARK] ?: false,
+                watermarkImageUri = prefs[WATERMARK_IMAGE_URI],
+                watermarkShape = prefs[WATERMARK_SHAPE] ?: "Square",
+                watermarkOpacity = prefs[WATERMARK_OPACITY] ?: 100,
+                watermarkSize = prefs[WATERMARK_SIZE] ?: 80,
+                watermarkXFraction = prefs[WATERMARK_X_FRACTION] ?: 0.05f,
+                watermarkYFraction = prefs[WATERMARK_Y_FRACTION] ?: 0.05f,
+                watermarkLocation = prefs[WATERMARK_LOCATION] ?: "Top Left",
+                screenshotFormat = prefs[SCREENSHOT_FORMAT] ?: "JPEG",
+                screenshotQuality = prefs[SCREENSHOT_QUALITY] ?: 90,
+                appTheme = prefs[APP_THEME] ?: "System",
+                appLanguage = prefs[APP_LANGUAGE] ?: "system",
+                performanceMode = prefs[PERFORMANCE_MODE] ?: false,
+                accentHex = prefs[ACCENT_COLOR] ?: "FF0033",
+                accentHex2 = prefs[ACCENT_COLOR_2] ?: "FF8C00",
+                accentGradient = prefs[ACCENT_USE_GRADIENT] ?: false,
+                saveLocationUri = prefs[SAVE_LOCATION_URI],
+                filenamePattern = prefs[FILENAME_PATTERN] ?: "yyyyMMdd_HHmmss",
+                autoDelete = prefs[AUTO_DELETE] ?: false,
+                keepScreenOn = prefs[KEEP_SCREEN_ON] ?: false,
+                analyticsEnabled = prefs[ANALYTICS_ENABLED] ?: false,
+                personalizedAdsEnabled = prefs[PERSONALIZED_ADS_ENABLED] ?: true,
+                adsDisabled = prefs[ADS_DISABLED] ?: false,
+            )
+        }
 
     // Setters — Video
     suspend fun setColorMode(value: String) {
@@ -315,7 +385,7 @@ class SettingsRepository(
     }
 
     suspend fun setResolution(value: String) {
-        context.dataStore.edit { it[RESOLUTION] = value }
+        context.dataStore.edit { it[RESOLUTION] = RecordingResolutionSupport.normalizeSavedSetting(value) }
     }
 
     suspend fun setRecordingOrientation(value: String) {
@@ -563,6 +633,19 @@ class SettingsRepository(
     suspend fun setAdsDisabled(value: Boolean) {
         context.dataStore.edit { it[ADS_DISABLED] = value }
     }
+
+    suspend fun setProFeaturesUnlockedUntilMillis(value: Long) {
+        context.dataStore.edit { it[PRO_FEATURES_UNLOCKED_UNTIL_MILLIS] = value }
+    }
+
+    suspend fun grantTimedProAccess(nowMillis: Long = System.currentTimeMillis()): Long {
+        val until = nowMillis + 4 * 60 * 60 * 1000L
+        setProFeaturesUnlockedUntilMillis(until)
+        return until
+    }
+
+    suspend fun hasProAccessNow(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        adsDisabled.first() || proFeaturesUnlockedUntilMillis.first() > nowMillis
 
     // Setters — Accent Color
     suspend fun setAccentColor(value: String) {

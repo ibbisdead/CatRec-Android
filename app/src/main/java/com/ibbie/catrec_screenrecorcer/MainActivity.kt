@@ -47,6 +47,8 @@ import androidx.lifecycle.lifecycleScope
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
@@ -55,6 +57,7 @@ import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
 import com.ibbie.catrec_screenrecorcer.utils.ExitUiCoordinator
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
+import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyPrivacySettings
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
@@ -78,7 +81,37 @@ class MainActivity : ComponentActivity() {
         /** Raw image URI string; NavGraph drains it once the graph is attached. */
         const val EXTRA_OPEN_IMAGE_EDITOR_URI = "com.ibbie.catrec_screenrecorcer.OPEN_IMAGE_EDITOR_URI"
 
+        const val ACTION_START_RECORDING_FROM_OVERLAY =
+            "com.ibbie.catrec_screenrecorcer.START_RECORDING_FROM_OVERLAY"
+        const val ACTION_START_BUFFER_FROM_OVERLAY =
+            "com.ibbie.catrec_screenrecorcer.START_BUFFER_FROM_OVERLAY"
+        const val EXTRA_SUPPRESS_APP_OPEN_AD =
+            "com.ibbie.catrec_screenrecorcer.SUPPRESS_APP_OPEN_AD"
+        const val EXTRA_ROUTE_REASON = "com.ibbie.catrec_screenrecorcer.ROUTE_REASON"
+        const val ROUTE_REASON_ROUTED_RECORDING_ACTION = "routed_recording_action"
+
         const val ACTION_FINISH_UI = "com.ibbie.catrec_screenrecorcer.FINISH_UI"
+
+        fun markRoutedRecordingAppOpenSuppressed(trigger: String) {
+            Log.d(TAG, "routed action suppression started trigger=$trigger")
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ROUTED_RECORDING_ACTION)
+        }
+
+        fun addRoutedRecordingSuppressionExtras(intent: Intent): Intent {
+            intent.putExtra(EXTRA_SUPPRESS_APP_OPEN_AD, true)
+            intent.putExtra(EXTRA_ROUTE_REASON, ROUTE_REASON_ROUTED_RECORDING_ACTION)
+            return intent
+        }
+
+        fun isRoutedRecordingActionIntent(intent: Intent?): Boolean {
+            if (intent == null) return false
+            return intent.action == ACTION_START_RECORDING_FROM_OVERLAY ||
+                intent.action == ACTION_START_BUFFER_FROM_OVERLAY ||
+                (
+                    intent.getBooleanExtra(EXTRA_SUPPRESS_APP_OPEN_AD, false) &&
+                        intent.getStringExtra(EXTRA_ROUTE_REASON) == ROUTE_REASON_ROUTED_RECORDING_ACTION
+                )
+        }
     }
 
     private val pendingImageEditorLock = Any()
@@ -187,6 +220,7 @@ class MainActivity : ComponentActivity() {
             androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED,
         )
 
+        consumeRoutedRecordingSuppressionIntent(intent, "onCreate")
         consumeOpenImageEditorIntent(intent)
 
         val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
@@ -201,6 +235,20 @@ class MainActivity : ComponentActivity() {
             enableEdgeToEdge()
 
             val settingsRepository = SettingsRepository(applicationContext)
+            val permissionManager = PermissionManager(applicationContext)
+            val firstLaunch = permissionManager.isFirstAppLaunch()
+            AppOpenAdManager.firstLaunchSession = firstLaunch
+            if (firstLaunch) {
+                permissionManager.markAppLaunchedOnce()
+            } else {
+                AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_LAUNCH)
+            }
+            AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isSetupComplete()
+            if (AppOpenAdManager.firstRunPermissionsComplete) {
+                AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
+            } else {
+                AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
+            }
             val analyticsEnabled: Boolean
             val personalizedAdsEnabled: Boolean
             val adsDisabled: Boolean
@@ -228,7 +276,7 @@ class MainActivity : ComponentActivity() {
                 val floatingOn = settingsRepository.floatingControls.first()
                 refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
-            // AdMob init: [CatRecApplication] calls [MobileAdsInitializer]; completion may wait for BLUETOOTH_CONNECT (API 31+).
+            // AdMob init: [CatRecApplication] calls [MobileAdsInitializer]; app-open display is gated separately.
 
             if (BuildConfig.DEBUG && analyticsEnabled) {
                 FirebaseAnalytics.getInstance(this).logEvent("debug_analytics_verification", null)
@@ -335,6 +383,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+        AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
         MobileAdsInitializer.initializeIfReady(this)
         if (ExitUiCoordinator.consumePendingFinishAffinity(this)) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
@@ -369,8 +419,17 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        consumeRoutedRecordingSuppressionIntent(intent, "onNewIntent")
         consumeOpenImageEditorIntent(intent)
-        // Latest action for FabRecordingBridge (ACTION_START_RECORDING_FROM_OVERLAY).
+        // Latest action is consumed by FabRecordingBridge for routed overlay/notification/tile starts.
+    }
+
+    private fun consumeRoutedRecordingSuppressionIntent(
+        intent: Intent?,
+        trigger: String,
+    ) {
+        if (!isRoutedRecordingActionIntent(intent)) return
+        markRoutedRecordingAppOpenSuppressed(trigger)
     }
 
     private fun applyStoredLanguage() {
@@ -404,19 +463,21 @@ private fun AppOpenAdOnStartEffect(activity: ComponentActivity) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val unitId = remember(activity) { activity.getString(R.string.admob_app_open_unit_id) }
     DisposableEffect(lifecycleOwner, unitId) {
-        val runShow = {
+        val runShow = { foregroundEventId: Long ->
             Handler(Looper.getMainLooper()).post {
-                AppOpenAdManager.showIfAvailable(activity, unitId)
+                AppOpenAdManager.showIfAvailable(activity, unitId, foregroundEventId)
             }
         }
         val observer =
             LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_START) runShow()
+                if (event == Lifecycle.Event.ON_START) {
+                    runShow(AppOpenAdManager.beginForegroundEvent())
+                }
             }
         val lifecycle = lifecycleOwner.lifecycle
         lifecycle.addObserver(observer)
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
-            runShow()
+            runShow(AppOpenAdManager.ensureForegroundEvent())
         }
         onDispose { lifecycle.removeObserver(observer) }
     }

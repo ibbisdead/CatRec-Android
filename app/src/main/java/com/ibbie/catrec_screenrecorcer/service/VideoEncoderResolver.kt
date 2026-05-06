@@ -41,8 +41,17 @@ internal object VideoEncoderResolver {
         val mediaCodecList = regularCodecList()
         val hardware =
             mediaCodecList.codecInfos.firstOrNull { info ->
+                val caps =
+                    try {
+                        info.getCapabilitiesForType(mimeType)
+                    } catch (_: Throwable) {
+                        null
+                    }
                 info.isEncoder &&
                     info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
+                    caps?.colorFormats?.any {
+                        it == MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
+                    } == true &&
                     !info.name.contains("google", ignoreCase = true) &&
                     if (Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated else true
             }

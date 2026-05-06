@@ -75,7 +75,7 @@ fun BannerAdRow(
                     // before Application.onCreate’s initialize callback finishes → failed banner loads.
                     // Use applicationContext so init/load does not run against an activity ConfigurationContext
                     // (avoids odd WebView / resource resolution paths on some OEM builds).
-                    // API 31+: [MobileAdsInitializer] defers init until BLUETOOTH_CONNECT is granted.
+                    // [MobileAdsInitializer] owns SDK init; this callback runs only after it is ready.
                     MobileAdsInitializer.runAfterInitialized(ctx) {
                         loadAd(AdMobAdRequestFactory.build())
                     }

@@ -10,6 +10,7 @@ import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
+import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -375,33 +376,37 @@ class DefaultRecordingSessionRepository(
                 }
             val aspectRatio = baseW.toFloat() / baseH.toFloat()
 
-            return when {
-                resolution == "Native" -> {
-                    val w = (baseW / 16) * 16
-                    val h = (baseH / 16) * 16
-                    w to h
+            val raw =
+                when {
+                    resolution == "Native" -> {
+                        val w = (baseW / 16) * 16
+                        val h = (baseH / 16) * 16
+                        w to h
+                    }
+                    resolution.contains("x") -> {
+                        val parts = resolution.split("x")
+                        val w = parts.getOrNull(0)?.toIntOrNull() ?: baseW
+                        val h = parts.getOrNull(1)?.toIntOrNull() ?: baseH
+                        ((w / 16) * 16) to ((h / 16) * 16)
+                    }
+                    else -> {
+                        val targetHeight =
+                            when {
+                                resolution.contains("2160") || resolution.contains("4K") -> 2160
+                                resolution.contains("1440") || resolution.contains("2K") -> 1440
+                                resolution.contains("1080") -> 1080
+                                resolution.contains("720") -> 720
+                                resolution.contains("480") -> 480
+                                resolution.contains("360") -> 360
+                                else -> baseH
+                            }
+                        val targetWidth = (targetHeight * aspectRatio).roundToInt()
+                        ((targetWidth / 16) * 16) to ((targetHeight / 16) * 16)
+                    }
                 }
-                resolution.contains("x") -> {
-                    val parts = resolution.split("x")
-                    val w = parts.getOrNull(0)?.toIntOrNull() ?: baseW
-                    val h = parts.getOrNull(1)?.toIntOrNull() ?: baseH
-                    ((w / 16) * 16) to ((h / 16) * 16)
-                }
-                else -> {
-                    val targetHeight =
-                        when {
-                            resolution.contains("2160") || resolution.contains("4K") -> 2160
-                            resolution.contains("1440") || resolution.contains("2K") -> 1440
-                            resolution.contains("1080") -> 1080
-                            resolution.contains("720") -> 720
-                            resolution.contains("480") -> 480
-                            resolution.contains("360") -> 360
-                            else -> baseH
-                        }
-                    val targetWidth = (targetHeight * aspectRatio).roundToInt()
-                    ((targetWidth / 16) * 16) to ((targetHeight / 16) * 16)
-                }
-            }
+            val clamped =
+                RecordingResolutionSupport.clampCaptureForVirtualDisplay(raw.first, raw.second)
+            return clamped.width to clamped.height
         }
     }
 }

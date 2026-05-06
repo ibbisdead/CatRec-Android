@@ -18,6 +18,8 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
@@ -77,8 +79,18 @@ class CatRecBillingManager(
     @Volatile
     private var pendingRefreshAfterSetup = false
 
+    @Volatile
+    private var reconnectScheduled = false
+
+    @Volatile
+    private var reconnectAttempts = 0
+
+    @Volatile
+    private var serviceUnavailableBackoffUntilMs = 0L
+
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
             Log.d(
                 TAG,
                 "onPurchasesUpdated code=${billingResult.responseCode} " +
@@ -117,6 +129,9 @@ class CatRecBillingManager(
                 )
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     billingSetupFinishedOk = true
+                    reconnectAttempts = 0
+                    reconnectScheduled = false
+                    serviceUnavailableBackoffUntilMs = 0L
                     loadProductDetails("billing_setup_ok")
                     // Initial sync + fulfils any [pendingRefreshAfterSetup] from restore/resume before connect.
                     val trigger =
@@ -131,7 +146,7 @@ class CatRecBillingManager(
                 } else {
                     billingSetupFinishedOk = false
                     AppLogger.w(TAG, "Billing setup failed: ${billingResult.debugMessage}")
-                    scheduleReconnectAfterSetupFailure()
+                    scheduleReconnect("setup_failure", billingResult.responseCode)
                     logBillingState("onBillingSetupFinished(failed)", billingResult.responseCode)
                 }
             }
@@ -140,16 +155,7 @@ class CatRecBillingManager(
                 billingSetupFinishedOk = false
                 Log.d(TAG, "onBillingServiceDisconnected — scheduling reconnect pendingRefresh=$pendingRefreshAfterSetup")
                 logBillingState("onBillingServiceDisconnected", null)
-                mainHandler.postDelayed({
-                    try {
-                        val c = billingClient
-                        if (c != null && !c.isReady) {
-                            c.startConnection(this)
-                        }
-                    } catch (e: Exception) {
-                        AppLogger.w(TAG, "Billing reconnect failed: ${e.message}")
-                    }
-                }, RECONNECT_DELAY_MS)
+                scheduleReconnect("service_disconnected", null)
             }
         }
 
@@ -188,6 +194,14 @@ class CatRecBillingManager(
      * @return true if sync ran immediately; false if deferred until connection is ready.
      */
     fun refreshPurchasesIfConnected(): Boolean {
+        val now = System.currentTimeMillis()
+        if (now < serviceUnavailableBackoffUntilMs) {
+            Log.d(
+                TAG,
+                "refreshPurchases skipped: SERVICE_UNAVAILABLE backoff remainingMs=${serviceUnavailableBackoffUntilMs - now}",
+            )
+            return false
+        }
         val c = billingClient
         if (c == null) {
             Log.w(TAG, "refreshPurchases requested: billingClient null")
@@ -223,6 +237,7 @@ class CatRecBillingManager(
                 .newBuilder()
                 .setProductDetails(details)
                 .build()
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.BILLING)
         val result =
             client.launchBillingFlow(
                 activity,
@@ -234,10 +249,12 @@ class CatRecBillingManager(
         return when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> true
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
                 syncInAppPurchases("launch_remove_ads_item_already_owned")
                 true
             }
             else -> {
+                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
                 AppLogger.w(TAG, "launchBillingFlow remove_ads: ${result.debugMessage}")
                 false
             }
@@ -256,6 +273,7 @@ class CatRecBillingManager(
                 .newBuilder()
                 .setProductDetails(details)
                 .build()
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.BILLING)
         val result =
             client.launchBillingFlow(
                 activity,
@@ -267,15 +285,39 @@ class CatRecBillingManager(
         return when (result.responseCode) {
             BillingClient.BillingResponseCode.OK -> true
             else -> {
+                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
                 AppLogger.w(TAG, "launchBillingFlow support_me: ${result.debugMessage}")
                 false
             }
         }
     }
 
-    private fun scheduleReconnectAfterSetupFailure() {
-        Log.d(TAG, "scheduleReconnectAfterSetupFailure in ${RECONNECT_DELAY_MS}ms")
+    private fun scheduleReconnect(
+        reason: String,
+        responseCode: Int?,
+    ) {
+        if (reconnectScheduled) {
+            Log.d(TAG, "scheduleReconnect skipped reason=$reason already scheduled")
+            return
+        }
+        reconnectAttempts += 1
+        val delay =
+            if (responseCode == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE) {
+                SERVICE_UNAVAILABLE_RECONNECT_DELAY_MS
+            } else {
+                (RECONNECT_BASE_DELAY_MS * (1L shl (reconnectAttempts - 1).coerceAtMost(4)))
+                    .coerceAtMost(RECONNECT_MAX_DELAY_MS)
+            }
+        if (responseCode == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE) {
+            serviceUnavailableBackoffUntilMs = System.currentTimeMillis() + delay
+        }
+        reconnectScheduled = true
+        Log.d(
+            TAG,
+            "scheduleReconnect reason=$reason code=${responseCode ?: "n/a"} attempt=$reconnectAttempts delayMs=$delay",
+        )
         mainHandler.postDelayed({
+            reconnectScheduled = false
             try {
                 val c = billingClient
                 if (c != null && !c.isReady) {
@@ -284,7 +326,7 @@ class CatRecBillingManager(
             } catch (e: Exception) {
                 AppLogger.w(TAG, "Billing reconnect after setup failure: ${e.message}")
             }
-        }, RECONNECT_DELAY_MS)
+        }, delay)
     }
 
     private fun loadProductDetails(trigger: String) {
@@ -467,6 +509,8 @@ class CatRecBillingManager(
 
     companion object {
         private const val TAG = "CatRecBilling"
-        private const val RECONNECT_DELAY_MS = 2000L
+        private const val RECONNECT_BASE_DELAY_MS = 30_000L
+        private const val RECONNECT_MAX_DELAY_MS = 15 * 60 * 1000L
+        private const val SERVICE_UNAVAILABLE_RECONNECT_DELAY_MS = 5 * 60 * 1000L
     }
 }

@@ -85,6 +85,7 @@ class ScreenRecorderEngine(
 
     /** MIME from [VideoEncoderConfigurator]; used for HEVC→AVC recovery on [MediaCodec.start] failure. */
     private var configuredVideoMime: String = ""
+    private var configuredVideoEncoder: ConfiguredVideoEncoder? = null
     private var audioEncoder: MediaCodec? = null
     private var muxer: MediaMuxer? = null
     private var inputSurface: Surface? = null
@@ -172,14 +173,11 @@ class ScreenRecorderEngine(
             try {
                 videoEncoder?.start()
             } catch (e: Exception) {
-                val wishedHevc =
-                    encoderType == "H.265 (HEVC)" &&
-                        !Build.MODEL.contains("sdk_gphone", ignoreCase = true) &&
-                        !Build.MODEL.contains("google_sdk", ignoreCase = true)
-                if (wishedHevc && configuredVideoMime == MediaFormat.MIMETYPE_VIDEO_HEVC) {
+                VideoEncoderConfigurator.describeStartFailure(TAG, configuredVideoEncoder, e)
+                if (shouldRetryVideoStart(e)) {
                     Log.e(
                         TAG,
-                        "Video encoder start failed on HEVC (${e.javaClass.simpleName}: ${e.message}); " +
+                        "Video encoder start failed (${e.javaClass.simpleName}: ${e.message}); " +
                             "re-preparing with AVC — brand=${Build.BRAND} model=${Build.MODEL}",
                         e,
                     )
@@ -192,10 +190,30 @@ class ScreenRecorderEngine(
                     } catch (_: Exception) {
                     }
                     videoEncoder = null
+                    configuredVideoEncoder = null
+                    configuredVideoMime = ""
                     inputSurface = null
-                    prepareVideoEncoder(avcOnly = true)
-                    Log.i(TAG, "Retrying video encoder start with AVC after HEVC start failure")
-                    videoEncoder?.start()
+                    val conservativeRetry = Build.VERSION.SDK_INT >= 36
+                    prepareVideoEncoder(avcOnly = true, safeStartFallback = conservativeRetry)
+                    Log.i(
+                        TAG,
+                        if (conservativeRetry) {
+                            "Retrying video encoder start with conservative AVC config after start failure"
+                        } else {
+                            "Retrying video encoder start with AVC after HEVC start failure"
+                        },
+                    )
+                    try {
+                        videoEncoder?.start()
+                    } catch (retryError: Exception) {
+                        VideoEncoderConfigurator.describeStartFailure(
+                            TAG,
+                            configuredVideoEncoder,
+                            retryError,
+                            phase = "start retry",
+                        )
+                        throw retryError
+                    }
                 } else {
                     throw e
                 }
@@ -426,6 +444,7 @@ class ScreenRecorderEngine(
             Log.w(TAG, "videoEncoder.release() failed: ${e.message}")
         }
         videoEncoder = null
+        configuredVideoEncoder = null
 
         try {
             inputSurface?.release()
@@ -611,9 +630,13 @@ class ScreenRecorderEngine(
         }
     }
 
-    private fun prepareVideoEncoder(avcOnly: Boolean = false) {
+    private fun prepareVideoEncoder(
+        avcOnly: Boolean = false,
+        safeStartFallback: Boolean = false,
+    ) {
         val forceAvcHint =
             !avcOnly &&
+                !safeStartFallback &&
                 adaptivePreferAvcForPrepare &&
                 encoderType == "H.265 (HEVC)"
         val result =
@@ -626,14 +649,25 @@ class ScreenRecorderEngine(
                 bitrate = bitrate,
                 avcOnly = avcOnly || forceAvcHint,
                 colorMode = colorMode,
+                safeStartFallback = safeStartFallback,
             )
         videoEncoder = result.codec
         inputSurface = result.inputSurface
+        configuredVideoEncoder = result
         configuredVideoMime = result.mime
         captureWidth = result.encodedWidth
         captureHeight = result.encodedHeight
-        Log.d(TAG, "Video encoder configured mime=$configuredVideoMime avcOnly=$avcOnly size=${captureWidth}x${captureHeight}")
+        Log.d(
+            TAG,
+            "Video encoder configured codec=${result.codecName} mime=$configuredVideoMime avcOnly=$avcOnly " +
+                "safeStartFallback=$safeStartFallback size=${captureWidth}x${captureHeight} " +
+                "fps=${result.fps} bitrate=${result.bitrate} profile=${result.profile} level=${result.level}",
+        )
     }
+
+    private fun shouldRetryVideoStart(error: Exception): Boolean =
+        configuredVideoMime == MediaFormat.MIMETYPE_VIDEO_HEVC ||
+            (Build.VERSION.SDK_INT >= 36 && VideoEncoderConfigurator.isCodecException(error))
 
     @SuppressLint("MissingPermission")
     private fun prepareAudioEncoder() {

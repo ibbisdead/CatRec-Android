@@ -37,14 +37,25 @@ class RecordTileService : TileService() {
                 )
             }
             else -> {
-                // Not authorized — open the app so the user can grant overlay permission.
+                // Route through MainActivity so Pro, permission, and MediaProjection gates can run.
+                MainActivity.markRoutedRecordingAppOpenSuppressed("quick_tile_record_open_main")
                 val intent =
-                    Intent(this, MainActivity::class.java).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                    MainActivity.addRoutedRecordingSuppressionExtras(Intent(this, MainActivity::class.java)).apply {
+                        action = MainActivity.ACTION_START_RECORDING_FROM_OVERLAY
+                        addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                        )
                     }
                 if (Build.VERSION.SDK_INT >= 34) {
                     startActivityAndCollapse(
-                        PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE),
+                        PendingIntent.getActivity(
+                            this,
+                            10,
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        ),
                     )
                 } else {
                     // PendingIntent overload is API 34+. [collapse] is not a public SDK method on [TileService].
@@ -59,7 +70,7 @@ class RecordTileService : TileService() {
         val tile = qsTile ?: return
         val isRecording = RecordingState.isRecording.value
         tile.label = getString(R.string.tile_record_label)
-        tile.icon = Icon.createWithResource(this, R.mipmap.ic_launcher)
+        tile.icon = Icon.createWithResource(this, R.drawable.ic_qs_record)
         tile.state = if (isRecording) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         if (Build.VERSION.SDK_INT >= 29) {
             tile.subtitle =

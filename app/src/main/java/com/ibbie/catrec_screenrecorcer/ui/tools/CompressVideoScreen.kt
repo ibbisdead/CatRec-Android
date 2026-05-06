@@ -98,6 +98,7 @@ fun CompressVideoScreen(
     val hScroll = rememberScrollState()
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.compress_title), fontWeight = FontWeight.Bold) },

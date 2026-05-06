@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 
 /**
@@ -22,6 +24,7 @@ import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 class OverlayScreenshotProjectionActivity : ComponentActivity() {
     private val projectionCapture =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
             when {
                 result.resultCode == RESULT_OK && result.data != null -> {
                     val snap =
@@ -63,6 +66,7 @@ class OverlayScreenshotProjectionActivity : ComponentActivity() {
                 ?.current()
                 ?.recordSingleAppEnabled
                 ?: false
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
         projectionCapture.launch(MediaProjectionIntents.createScreenCaptureIntent(this, singleApp))
     }
 }

@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- API 30+: use always — the supported cutout mode for edge-to-edge on Android 15+.
-         (shortEdges is deprecated; the platform maps it to always for non-floating windows.) -->
+         Uses the supported cutout mode for non-floating windows. -->
     <style name="Theme.CatRecScreenRecorcer" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/cyber_black</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
     </style>

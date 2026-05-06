@@ -1,5 +1,6 @@
 package com.ibbie.catrec_screenrecorcer.ui.tools
 
+import android.app.Activity
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -23,10 +24,16 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
+import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.service.GifExportPipeline
+import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
+import com.ibbie.catrec_screenrecorcer.ui.components.ProBadge
+import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
+import com.ibbie.catrec_screenrecorcer.ui.components.logProGateCheck
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.formatElapsedMinutesSecondsMs
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +53,10 @@ fun VideoToGifScreen(
     val context = LocalContext.current
     val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
     val scope = rememberCoroutineScope()
+    val repository = remember { SettingsRepository(context) }
+    val adsDisabled by repository.adsDisabled.collectAsState(initial = false)
+    val proUnlockedUntilMillis by repository.proFeaturesUnlockedUntilMillis.collectAsState(initial = 0L)
+    val billing = remember(context) { (context.applicationContext as CatRecApplication).billingManager }
 
     val mediaReadable =
         produceState<Boolean?>(initialValue = null, key1 = videoUri) {
@@ -58,9 +69,16 @@ fun VideoToGifScreen(
     when (mediaReadable.value) {
         null -> {
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
-                        title = { Text(stringResource(R.string.gif_title), fontWeight = FontWeight.Bold) },
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(stringResource(R.string.gif_title), fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.width(6.dp))
+                                ProBadge()
+                            }
+                        },
                         navigationIcon = {
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back))
@@ -79,6 +97,7 @@ fun VideoToGifScreen(
         }
         false -> {
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.gif_title), fontWeight = FontWeight.Bold) },
@@ -134,11 +153,14 @@ fun VideoToGifScreen(
             var endFraction by remember { mutableFloatStateOf(1f) }
             var currentPositionMs by remember { mutableLongStateOf(0L) }
             var isWorking by remember { mutableStateOf(false) }
+            var showProDialog by remember { mutableStateOf(false) }
             var qualityTier by remember { mutableIntStateOf(1) } // 0 = Low, 1 = Medium, 2 = High — same tiers as [GifRecordingPresets]
             val exportPreset = remember(qualityTier) { GifRecordingPresets.forVideoToGifTier(qualityTier) }
             var fps by remember { mutableIntStateOf(GifRecordingPresets.forVideoToGifTier(1).exportFps) }
             val fpsSliderMax = exportPreset.gifFpsSliderMax
             val fpsSliderMin = 3
+
+            fun hasProAccess(): Boolean = adsDisabled || proUnlockedUntilMillis > System.currentTimeMillis()
 
             LaunchedEffect(qualityTier) {
                 fps = exportPreset.exportFps
@@ -176,7 +198,48 @@ fun VideoToGifScreen(
             val startMs = (startFraction * durationMs).toLong()
             val endMs = (endFraction * durationMs).toLong()
 
+            fun runGifExport() {
+                if (isWorking) return
+                if (endMs - startMs < 400L) {
+                    Toast.makeText(context, toastTrimTooShort, Toast.LENGTH_SHORT).show()
+                    return
+                }
+                isWorking = true
+                scope.launch {
+                    val ok =
+                        withContext(Dispatchers.IO) {
+                            GifExportPipeline.transcodeMp4ToGif(
+                                context,
+                                videoUri,
+                                exportPreset.maxWidth,
+                                fps,
+                                startMs = startMs,
+                                endMs = endMs,
+                                maxColors = exportPreset.maxColors,
+                                paletteDither = exportPreset.paletteDither,
+                                colorMode = colorMode,
+                                forceRec709Compatibility = forceRec709Compatibility,
+                            )
+                        }
+                    isWorking = false
+                    if (ok) {
+                        Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
+                        navController.popBackStack()
+                    } else {
+                        Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+
+            LaunchedEffect(adsDisabled) {
+                if (adsDisabled && showProDialog && !isWorking) {
+                    showProDialog = false
+                    runGifExport()
+                }
+            }
+
             Scaffold(
+                contentWindowInsets = WindowInsets(0),
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.gif_title), fontWeight = FontWeight.Bold) },
@@ -270,34 +333,12 @@ fun VideoToGifScreen(
                         )
                         Button(
                             onClick = {
-                                if (endMs - startMs < 400L) {
-                                    Toast.makeText(context, toastTrimTooShort, Toast.LENGTH_SHORT).show()
-                                    return@Button
-                                }
-                                isWorking = true
-                                scope.launch {
-                                    val ok =
-                                        withContext(Dispatchers.IO) {
-                                            GifExportPipeline.transcodeMp4ToGif(
-                                                context,
-                                                videoUri,
-                                                exportPreset.maxWidth,
-                                                fps,
-                                                startMs = startMs,
-                                                endMs = endMs,
-                                                maxColors = exportPreset.maxColors,
-                                                paletteDither = exportPreset.paletteDither,
-                                                colorMode = colorMode,
-                                                forceRec709Compatibility = forceRec709Compatibility,
-                                            )
-                                        }
-                                    isWorking = false
-                                    if (ok) {
-                                        Toast.makeText(context, toastEditorSavedOk, Toast.LENGTH_SHORT).show()
-                                        navController.popBackStack()
-                                    } else {
-                                        Toast.makeText(context, toastEditorFailed, Toast.LENGTH_LONG).show()
-                                    }
+                                val features = listOf(ProFeature.VIDEO_TO_GIF)
+                                logProGateCheck(features, adsDisabled, proUnlockedUntilMillis)
+                                if (hasProAccess()) {
+                                    runGifExport()
+                                } else {
+                                    showProDialog = true
                                 }
                             },
                             enabled = !isWorking && endMs - startMs >= 400L,
@@ -315,10 +356,30 @@ fun VideoToGifScreen(
                                 Icon(Icons.Default.Gif, null, Modifier.size(20.dp))
                                 Spacer(Modifier.width(8.dp))
                                 Text(stringResource(R.string.gif_convert))
+                                Spacer(Modifier.width(8.dp))
+                                ProBadge()
                             }
                         }
                     }
                 }
+            }
+            if (showProDialog) {
+                ProUnlockDialog(
+                    title = stringResource(R.string.pro_feature),
+                    body = stringResource(R.string.pro_tools_body),
+                    watchButtonText = stringResource(R.string.pro_unlock_watch_ad),
+                    showRemoveAds = true,
+                    triggeredFeatures = listOf(ProFeature.VIDEO_TO_GIF),
+                    onUnlocked = {
+                        showProDialog = false
+                        runGifExport()
+                    },
+                    onRemoveAds = {
+                        val activity = context as? Activity
+                        if (activity != null) billing.launchRemoveAdsPurchase(activity)
+                    },
+                    onDismiss = { showProDialog = false },
+                )
             }
         }
     }

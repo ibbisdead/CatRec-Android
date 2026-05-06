@@ -1,6 +1,11 @@
-﻿<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <!-- App -->
-    <string name="app_name">CatRec - Perekam Layar</string>
+    <string name="app_name">CatRec</string>
+    <string name="screen_title_default">CatRec</string>
+    <string name="screen_title_player">Pemutar</string>
+    <string name="screen_title_trim">Pangkas</string>
+    <string name="screen_title_crop">Potong</string>
 
     <string name="brand_catrect">CatRec</string>
     <string name="faq_content_description">Bantuan dan dukungan</string>
@@ -21,7 +26,7 @@
     <string name="feedback_screenshots_hint">Tambahkan hingga 5 gambar (pesan kesalahan, layar Pengaturan, halaman baterai, dll.).</string>
     <string name="feedback_add_screenshots">Tambahkan gambar</string>
     <string name="feedback_send">Mengirim</string>
-    <string name="feedback_send_note">Buka aplikasi email Anda dengan pesan ke %1$s — ketuk Kirim ke sana untuk mengirim.</string>
+    <string name="feedback_send_note">Buka aplikasi email Anda dengan pesan ke %1$s \u2014 ketuk Kirim ke sana untuk mengirim.</string>
     <string name="feedback_send_chooser_title">Kirim email</string>
     <string name="feedback_no_email_app">Tidak ada aplikasi email yang ditemukan. Instal Gmail atau Outlook, atau salin detail dari layar berikutnya jika ditampilkan.</string>
     <string name="feedback_select_issue">Silakan pilih jenis masalah.</string>
@@ -45,18 +50,18 @@
     <string name="tab_support">Dukungan</string>
     <string name="tab_editor">Editor</string>
     <string name="fab_start_recording">Catatan</string>
-    <string name="storage_indicator_format">%1$s terpakai · %2$s gratis</string>
+    <string name="storage_indicator_format">%1$s terpakai \u00B7 %2$s gratis</string>
     <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
 
     <string name="settings_section_recording_quality">Kualitas rekaman</string>
     <string name="settings_open_audio_menu">Pengaturan audio</string>
-    <string name="settings_open_audio_menu_sub">Mikrofon, audio internal, bitrate, saluran…</string>
+    <string name="settings_open_audio_menu_sub">Mikrofon, audio internal, bitrate, saluran\u2026</string>
     <string name="settings_open_video_menu">Pengaturan Video &amp; GIF</string>
-    <string name="settings_open_video_menu_sub">Prasetel GIF, resolusi, FPS, bitrate, encoder…</string>
+    <string name="settings_open_video_menu_sub">Prasetel GIF, resolusi, FPS, bitrate, encoder\u2026</string>
 
     <string name="support_section_help">Membantu</string>
     <string name="support_send_feedback">Kirim masukan</string>
-    <string name="support_send_feedback_desc">Sama seperti Hubungi kami di FAQ — laporkan bug atau saran</string>
+    <string name="support_send_feedback_desc">Sama seperti Hubungi kami di FAQ \u2014 laporkan bug atau saran</string>
 
     <!-- Common Actions -->
     <string name="action_cancel">Batal</string>
@@ -94,7 +99,6 @@
     <string name="battery_opt_btn_oem_settings">Buka Pengaturan %s</string>
     <string name="battery_opt_btn_learn_more">Panduan visual (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">Nanti Saja</string>
-    <string name="battery_opt_status_exempted">Baterai: Tidak Dibatasi ✓</string>
     <string name="battery_opt_banner_text">Perangkat Anda mungkin menghentikan perekaman di latar belakang.</string>
     <string name="battery_opt_banner_fix">Perbaiki</string>
     <string name="settings_section_video">Video</string>
@@ -116,7 +120,7 @@
     <!-- Video Settings -->
     <string name="setting_resolution">Resolusi</string>
     <string name="setting_resolution_native">Asli</string>
-    <string name="setting_resolution_custom">Resolusi kustom…</string>
+    <string name="setting_resolution_custom">Resolusi kustom\u2026</string>
     <string name="setting_resolution_custom_hint">mis. 1920x1080</string>
     <string name="setting_fps">Kecepatan Bingkai (FPS)</string>
     <string name="setting_bitrate">Bitrate Video</string>
@@ -215,21 +219,21 @@
     <string name="setting_language">Bahasa Aplikasi</string>
     <string name="language_system">Default Sistem</string>
     <string name="language_english">Bahasa inggris</string>
-    <string name="language_arabic">العربية</string>
-    <string name="language_chinese_simplified">中文（简体）</string>
-    <string name="language_chinese_traditional">中文（繁體）</string>
+    <string name="language_arabic">\u0627\u0644\u0639\u0631\u0628\u064A\u0629</string>
+    <string name="language_chinese_simplified">\u4E2D\u6587\uFF08\u7B80\u4F53\uFF09</string>
+    <string name="language_chinese_traditional">\u4E2D\u6587\uFF08\u7E41\u9AD4\uFF09</string>
     <string name="language_french">Perancis</string>
     <string name="language_german">Jerman</string>
-    <string name="language_hindi">हिन्दी</string>
+    <string name="language_hindi">\u0939\u093F\u0928\u094D\u0926\u0940</string>
     <string name="language_indonesian">Bahasa Indonesia</string>
     <string name="language_italian">Italia</string>
-    <string name="language_japanese">日本語</string>
-    <string name="language_korean">한국어</string>
+    <string name="language_japanese">\u65E5\u672C\u8A9E</string>
+    <string name="language_korean">\uD55C\uAD6D\uC5B4</string>
     <string name="language_portuguese">Portugis</string>
-    <string name="language_russian">Русский</string>
+    <string name="language_russian">\u0420\u0443\u0441\u0441\u043A\u0438\u0439</string>
     <string name="language_spanish">Spanyol</string>
     <string name="language_turkish">Turki</string>
-    <string name="language_vietnamese">Tiếng Việt</string>
+    <string name="language_vietnamese">Ti\u1EBFng Vi\u1EC7t</string>
 
     <!-- Storage Settings -->
     <string name="setting_save_location">Lokasi Simpan</string>
@@ -251,18 +255,18 @@
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Berlangganan YouTube</string>
     <string name="support_subscribe_youtube_desc">Ikuti \@ibbie untuk pembaruan</string>
-    <string name="support_remove_ads">Hapus Iklan — $1</string>
+    <string name="support_remove_ads">Hapus Iklan \u2014 $1</string>
     <string name="support_remove_ads_desc">Pembelian sekali, bebas iklan selamanya</string>
     <string name="support_restore_purchases">Pulihkan pembelian</string>
     <string name="support_restore_purchases_desc">Sinkronkan Hapus Iklan dan pembelian lainnya dari Google Play</string>
-    <string name="support_restore_purchases_toast">Memeriksa Google Play untuk pembelian Anda…</string>
+    <string name="support_restore_purchases_toast">Memeriksa Google Play untuk pembelian Anda\u2026</string>
     <string name="support_play_promo_title">Kode promo (Hapus iklan)</string>
-    <string name="support_play_promo_desc">Membuka pembelian Google Play untuk Hapus iklan. Ketuk metode pembayaran → Tukarkan kode, masukkan kode, lalu selesaikan. Jika iklan masih ada, ketuk Pulihkan pembelian di bawah.</string>
-    <string name="support_ads_removed">Iklan Dihapus — Terima kasih!</string>
-    <string name="support_ads_removed_desc">Opsi premium tetap terbuka — tidak ada iklan untuk ditonton.</string>
+    <string name="support_play_promo_desc">Membuka pembelian Google Play untuk Hapus iklan. Ketuk metode pembayaran \u2192 Tukarkan kode, masukkan kode, lalu selesaikan. Jika iklan masih ada, ketuk Pulihkan pembelian di bawah.</string>
+    <string name="support_ads_removed">Iklan Dihapus \u2014 Terima kasih!</string>
+    <string name="support_ads_removed_desc">Opsi premium tetap terbuka \u2014 tidak ada iklan untuk ditonton.</string>
     <string name="support_watch_ad">Tonton Iklan</string>
     <string name="support_donate">Belikan saya kopi ($1)</string>
-    <string name="support_donate_desc">Donasi sekali — menjaga CatRec tetap hidup</string>
+    <string name="support_donate_desc">Donasi sekali \u2014 menjaga CatRec tetap hidup</string>
     <string name="support_share">Bagikan CatRec</string>
     <string name="support_share_desc">Beritahu teman Anda tentang kami</string>
     <string name="support_changelog">Catatan Perubahan</string>
@@ -287,9 +291,7 @@
     <string name="action_rename">Ganti nama</string>
     <string name="action_trim">Memangkas</string>
     <string name="action_open_external">Buka secara eksternal</string>
-    <string name="action_loading">Memuat…</string>
-    <string name="action_watch_ad">Tonton iklan</string>
-    <string name="action_unlock">Buka kunci</string>
+    <string name="action_loading">Memuat\u2026</string>
     <string name="action_got_it">Mengerti</string>
     <string name="action_leave_feedback">Tinggalkan Umpan Balik</string>
     <string name="action_change">Ubah</string>
@@ -303,21 +305,19 @@
     <string name="stop_behavior_pause_on_screen_off">Jeda saat layar mati</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">Gelembung selalu terlihat — rekam dan tangkap dari aplikasi apa pun</string>
+    <string name="settings_floating_controls_desc">Gelembung selalu terlihat \u2014 rekam dan tangkap dari aplikasi apa pun</string>
     <string name="settings_show_touches">Tampilkan Sentuhan</string>
     <string name="settings_show_touches_desc">Aktifkan di Opsi Pengembang</string>
-    <string name="toast_enable_show_taps">Aktifkan «Tampilkan ketukan» secara manual</string>
+    <string name="toast_enable_show_taps">Aktifkan \u00ABTampilkan ketukan\u00BB secara manual</string>
     <string name="toast_overlay_permission">Harap berikan izin overlay</string>
     <string name="setting_countdown_off">Nonaktif</string>
     <plurals name="setting_countdown_seconds">
         <item quantity="other">%1$d detik</item>
     </plurals>
     <string name="setting_internal_audio_note">Hanya Android 10+</string>
-    <string name="gate_feature_separate_mic">Trek Mikrofon Terpisah</string>
-    <string name="gate_feature_camera_overlay">Pengaturan Overlay Kamera</string>
-    <string name="camera_status_enabled">Aktif — %1$s • %2$s</string>
+    <string name="camera_status_enabled">Aktif \u2014 %1$s \u2022 %2$s</string>
     <string name="state_disabled">Dinonaktifkan</string>
-    <string name="watermark_preview_active">Pratinjau langsung aktif — seret tanda air untuk memposisikan ulang</string>
+    <string name="watermark_preview_active">Pratinjau langsung aktif \u2014 seret tanda air untuk memposisikan ulang</string>
     <string name="watermark_preview_recording">Pratinjau tidak tersedia saat merekam</string>
     <string name="watermark_preview_need_overlay">Berikan izin overlay untuk pratinjau langsung</string>
     <string name="watermark_snap_dialog_title">Jepret ke posisi</string>
@@ -333,9 +333,9 @@
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
-    <string name="perf_auto_low_end">Diaktifkan otomatis — perangkat low-end terdeteksi</string>
+    <string name="perf_auto_low_end">Diaktifkan otomatis \u2014 perangkat low-end terdeteksi</string>
     <string name="perf_quality_may_lag">Mode kualitas (mungkin lag di perangkat ini)</string>
-    <string name="perf_static_glass">Kaca statis — blur dinonaktifkan</string>
+    <string name="perf_static_glass">Kaca statis \u2014 blur dinonaktifkan</string>
     <string name="perf_dynamic_glass">Blur kaca dinamis diaktifkan</string>
     <string name="setting_performance_mode">Mode Performa</string>
     <string name="setting_adaptive_recording_performance">Kinerja rekaman adaptif</string>
@@ -359,9 +359,9 @@
     <string name="setting_keep_screen_on_desc">Selama perekaman</string>
     <string name="settings_section_privacy">Privasi</string>
     <string name="dialog_custom_resolution_title">Resolusi Kustom</string>
-    <string name="dialog_custom_resolution_hint">Masukkan resolusi sebagai LEBAR×TINGGI (mis. 1920×1080)</string>
-    <string name="error_resolution_format">Format harus L×T (mis. 1920×1080)</string>
-    <string name="error_resolution_min">Resolusi minimum adalah 100×100</string>
+    <string name="dialog_custom_resolution_hint">Masukkan resolusi sebagai LEBAR\u00D7TINGGI (mis. 1920\u00D71080)</string>
+    <string name="error_resolution_format">Format harus L\u00D7T (mis. 1920\u00D71080)</string>
+    <string name="error_resolution_min">Resolusi minimum adalah 100\u00D7100</string>
     <string name="error_resolution_max">Resolusi maksimum adalah 7680 di sisi mana pun</string>
     <string name="dialog_resolution_title">Resolusi</string>
     <string name="resolution_group_16_9">16:9</string>
@@ -388,10 +388,6 @@
     <string name="dialog_fps_title">Frame Rate (FPS)</string>
     <string name="dialog_screenshot_format">Format Tangkapan Layar</string>
     <string name="dialog_camera_orientation">Orientasi kamera</string>
-    <string name="premium_feature_title">Fitur premium</string>
-    <string name="premium_feature_body">%1$s adalah fitur premium.</string>
-    <string name="premium_feature_watch_ad">Tonton iklan singkat untuk membukanya untuk sesi ini.</string>
-    <string name="premium_feature_tap_unlock">Ketuk Buka Kunci untuk mengaktifkannya untuk sesi ini.</string>
     <string name="gate_high_fps">%1$s FPS</string>
     <string name="camera_drag_hint">Seret lingkaran kamera untuk memposisikan ulang</string>
     <string name="camera_lock_desc_short">Mencegah pergerakan yang tidak disengaja</string>
@@ -446,11 +442,11 @@
     <string name="trim_set_to_current">Setel ke saat ini</string>
     <string name="trim_start_label">Mulai: %1$s</string>
     <string name="trim_end_label">Akhir: %1$s</string>
-    <string name="trim_duration_summary">Durasi pemangkasan: %1$s (%2$s → %3$s)</string>
+    <string name="trim_duration_summary">Durasi pemangkasan: %1$s (%2$s \u2192 %3$s)</string>
     <string name="trim_too_short">Rentang pemangkasan terlalu pendek (min 0,5 detik)</string>
     <string name="trim_saved_success">Trim berhasil disimpan</string>
     <string name="trim_failed_retry">Pemangkasan gagal. Silakan coba lagi.</string>
-    <string name="trim_progress">Memangkas… %1$d%%</string>
+    <string name="trim_progress">Memangkas\u2026 %1$d%%</string>
     <string name="trim_save">Pangkas &amp; simpan</string>
     <string name="content_desc_back">Kembali</string>
     <string name="content_desc_refresh">Menyegarkan</string>
@@ -467,7 +463,7 @@
     <string name="editor_pick_catrec">Rekaman CatRec</string>
     <string name="editor_pick_storage">Video di perangkat</string>
     <string name="editor_export">Ekspor</string>
-    <string name="editor_saving">Penghematan…</string>
+    <string name="editor_saving">Penghematan\u2026</string>
     <string name="editor_saved_ok">Disimpan ke Film/CatRec</string>
     <string name="editor_failed">Tidak dapat menyelesaikan ekspor. Coba file atau kualitas lain.</string>
     <string name="compress_title">Kompres</string>
@@ -501,17 +497,17 @@
     <string name="changelog_version_template">v%1$s</string>
     <string name="support_section_support_dev">Dukung pengembang</string>
     <string name="support_section_legal">Legal</string>
-    <string name="support_watch_ad_sub_loading">Memuat iklan…</string>
+    <string name="support_watch_ad_sub_loading">Memuat iklan\u2026</string>
     <string name="support_watch_ad_sub">Cara cepat untuk mendukung secara gratis</string>
     <string name="support_toast_youtube">Tidak dapat membuka YouTube</string>
     <string name="support_toast_ad_failed">Tidak dapat menampilkan iklan. Coba lagi nanti.</string>
-    <string name="support_toast_thanks_ad">Terima kasih telah menonton! 🐱</string>
-    <string name="support_toast_ad_loading">Iklan sedang dimuat, harap tunggu…</string>
+    <string name="support_toast_thanks_ad">Terima kasih telah menonton! \uD83D\uDC31</string>
+    <string name="support_toast_ad_loading">Iklan sedang dimuat, harap tunggu\u2026</string>
     <string name="support_toast_no_ad">Tidak ada iklan yang tersedia saat ini. Coba lagi nanti.</string>
     <string name="support_toast_browser">Tidak dapat membuka browser</string>
     <string name="billing_store_not_ready">Play Store belum siap. Periksa koneksi Anda dan coba lagi.</string>
-    <string name="billing_thanks_support_me">Terima kasih atas dukungan Anda! 🐱</string>
-    <string name="billing_pending">Pembelian tertunda — Anda akan mendapatkan akses setelah pembelian selesai.</string>
+    <string name="billing_thanks_support_me">Terima kasih atas dukungan Anda! \uD83D\uDC31</string>
+    <string name="billing_pending">Pembelian tertunda \u2014 Anda akan mendapatkan akses setelah pembelian selesai.</string>
     <string name="dialog_changelog_title">log perubahan</string>
     <string name="support_privacy_policy">Kebijakan Privasi</string>
     <string name="support_privacy_policy_desc">Bagaimana CatRec menangani data Anda</string>
@@ -541,13 +537,13 @@
     <string name="notif_channel_recording_complete">Perekaman selesai</string>
     <string name="notif_channel_rolling_buffer">Penyangga bergulir</string>
     <string name="notif_ready_title">CatRec sudah siap</string>
-    <string name="notif_ready_text">Ketuk tombol hamparan ● untuk mulai merekam</string>
+    <string name="notif_ready_text">Ketuk tombol hamparan \u25CF untuk mulai merekam</string>
     <string name="notif_action_revoke">Menarik kembali</string>
-    <string name="notif_preparing">Mempersiapkan…</string>
-    <string name="notif_recording_starting_in">Perekaman dimulai pada %1$d…</string>
+    <string name="notif_preparing">Mempersiapkan\u2026</string>
+    <string name="notif_recording_starting_in">Perekaman dimulai pada %1$d\u2026</string>
     <string name="notif_recording_paused">Perekaman dijeda</string>
-    <string name="notif_recording_muted">Merekam (dibisukan)…</string>
-    <string name="notif_recording_in_progress">Perekaman sedang berlangsung…</string>
+    <string name="notif_recording_muted">Merekam (dibisukan)\u2026</string>
+    <string name="notif_recording_in_progress">Perekaman sedang berlangsung\u2026</string>
     <string name="notif_title_short">Rek Cat</string>
     <string name="notif_action_stop">Berhenti</string>
     <string name="notif_action_pause">Berhenti sebentar</string>
@@ -555,9 +551,9 @@
     <string name="notif_action_mute">Bisu</string>
     <string name="notif_action_unmute">Membunyikan</string>
     <string name="notif_action_show_controls">Tampilkan kontrol</string>
-    <string name="notif_buffer_title">CatRec — Penyangga bergulir</string>
-    <string name="notif_buffer_starting">Memulai penyanggaan…</string>
-    <string name="notif_buffer_buffering">Buffer %1$d detik terakhir…</string>
+    <string name="notif_buffer_title">CatRec \u2014 Penyangga bergulir</string>
+    <string name="notif_buffer_starting">Memulai penyanggaan\u2026</string>
+    <string name="notif_buffer_buffering">Buffer %1$d detik terakhir\u2026</string>
     <string name="notif_buffer_save_clip">Simpan klip</string>
     <string name="notif_post_title">Perekaman selesai</string>
     <string name="notif_post_text">Ketuk untuk membuka rekaman Anda</string>
@@ -568,16 +564,16 @@
     <string name="toast_video_encoder_failed">Tidak dapat memulai pengkode video. Coba resolusi lebih rendah atau pengkode lain di Pengaturan.</string>
     <string name="toast_recording_stopped_projection">Perekaman dihentikan: aplikasi yang diambil ditutup atau dipindahkan ke latar belakang</string>
     <string name="toast_recording_failed_no_video">Perekaman gagal: tidak ada video yang diambil</string>
-    <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF — rekaman MP4 Anda disimpan.</string>
+    <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF \u2014 rekaman MP4 Anda disimpan.</string>
     <string name="toast_gif_saved">GIF disimpan ke Gambar/CatRec/GIF</string>
-    <string name="toast_separate_mic_failed">Tidak dapat membuat file audio terpisah — mikrofon akan direkam dalam video</string>
-    <string name="toast_internal_audio_silent">Audio internal tidak bersuara — aplikasi yang sedang direkam mungkin tidak mengizinkan pengambilan audio. Coba rekam audio mikrofon saja.</string>
+    <string name="toast_separate_mic_failed">Tidak dapat membuat file audio terpisah \u2014 mikrofon akan direkam dalam video</string>
+    <string name="toast_internal_audio_silent">Audio internal tidak bersuara \u2014 aplikasi yang sedang direkam mungkin tidak mengizinkan pengambilan audio. Coba rekam audio mikrofon saja.</string>
     <string name="recording_has_separate_audio">Memiliki trek audio terpisah</string>
     <string name="toast_buffer_start_failed">Penyangga gagal dimulai: %1$s</string>
-    <string name="toast_clip_empty">Klip kosong – simpan buffering lebih lama</string>
+    <string name="toast_clip_empty">Klip kosong \u2013 simpan buffering lebih lama</string>
     <string name="toast_clip_saved">Klip disimpan!</string>
     <string name="toast_clip_save_failed">Penyimpanan klip gagal: %1$s</string>
-    <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif — ketuk untuk kembali ke aplikasi</string>
+    <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif \u2014 ketuk untuk kembali ke aplikasi</string>
     <string name="tile_record_label">Catatan CatRec</string>
     <string name="tile_clipper_label">Pemotong CatRec</string>
     <string name="notif_channel_camera_overlay">Hamparan kamera</string>
@@ -590,13 +586,13 @@
     <string name="notif_recording_interrupted_title">Penangkapan dihentikan</string>
     <string name="notif_recording_interrupted_text">CatRec ditutup atau dimulai ulang oleh sistem saat perekaman atau penangkapan klip aktif. File terakhir Anda mungkin tidak lengkap. Buka CatRec untuk mulai lagi.</string>
     <string name="notif_app_controls_title">Rek Cat</string>
-    <string name="notif_app_controls_text_idle">Menganggur — ketuk tindakan di bawah</string>
+    <string name="notif_app_controls_text_idle">Menganggur \u2014 ketuk tindakan di bawah</string>
     <string name="notif_action_screenshot">Tangkapan layar</string>
     <string name="notif_action_overlay_hide">Sembunyikan hamparan</string>
     <string name="notif_action_overlay_show">Tampilkan hamparan</string>
     <string name="notif_action_overlay_enable_in_settings">Hamparan tidak aktif</string>
-    <string name="tile_subtitle_recording">Rekaman…</string>
-    <string name="tile_subtitle_buffering">Penyangga…</string>
+    <string name="tile_subtitle_recording">Rekaman\u2026</string>
+    <string name="tile_subtitle_buffering">Penyangga\u2026</string>
     <string name="tile_subtitle_ready">Siap</string>
     <string name="tile_subtitle_tap_open">Ketuk untuk membuka aplikasi</string>
 
@@ -604,9 +600,9 @@
     <string name="toast_screen_capture_denied">Izin rekam layar ditolak</string>
     <string name="toast_no_email_app">Aplikasi email tidak ditemukan</string>
     <string name="share_screenshot_chooser_title">Bagikan tangkapan layar</string>
-    <string name="recordings_header_format">PERPUSTAKAAN · %1$d</string>
-    <string name="screenshots_header_format">TANGKAPAN LAYAR · %1$d</string>
-    <string name="countdown_subtitle">Memulai rekaman…</string>
+    <string name="recordings_header_format">PERPUSTAKAAN \u00B7 %1$d</string>
+    <string name="screenshots_header_format">TANGKAPAN LAYAR \u00B7 %1$d</string>
+    <string name="countdown_subtitle">Memulai rekaman\u2026</string>
     <string name="toast_recorder_start_failed">Gagal memulai rekaman: %1$s</string>
     <string name="format_jpeg">jpeg</string>
     <string name="format_png">PNG</string>
@@ -614,11 +610,24 @@
     <string name="content_desc_more_options">Opsi lainnya</string>
     <string name="content_desc_rewind_10">Mundur 10 detik</string>
     <string name="content_desc_forward_10">Maju 10 detik</string>
-    <string name="list_bullet">•</string>
+    <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v113_items">
+        <item>Perbaikan edge-to-edge di Android 15+ untuk menghilangkan ANR.</item>
+        <item>Perbaikan kecepatan membuka tab Pengaturan dan jank saat menggulir.</item>
+    </string-array>
+
+    <string-array name="changelog_v112_items">
+        <item>Overlay kamera: perbaikan pergantian depan/belakang, rasio aspek, dan rotasi pratinjau saat perangkat diputar.</item>
+        <item>Pembaruan tampilan overlay kamera yang lebih halus untuk mengurangi ANR di beberapa perangkat.</item>
+    </string-array>
 
     <string-array name="changelog_v111_items">
         <item>Memaksakan metadata Rec.709 (BT.709) pada perangkat yang hanya mendukung pengkodean HEVC seperti Poco X7 Pro agar warna saat pemutaran ditafsirkan benar.</item>
         <item>Opsi koreksi warna Rec.709 baru di Pengaturan untuk menyesuaikan kecerahan dan kompatibilitas perangkat.</item>
+        <item>Memperbaiki pemotongan watermark lingkaran dan persegi yang salah.</item>
+        <item>Stabilitas lebih baik di Android 14 ke atas, termasuk crash di beberapa perangkat OEM.</item>
+        <item>Mengurangi kejadian aplikasi tidak merespons (ANR) pada perangkat yang terpengaruh.</item>
     </string-array>
 
     <string-array name="changelog_v110_items">
@@ -644,7 +653,7 @@
 
     <string-array name="changelog_v100_items">
         <item>Perekaman layar dengan dukungan codec H.264 dan H.265 (HEVC).</item>
-        <item>Rolling Clipper buffer (1–5 menit, dapat dikonfigurasi) dengan penggabungan segmen yang mulus dan preset durasi yang cepat</item>
+        <item>"Rolling Clipper buffer (1–5 menit, dapat dikonfigurasi) dengan penggabungan segmen yang mulus dan preset durasi yang cepat"</item>
         <item>Tombol Simpan Klip saat Clipper sedang berjalan</item>
         <item>Pilihan resolusi luas untuk semua rasio aspek, ditambah input khusus</item>
         <item>Pelacakan orientasi otomatis selama perekaman</item>
@@ -655,7 +664,7 @@
         <item>Mode perekaman GIF dengan preset kualitas</item>
         <item>Hamparan kontrol mengambang: jeda, hentikan, bisu, tangkapan layar, akses klip</item>
         <item>Hamparan tersedia kapan saja; mulai merekam atau memotong dari overlay</item>
-        <item>Otorisasi perekaman overlay dengan satu ketukan — permintaan izin berulang yang minimal</item>
+        <item>"Otorisasi perekaman overlay dengan satu ketukan — permintaan izin berulang yang minimal"</item>
         <item>Alat kuas pada hamparan mengambang</item>
         <item>Hamparan kamera dengan pratinjau kamera wajah langsung</item>
         <item>Hamparan tanda air: gambar khusus, bentuk, opacity, posisi, snap-to-corner; default cocok dengan ikon aplikasi</item>
@@ -676,4 +685,32 @@
         <item>Kontrol privasi: tombol analitik dan personalisasi iklan</item>
         <item>Layar dukungan: log perubahan, tautan legal, dan dukungan berhadiah opsional</item>
     </string-array>
+
+    <!-- Localized additions -->
+    <string name="resolution_preset_4k">4K</string>
+    <string name="resolution_preset_2k">2K</string>
+    <string name="resolution_preset_1080">1080</string>
+    <string name="resolution_preset_720">720</string>
+    <string name="resolution_preset_480">480</string>
+    <string name="error_resolution_required">Masukkan resolusi.</string>
+    <string name="error_resolution_positive">Lebar dan tinggi harus berupa angka positif.</string>
+    <string name="error_resolution_even">Lebar dan tinggi harus berupa angka genap.</string>
+    <string name="error_resolution_encoder_unsupported">Resolusi ini tidak didukung oleh encoder video yang dipilih.</string>
+    <string name="error_resolution_too_large_for_profile">Resolusi ini terlalu besar untuk profil performa perangkat ini.</string>
+    <string name="pro_feature">Fitur PRO</string>
+    <string name="pro_recording_title">Anda merekam dengan fitur PRO</string>
+    <string name="pro_recording_body">Tonton iklan untuk membuka fitur PRO selama 4 jam, atau hapus iklan untuk akses permanen.</string>
+    <string name="pro_tools_body">Tonton iklan untuk membuka fitur PRO selama 4 jam, atau beli Hapus Iklan untuk akses permanen?</string>
+    <string name="pro_unlock_watch_ad">Tonton Iklan</string>
+    <string name="pro_unlock_remove_ads">Hapus Iklan</string>
+    <string name="pro_unlock_ad_unavailable">Iklan belum tersedia saat ini. Coba lagi nanti.</string>
+    <string name="tools_title">Alat</string>
+    <string name="changelog_label_latest">Terbaru</string>
+    <string name="toast_recording_muxer_failed">Rekaman tidak dapat diselesaikan. Coba lagi.</string>
+    <string name="notif_cc_record">Rekam</string>
+    <string name="notif_cc_shot">Jepret</string>
+    <string name="notif_cc_float">Mengambang</string>
+    <string name="notif_cc_home">Beranda</string>
+    <string name="notif_cc_close">Tutup</string>
+    <string name="notif_cc_stop">Berhenti</string>
 </resources>

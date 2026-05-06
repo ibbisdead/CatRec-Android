@@ -9,14 +9,24 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.content.res.Configuration
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Outline
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.PixelFormat
+import android.graphics.PorterDuff
+import android.hardware.display.DisplayManager
+import android.graphics.PorterDuffXfermode
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -25,10 +35,12 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.Display
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -46,7 +58,6 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -59,12 +70,15 @@ import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGate
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGateResult
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -118,6 +132,13 @@ class OverlayService : LifecycleService() {
 
         private const val CAMERA_CHANNEL_ID = "CatRec_Camera_Channel"
         private const val CAMERA_NOTIFICATION_ID = 42
+
+        /**
+         * [DisplayManager] can deliver bursts of [DisplayManager.DisplayListener.onDisplayChanged]
+         * (VRR, brightness pipelines, etc.). Rebinding CameraX on every callback jams the main
+         * thread and has shown up as ANRs (Crashlytics: nativePollOnce) after 1.1.1.
+         */
+        private const val CAMERA_ROTATION_REBIND_DEBOUNCE_MS = 400L
 
         private const val OVERLAY_NOTIFICATION_ID = 43
         const val ACTION_CLOSE_OVERLAY = "com.ibbie.catrec_screenrecorcer.CLOSE_OVERLAY"
@@ -227,25 +248,7 @@ class OverlayService : LifecycleService() {
                 // regains touch focus immediately — the subsequent recording-state broadcast
                 // will keep it collapsed too.
                 hideControlsCard()
-                if (RecordingState.isPrepared.value) {
-                    val overlayAction =
-                        if (currentMode == CaptureMode.CLIPPER) {
-                            ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                        } else {
-                            ScreenRecordService.ACTION_START_FROM_OVERLAY
-                        }
-                    startService(Intent(this, ScreenRecordService::class.java).apply { this.action = overlayAction })
-                } else {
-                    try {
-                        val asBuffer = currentMode == CaptureMode.CLIPPER
-                        startActivity(
-                            Intent(this, OverlayRecordProjectionActivity::class.java).apply {
-                                putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            },
-                        )
-                    } catch (_: Exception) {}
-                }
+                requestRecordingStartFromOverlay(asBuffer = currentMode == CaptureMode.CLIPPER)
             }
             OverlayAction.HOME -> BtnSpec(R.drawable.ic_home) {
                 cancelAutoCollapse()
@@ -367,6 +370,69 @@ class OverlayService : LifecycleService() {
     private var brushOverlayView: BrushOverlayLayout? = null
     private val settingsRepo by lazy { SettingsRepository(applicationContext) }
 
+    private fun requestRecordingStartFromOverlay(asBuffer: Boolean) {
+        val source = if (asBuffer) "overlay_button_buffer" else "overlay_button_recording"
+        lifecycleScope.launch(Dispatchers.IO) {
+            val gate =
+                if (asBuffer) {
+                    RecordingStartProGate.checkBuffer(settingsRepo, source)
+                } else {
+                    RecordingStartProGate.checkFullRecording(settingsRepo, source)
+                }
+            withContext(Dispatchers.Main) {
+                if (gate is RecordingStartProGateResult.BlockedNeedsPro) {
+                    Log.d(
+                        "OverlayService",
+                        "overlay start routed to MainActivity for Pro unlock source=$source features=${gate.features.joinToString(",") { it.logName }}",
+                    )
+                    MainActivity.markRoutedRecordingAppOpenSuppressed(source)
+                    startActivity(
+                        MainActivity.addRoutedRecordingSuppressionExtras(
+                            Intent(this@OverlayService, MainActivity::class.java),
+                        ).apply {
+                            action =
+                                if (asBuffer) {
+                                    MainActivity.ACTION_START_BUFFER_FROM_OVERLAY
+                                } else {
+                                    MainActivity.ACTION_START_RECORDING_FROM_OVERLAY
+                                }
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                            )
+                        },
+                    )
+                    return@withContext
+                }
+
+                if (RecordingState.isPrepared.value) {
+                    val overlayAction =
+                        if (asBuffer) {
+                            ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
+                        } else {
+                            ScreenRecordService.ACTION_START_FROM_OVERLAY
+                        }
+                    startService(
+                        Intent(this@OverlayService, ScreenRecordService::class.java).apply {
+                            action = overlayAction
+                        },
+                    )
+                } else {
+                    try {
+                        startActivity(
+                            Intent(this@OverlayService, OverlayRecordProjectionActivity::class.java).apply {
+                                putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                        )
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
+    }
+
     // ── Radial menu constants ────────────────────────────────────────────────
     // Sub-menu button diameter, shrunk 20% from the original 48dp so icons
     // feel more like satellites orbiting the 56dp bubble than separate tiles.
@@ -411,6 +477,31 @@ class OverlayService : LifecycleService() {
     private var useFrontCamera = true
     private var cameraPreviewView: PreviewView? = null
     private var cameraProvider: ProcessCameraProvider? = null
+
+    private val displayRotationHandler = Handler(Looper.getMainLooper())
+    private var displayRotationListenerRegistered = false
+    private var lastRecordingPreviewBoundRotation = Int.MIN_VALUE
+    private var lastSettingsPreviewBoundRotation = Int.MIN_VALUE
+
+    private val scheduleCameraRotationRebindRunnable =
+        Runnable { applyDebouncedDisplayRotationRebind() }
+
+    private val displayRotationListener =
+        object : DisplayManager.DisplayListener {
+            override fun onDisplayAdded(displayId: Int) {}
+
+            override fun onDisplayRemoved(displayId: Int) {}
+
+            override fun onDisplayChanged(displayId: Int) {
+                if (displayId != primaryDisplayId()) return
+                if (cameraPreviewView == null && settingsCameraPreviewView == null) return
+                displayRotationHandler.removeCallbacks(scheduleCameraRotationRebindRunnable)
+                displayRotationHandler.postDelayed(
+                    scheduleCameraRotationRebindRunnable,
+                    CAMERA_ROTATION_REBIND_DEBOUNCE_MS,
+                )
+            }
+        }
 
     override fun onCreate() {
         super.onCreate()
@@ -776,7 +867,10 @@ class OverlayService : LifecycleService() {
         aspectRatio: String = "Circle",
         opacity: Int = 100,
     ) {
-        if (cameraView != null) return
+        if (cameraView != null) {
+            refreshRecordingCameraOverlay(sizeDp, xFraction, yFraction, locked, aspectRatio, opacity)
+            return
+        }
 
         if (!hasRuntimeCameraPermission()) {
             Log.w("OverlayService", "Camera overlay skipped: CAMERA runtime permission not granted")
@@ -857,6 +951,63 @@ class OverlayService : LifecycleService() {
             return
         }
         startCamera()
+        ensureDisplayRotationListener()
+    }
+
+    /** Updates layout, clip shape, and camera binding when prefs change while the overlay is already visible. */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun refreshRecordingCameraOverlay(
+        sizeDp: Int,
+        xFraction: Float,
+        yFraction: Float,
+        locked: Boolean,
+        aspectRatio: String,
+        opacity: Int,
+    ) {
+        val container = cameraView as? FrameLayout ?: return
+        val params = cameraViewParams ?: return
+        val previewView = cameraPreviewView ?: return
+
+        cameraIsLocked = locked
+        cameraAspectRatioSetting = aspectRatio
+        cameraOpacityValue = opacity
+        lastCamSizeDp = sizeDp
+        lastCamXFraction = xFraction
+        lastCamYFraction = yFraction
+
+        val metrics = resources.displayMetrics
+        val screenW = metrics.widthPixels
+        val screenH = metrics.heightPixels
+        val (widthPx, heightPx) = computeCameraViewSize(sizeDp, aspectRatio)
+        params.width = widthPx
+        params.height = heightPx
+        params.x = fractionToOverlayOffset(xFraction, screenW, widthPx)
+        params.y = fractionToOverlayOffset(yFraction, screenH, heightPx)
+
+        var flags =
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        if (locked) flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        if (keepScreenOnForControls) flags = flags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+        params.flags = flags
+
+        container.alpha = opacity.coerceIn(0, 100) / 100f
+        container.outlineProvider = buildOutlineProvider(aspectRatio)
+        container.clipToOutline = true
+        container.invalidateOutline()
+
+        if (!locked) {
+            container.setOnTouchListener(makeCameraGestureListener(params, container, aspectRatio))
+        } else {
+            container.setOnTouchListener(null)
+        }
+
+        try {
+            windowManager?.updateViewLayout(container, params)
+        } catch (_: Exception) {
+        }
+        previewView.requestLayout()
+        bindCamera(previewView)
     }
 
     private fun computeCameraViewSize(
@@ -975,6 +1126,50 @@ class OverlayService : LifecycleService() {
         }
     }
 
+    private fun primaryDisplayId(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display?.displayId ?: Display.DEFAULT_DISPLAY
+        } else {
+            Display.DEFAULT_DISPLAY
+        }
+
+    private fun applyDebouncedDisplayRotationRebind() {
+        cameraPreviewView?.let { pv ->
+            val rot = previewSurfaceRotation(pv)
+            if (rot != lastRecordingPreviewBoundRotation) {
+                bindCamera(pv)
+            }
+        }
+        settingsCameraPreviewView?.let { pv ->
+            val rot = previewSurfaceRotation(pv)
+            if (rot != lastSettingsPreviewBoundRotation) {
+                bindSettingsCameraPreview(pv)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun previewSurfaceRotation(previewView: PreviewView): Int {
+        previewView.display?.rotation?.let { return it }
+        return windowManager?.defaultDisplay?.rotation ?: Surface.ROTATION_0
+    }
+
+    private fun ensureDisplayRotationListener() {
+        if (displayRotationListenerRegistered) return
+        val dm = getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager ?: return
+        dm.registerDisplayListener(displayRotationListener, displayRotationHandler)
+        displayRotationListenerRegistered = true
+    }
+
+    private fun maybeUnregisterDisplayRotationListener() {
+        if (!displayRotationListenerRegistered) return
+        if (cameraView != null || cameraPreviewOverlayView != null) return
+        displayRotationHandler.removeCallbacks(scheduleCameraRotationRebindRunnable)
+        val dm = getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager ?: return
+        dm.unregisterDisplayListener(displayRotationListener)
+        displayRotationListenerRegistered = false
+    }
+
     private fun startCamera() {
         val previewView = cameraPreviewView ?: return
         val future = ProcessCameraProvider.getInstance(this)
@@ -992,22 +1187,52 @@ class OverlayService : LifecycleService() {
     private fun bindCamera(previewView: PreviewView) {
         val provider = cameraProvider ?: return
         val selector = if (useFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
-        val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
+        val rotation = previewSurfaceRotation(previewView)
+        val preview =
+            Preview.Builder()
+                .setTargetRotation(rotation)
+                .build()
+                .also { it.surfaceProvider = previewView.surfaceProvider }
         try {
             provider.unbindAll()
             provider.bindToLifecycle(this, selector, preview)
+            lastRecordingPreviewBoundRotation = rotation
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera bind failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: camera bind failed")
         }
     }
 
+    private fun bindSettingsCameraPreview(previewView: PreviewView) {
+        val provider = settingsCameraProvider ?: return
+        val rotation = previewSurfaceRotation(previewView)
+        val preview =
+            Preview.Builder()
+                .setTargetRotation(rotation)
+                .build()
+                .also { it.surfaceProvider = previewView.surfaceProvider }
+        try {
+            provider.unbindAll()
+            provider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
+            lastSettingsPreviewBoundRotation = rotation
+        } catch (e: Exception) {
+            Log.e("OverlayService", "Settings camera preview bind failed", e)
+            recordCrashlyticsNonFatal(e, "Overlay: settings camera preview bind failed")
+        }
+    }
+
     private fun flipCamera() {
         useFrontCamera = !useFrontCamera
-        cameraPreviewView?.let { bindCamera(it) }
+        val pv = cameraPreviewView ?: return
+        if (cameraProvider != null) {
+            bindCamera(pv)
+        } else {
+            startCamera()
+        }
     }
 
     private fun hideCameraOverlay() {
+        lastRecordingPreviewBoundRotation = Int.MIN_VALUE
         cameraProvider?.unbindAll()
         cameraProvider = null
         cameraPreviewView = null
@@ -1023,6 +1248,7 @@ class OverlayService : LifecycleService() {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } catch (_: Exception) {
         }
+        maybeUnregisterDisplayRotationListener()
     }
 
     // ── Watermark Overlay ──────────────────────────────────────────────────────
@@ -2188,6 +2414,7 @@ class OverlayService : LifecycleService() {
         try {
             wm.addView(container, wmParams)
             crashlyticsLog("Overlay: camera preview (settings) container added")
+            ensureDisplayRotationListener()
         } catch (e: Exception) {
             Log.e("OverlayService", "Camera preview add failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: camera preview container add failed")
@@ -2225,9 +2452,7 @@ class OverlayService : LifecycleService() {
             try {
                 settingsCameraProvider = future.get()
                 val previewView = settingsCameraPreviewView ?: return@addListener
-                val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
-                settingsCameraProvider?.unbindAll()
-                settingsCameraProvider?.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
+                bindSettingsCameraPreview(previewView)
             } catch (e: Exception) {
                 Log.e("OverlayService", "Settings camera preview bind failed", e)
                 recordCrashlyticsNonFatal(e, "Overlay: settings camera preview bind failed")
@@ -2294,6 +2519,7 @@ class OverlayService : LifecycleService() {
     }
 
     private fun hideCameraPreview() {
+        lastSettingsPreviewBoundRotation = Int.MIN_VALUE
         settingsCameraProvider?.unbindAll()
         settingsCameraProvider = null
         settingsCameraPreviewView = null
@@ -2432,7 +2658,61 @@ class OverlayService : LifecycleService() {
 
     // ── Shared Helpers ─────────────────────────────────────────────────────────
 
-    /** Same icon the launcher shows — matches "Default (app icon)" in settings, not a separate marketing drawable. */
+    private class WatermarkImageView(context: Context) : ImageView(context) {
+        var clipCircle: Boolean = false
+            set(value) {
+                field = value
+                rebuildClipPath(width, height)
+                invalidate()
+                invalidateOutline()
+            }
+
+        private val clipPath = Path()
+        private val clipPaint =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.BLACK
+                style = Paint.Style.FILL
+                xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+            }
+
+        override fun onSizeChanged(
+            w: Int,
+            h: Int,
+            oldw: Int,
+            oldh: Int,
+        ) {
+            super.onSizeChanged(w, h, oldw, oldh)
+            rebuildClipPath(w, h)
+        }
+
+        override fun onDraw(canvas: Canvas) {
+            if (!clipCircle || clipPath.isEmpty) {
+                super.onDraw(canvas)
+                return
+            }
+            val checkpoint = canvas.saveLayer(0f, 0f, width.toFloat(), height.toFloat(), null)
+            super.onDraw(canvas)
+            canvas.drawPath(clipPath, clipPaint)
+            canvas.restoreToCount(checkpoint)
+        }
+
+        private fun rebuildClipPath(
+            width: Int,
+            height: Int,
+        ) {
+            clipPath.reset()
+            if (clipCircle && width > 0 && height > 0) {
+                clipPath.addCircle(
+                    width / 2f,
+                    height / 2f,
+                    minOf(width, height) / 2f,
+                    Path.Direction.CW,
+                )
+            }
+        }
+    }
+
+    /** Same icon art the launcher shows; the final watermark shape is applied by [buildWatermarkImageView]. */
     private fun defaultWatermarkDrawable(): Drawable? {
         val base =
             try {
@@ -2440,7 +2720,24 @@ class OverlayService : LifecycleService() {
             } catch (_: Exception) {
                 ContextCompat.getDrawable(this, R.mipmap.ic_launcher)
             }
-        return base?.mutate()
+        return if (base is AdaptiveIconDrawable) {
+            unmaskedAdaptiveIconDrawable(base)
+        } else {
+            base?.mutate()
+        }
+    }
+
+    private fun unmaskedAdaptiveIconDrawable(icon: AdaptiveIconDrawable): Drawable? {
+        val size = dpToPx(108).coerceAtLeast(108)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        listOf(icon.background, icon.foreground).forEach { layer ->
+            layer?.mutate()?.apply {
+                setBounds(0, 0, size, size)
+                draw(canvas)
+            }
+        }
+        return BitmapDrawable(resources, bitmap)
     }
 
     private fun buildWatermarkImageView(
@@ -2449,58 +2746,38 @@ class OverlayService : LifecycleService() {
         shape: String,
         imageUri: String?,
     ): View {
-        val pad = if (shape == "Circle") (sizePx * 0.12f).toInt().coerceAtLeast(dpToPx(2)) else 0
+        val isCircle = shape == "Circle"
         val appIcon = defaultWatermarkDrawable()
-        val image =
-            ImageView(this).apply {
-                layoutParams =
-                    if (shape == "Circle") {
-                        FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                            FrameLayout.LayoutParams.MATCH_PARENT,
-                        )
-                    } else {
-                        ViewGroup.LayoutParams(sizePx, sizePx)
-                    }
-                scaleType = if (shape == "Circle") ImageView.ScaleType.CENTER_INSIDE else ImageView.ScaleType.CENTER_CROP
-                alpha = opacity.coerceIn(0, 100) / 100f
-                if (!imageUri.isNullOrBlank()) {
-                    try {
-                        setImageURI(imageUri.toUri())
-                        if (drawable == null) {
-                            setImageDrawable(appIcon)
-                        }
-                    } catch (_: Exception) {
+        return WatermarkImageView(this).apply {
+            clipCircle = isCircle
+            layoutParams = ViewGroup.LayoutParams(sizePx, sizePx)
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            alpha = opacity.coerceIn(0, 100) / 100f
+            if (!imageUri.isNullOrBlank()) {
+                try {
+                    setImageURI(imageUri.toUri())
+                    if (drawable == null) {
                         setImageDrawable(appIcon)
                     }
-                } else {
+                } catch (_: Exception) {
                     setImageDrawable(appIcon)
                 }
-                if (pad > 0) setPadding(pad, pad, pad, pad)
+            } else {
+                setImageDrawable(appIcon)
             }
-        if (shape != "Circle") return image
-        return CardView(this).apply {
-            radius = sizePx / 2f
-            cardElevation = 0f
-            setCardBackgroundColor(Color.TRANSPARENT)
-            preventCornerOverlap = false
-            useCompatPadding = false
-            clipChildren = true
-            clipToOutline = true
-            layoutParams = ViewGroup.LayoutParams(sizePx, sizePx)
-            outlineProvider =
-                object : ViewOutlineProvider() {
-                    override fun getOutline(
-                        view: View,
-                        outline: Outline,
-                    ) {
-                        val w = view.width
-                        val h = view.height
-                        val r = (minOf(w, h) / 2f).coerceAtLeast(1f)
-                        outline.setRoundRect(0, 0, w, h, r)
+            if (isCircle) {
+                // Apply the selected shape at final bounds so custom images do not shrink instead of masking.
+                clipToOutline = true
+                outlineProvider =
+                    object : ViewOutlineProvider() {
+                        override fun getOutline(
+                            view: View,
+                            outline: Outline,
+                        ) {
+                            outline.setOval(0, 0, view.width, view.height)
+                        }
                     }
-                }
-            addView(image)
+            }
         }
     }
 

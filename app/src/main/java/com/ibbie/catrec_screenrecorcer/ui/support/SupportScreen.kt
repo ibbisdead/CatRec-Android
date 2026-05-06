@@ -38,6 +38,8 @@ import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
 import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
@@ -156,7 +158,7 @@ fun SupportScreen(
 
     Scaffold(
         // Outer NavGraph Scaffold already applies window insets; avoid double safeDrawing padding.
-        contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+        contentWindowInsets = WindowInsets(0),
     ) { paddingValues ->
         Column(
             modifier =
@@ -276,10 +278,12 @@ fun SupportScreen(
                         when {
                             ad != null && activity != null -> {
                                 supportRewardEarned = false
+                                AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.REWARDED_AD)
                                 ad.fullScreenContentCallback =
                                     object : FullScreenContentCallback() {
                                         override fun onAdDismissedFullScreenContent() {
                                             activity.resetWindowFocusAfterFullscreenOverlay()
+                                            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.REWARDED_AD)
                                             if (supportRewardEarned) {
                                                 Toast.makeText(context, toastSupportThanksAd, Toast.LENGTH_SHORT).show()
                                             }
@@ -291,6 +295,7 @@ fun SupportScreen(
                                         override fun onAdFailedToShowFullScreenContent(error: AdError) {
                                             supportRewardEarned = false
                                             activity.resetWindowFocusAfterFullscreenOverlay()
+                                            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.REWARDED_AD)
                                             rewardedAd = null
                                             loadRewardedAd()
                                             Toast.makeText(context, toastSupportAdFailed, Toast.LENGTH_SHORT).show()
@@ -457,6 +462,8 @@ fun SupportScreen(
     }
 
     if (showChangelogDialog) {
+        val changelog113Items = stringArrayResource(R.array.changelog_v113_items).toList()
+        val changelog112Items = stringArrayResource(R.array.changelog_v112_items).toList()
         val changelog111Items = stringArrayResource(R.array.changelog_v111_items).toList()
         val changelog110Items = stringArrayResource(R.array.changelog_v110_items).toList()
         val changelog107Items = stringArrayResource(R.array.changelog_v107_items).toList()
@@ -471,8 +478,20 @@ fun SupportScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_template, "1.1.1"),
+                        version = stringResource(R.string.changelog_version_template, "1.1.3"),
                         label = stringResource(R.string.changelog_label_latest),
+                        changes = changelog113Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.1.2"),
+                        label = null,
+                        changes = changelog112Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.1.1"),
+                        label = null,
                         changes = changelog111Items,
                     )
                     Spacer(Modifier.height(24.dp))

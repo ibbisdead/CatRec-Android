@@ -4,11 +4,22 @@ All notable changes to CatRec Screen Recorder are documented here.
 
 ---
 
+## [1.1.2] — 2026-05-05
+
+### Fixed
+- **Camera overlay:** front/rear switching, aspect-ratio shapes, and preview rotation when the device rotates.
+- Smoother display-driven updates for the camera overlay to reduce main-thread stalls and **ANR** risk on some devices (including high-frequency display callbacks).
+
+---
+
 ## [1.1.1] — 2026-05-01
 
 ### Added / Fixed
 - Force Rec.709 (BT.709) tagging/metadata for recordings on **HEVC-only** devices (for example **Poco X7 Pro**) so players interpret color correctly instead of stretching or washing out the image.
 - **Rec.709 color correction** options in Settings to tune brightness and device-specific compatibility alongside the selectable Rec.709 / full-range profiles.
+- Corrected watermark cropping for **circular** and **square** watermark shapes.
+- Improved stability on **Android 14 and newer**, including crash fixes on certain OEM devices.
+- Reduced **application-not-responding (ANR)** incidents on affected devices.
 
 ---
 

@@ -22,11 +22,11 @@ sealed class Screen(
     /** Video tools / editor hub (trim, GIF, etc.). */
     object Editor : Screen("editor", R.string.tab_editor)
 
-    object Crop : Screen("crop/{imageUri}", R.string.app_name)
+    object Crop : Screen("crop/{imageUri}", R.string.screen_title_crop)
 
-    object Player : Screen("player?videoUri={videoUri}", R.string.app_name)
+    object Player : Screen("player?videoUri={videoUri}", R.string.screen_title_player)
 
-    object Trim : Screen("trim?videoUri={videoUri}", R.string.app_name)
+    object Trim : Screen("trim?videoUri={videoUri}", R.string.screen_title_trim)
 
     object Compress : Screen("compress?videoUri={videoUri}", R.string.tool_compress)
 

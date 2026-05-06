@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 import kotlinx.coroutines.flow.first
@@ -24,6 +26,7 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
 
     private val projectionCapture =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
             when {
                 result.resultCode == RESULT_OK && result.data != null -> {
                     val asBuffer = intent.getBooleanExtra(EXTRA_START_AS_BUFFER, false)
@@ -62,6 +65,7 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
             runBlocking {
                 SettingsRepository(applicationContext).recordSingleAppEnabled.first()
             }
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
         projectionCapture.launch(MediaProjectionIntents.createScreenCaptureIntent(this, singleApp))
     }
 }

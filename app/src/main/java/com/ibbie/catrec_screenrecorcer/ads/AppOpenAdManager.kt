@@ -12,12 +12,10 @@ import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Full-screen app open ads. Respects [adsDisabled] (remove-ads / promo entitlement).
- * Loads the next ad after dismiss or failed show.
+ * Full-screen app-open ads. Respects remove-ads entitlement and central suppression state.
  */
 object AppOpenAdManager {
     private const val TAG = "AppOpenAd"
-    private const val MIN_INTERVAL_MS = 5_000L
     private const val MAX_AD_AGE_MS = 4 * 60 * 60 * 1000L
 
     @Volatile
@@ -32,17 +30,26 @@ object AppOpenAdManager {
             }
         }
 
+    @Volatile
+    var firstLaunchSession: Boolean = false
+
+    private var firstLaunchBlockedForegroundEventId: Long = 0
+
+    @Volatile
+    var firstRunPermissionsComplete: Boolean = true
+
     private var appOpenAd: AppOpenAd? = null
     private val isLoading = AtomicBoolean(false)
     private var loadTime: Long = 0
-    private var lastShownAt: Long = 0
+    private var currentForegroundEventId: Long = 0
+    private var shownForegroundEventId: Long = 0
 
     /**
-     * When [showIfAvailable] runs before the first ad has finished loading (cold start),
-     * we remember the foreground activity and show as soon as [onAdLoaded] runs.
+     * Used only when every gating check already passed but the cold-start ad has not loaded yet.
      */
     private var pendingShowActivity: WeakReference<Activity>? = null
     private var pendingShowUnitId: String? = null
+    private var pendingShowForegroundEventId: Long = 0
 
     @Volatile
     var isShowingAd: Boolean = false
@@ -82,11 +89,13 @@ object AppOpenAdManager {
     private fun tryShowPendingAfterLoad(loadedUnitId: String) {
         val id = pendingShowUnitId ?: return
         if (id != loadedUnitId) return
+        val eventId = pendingShowForegroundEventId
         val act = pendingShowActivity?.get()
         pendingShowActivity = null
         pendingShowUnitId = null
-        if (act != null && !act.isFinishing && !act.isDestroyed) {
-            showIfAvailable(act, loadedUnitId)
+        pendingShowForegroundEventId = 0
+        if (act != null) {
+            showIfAvailable(act, loadedUnitId, eventId)
         }
     }
 
@@ -100,33 +109,59 @@ object AppOpenAdManager {
         return true
     }
 
-    /**
-     * Shows a loaded ad if allowed; otherwise requests a load for next time.
-     */
     fun showIfAvailable(
         activity: Activity,
         adUnitId: String,
+        foregroundEventId: Long = ensureForegroundEvent(),
     ) {
         if (adsDisabled) {
-            pendingShowActivity = null
-            pendingShowUnitId = null
+            Log.d(TAG, "blocked: ads_disabled")
+            clearPendingShow()
             return
         }
-        if (isShowingAd) return
-        val now = System.currentTimeMillis()
-        if (now - lastShownAt < MIN_INTERVAL_MS && lastShownAt > 0) {
+        if (activity.isFinishing || activity.isDestroyed) {
+            Log.d(TAG, "blocked: invalid_activity")
+            clearPendingShow()
+            return
+        }
+        if (isShowingAd) {
+            Log.d(TAG, "blocked: already_showing_app_open")
+            clearPendingShow()
+            return
+        }
+        if (shownForegroundEventId == foregroundEventId) {
+            Log.d(TAG, "blocked: already_shown_for_foreground_event id=$foregroundEventId")
+            clearPendingShow()
             load(activity.applicationContext, adUnitId)
             return
         }
+
+        val now = System.currentTimeMillis()
+        val blockReason = showBlockReason(now, foregroundEventId)
+        if (blockReason != null) {
+            Log.d(
+                TAG,
+                "blocked: $blockReason loaded=${appOpenAd != null} loading=${isLoading.get()} " +
+                    "firstLaunch=$firstLaunchSession firstRunComplete=$firstRunPermissionsComplete",
+            )
+            clearPendingShow()
+            load(activity.applicationContext, adUnitId)
+            return
+        }
+
         val ad = appOpenAd
         if (ad == null || !isAdAvailable()) {
-            // Cold start: ad usually not ready on first ON_START — show when load completes.
+            Log.d(TAG, "blocked: no_loaded_ad; requesting load and pending foreground show event=$foregroundEventId")
             pendingShowActivity = WeakReference(activity)
             pendingShowUnitId = adUnitId
+            pendingShowForegroundEventId = foregroundEventId
             load(activity.applicationContext, adUnitId)
             return
         }
+
+        Log.d(TAG, "showing app-open ad foregroundEvent=$foregroundEventId")
         isShowingAd = true
+        shownForegroundEventId = foregroundEventId
         ad.fullScreenContentCallback =
             object : FullScreenContentCallback() {
                 override fun onAdDismissedFullScreenContent() {
@@ -144,10 +179,44 @@ object AppOpenAdManager {
                     load(activity.applicationContext, adUnitId)
                 }
 
-                override fun onAdShowedFullScreenContent() {
-                    lastShownAt = System.currentTimeMillis()
-                }
+                override fun onAdShowedFullScreenContent() = Unit
             }
         ad.show(activity)
+    }
+
+    fun beginForegroundEvent(): Long {
+        currentForegroundEventId += 1
+        if (firstLaunchSession && firstLaunchBlockedForegroundEventId == 0L) {
+            firstLaunchBlockedForegroundEventId = currentForegroundEventId
+        } else if (currentForegroundEventId > firstLaunchBlockedForegroundEventId) {
+            firstLaunchSession = false
+        }
+        clearPendingShow()
+        Log.d(TAG, "foreground_event id=$currentForegroundEventId")
+        return currentForegroundEventId
+    }
+
+    fun ensureForegroundEvent(): Long =
+        if (currentForegroundEventId > 0) {
+            currentForegroundEventId
+        } else {
+            beginForegroundEvent()
+        }
+
+    private fun showBlockReason(
+        now: Long,
+        foregroundEventId: Long,
+    ): String? {
+        if (firstLaunchSession && foregroundEventId == firstLaunchBlockedForegroundEventId) {
+            return AppOpenAdSuppressionReason.FIRST_LAUNCH.logName
+        }
+        if (!firstRunPermissionsComplete) return AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS.logName
+        return AppOpenAdSuppressor.activeBlockReason(now)
+    }
+
+    private fun clearPendingShow() {
+        pendingShowActivity = null
+        pendingShowUnitId = null
+        pendingShowForegroundEventId = 0
     }
 }

@@ -69,6 +69,9 @@ import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineEventBus
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingFatalKind
+import com.ibbie.catrec_screenrecorcer.data.recording.ProRecordingFeature
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGate
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGateResult
 import com.ibbie.catrec_screenrecorcer.data.recording.SessionConfig
 import com.ibbie.catrec_screenrecorcer.data.recording.toMicAndInternalFlags
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
@@ -78,6 +81,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
@@ -608,6 +612,7 @@ class ScreenRecordService :
             }
 
             ACTION_START -> {
+                promoteImmediateMediaProjectionForeground(forBuffer = false)
                 captureDimensionsFromSessionConfig = false
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 resultData =
@@ -682,11 +687,25 @@ class ScreenRecordService :
                 applySessionConfigFromIntent(intent)
 
                 if (resultCode != 0 && resultData != null) {
+                    when (val gate = runBlocking { checkCurrentRecordingProGate("service_action_start") }) {
+                        RecordingStartProGateResult.Allowed -> Unit
+                        is RecordingStartProGateResult.BlockedNeedsPro -> {
+                            handleBlockedProStart(
+                                source = "service_action_start",
+                                asBuffer = false,
+                                features = gate.features,
+                                preservePreparedSession = false,
+                            )
+                            return START_STICKY
+                        }
+                    }
                     try {
                         startRecording()
                     } catch (e: Exception) {
                         FirebaseCrashlytics.getInstance().recordException(e)
                     }
+                } else {
+                    abortForegroundServiceEntryPendingStop()
                 }
             }
             ACTION_EXIT_SERVICE -> {
@@ -753,6 +772,7 @@ class ScreenRecordService :
             ACTION_NOTIFICATION_DISMISSED -> Unit
             ACTION_START_BUFFER -> {
                 if (!isRecorderRunning && !isBufferRunning) {
+                    promoteImmediateMediaProjectionForeground(forBuffer = true)
                     captureDimensionsFromSessionConfig = false
                     resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                     resultData =
@@ -782,14 +802,66 @@ class ScreenRecordService :
                     clipperDurationMinutes = intent.getIntExtra(EXTRA_CLIPPER_DURATION_MINUTES, 1).coerceIn(1, 5)
                     countdownValue = intent.getIntExtra(EXTRA_COUNTDOWN, 0).coerceIn(0, 60)
                     applySessionConfigFromIntent(intent)
-                    if (resultCode != 0 && resultData != null) startBuffer()
+                    if (resultCode != 0 && resultData != null) {
+                        when (val gate = runBlocking { checkCurrentBufferProGate("service_action_start_buffer") }) {
+                            RecordingStartProGateResult.Allowed -> Unit
+                            is RecordingStartProGateResult.BlockedNeedsPro -> {
+                                handleBlockedProStart(
+                                    source = "service_action_start_buffer",
+                                    asBuffer = true,
+                                    features = gate.features,
+                                    preservePreparedSession = false,
+                                )
+                                return START_STICKY
+                            }
+                        }
+                        startBuffer()
+                    } else {
+                        abortForegroundServiceEntryPendingStop()
+                    }
                 }
             }
             ACTION_STOP_BUFFER -> stopBuffer()
             ACTION_SAVE_CLIP -> saveClip()
 
             ACTION_PREPARE -> {
-                if (isPrepared || isRecorderRunning || isBufferRunning) return START_STICKY
+                promoteImmediateMediaProjectionForeground(forBuffer = false)
+                if (isRecorderRunning) {
+                    runCatching {
+                        ServiceCompat.startForeground(
+                            this,
+                            MAIN_FOREGROUND_NOTIFICATION_ID,
+                            buildRecordingNotification(isPaused = isRecordingPaused),
+                            mediaProjectionForegroundServiceTypes(),
+                        )
+                        mainForegroundActive = true
+                    }
+                    return START_STICKY
+                }
+                if (isBufferRunning) {
+                    runCatching {
+                        ServiceCompat.startForeground(
+                            this,
+                            BUFFER_NOTIFICATION_ID,
+                            buildBufferNotification(),
+                            mediaProjectionForegroundServiceTypes(),
+                        )
+                        mainForegroundActive = false
+                    }
+                    return START_STICKY
+                }
+                if (isPrepared) {
+                    runCatching {
+                        ServiceCompat.startForeground(
+                            this,
+                            MAIN_FOREGROUND_NOTIFICATION_ID,
+                            buildReadyNotification(),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION,
+                        )
+                        mainForegroundActive = true
+                    }
+                    return START_STICKY
+                }
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 resultData =
                     if (Build.VERSION.SDK_INT >= 33) {
@@ -798,7 +870,10 @@ class ScreenRecordService :
                         @Suppress("DEPRECATION")
                         intent.getParcelableExtra(EXTRA_DATA)
                     }
-                if (resultCode == 0 || resultData == null) return START_STICKY
+                if (resultCode == 0 || resultData == null) {
+                    abortForegroundServiceEntryPendingStop()
+                    return START_STICKY
+                }
                 intent.getStringExtra(EXTRA_SCREENSHOT_FORMAT)?.let { screenshotFormat = it }
                 val q = intent.getIntExtra(EXTRA_SCREENSHOT_QUALITY, -1)
                 if (q >= 0) screenshotQuality = q.coerceIn(1, 100)
@@ -806,22 +881,60 @@ class ScreenRecordService :
             }
 
             ACTION_START_FROM_OVERLAY -> {
-                if (!isPrepared || isRecorderRunning) return START_STICKY
+                promoteImmediateMediaProjectionForeground(forBuffer = false)
+                when {
+                    isRecorderRunning -> {
+                        runCatching {
+                            ServiceCompat.startForeground(
+                                this,
+                                MAIN_FOREGROUND_NOTIFICATION_ID,
+                                buildRecordingNotification(isPaused = isRecordingPaused),
+                                mediaProjectionForegroundServiceTypes(),
+                            )
+                            mainForegroundActive = true
+                        }
+                        return START_STICKY
+                    }
+                    !isPrepared -> {
+                        abortForegroundServiceEntryPendingStop()
+                        return START_STICKY
+                    }
+                }
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         applyOverlayRecordingRepoSnapshotToService()
+                        val proGate = checkCurrentRecordingProGate("overlay_prepared_recording")
                         withContext(Dispatchers.Main) {
                             if (!isPrepared) {
                                 Log.w(
                                     LOG_TAG,
                                     "stale_overlay_start_ignored recording prepared=false",
                                 )
+                                abortForegroundServiceEntryPendingStop()
                                 return@withContext
                             }
                             if (isRecorderRunning) {
                                 Log.w(
                                     LOG_TAG,
                                     "stale_overlay_start_ignored recording rec=true",
+                                )
+                                runCatching {
+                                    ServiceCompat.startForeground(
+                                        this@ScreenRecordService,
+                                        MAIN_FOREGROUND_NOTIFICATION_ID,
+                                        buildRecordingNotification(isPaused = isRecordingPaused),
+                                        mediaProjectionForegroundServiceTypes(),
+                                    )
+                                    mainForegroundActive = true
+                                }
+                                return@withContext
+                            }
+                            if (proGate is RecordingStartProGateResult.BlockedNeedsPro) {
+                                handleBlockedProStart(
+                                    source = "overlay_prepared_recording",
+                                    asBuffer = false,
+                                    features = proGate.features,
+                                    preservePreparedSession = true,
                                 )
                                 return@withContext
                             }
@@ -838,15 +951,78 @@ class ScreenRecordService :
             }
 
             ACTION_START_BUFFER_FROM_OVERLAY -> {
-                if (!isPrepared || isBufferRunning || isRecorderRunning) return START_STICKY
+                promoteImmediateMediaProjectionForeground(forBuffer = true)
+                when {
+                    isBufferRunning -> {
+                        runCatching {
+                            ServiceCompat.startForeground(
+                                this,
+                                BUFFER_NOTIFICATION_ID,
+                                buildBufferNotification(),
+                                mediaProjectionForegroundServiceTypes(),
+                            )
+                            mainForegroundActive = false
+                        }
+                        return START_STICKY
+                    }
+                    isRecorderRunning -> {
+                        runCatching {
+                            ServiceCompat.startForeground(
+                                this,
+                                MAIN_FOREGROUND_NOTIFICATION_ID,
+                                buildRecordingNotification(isPaused = isRecordingPaused),
+                                mediaProjectionForegroundServiceTypes(),
+                            )
+                            mainForegroundActive = true
+                        }
+                        return START_STICKY
+                    }
+                    !isPrepared -> {
+                        abortForegroundServiceEntryPendingStop()
+                        return START_STICKY
+                    }
+                }
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         applyOverlayBufferRepoSnapshotToService()
+                        val proGate = checkCurrentBufferProGate("overlay_prepared_buffer")
                         withContext(Dispatchers.Main) {
                             if (!isPrepared || isBufferRunning || isRecorderRunning) {
                                 Log.w(
                                     LOG_TAG,
                                     "stale_overlay_start_ignored buffer prepared=$isPrepared buf=$isBufferRunning rec=$isRecorderRunning",
+                                )
+                                when {
+                                    !isPrepared -> abortForegroundServiceEntryPendingStop()
+                                    isBufferRunning ->
+                                        runCatching {
+                                            ServiceCompat.startForeground(
+                                                this@ScreenRecordService,
+                                                BUFFER_NOTIFICATION_ID,
+                                                buildBufferNotification(),
+                                                mediaProjectionForegroundServiceTypes(),
+                                            )
+                                            mainForegroundActive = false
+                                        }
+                                    isRecorderRunning ->
+                                        runCatching {
+                                            ServiceCompat.startForeground(
+                                                this@ScreenRecordService,
+                                                MAIN_FOREGROUND_NOTIFICATION_ID,
+                                                buildRecordingNotification(isPaused = isRecordingPaused),
+                                                mediaProjectionForegroundServiceTypes(),
+                                            )
+                                            mainForegroundActive = true
+                                        }
+                                }
+                                return@withContext
+                            }
+                            if (proGate is RecordingStartProGateResult.BlockedNeedsPro) {
+                                handleBlockedProStart(
+                                    source = "overlay_prepared_buffer",
+                                    asBuffer = true,
+                                    features = proGate.features,
+                                    preservePreparedSession = true,
                                 )
                                 return@withContext
                             }
@@ -863,7 +1039,6 @@ class ScreenRecordService :
             }
 
             ACTION_START_AFTER_OVERLAY_PROJECTION -> {
-                if (isRecorderRunning || isBufferRunning) return START_STICKY
                 val rc = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 val rd =
                     if (Build.VERSION.SDK_INT >= 33) {
@@ -872,8 +1047,39 @@ class ScreenRecordService :
                         @Suppress("DEPRECATION")
                         intent.getParcelableExtra(EXTRA_DATA)
                     }
-                if (rc == 0 || rd == null) return START_STICKY
                 val asBuffer = intent.getBooleanExtra(EXTRA_OVERLAY_SESSION_AS_BUFFER, false)
+
+                if (isRecorderRunning || isBufferRunning) {
+                    promoteImmediateMediaProjectionForeground(forBuffer = isBufferRunning)
+                    runCatching {
+                        if (isRecorderRunning) {
+                            ServiceCompat.startForeground(
+                                this,
+                                MAIN_FOREGROUND_NOTIFICATION_ID,
+                                buildRecordingNotification(isPaused = isRecordingPaused),
+                                mediaProjectionForegroundServiceTypes(),
+                            )
+                            mainForegroundActive = true
+                        } else {
+                            ServiceCompat.startForeground(
+                                this,
+                                BUFFER_NOTIFICATION_ID,
+                                buildBufferNotification(),
+                                mediaProjectionForegroundServiceTypes(),
+                            )
+                            mainForegroundActive = false
+                        }
+                    }
+                    return START_STICKY
+                }
+
+                if (rc == 0 || rd == null) {
+                    promoteImmediateMediaProjectionForeground(forBuffer = asBuffer)
+                    abortForegroundServiceEntryPendingStop()
+                    return START_STICKY
+                }
+
+                promoteImmediateMediaProjectionForeground(forBuffer = asBuffer)
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         if (asBuffer) {
@@ -881,8 +1087,44 @@ class ScreenRecordService :
                         } else {
                             applyOverlayRecordingRepoSnapshotToService()
                         }
+                        val proGate =
+                            if (asBuffer) {
+                                checkCurrentBufferProGate("overlay_projection_buffer")
+                            } else {
+                                checkCurrentRecordingProGate("overlay_projection_recording")
+                            }
                         withContext(Dispatchers.Main) {
-                            if (isRecorderRunning || isBufferRunning) return@withContext
+                            if (isRecorderRunning || isBufferRunning) {
+                                runCatching {
+                                    if (isRecorderRunning) {
+                                        ServiceCompat.startForeground(
+                                            this@ScreenRecordService,
+                                            MAIN_FOREGROUND_NOTIFICATION_ID,
+                                            buildRecordingNotification(isPaused = isRecordingPaused),
+                                            mediaProjectionForegroundServiceTypes(),
+                                        )
+                                        mainForegroundActive = true
+                                    } else {
+                                        ServiceCompat.startForeground(
+                                            this@ScreenRecordService,
+                                            BUFFER_NOTIFICATION_ID,
+                                            buildBufferNotification(),
+                                            mediaProjectionForegroundServiceTypes(),
+                                        )
+                                        mainForegroundActive = false
+                                    }
+                                }
+                                return@withContext
+                            }
+                            if (proGate is RecordingStartProGateResult.BlockedNeedsPro) {
+                                handleBlockedProStart(
+                                    source = if (asBuffer) "overlay_projection_buffer" else "overlay_projection_recording",
+                                    asBuffer = asBuffer,
+                                    features = proGate.features,
+                                    preservePreparedSession = false,
+                                )
+                                return@withContext
+                            }
                             resultCode = rc
                             resultData = rd
                             try {
@@ -1613,25 +1855,183 @@ class ScreenRecordService :
         }
     }
 
-    @RequiresApi(30)
-    @SuppressLint("WakelockTimeout")
-    private fun startRecording() {
-        isStoppingForCodec.set(false)
+    /** Bitmask passed to [ServiceCompat.startForeground] for capture sessions (projection ± mic). */
+    private fun mediaProjectionForegroundServiceTypes(): Int {
         val hasAudioPermission =
             ContextCompat.checkSelfPermission(
                 this,
                 android.Manifest.permission.RECORD_AUDIO,
             ) == PackageManager.PERMISSION_GRANTED
+        var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+        if (hasAudioPermission && (audioEnabled || internalAudioEnabled)) {
+            type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+        }
+        return type
+    }
+
+    /**
+     * Android 14+: [MediaProjectionManager.getMediaProjection] requires an active foreground service
+     * declared with [ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION]. OEM builds may reject token
+     * consumption after delays (e.g. countdown) unless types are re-bound immediately before the call
+     * (Crashlytics: SecurityException in [actualStartRecording]).
+     */
+    private fun ensureRecordingForegroundBeforeMediaProjection() {
+        if (Build.VERSION.SDK_INT < 34) return
+        ServiceCompat.startForeground(
+            this,
+            MAIN_FOREGROUND_NOTIFICATION_ID,
+            buildRecordingNotification(isPaused = false, contentText = getString(R.string.notif_preparing)),
+            mediaProjectionForegroundServiceTypes(),
+        )
+        mainForegroundActive = true
+    }
+
+    private fun ensureBufferForegroundBeforeMediaProjection() {
+        if (Build.VERSION.SDK_INT < 34) return
+        ServiceCompat.startForeground(
+            this,
+            BUFFER_NOTIFICATION_ID,
+            buildBufferNotification(getString(R.string.notif_buffer_starting)),
+            mediaProjectionForegroundServiceTypes(),
+        )
+        mainForegroundActive = false
+    }
+
+    /**
+     * [Context.startForegroundService] requires [startForeground] very soon — often before [onStartCommand]
+     * returns. Deferred work ([lifecycleScope.launch(Dispatchers.IO)]) must not precede the first
+     * [startForeground] call (Crashlytics: ForegroundServiceDidNotStartInTimeException).
+     *
+     * Projection-type only; [startRecording]/[startBuffer] re-bind with microphone OR when needed.
+     */
+    private fun promoteImmediateMediaProjectionForeground(forBuffer: Boolean) {
+        try {
+            val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            if (forBuffer) {
+                ServiceCompat.startForeground(
+                    this,
+                    BUFFER_NOTIFICATION_ID,
+                    buildBufferNotification(getString(R.string.notif_buffer_starting)),
+                    types,
+                )
+                mainForegroundActive = false
+            } else {
+                ServiceCompat.startForeground(
+                    this,
+                    MAIN_FOREGROUND_NOTIFICATION_ID,
+                    buildRecordingNotification(isPaused = false, contentText = getString(R.string.notif_preparing)),
+                    types,
+                )
+                mainForegroundActive = true
+            }
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "promoteImmediateMediaProjectionForeground failed", e)
+        }
+    }
+
+    private fun abortForegroundServiceEntryPendingStop() {
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (_: Exception) {
+        }
+        mainForegroundActive = false
+        stopSelf()
+    }
+
+    private suspend fun checkCurrentRecordingProGate(source: String): RecordingStartProGateResult =
+        RecordingStartProGate.check(
+            source = source,
+            features =
+                RecordingStartProGate.featuresForFullRecording(
+                    fps = fps,
+                    separateMicRecording = separateMicRecording,
+                    cameraOverlay = showCamera,
+                    showWatermark = showWatermark,
+                ),
+            adsDisabled = settingsRepository.adsDisabled.first(),
+            proUnlockedUntilMillis = settingsRepository.proFeaturesUnlockedUntilMillis.first(),
+        )
+
+    private suspend fun checkCurrentBufferProGate(source: String): RecordingStartProGateResult =
+        RecordingStartProGate.check(
+            source = source,
+            features = RecordingStartProGate.featuresForBuffer(fps),
+            adsDisabled = settingsRepository.adsDisabled.first(),
+            proUnlockedUntilMillis = settingsRepository.proFeaturesUnlockedUntilMillis.first(),
+        )
+
+    private fun routeProBlockedStartToMainActivity(
+        source: String,
+        asBuffer: Boolean,
+        features: List<ProRecordingFeature>,
+    ) {
+        val featureNames = features.joinToString(",") { it.logName }
+        Log.d(
+            LOG_TAG,
+            "Pro gate blocked start source=$source features=$featureNames; routing to MainActivity",
+        )
+        val action =
+            if (asBuffer) {
+                MainActivity.ACTION_START_BUFFER_FROM_OVERLAY
+            } else {
+                MainActivity.ACTION_START_RECORDING_FROM_OVERLAY
+        }
+        runCatching {
+            MainActivity.markRoutedRecordingAppOpenSuppressed(source)
+            startActivity(
+                MainActivity.addRoutedRecordingSuppressionExtras(Intent(this, MainActivity::class.java)).apply {
+                    this.action = action
+                    addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                    )
+                },
+            )
+        }.onFailure {
+            Log.w(LOG_TAG, "Failed to route Pro-blocked start to MainActivity source=$source", it)
+        }
+    }
+
+    private fun restorePreparedForegroundAfterBlockedStart() {
+        if (!isPrepared) {
+            abortForegroundServiceEntryPendingStop()
+            return
+        }
+        runCatching {
+            ServiceCompat.startForeground(
+                this,
+                MAIN_FOREGROUND_NOTIFICATION_ID,
+                buildReadyNotification(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION,
+            )
+            mainForegroundActive = true
+        }.onFailure {
+            Log.w(LOG_TAG, "Failed to restore prepared foreground after Pro block", it)
+        }
+    }
+
+    private fun handleBlockedProStart(
+        source: String,
+        asBuffer: Boolean,
+        features: List<ProRecordingFeature>,
+        preservePreparedSession: Boolean,
+    ) {
+        routeProBlockedStartToMainActivity(source, asBuffer, features)
+        if (preservePreparedSession) {
+            restorePreparedForegroundAfterBlockedStart()
+        } else {
+            abortForegroundServiceEntryPendingStop()
+        }
+    }
+
+    @RequiresApi(30)
+    @SuppressLint("WakelockTimeout")
+    private fun startRecording() {
+        isStoppingForCodec.set(false)
 
         val notification = buildRecordingNotification(isPaused = false, contentText = getString(R.string.notif_preparing))
-        val serviceType = run {
-            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            // Match rolling-buffer logic: mic capture needs RECORD_AUDIO; internal capture is gated the same way.
-            if (hasAudioPermission && (audioEnabled || internalAudioEnabled)) {
-                type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            }
-            type
-        }
+        val serviceType = mediaProjectionForegroundServiceTypes()
 
         val notifMgr = getSystemService(NotificationManager::class.java) ?: return
         try {
@@ -1730,7 +2130,26 @@ class ScreenRecordService :
         if (mediaProjection == null) {
             // Normal path: consume the one-time token from the permission dialog.
             Log.d(LOG_TAG, "Obtaining MediaProjection from token (resultCode=$resultCode)")
-            mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            try {
+                ensureRecordingForegroundBeforeMediaProjection()
+                mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            } catch (e: SecurityException) {
+                Log.e(LOG_TAG, "getMediaProjection SecurityException (recording)", e)
+                FirebaseCrashlytics.getInstance().recordException(e)
+                RecordingEngineEventBus.tryEmit(
+                    RecordingError.PermissionDenied("media_projection_security_exception"),
+                )
+                logServiceAnalyticsEvent(
+                    "capture_denied_or_unsupported",
+                    mapOf(
+                        "reason" to "projection_security_exception",
+                        "api" to Build.VERSION.SDK_INT.toString(),
+                        "brand" to Build.BRAND,
+                    ),
+                )
+                stopRecording()
+                return
+            }
             Log.d(LOG_TAG, "MediaProjection obtained: $mediaProjection")
 
             if (mediaProjection != null) {
@@ -2022,11 +2441,10 @@ class ScreenRecordService :
                 displayHeight = (baseH / 16) * 16
             }
             else -> {
-                if (resolutionSetting.contains("x")) {
-                    // Custom resolution e.g. "1920x1080"
-                    val parts = resolutionSetting.split("x")
-                    val w = parts.getOrNull(0)?.toIntOrNull() ?: baseW
-                    val h = parts.getOrNull(1)?.toIntOrNull() ?: baseH
+                val explicitSize = RecordingResolutionSupport.parseSize(resolutionSetting)
+                if (explicitSize != null) {
+                    val w = explicitSize.width
+                    val h = explicitSize.height
                     displayWidth = (w / 16) * 16
                     displayHeight = (h / 16) * 16
                 } else {
@@ -2046,10 +2464,17 @@ class ScreenRecordService :
                 }
             }
         }
+        val clamped = RecordingResolutionSupport.clampCaptureForVirtualDisplay(displayWidth, displayHeight)
+        displayWidth = clamped.width
+        displayHeight = clamped.height
     }
 
     private fun readSessionConfigExtra(intent: Intent): SessionConfig? =
         runCatching {
+            val loader =
+                SessionConfig::class.java.classLoader ?: javaClass.classLoader
+            intent.setExtrasClassLoader(loader)
+            intent.extras?.classLoader = loader
             if (Build.VERSION.SDK_INT >= 33) {
                 intent.getParcelableExtra(EXTRA_SESSION_CONFIG, SessionConfig::class.java)
             } else {
@@ -2084,6 +2509,9 @@ class ScreenRecordService :
         if (freeze) {
             displayWidth = alignCaptureDimCeil16(session.widthPx)
             displayHeight = alignCaptureDimCeil16(session.heightPx)
+            val clamped = RecordingResolutionSupport.clampCaptureForVirtualDisplay(displayWidth, displayHeight)
+            displayWidth = clamped.width
+            displayHeight = clamped.height
         }
         return true
     }
@@ -2529,20 +2957,9 @@ class ScreenRecordService :
     @RequiresApi(30)
     private fun startBuffer() {
         isStoppingForCodec.set(false)
-        val hasAudioPermission =
-            ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.RECORD_AUDIO,
-            ) == PackageManager.PERMISSION_GRANTED
 
         val notification = buildBufferNotification(getString(R.string.notif_buffer_starting))
-        val serviceType = run {
-            var type = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-            if (hasAudioPermission && (audioEnabled || internalAudioEnabled)) {
-                type = type or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-            }
-            type
-        }
+        val serviceType = mediaProjectionForegroundServiceTypes()
 
         try {
             ServiceCompat.startForeground(this, BUFFER_NOTIFICATION_ID, notification, serviceType)
@@ -2577,7 +2994,26 @@ class ScreenRecordService :
         // In prepared mode the MediaProjection is already held — reuse it instead of
         // consuming the one-time token a second time.
         if (mediaProjection == null) {
-            mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            try {
+                ensureBufferForegroundBeforeMediaProjection()
+                mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, resultData!!)
+            } catch (e: SecurityException) {
+                Log.e(LOG_TAG, "getMediaProjection SecurityException (buffer)", e)
+                FirebaseCrashlytics.getInstance().recordException(e)
+                RecordingEngineEventBus.tryEmit(
+                    RecordingError.PermissionDenied("media_projection_security_exception_buffer"),
+                )
+                logServiceAnalyticsEvent(
+                    "capture_denied_or_unsupported",
+                    mapOf(
+                        "reason" to "projection_security_exception_buffer",
+                        "api" to Build.VERSION.SDK_INT.toString(),
+                        "brand" to Build.BRAND,
+                    ),
+                )
+                stopBuffer()
+                return
+            }
             if (mediaProjection == null) {
                 Log.e(LOG_TAG, "getMediaProjection returned null — cannot start buffer")
                 RecordingEngineEventBus.tryEmit(RecordingError.PermissionDenied("media_projection_null_buffer"))
@@ -2970,8 +3406,14 @@ class ScreenRecordService :
         }
         releasePendingScreenshotVirtualDisplay()
         releasePendingScreenshotImageReader()
-        val width = metrics.widthPixels
-        val height = metrics.heightPixels
+        // Same GPU buffer-queue limits as recording VirtualDisplay (see Crashlytics ANRs on Adreno).
+        val clamped =
+            RecordingResolutionSupport.clampCaptureForVirtualDisplay(
+                metrics.widthPixels,
+                metrics.heightPixels,
+            )
+        val width = clamped.width
+        val height = clamped.height
         val imageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
         val virtualDisplay =
             try {
@@ -3757,7 +4199,7 @@ class ScreenRecordService :
             if (isPaused) {
                 R.drawable.ic_play
             } else {
-                R.drawable.ic_pause
+                R.drawable.ic_notification_pause
             }
         val pauseDesc =
             getString(

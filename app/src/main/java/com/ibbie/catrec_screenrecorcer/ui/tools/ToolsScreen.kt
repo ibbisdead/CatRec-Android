@@ -7,10 +7,8 @@ import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMerge
 import androidx.compose.material.icons.filled.Compress
@@ -18,31 +16,27 @@ import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Gif
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
-import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
+import com.ibbie.catrec_screenrecorcer.ui.components.ProBadge
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingEntry
 import com.ibbie.catrec_screenrecorcer.ui.recordings.loadAppRecordings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.lazy.grid.items as gridItems
 
 private enum class PendingVideoTool { Trim, Compress, Gif }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolsScreen(navController: NavController) {
     val context = LocalContext.current
@@ -93,15 +87,11 @@ fun ToolsScreen(navController: NavController) {
 
     val editImageTitle = stringResource(R.string.tool_edit_image)
 
-    val imageTools =
+    val tools =
         listOf(
             ToolItem(editImageTitle, Icons.Default.Image) {
                 imageEditorLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly))
             },
-        )
-
-    val tools =
-        listOf(
             ToolItem(trimTitle, Icons.Default.ContentCut) {
                 pendingTool = PendingVideoTool.Trim
                 showSourceDialog = true
@@ -110,11 +100,11 @@ fun ToolsScreen(navController: NavController) {
                 pendingTool = PendingVideoTool.Compress
                 showSourceDialog = true
             },
-            ToolItem(gifTitle, Icons.Default.Gif) {
+            ToolItem(gifTitle, Icons.Default.Gif, isPro = true) {
                 pendingTool = PendingVideoTool.Gif
                 showSourceDialog = true
             },
-            ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge) {
+            ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge, isPro = true) {
                 navController.navigate(Screen.MergeVideos.route)
             },
         )
@@ -192,39 +182,19 @@ fun ToolsScreen(navController: NavController) {
         }
     }
 
-    val toolGridColumns =
-        when (LocalWindowSizeClass.current.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> GridCells.Adaptive(minSize = 136.dp)
-            else -> GridCells.Fixed(2)
-        }
-    LazyVerticalGrid(
-        columns = toolGridColumns,
+    LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(span = { GridItemSpan(2) }) {
+        item {
             Text(
-                stringResource(R.string.tools_image_editing),
-                style = MaterialTheme.typography.titleMedium,
+                stringResource(R.string.tools_title),
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
-        gridItems(imageTools) { tool ->
-            ToolCard(tool)
-        }
-        item(span = { GridItemSpan(2) }) {
-            Spacer(Modifier.height(8.dp))
-        }
-        item(span = { GridItemSpan(2) }) {
-            Text(
-                stringResource(R.string.tools_video_editing),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-        gridItems(tools) { tool ->
-            ToolCard(tool)
+        items(tools) { tool ->
+            EditorToolRow(tool)
         }
     }
 }
@@ -232,42 +202,47 @@ fun ToolsScreen(navController: NavController) {
 data class ToolItem(
     val name: String,
     val icon: ImageVector,
+    val isPro: Boolean = false,
     val onClick: () -> Unit,
 )
 
 @Composable
-fun ToolCard(tool: ToolItem) {
-    Card(
+fun EditorToolRow(tool: ToolItem) {
+    Surface(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.2f)
+                .heightIn(min = 68.dp)
                 .clickable { tool.onClick() },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Column(
+        Row(
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = tool.icon,
                 contentDescription = null,
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(28.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = tool.name,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            if (tool.isPro) {
+                Spacer(Modifier.width(12.dp))
+                ProBadge()
+            }
         }
     }
 }

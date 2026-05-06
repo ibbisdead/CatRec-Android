@@ -15,10 +15,13 @@ import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
+import com.ibbie.catrec_screenrecorcer.data.SettingsUiState
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGate
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGateResult
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
@@ -95,7 +98,7 @@ class RecordingViewModel(
     val audioSampleRate: StateFlow<Int> = settingsRepository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 44100)
     val audioChannels: StateFlow<String> = settingsRepository.audioChannels.stateIn(viewModelScope, SharingStarted.Lazily, "Mono")
     val audioEncoder: StateFlow<String> = settingsRepository.audioEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "AAC-LC")
-    val separateMicRecording: StateFlow<Boolean> = settingsRepository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val separateMicRecording: StateFlow<Boolean> = settingsRepository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Controls
     val floatingControls: StateFlow<Boolean> = settingsRepository.floatingControls.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -180,7 +183,7 @@ class RecordingViewModel(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, "Native")
 
     // Camera Overlay
-    val cameraOverlay: StateFlow<Boolean> = settingsRepository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val cameraOverlay: StateFlow<Boolean> = settingsRepository.cameraOverlay.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val cameraOverlaySize: StateFlow<Int> = settingsRepository.cameraOverlaySize.stateIn(viewModelScope, SharingStarted.Lazily, 120)
     val cameraXFraction: StateFlow<Float> = settingsRepository.cameraXFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.05f)
     val cameraYFraction: StateFlow<Float> = settingsRepository.cameraYFraction.stateIn(viewModelScope, SharingStarted.Lazily, 0.1f)
@@ -191,7 +194,7 @@ class RecordingViewModel(
     val cameraOpacity: StateFlow<Int> = settingsRepository.cameraOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
 
     // Watermark
-    val showWatermark: StateFlow<Boolean> = settingsRepository.showWatermark.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val showWatermark: StateFlow<Boolean> = settingsRepository.showWatermark.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val watermarkLocation: StateFlow<String> = settingsRepository.watermarkLocation.stateIn(viewModelScope, SharingStarted.Lazily, "Top Left")
     val watermarkImageUri: StateFlow<String?> = settingsRepository.watermarkImageUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
     val watermarkShape: StateFlow<String> = settingsRepository.watermarkShape.stateIn(viewModelScope, SharingStarted.Lazily, "Square")
@@ -223,9 +226,18 @@ class RecordingViewModel(
     val adaptivePerformanceEnabled: StateFlow<Boolean> =
         settingsRepository.adaptiveRecordingPerformance.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-    /** Remove-ads entitlement: disables all rewarded-ad gating when true ([com.ibbie.catrec_screenrecorcer.data.AdGate]). */
+    /** Remove-ads entitlement: disables all Pro rewarded-ad gating when true. */
     val adsDisabled: StateFlow<Boolean> =
         settingsRepository.adsDisabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val settingsUiState: StateFlow<SettingsUiState> =
+        combine(settingsRepository.settingsSnapshot, RecordingState.isRecording) { snapshot, isRecording ->
+            snapshot.copy(isRecording = isRecording)
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            SettingsUiState(),
+        )
 
     // Privacy
     val analyticsEnabled: StateFlow<Boolean> = settingsRepository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -424,6 +436,12 @@ class RecordingViewModel(
         }
 
     // Setters — Accent Color
+    suspend fun checkRecordingProGate(source: String): RecordingStartProGateResult =
+        RecordingStartProGate.checkFullRecording(settingsRepository, source)
+
+    suspend fun checkBufferProGate(source: String): RecordingStartProGateResult =
+        RecordingStartProGate.checkBuffer(settingsRepository, source)
+
     fun setAccentColor(value: String) = viewModelScope.launch { settingsRepository.setAccentColor(value) }
 
     fun setAccentColor2(value: String) = viewModelScope.launch { settingsRepository.setAccentColor2(value) }

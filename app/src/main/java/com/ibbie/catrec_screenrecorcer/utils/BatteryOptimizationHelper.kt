@@ -9,6 +9,8 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import androidx.core.net.toUri
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 
 /**
  * Utility for battery-optimization exemption management.
@@ -225,9 +227,11 @@ object BatteryOptimizationHelper {
             try {
                 val flagged = Intent(intent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 if (flagged.resolveActivity(context.packageManager) != null) {
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                     context.startActivity(flagged)
                     return true
                 }
+                AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                 context.startActivity(flagged)
                 return true
             } catch (e: Exception) {
@@ -247,6 +251,7 @@ object BatteryOptimizationHelper {
      */
     fun launchDirectExemption(context: Context): Boolean {
         return try {
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
             context.startActivity(
                 Intent(
                     Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
@@ -262,6 +267,7 @@ object BatteryOptimizationHelper {
     /** Opens the system-wide battery-optimization list as a fallback. */
     fun launchGeneralBatterySettings(context: Context): Boolean {
         return try {
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
             context.startActivity(
                 Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -269,6 +275,7 @@ object BatteryOptimizationHelper {
             true
         } catch (_: Exception) {
             try {
+                AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                 context.startActivity(
                     Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

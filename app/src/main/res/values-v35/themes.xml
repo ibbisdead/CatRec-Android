@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Targeting API 35+: statusBarColor / navigationBarColor theme attrs are deprecated; bars are
-         transparent via edge-to-edge. Keep window background for recreate() flash avoidance. -->
+    <!-- Targeting API 35+: system bars are configured from enableEdgeToEdge().
+         Keep window background for recreate() flash avoidance. -->
     <style name="Theme.CatRecScreenRecorcer" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/cyber_black</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>

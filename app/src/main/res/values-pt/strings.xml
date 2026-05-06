@@ -1,40 +1,45 @@
-﻿<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <!-- App -->
-    <string name="app_name">CatRec - Screen Recorder</string>
+    <string name="app_name">CatRec</string>
+    <string name="screen_title_default">CatRec</string>
+    <string name="screen_title_player">Reprodutor</string>
+    <string name="screen_title_trim">Aparar v\u00EDdeo</string>
+    <string name="screen_title_crop">Recortar</string>
 
     <string name="brand_catrect">CatRec</string>
     <string name="faq_content_description">Ajuda e suporte</string>
-    <string name="capture_mode_recording">Gravação</string>
+    <string name="capture_mode_recording">Grava\u00E7\u00E3o</string>
     <string name="capture_mode_clipper">Tosquiadeira</string>
-    <string name="capture_mode_gif">Gravação GIF</string>
+    <string name="capture_mode_gif">Grava\u00E7\u00E3o GIF</string>
 
     <!-- FAQ & feedback -->
     <string name="faq_title">Perguntas frequentes</string>
-    <string name="faq_intro">Encontre respostas por categoria. Toque em uma pergunta para expandir. Se você ainda precisar de ajuda, use Fale conosco abaixo.</string>
+    <string name="faq_intro">Encontre respostas por categoria. Toque em uma pergunta para expandir. Se voc\u00EA ainda precisar de ajuda, use Fale conosco abaixo.</string>
     <string name="faq_contact_us">Contate-nos</string>
-    <string name="feedback_title">Enviar comentários</string>
+    <string name="feedback_title">Enviar coment\u00E1rios</string>
     <string name="feedback_issue_section_title">O que deu errado?</string>
     <string name="feedback_description_title">Detalhes</string>
-    <string name="feedback_description_hint">Descreva o que aconteceu, quando começou e o que você já tentou (por exemplo, resolução reduzida, telefone reiniciado). Mais detalhes nos ajudam a corrigi-lo mais rapidamente.</string>
+    <string name="feedback_description_hint">Descreva o que aconteceu, quando come\u00E7ou e o que voc\u00EA j\u00E1 tentou (por exemplo, resolu\u00E7\u00E3o reduzida, telefone reiniciado). Mais detalhes nos ajudam a corrigi-lo mais rapidamente.</string>
     <string name="feedback_screenshots_title">Capturas de tela</string>
     <string name="feedback_screenshots_count">%1$d/%2$d</string>
-    <string name="feedback_screenshots_hint">Adicione até 5 imagens (mensagens de erro, telas de configurações, página de bateria, etc.).</string>
+    <string name="feedback_screenshots_hint">Adicione at\u00E9 5 imagens (mensagens de erro, telas de configura\u00E7\u00F5es, p\u00E1gina de bateria, etc.).</string>
     <string name="feedback_add_screenshots">Adicionar imagens</string>
     <string name="feedback_send">Enviar</string>
-    <string name="feedback_send_note">Abre seu aplicativo de e-mail com mensagem para %1$s — toque em Enviar para lá para entregar.</string>
+    <string name="feedback_send_note">Abre seu aplicativo de e-mail com mensagem para %1$s \u2014 toque em Enviar para l\u00E1 para entregar.</string>
     <string name="feedback_send_chooser_title">Enviar e-mail</string>
-    <string name="feedback_no_email_app">Nenhum aplicativo de e-mail encontrado. Instale o Gmail ou Outlook ou copie os detalhes da próxima tela, se mostrado.</string>
+    <string name="feedback_no_email_app">Nenhum aplicativo de e-mail encontrado. Instale o Gmail ou Outlook ou copie os detalhes da pr\u00F3xima tela, se mostrado.</string>
     <string name="feedback_select_issue">Selecione um tipo de problema.</string>
     <string name="feedback_description_too_short">Adicione um pouco mais de detalhes (pelo menos uma frase) para que possamos ajudar.</string>
-    <string name="feedback_issue_recording_stopped">A gravação parou aleatoriamente</string>
+    <string name="feedback_issue_recording_stopped">A grava\u00E7\u00E3o parou aleatoriamente</string>
     <string name="feedback_issue_crash">O aplicativo travou</string>
-    <string name="feedback_issue_no_sound">Sem problemas de som/áudio</string>
-    <string name="feedback_issue_video_black">Tela preta/vídeo congelado</string>
-    <string name="feedback_issue_cant_start">Não consigo iniciar a gravação</string>
-    <string name="feedback_issue_overlay">Controles/sobreposição flutuantes</string>
-    <string name="feedback_issue_gif_export">GIF ou exportação de arquivo</string>
+    <string name="feedback_issue_no_sound">Sem problemas de som/\u00E1udio</string>
+    <string name="feedback_issue_video_black">Tela preta/v\u00EDdeo congelado</string>
+    <string name="feedback_issue_cant_start">N\u00E3o consigo iniciar a grava\u00E7\u00E3o</string>
+    <string name="feedback_issue_overlay">Controles/sobreposi\u00E7\u00E3o flutuantes</string>
+    <string name="feedback_issue_gif_export">GIF ou exporta\u00E7\u00E3o de arquivo</string>
     <string name="feedback_issue_battery_oem">Bateria/fundo (Xiaomi, etc.)</string>
-    <string name="feedback_issue_storage">Armazenamento/não consigo encontrar arquivos</string>
+    <string name="feedback_issue_storage">Armazenamento/n\u00E3o consigo encontrar arquivos</string>
     <string name="feedback_issue_quality">Qualidade / atraso / gagueira</string>
     <string name="feedback_issue_other">Outro</string>
 
@@ -45,18 +50,18 @@
     <string name="tab_support">Support</string>
     <string name="tab_editor">Editor</string>
     <string name="fab_start_recording">Registro</string>
-    <string name="storage_indicator_format">%1$s usado · %2$s grátis</string>
+    <string name="storage_indicator_format">%1$s usado \u00B7 %2$s gr\u00E1tis</string>
     <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
 
-    <string name="settings_section_recording_quality">Qualidade de gravação</string>
-    <string name="settings_open_audio_menu">Configurações de áudio</string>
-    <string name="settings_open_audio_menu_sub">Microfone, áudio interno, taxa de bits, canais…</string>
-    <string name="settings_open_video_menu">Configurações de vídeo e GIF</string>
-    <string name="settings_open_video_menu_sub">Predefinição de GIF, resolução, FPS, taxa de bits, codificador…</string>
+    <string name="settings_section_recording_quality">Qualidade de grava\u00E7\u00E3o</string>
+    <string name="settings_open_audio_menu">Configura\u00E7\u00F5es de \u00E1udio</string>
+    <string name="settings_open_audio_menu_sub">Microfone, \u00E1udio interno, taxa de bits, canais\u2026</string>
+    <string name="settings_open_video_menu">Configura\u00E7\u00F5es de v\u00EDdeo e GIF</string>
+    <string name="settings_open_video_menu_sub">Predefini\u00E7\u00E3o de GIF, resolu\u00E7\u00E3o, FPS, taxa de bits, codificador\u2026</string>
 
     <string name="support_section_help">Ajuda</string>
-    <string name="support_send_feedback">Enviar comentários</string>
-    <string name="support_send_feedback_desc">O mesmo que entre em contato conosco nas perguntas frequentes – reporte bugs ou sugestões</string>
+    <string name="support_send_feedback">Enviar coment\u00E1rios</string>
+    <string name="support_send_feedback_desc">O mesmo que entre em contato conosco nas perguntas frequentes \u2013 reporte bugs ou sugest\u00F5es</string>
 
     <!-- Common Actions -->
     <string name="action_cancel">Cancel</string>
@@ -66,15 +71,15 @@
     <string name="action_share">Share</string>
     <string name="action_open">Open</string>
     <string name="action_edit">Editar</string>
-    <string name="consent_analytics_title">Análise de uso</string>
-    <string name="consent_analytics_message">Ajude-nos a melhorar o CatRec permitindo o uso opcional e análises de falhas. Os anúncios personalizados são controlados separadamente nas Configurações (ativado por padrão). Você pode alterar isso a qualquer momento em Configurações.</string>
+    <string name="consent_analytics_title">An\u00E1lise de uso</string>
+    <string name="consent_analytics_message">Ajude-nos a melhorar o CatRec permitindo o uso opcional e an\u00E1lises de falhas. Os an\u00FAncios personalizados s\u00E3o controlados separadamente nas Configura\u00E7\u00F5es (ativado por padr\u00E3o). Voc\u00EA pode alterar isso a qualquer momento em Configura\u00E7\u00F5es.</string>
     <string name="setting_usage_analytics">Usage analytics</string>
     <string name="setting_usage_analytics_desc">Crash and usage statistics to improve the app</string>
     <string name="setting_personalized_ads">Personalized ads</string>
     <string name="setting_personalized_ads_on_desc">AdMob may use your advertising ID for relevant ads</string>
     <string name="setting_personalized_ads_off_desc">Non-personalized ads only</string>
     <string name="consent_accept">Permitir</string>
-    <string name="consent_decline">Declínio</string>
+    <string name="consent_decline">Decl\u00EDnio</string>
     <string name="action_apply">Apply</string>
     <string name="action_pause">Pause</string>
     <string name="action_resume">Resume</string>
@@ -87,23 +92,22 @@
     <string name="settings_section_controls">Controls</string>
     <string name="setting_allow_background_title">Optimize for background recording</string>
     <string name="setting_allow_background_desc">Optional: granting Unrestricted battery for CatRec in system settings can help prevent very long recordings from being stopped. Tap to open your device battery list and adjust CatRec if you want.</string>
-    <string name="battery_opt_rationale_title">Evitar Interrupções na Gravação</string>
-    <string name="battery_opt_rationale_body">A gravação de tela requer processamento contínuo em segundo plano. Defina o uso de bateria do CatRec como &quot;Sem restrições&quot; nas configurações do sistema.</string>
+    <string name="battery_opt_rationale_title">Evitar Interrup\u00E7\u00F5es na Grava\u00E7\u00E3o</string>
+    <string name="battery_opt_rationale_body">A grava\u00E7\u00E3o de tela requer processamento cont\u00EDnuo em segundo plano. Defina o uso de bateria do CatRec como &quot;Sem restri\u00E7\u00F5es&quot; nas configura\u00E7\u00F5es do sistema.</string>
     <string name="battery_opt_oem_note">Seu dispositivo (%s) usa gerenciamento agressivo de bateria que pode encerrar aplicativos em segundo plano.</string>
-    <string name="battery_opt_btn_grant">Conceder Bateria Sem Restrições</string>
-    <string name="battery_opt_btn_oem_settings">Abrir Configurações do %s</string>
+    <string name="battery_opt_btn_grant">Conceder Bateria Sem Restri\u00E7\u00F5es</string>
+    <string name="battery_opt_btn_oem_settings">Abrir Configura\u00E7\u00F5es do %s</string>
     <string name="battery_opt_btn_learn_more">Guia visual (dontkillmyapp.com)</string>
-    <string name="battery_opt_btn_not_now">Agora Não</string>
-    <string name="battery_opt_status_exempted">Bateria: Sem Restrições ✓</string>
-    <string name="battery_opt_banner_text">Seu dispositivo pode parar as gravações em segundo plano.</string>
+    <string name="battery_opt_btn_not_now">Agora N\u00E3o</string>
+    <string name="battery_opt_banner_text">Seu dispositivo pode parar as grava\u00E7\u00F5es em segundo plano.</string>
     <string name="battery_opt_banner_fix">Corrigir</string>
-    <string name="settings_section_video">Vídeo</string>
+    <string name="settings_section_video">V\u00EDdeo</string>
     <string name="settings_section_gif_recorder">Gravador GIF</string>
-    <string name="settings_gif_recorder_desc">O modo GIF grava o vídeo primeiro e depois o converte. Qualidade e duração seguem o preset abaixo; os controles deslizantes de vídeo permanecem salvos quando você voltar para a Gravação.</string>
-    <string name="setting_gif_preset">Predefinição de qualidade GIF</string>
-    <string name="video_locked_by_gif_preset">As opções de vídeo são controladas pela predefinição GIF enquanto o modo GIF está selecionado.</string>
-    <string name="gif_preset_small">Pequeno (arquivo menor e mais rápido)</string>
-    <string name="gif_preset_medium">Médio</string>
+    <string name="settings_gif_recorder_desc">O modo GIF grava o v\u00EDdeo primeiro e depois o converte. Qualidade e dura\u00E7\u00E3o seguem o preset abaixo; os controles deslizantes de v\u00EDdeo permanecem salvos quando voc\u00EA voltar para a Grava\u00E7\u00E3o.</string>
+    <string name="setting_gif_preset">Predefini\u00E7\u00E3o de qualidade GIF</string>
+    <string name="video_locked_by_gif_preset">As op\u00E7\u00F5es de v\u00EDdeo s\u00E3o controladas pela predefini\u00E7\u00E3o GIF enquanto o modo GIF est\u00E1 selecionado.</string>
+    <string name="gif_preset_small">Pequeno (arquivo menor e mais r\u00E1pido)</string>
+    <string name="gif_preset_medium">M\u00E9dio</string>
     <string name="gif_preset_hd">HD (arquivo maior)</string>
     <string name="settings_section_audio">Audio</string>
     <string name="settings_section_overlay">Overlay</string>
@@ -116,22 +120,22 @@
     <!-- Video Settings -->
     <string name="setting_resolution">Resolution</string>
     <string name="setting_resolution_native">Native</string>
-    <string name="setting_resolution_custom">Custom resolution…</string>
+    <string name="setting_resolution_custom">Custom resolution\u2026</string>
     <string name="setting_resolution_custom_hint">e.g. 1920x1080</string>
     <string name="setting_fps">Frame Rate (FPS)</string>
-    <string name="setting_bitrate">Vídeo Bitrate</string>
-    <string name="setting_video_encoder">Vídeo Encoder</string>
+    <string name="setting_bitrate">V\u00EDdeo Bitrate</string>
+    <string name="setting_video_encoder">V\u00EDdeo Encoder</string>
     <string name="setting_color_mode">Modo de cor</string>
-    <string name="setting_color_mode_standard">Padrão (Rec.709)</string>
+    <string name="setting_color_mode_standard">Padr\u00E3o (Rec.709)</string>
     <string name="setting_color_mode_full">Gama completa</string>
     <string name="dialog_color_mode">Modo de cor</string>
     <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
     <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">Correção de brilho Rec.709</string>
-    <string name="setting_rec709_brightness_correction_summary">Aplica uma leve elevação de gama após o reparo dos metadados. Pode reduzir um pouco a velocidade de exportação.</string>
+    <string name="setting_rec709_brightness_correction">Corre\u00E7\u00E3o de brilho Rec.709</string>
+    <string name="setting_rec709_brightness_correction_summary">Aplica uma leve eleva\u00E7\u00E3o de gama ap\u00F3s o reparo dos metadados. Pode reduzir um pouco a velocidade de exporta\u00E7\u00E3o.</string>
     <string name="rec709_brightness_correction_off">Desativado</string>
-    <string name="rec709_brightness_correction_low">Correção de brilho baixa</string>
-    <string name="rec709_brightness_correction_medium">Correção de brilho média</string>
+    <string name="rec709_brightness_correction_low">Corre\u00E7\u00E3o de brilho baixa</string>
+    <string name="rec709_brightness_correction_medium">Corre\u00E7\u00E3o de brilho m\u00E9dia</string>
     <string name="setting_orientation">Orientation</string>
     <string name="setting_orientation_auto">Auto</string>
     <string name="setting_orientation_portrait">Portrait</string>
@@ -151,14 +155,14 @@
 
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">Floating Controls</string>
-    <string name="setting_hide_floating_while_recording">Ocultar ícone flutuante durante a gravação</string>
-    <string name="settings_hide_floating_while_recording_desc">Ocultar o balão de controles flutuante enquanto uma gravação está em andamento</string>
-    <string name="setting_post_screenshot_options">Opções pós-captura de tela</string>
-    <string name="settings_post_screenshot_options_desc">Após uma captura de tela, mostre opções para compartilhar ou editar</string>
-    <string name="setting_record_single_app">Grave um único aplicativo</string>
+    <string name="setting_hide_floating_while_recording">Ocultar \u00EDcone flutuante durante a grava\u00E7\u00E3o</string>
+    <string name="settings_hide_floating_while_recording_desc">Ocultar o bal\u00E3o de controles flutuante enquanto uma grava\u00E7\u00E3o est\u00E1 em andamento</string>
+    <string name="setting_post_screenshot_options">Op\u00E7\u00F5es p\u00F3s-captura de tela</string>
+    <string name="settings_post_screenshot_options_desc">Ap\u00F3s uma captura de tela, mostre op\u00E7\u00F5es para compartilhar ou editar</string>
+    <string name="setting_record_single_app">Grave um \u00FAnico aplicativo</string>
     <string name="settings_record_single_app_desc">No Android 14+, escolha uma janela do aplicativo ou tela inteira ao conceder a captura de tela</string>
     <string name="screenshot_post_edit">Editar</string>
-    <string name="screenshot_post_action_failed">Não foi possível abrir o compartilhamento</string>
+    <string name="screenshot_post_action_failed">N\u00E3o foi poss\u00EDvel abrir o compartilhamento</string>
     <string name="screenshot_post_tap_outside">Toque fora para fechar</string>
     <string name="image_editor_title">Editar imagem</string>
     <string name="image_editor_panel_rotate">Girar</string>
@@ -167,8 +171,8 @@
     <string name="image_editor_rotate_ccw">Girar para a esquerda</string>
     <string name="image_editor_rotate_cw">Girar para a direita</string>
     <string name="image_editor_saved">Imagem salva em Imagens/CatRec/Capturas de tela</string>
-    <string name="image_editor_save_failed">Não foi possível salvar a imagem</string>
-    <string name="image_editor_load_failed">Não foi possível carregar a imagem</string>
+    <string name="image_editor_save_failed">N\u00E3o foi poss\u00EDvel salvar a imagem</string>
+    <string name="image_editor_load_failed">N\u00E3o foi poss\u00EDvel carregar a imagem</string>
     <string name="tool_edit_image">Editar imagem</string>
     <string name="brush_line_width">Largura da linha</string>
     <string name="brush_color_picker_hint">Escolha uma cor, ajuste a espessura e toque em Aplicar.</string>
@@ -176,24 +180,24 @@
     <string name="brush_apply">Aplicar</string>
     <string name="brush_tool_pen">Empate</string>
     <string name="brush_tool_eraser">Apagador</string>
-    <string name="brush_tool_undo">Desfazer o último golpe</string>
-    <string name="brush_tool_square">Retângulo</string>
+    <string name="brush_tool_undo">Desfazer o \u00FAltimo golpe</string>
+    <string name="brush_tool_square">Ret\u00E2ngulo</string>
     <string name="brush_tool_circle">Elipse</string>
     <string name="brush_tool_arrow">Seta</string>
-    <string name="brush_tool_mosaic">Área de pixelização</string>
+    <string name="brush_tool_mosaic">\u00C1rea de pixeliza\u00E7\u00E3o</string>
     <string name="brush_tool_colors">Cor e largura da linha</string>
     <string name="brush_panel_title">AVC</string>
-    <string name="setting_camera_settings">Câmera Settings</string>
+    <string name="setting_camera_settings">C\u00E2mera Settings</string>
     <string name="setting_watermark">CatRec Watermark</string>
     <string name="setting_watermark_size">Watermark Size</string>
     <string name="setting_watermark_opacity">Watermark Opacity</string>
 
     <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">Enable Câmera</string>
-    <string name="camera_enable_desc">Show câmera overlay during recording</string>
+    <string name="camera_enable">Enable C\u00E2mera</string>
+    <string name="camera_enable_desc">Show c\u00E2mera overlay during recording</string>
     <string name="camera_lock_position">Lock Position</string>
-    <string name="camera_facing">Câmera</string>
+    <string name="camera_facing">C\u00E2mera</string>
     <string name="camera_facing_front">Front</string>
     <string name="camera_facing_rear">Rear</string>
     <string name="camera_aspect_ratio">Aspect Ratio</string>
@@ -214,22 +218,22 @@
     <!-- Language Settings -->
     <string name="setting_language">App Language</string>
     <string name="language_system">System Default</string>
-    <string name="language_english">Inglês</string>
-    <string name="language_arabic">العربية</string>
-    <string name="language_chinese_simplified">中文（简体）</string>
-    <string name="language_chinese_traditional">中文（繁體）</string>
-    <string name="language_french">Francês</string>
-    <string name="language_german">Alemão</string>
+    <string name="language_english">Ingl\u00EAs</string>
+    <string name="language_arabic">\u0627\u0644\u0639\u0631\u0628\u064A\u0629</string>
+    <string name="language_chinese_simplified">\u4E2D\u6587\uFF08\u7B80\u4F53\uFF09</string>
+    <string name="language_chinese_traditional">\u4E2D\u6587\uFF08\u7E41\u9AD4\uFF09</string>
+    <string name="language_french">Franc\u00EAs</string>
+    <string name="language_german">Alem\u00E3o</string>
     <string name="language_hindi">Adeus</string>
-    <string name="language_indonesian">Bahasa Indonésia</string>
+    <string name="language_indonesian">Bahasa Indon\u00E9sia</string>
     <string name="language_italian">Italiano</string>
-    <string name="language_japanese">日本語</string>
-    <string name="language_korean">한국어</string>
-    <string name="language_portuguese">Português</string>
+    <string name="language_japanese">\u65E5\u672C\u8A9E</string>
+    <string name="language_korean">\uD55C\uAD6D\uC5B4</string>
+    <string name="language_portuguese">Portugu\u00EAs</string>
     <string name="language_russian">Russo</string>
     <string name="language_spanish">Espanhol</string>
     <string name="language_turkish">Turquia</string>
-    <string name="language_vietnamese">Tiếng Việt</string>
+    <string name="language_vietnamese">Ti\u1EBFng Vi\u1EC7t</string>
 
     <!-- Storage Settings -->
     <string name="setting_save_location">Save Location</string>
@@ -250,26 +254,26 @@
 
     <!-- Support Screen -->
     <string name="support_subscribe_youtube">Inscreva-se no YouTube</string>
-    <string name="support_subscribe_youtube_desc">Siga \@ibbie para atualizações</string>
-    <string name="support_remove_ads">Remove Ads — $1</string>
+    <string name="support_subscribe_youtube_desc">Siga \@ibbie para atualiza\u00E7\u00F5es</string>
+    <string name="support_remove_ads">Remove Ads \u2014 $1</string>
     <string name="support_remove_ads_desc">One-time purchase, forever ad-free</string>
     <string name="support_restore_purchases">Restaurar compras</string>
-    <string name="support_restore_purchases_desc">Sincronizar, remover anúncios e outras compras do Google Play</string>
-    <string name="support_restore_purchases_toast">Verificando suas compras no Google Play…</string>
-    <string name="support_play_promo_title">Código promocional (Remover anúncios)</string>
-    <string name="support_play_promo_desc">Abre a compra no Google Play para Remover anúncios. Toque em Forma de pagamento → Resgatar código, digite o código e conclua. Se os anúncios continuarem, toque em Restaurar compras abaixo.</string>
-    <string name="support_ads_removed">Ads Removed — Thank you!</string>
-    <string name="support_ads_removed_desc">As opções premium permanecem desbloqueadas – sem anúncios para assistir.</string>
-    <string name="support_watch_ad">Assistir a um anúncio</string>
+    <string name="support_restore_purchases_desc">Sincronizar, remover an\u00FAncios e outras compras do Google Play</string>
+    <string name="support_restore_purchases_toast">Verificando suas compras no Google Play\u2026</string>
+    <string name="support_play_promo_title">C\u00F3digo promocional (Remover an\u00FAncios)</string>
+    <string name="support_play_promo_desc">Abre a compra no Google Play para Remover an\u00FAncios. Toque em Forma de pagamento \u2192 Resgatar c\u00F3digo, digite o c\u00F3digo e conclua. Se os an\u00FAncios continuarem, toque em Restaurar compras abaixo.</string>
+    <string name="support_ads_removed">Ads Removed \u2014 Thank you!</string>
+    <string name="support_ads_removed_desc">As op\u00E7\u00F5es premium permanecem desbloqueadas \u2013 sem an\u00FAncios para assistir.</string>
+    <string name="support_watch_ad">Assistir a um an\u00FAncio</string>
     <string name="support_donate">Buy me a coffee ($1)</string>
-    <string name="support_donate_desc">Doação única – mantém CatRec vivo</string>
+    <string name="support_donate_desc">Doa\u00E7\u00E3o \u00FAnica \u2013 mant\u00E9m CatRec vivo</string>
     <string name="support_share">Compartilhar CatRec</string>
-    <string name="support_share_desc">Conte a seus amigos sobre nós</string>
+    <string name="support_share_desc">Conte a seus amigos sobre n\u00F3s</string>
     <string name="support_changelog">Changelog</string>
-    <string name="support_changelog_desc">Veja o que há de novo nesta versão</string>
-    <string name="support_credits">Créditos</string>
+    <string name="support_changelog_desc">Veja o que h\u00E1 de novo nesta vers\u00E3o</string>
+    <string name="support_credits">Cr\u00E9ditos</string>
     <string name="support_credits_desc">Testadores e criadores que ajudaram o CatRec</string>
-    <string name="dialog_credits_title">Créditos</string>
+    <string name="dialog_credits_title">Cr\u00E9ditos</string>
     <string name="credits_intro">Obrigado a estas pessoas por testarem e partilharem o CatRec. Toque num nome para abrir o canal.</string>
 
     <!-- Notifications -->
@@ -277,19 +281,17 @@
 
     <!-- Errors / Toast -->
     <string name="error_screenshot_no_projection">Screen capture isn\'t active. Open CatRec and grant capture first.</string>
-    <string name="error_screenshot_capture_failed">Não foi possível capturar a captura de tela. Tente novamente.</string>
+    <string name="error_screenshot_capture_failed">N\u00E3o foi poss\u00EDvel capturar a captura de tela. Tente novamente.</string>
     <string name="toast_share_app">Confira CatRec - o gravador de tela mais legal!</string>
 
     <!-- Actions (extra) -->
     <string name="action_done">Done</string>
     <string name="action_grant_now">Conceda agora</string>
-    <string name="action_not_now">Agora não</string>
+    <string name="action_not_now">Agora n\u00E3o</string>
     <string name="action_rename">Renomear</string>
     <string name="action_trim">Aparar</string>
     <string name="action_open_external">Abrir externamente</string>
-    <string name="action_loading">Loading…</string>
-    <string name="action_watch_ad">Watch Ad</string>
-    <string name="action_unlock">Unlock</string>
+    <string name="action_loading">Loading\u2026</string>
     <string name="action_got_it">Entendi</string>
     <string name="action_leave_feedback">Deixar feedback</string>
     <string name="action_change">Change</string>
@@ -303,7 +305,7 @@
     <string name="stop_behavior_pause_on_screen_off">Pause on screen off</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">Always-on bubble — record, screenshot &amp; controls from any app</string>
+    <string name="settings_floating_controls_desc">Always-on bubble \u2014 record, screenshot &amp; controls from any app</string>
     <string name="settings_show_touches">Show Touches</string>
     <string name="settings_show_touches_desc">Enable in Developer Options</string>
     <string name="toast_enable_show_taps">Enable \'Show Taps\' manually</string>
@@ -315,11 +317,9 @@
         <item quantity="other">%1$d segundos</item>
     </plurals>
     <string name="setting_internal_audio_note">Android 10+ only</string>
-    <string name="gate_feature_separate_mic">Separate Mic Track</string>
-    <string name="gate_feature_camera_overlay">Câmera Overlay Settings</string>
-    <string name="camera_status_enabled">Enabled — %1$s • %2$s</string>
+    <string name="camera_status_enabled">Enabled \u2014 %1$s \u2022 %2$s</string>
     <string name="state_disabled">Disabled</string>
-    <string name="watermark_preview_active">Live preview active — drag watermark to reposition</string>
+    <string name="watermark_preview_active">Live preview active \u2014 drag watermark to reposition</string>
     <string name="watermark_preview_recording">Preview unavailable while recording</string>
     <string name="watermark_preview_need_overlay">Grant overlay permission to see live preview</string>
     <string name="watermark_snap_dialog_title">Snap to position</string>
@@ -335,14 +335,14 @@
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
-    <string name="perf_auto_low_end">Auto-enabled — low-end device detected</string>
+    <string name="perf_auto_low_end">Auto-enabled \u2014 low-end device detected</string>
     <string name="perf_quality_may_lag">Quality mode (may cause lag on this device)</string>
-    <string name="perf_static_glass">Static glass — blur disabled</string>
+    <string name="perf_static_glass">Static glass \u2014 blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
-    <string name="setting_adaptive_recording_performance">Desempenho de gravação adaptativo</string>
-    <string name="setting_adaptive_recording_performance_summary">Reduz a carga automaticamente se o dispositivo tiver dificuldade durante a gravação</string>
-    <string name="performance_fallback_active">Mudou para um perfil de gravação mais leve para estabilidade</string>
+    <string name="setting_adaptive_recording_performance">Desempenho de grava\u00E7\u00E3o adaptativo</string>
+    <string name="setting_adaptive_recording_performance_summary">Reduz a carga automaticamente se o dispositivo tiver dificuldade durante a grava\u00E7\u00E3o</string>
+    <string name="performance_fallback_active">Mudou para um perfil de grava\u00E7\u00E3o mais leve para estabilidade</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
     <string name="accent_color_title">Accent color</string>
@@ -361,9 +361,9 @@
     <string name="setting_keep_screen_on_desc">During recording</string>
     <string name="settings_section_privacy">Privacy</string>
     <string name="dialog_custom_resolution_title">Custom resolution</string>
-    <string name="dialog_custom_resolution_hint">Enter resolution as WIDTH×HEIGHT (e.g. 1920×1080)</string>
-    <string name="error_resolution_format">Format must be W×H (e.g. 1920×1080)</string>
-    <string name="error_resolution_min">Minimum resolution is 100×100</string>
+    <string name="dialog_custom_resolution_hint">Enter resolution as WIDTH\u00D7HEIGHT (e.g. 1920\u00D71080)</string>
+    <string name="error_resolution_format">Format must be W\u00D7H (e.g. 1920\u00D71080)</string>
+    <string name="error_resolution_min">Minimum resolution is 100\u00D7100</string>
     <string name="error_resolution_max">Maximum resolution is 7680 on either side</string>
     <string name="dialog_resolution_title">Resolution</string>
     <string name="resolution_group_16_9">16:9</string>
@@ -382,20 +382,16 @@
     <string name="countdown_10s">10s</string>
     <string name="countdown_20s">20s</string>
     <string name="countdown_30s">30s</string>
-    <string name="dialog_video_encoder">Vídeo encoder</string>
+    <string name="dialog_video_encoder">V\u00EDdeo encoder</string>
     <string name="dialog_audio_encoder">Audio encoder</string>
     <string name="dialog_audio_bitrate">Audio bitrate</string>
     <string name="dialog_sample_rate">Sample rate</string>
     <string name="dialog_bitrate_title">Bitrate</string>
     <string name="dialog_fps_title">Frame rate (FPS)</string>
     <string name="dialog_screenshot_format">Screenshot format</string>
-    <string name="dialog_camera_orientation">Câmera orientation</string>
-    <string name="premium_feature_title">Premium feature</string>
-    <string name="premium_feature_body">%1$s is a premium feature.</string>
-    <string name="premium_feature_watch_ad">Watch a short ad to unlock it for this session.</string>
-    <string name="premium_feature_tap_unlock">Tap Unlock to enable it for this session.</string>
+    <string name="dialog_camera_orientation">C\u00E2mera orientation</string>
     <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_drag_hint">Drag the câmera circle to reposition</string>
+    <string name="camera_drag_hint">Drag the c\u00E2mera circle to reposition</string>
     <string name="camera_lock_desc_short">Prevent accidental movement</string>
     <string name="shape_square">Square</string>
     <string name="shape_circle">Circle</string>
@@ -418,13 +414,13 @@
     <string name="clipper_duration_3m">3 minutos</string>
     <string name="clipper_duration_4m">4 minutos</string>
     <string name="clipper_duration_5m">5 minutos</string>
-    <string name="perm_rationale_intro">CatRec precisa das seguintes permissões para gravar sua tela:</string>
-    <string name="perm_dialog_title">Permissões necessárias</string>
+    <string name="perm_rationale_intro">CatRec precisa das seguintes permiss\u00F5es para gravar sua tela:</string>
+    <string name="perm_dialog_title">Permiss\u00F5es necess\u00E1rias</string>
     <!-- Recordings / screenshots / player -->
-    <string name="delete_recording_title">Excluir gravação?</string>
-    <string name="delete_recording_message">"%1$s" será excluído permanentemente.</string>
+    <string name="delete_recording_title">Excluir grava\u00E7\u00E3o?</string>
+    <string name="delete_recording_message">"%1$s" ser\u00E1 exclu\u00EDdo permanentemente.</string>
     <string name="delete_screenshot_title">Excluir captura de tela?</string>
-    <string name="delete_screenshot_message">"%1$s" será excluído permanentemente.</string>
+    <string name="delete_screenshot_message">"%1$s" ser\u00E1 exclu\u00EDdo permanentemente.</string>
     <plurals name="multiselect_selected_count">
         <item quantity="one">%1$d selecionado</item>
         <item quantity="many">%1$d selecionado</item>
@@ -437,66 +433,66 @@
         <item quantity="many">Excluir %1$d itens?</item>
         <item quantity="other">Excluir %1$d itens?</item>
     </plurals>
-    <string name="multiselect_delete_message">Esses arquivos serão excluídos permanentemente.</string>
-    <string name="multiselect_share_recordings">Compartilhar gravações</string>
+    <string name="multiselect_delete_message">Esses arquivos ser\u00E3o exclu\u00EDdos permanentemente.</string>
+    <string name="multiselect_share_recordings">Compartilhar grava\u00E7\u00F5es</string>
     <string name="multiselect_share_screenshots">Compartilhe capturas de tela</string>
-    <string name="delete_generic_recording">Esta gravação será excluída permanentemente.</string>
+    <string name="delete_generic_recording">Esta grava\u00E7\u00E3o ser\u00E1 exclu\u00EDda permanentemente.</string>
     <string name="player_renamed_to">Renomeado para %1$s</string>
     <string name="player_rename_failed">Falha ao renomear: %1$s</string>
-    <string name="player_delete_failed">Falha na exclusão: %1$s</string>
-    <string name="player_no_app_video">Nenhum aplicativo encontrado para abrir o vídeo</string>
-    <string name="player_video_unavailable">Este vídeo já não está disponível. Pode ter sido eliminado ou movido.</string>
+    <string name="player_delete_failed">Falha na exclus\u00E3o: %1$s</string>
+    <string name="player_no_app_video">Nenhum aplicativo encontrado para abrir o v\u00EDdeo</string>
+    <string name="player_video_unavailable">Este v\u00EDdeo j\u00E1 n\u00E3o est\u00E1 dispon\u00EDvel. Pode ter sido eliminado ou movido.</string>
     <string name="player_rename_title">Renomear</string>
     <string name="player_file_name_label">Nome do arquivo</string>
-    <string name="trim_title">Cortar vídeo</string>
+    <string name="trim_title">Cortar v\u00EDdeo</string>
     <string name="trim_set_to_current">Definir como atual</string>
-    <string name="trim_start_label">Início: %1$s</string>
+    <string name="trim_start_label">In\u00EDcio: %1$s</string>
     <string name="trim_end_label">Fim: %1$s</string>
-    <string name="trim_duration_summary">Duração do corte: %1$s (%2$s → %3$s)</string>
+    <string name="trim_duration_summary">Dura\u00E7\u00E3o do corte: %1$s (%2$s \u2192 %3$s)</string>
     <string name="trim_too_short">Faixa de corte muito curta (min 0,5s)</string>
     <string name="trim_saved_success">Corte salvo com sucesso</string>
     <string name="trim_failed_retry">O corte falhou. Por favor, tente novamente.</string>
-    <string name="trim_progress">Cortando… %1$d%%</string>
+    <string name="trim_progress">Cortando\u2026 %1$d%%</string>
     <string name="trim_save">Cortar e salvar</string>
     <string name="content_desc_back">Voltar</string>
     <string name="content_desc_refresh">Atualizar</string>
-    <string name="content_desc_options">Opções</string>
+    <string name="content_desc_options">Op\u00E7\u00F5es</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">Edição de vídeo</string>
-    <string name="tools_image_editing">Edição de imagem</string>
-    <string name="tool_video_trim">Corte de vídeo</string>
-    <string name="tool_compress">Compactar vídeo</string>
-    <string name="tool_video_to_gif">Vídeo para GIF</string>
+    <string name="tools_video_editing">Edi\u00E7\u00E3o de v\u00EDdeo</string>
+    <string name="tools_image_editing">Edi\u00E7\u00E3o de imagem</string>
+    <string name="tool_video_trim">Corte de v\u00EDdeo</string>
+    <string name="tool_compress">Compactar v\u00EDdeo</string>
+    <string name="tool_video_to_gif">V\u00EDdeo para GIF</string>
     <string name="tool_merge_clips">Mesclar clipes</string>
-    <string name="editor_pick_video_title">Escolha um vídeo</string>
-    <string name="editor_pick_catrec">Gravações CatRec</string>
-    <string name="editor_pick_storage">Vídeos no dispositivo</string>
+    <string name="editor_pick_video_title">Escolha um v\u00EDdeo</string>
+    <string name="editor_pick_catrec">Grava\u00E7\u00F5es CatRec</string>
+    <string name="editor_pick_storage">V\u00EDdeos no dispositivo</string>
     <string name="editor_export">Exportar</string>
-    <string name="editor_saving">Salvando…</string>
+    <string name="editor_saving">Salvando\u2026</string>
     <string name="editor_saved_ok">Salvo em Filmes/CatRec</string>
-    <string name="editor_failed">Não foi possível concluir a exportação. Tente outro arquivo ou qualidade.</string>
+    <string name="editor_failed">N\u00E3o foi poss\u00EDvel concluir a exporta\u00E7\u00E3o. Tente outro arquivo ou qualidade.</string>
     <string name="compress_title">Compressa</string>
     <string name="compress_quality_label">Qualidade alvo</string>
     <string name="compress_quality_high">Alto</string>
-    <string name="compress_quality_medium">Médio</string>
+    <string name="compress_quality_medium">M\u00E9dio</string>
     <string name="compress_quality_low">Baixo</string>
-    <string name="compress_resolution_label">Resolução alvo (altura)</string>
+    <string name="compress_resolution_label">Resolu\u00E7\u00E3o alvo (altura)</string>
     <string name="compress_original">Tamanho original</string>
     <string name="compress_estimated">Tamanho estimado: ~%1$s</string>
     <string name="compress_source">Fonte: %1$dx%2$d</string>
-    <string name="gif_title">Vídeo para GIF</string>
+    <string name="gif_title">V\u00EDdeo para GIF</string>
     <string name="gif_fps">FPS: %1$d</string>
     <string name="gif_quality_label">Qualidade GIF</string>
     <string name="gif_quality_small">Arquivo menor</string>
     <string name="gif_quality_balanced">Equilibrado</string>
-    <string name="gif_quality_sharper">Mais nítido</string>
+    <string name="gif_quality_sharper">Mais n\u00EDtido</string>
     <string name="gif_convert">Criar GIF</string>
     <string name="merge_title">Mesclar clipes</string>
     <string name="merge_add_catrec">Adicionar do CatRec</string>
     <string name="merge_clear_all">Limpar tudo</string>
     <string name="merge_run">Mesclar e salvar</string>
-    <string name="merge_need_two">Adicione pelo menos dois vídeos (a ordem é mantida).</string>
+    <string name="merge_need_two">Adicione pelo menos dois v\u00EDdeos (a ordem \u00E9 mantida).</string>
     <string name="merge_clip_label">Clipe %1$d</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
 
@@ -506,54 +502,54 @@
     <string name="support_version_label">Version %1$s</string>
     <string name="changelog_version_template">v%1$s</string>
     <string name="support_section_support_dev">Apoie o desenvolvedor</string>
-    <string name="support_section_legal">Jurídico</string>
-    <string name="support_watch_ad_sub_loading">Carregando anúncio…</string>
-    <string name="support_watch_ad_sub">Maneira rápida de oferecer suporte gratuitamente</string>
-    <string name="support_toast_youtube">Não foi possível abrir o YouTube</string>
-    <string name="support_toast_ad_failed">Não foi possível exibir o anúncio. Tente novamente mais tarde.</string>
-    <string name="support_toast_thanks_ad">Obrigado por assistir! 🐱</string>
-    <string name="support_toast_ad_loading">O anúncio está carregando, aguarde…</string>
-    <string name="support_toast_no_ad">Nenhum anúncio disponível no momento. Tente novamente mais tarde.</string>
-    <string name="support_toast_browser">Não foi possível abrir o navegador</string>
-    <string name="billing_store_not_ready">A Play Store ainda não está pronta. Verifique sua conexão e tente novamente.</string>
-    <string name="billing_thanks_support_me">Obrigado pelo seu apoio! 🐱</string>
-    <string name="billing_pending">A compra está pendente. Você terá acesso quando ela for concluída.</string>
-    <string name="dialog_changelog_title">Registro de alterações</string>
-    <string name="support_privacy_policy">política de Privacidade</string>
+    <string name="support_section_legal">Jur\u00EDdico</string>
+    <string name="support_watch_ad_sub_loading">Carregando an\u00FAncio\u2026</string>
+    <string name="support_watch_ad_sub">Maneira r\u00E1pida de oferecer suporte gratuitamente</string>
+    <string name="support_toast_youtube">N\u00E3o foi poss\u00EDvel abrir o YouTube</string>
+    <string name="support_toast_ad_failed">N\u00E3o foi poss\u00EDvel exibir o an\u00FAncio. Tente novamente mais tarde.</string>
+    <string name="support_toast_thanks_ad">Obrigado por assistir! \uD83D\uDC31</string>
+    <string name="support_toast_ad_loading">O an\u00FAncio est\u00E1 carregando, aguarde\u2026</string>
+    <string name="support_toast_no_ad">Nenhum an\u00FAncio dispon\u00EDvel no momento. Tente novamente mais tarde.</string>
+    <string name="support_toast_browser">N\u00E3o foi poss\u00EDvel abrir o navegador</string>
+    <string name="billing_store_not_ready">A Play Store ainda n\u00E3o est\u00E1 pronta. Verifique sua conex\u00E3o e tente novamente.</string>
+    <string name="billing_thanks_support_me">Obrigado pelo seu apoio! \uD83D\uDC31</string>
+    <string name="billing_pending">A compra est\u00E1 pendente. Voc\u00EA ter\u00E1 acesso quando ela for conclu\u00EDda.</string>
+    <string name="dialog_changelog_title">Registro de altera\u00E7\u00F5es</string>
+    <string name="support_privacy_policy">pol\u00EDtica de Privacidade</string>
     <string name="support_privacy_policy_desc">Como CatRec lida com seus dados</string>
-    <string name="support_terms_of_service">Termos de Serviço</string>
-    <string name="support_terms_of_service_desc">Regras de uso e isenções de responsabilidade</string>
-    <string name="support_permissions_disclosure">Divulgação de permissões</string>
-    <string name="support_permissions_disclosure_desc">Por que cada permissão é necessária</string>
+    <string name="support_terms_of_service">Termos de Servi\u00E7o</string>
+    <string name="support_terms_of_service_desc">Regras de uso e isen\u00E7\u00F5es de responsabilidade</string>
+    <string name="support_permissions_disclosure">Divulga\u00E7\u00E3o de permiss\u00F5es</string>
+    <string name="support_permissions_disclosure_desc">Por que cada permiss\u00E3o \u00E9 necess\u00E1ria</string>
 
     <!-- Permissions manager -->
-    <string name="perm_name_notifications">Notificações</string>
-    <string name="perm_rationale_notifications">Necessário para mostrar controles de gravação e status ao vivo na aba de notificações durante a gravação.</string>
+    <string name="perm_name_notifications">Notifica\u00E7\u00F5es</string>
+    <string name="perm_rationale_notifications">Necess\u00E1rio para mostrar controles de grava\u00E7\u00E3o e status ao vivo na aba de notifica\u00E7\u00F5es durante a grava\u00E7\u00E3o.</string>
     <string name="perm_name_microphone">Microfone</string>
-    <string name="perm_rationale_microphone">Necessário para capturar o áudio do microfone junto com a gravação da tela.</string>
-    <string name="perm_name_camera">Câmera</string>
-    <string name="perm_rationale_camera">Necessário para mostrar a sobreposição da câmera na imagem na parte superior da gravação da tela.</string>
+    <string name="perm_rationale_microphone">Necess\u00E1rio para capturar o \u00E1udio do microfone junto com a grava\u00E7\u00E3o da tela.</string>
+    <string name="perm_name_camera">C\u00E2mera</string>
+    <string name="perm_rationale_camera">Necess\u00E1rio para mostrar a sobreposi\u00E7\u00E3o da c\u00E2mera na imagem na parte superior da grava\u00E7\u00E3o da tela.</string>
     <string name="perm_name_overlay">Exibir sobre outros aplicativos</string>
-    <string name="perm_rationale_overlay">Necessário para mostrar o balão de controles flutuantes e a sobreposição da câmera sobre outros aplicativos durante a gravação.</string>
+    <string name="perm_rationale_overlay">Necess\u00E1rio para mostrar o bal\u00E3o de controles flutuantes e a sobreposi\u00E7\u00E3o da c\u00E2mera sobre outros aplicativos durante a grava\u00E7\u00E3o.</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
-    <string name="service_description_screen_record">Serviço em primeiro plano durante a gravação: captura de ecrã (MediaProjection) com áudio opcional do microfone e notificação persistente.</string>
-    <string name="service_description_overlay">Serviço em primeiro plano enquanto a sobreposição flutuante é mostrada: pré-visualização da câmara em imagem na imagem, com notificação persistente.</string>
+    <string name="service_description_screen_record">Servi\u00E7o em primeiro plano durante a grava\u00E7\u00E3o: captura de ecr\u00E3 (MediaProjection) com \u00E1udio opcional do microfone e notifica\u00E7\u00E3o persistente.</string>
+    <string name="service_description_overlay">Servi\u00E7o em primeiro plano enquanto a sobreposi\u00E7\u00E3o flutuante \u00E9 mostrada: pr\u00E9-visualiza\u00E7\u00E3o da c\u00E2mara em imagem na imagem, com notifica\u00E7\u00E3o persistente.</string>
 
     <!-- Notifications (service) -->
-    <string name="notif_channel_screen_recording">Gravação de tela</string>
-    <string name="notif_channel_recording_complete">Gravação concluída</string>
+    <string name="notif_channel_screen_recording">Grava\u00E7\u00E3o de tela</string>
+    <string name="notif_channel_recording_complete">Grava\u00E7\u00E3o conclu\u00EDda</string>
     <string name="notif_channel_rolling_buffer">Buffer rolante</string>
     <string name="notif_ready_title">Pronto para CatRec</string>
-    <string name="notif_ready_text">Toque no botão ● de sobreposição para iniciar a gravação</string>
+    <string name="notif_ready_text">Toque no bot\u00E3o \u25CF de sobreposi\u00E7\u00E3o para iniciar a grava\u00E7\u00E3o</string>
     <string name="notif_action_revoke">Revogar</string>
-    <string name="notif_preparing">Preparando…</string>
-    <string name="notif_recording_starting_in">Gravação começando em %1$d…</string>
-    <string name="notif_recording_paused">Gravação pausada</string>
-    <string name="notif_recording_muted">Gravando (sem som)…</string>
-    <string name="notif_recording_in_progress">Gravação em andamento…</string>
+    <string name="notif_preparing">Preparando\u2026</string>
+    <string name="notif_recording_starting_in">Grava\u00E7\u00E3o come\u00E7ando em %1$d\u2026</string>
+    <string name="notif_recording_paused">Grava\u00E7\u00E3o pausada</string>
+    <string name="notif_recording_muted">Gravando (sem som)\u2026</string>
+    <string name="notif_recording_in_progress">Grava\u00E7\u00E3o em andamento\u2026</string>
     <string name="notif_title_short">CatRec</string>
     <string name="notif_action_stop">Parar</string>
     <string name="notif_action_pause">Pausa</string>
@@ -561,48 +557,48 @@
     <string name="notif_action_mute">Mudo</string>
     <string name="notif_action_unmute">Ativar som</string>
     <string name="notif_action_show_controls">Mostrar controles</string>
-    <string name="notif_buffer_title">CatRec — Buffer rolante</string>
-    <string name="notif_buffer_starting">Iniciando buffer…</string>
-    <string name="notif_buffer_buffering">Armazenando os últimos %1$d s…</string>
+    <string name="notif_buffer_title">CatRec \u2014 Buffer rolante</string>
+    <string name="notif_buffer_starting">Iniciando buffer\u2026</string>
+    <string name="notif_buffer_buffering">Armazenando os \u00FAltimos %1$d s\u2026</string>
     <string name="notif_buffer_save_clip">Salvar clipe</string>
-    <string name="notif_post_title">Gravação concluída</string>
-    <string name="notif_post_text">Toque para abrir sua gravação</string>
+    <string name="notif_post_title">Grava\u00E7\u00E3o conclu\u00EDda</string>
+    <string name="notif_post_text">Toque para abrir sua grava\u00E7\u00E3o</string>
     <string name="notif_post_open">Abrir</string>
     <string name="notif_post_share">Compartilhar</string>
     <string name="notif_post_delete">Excluir</string>
-    <string name="share_recording_title">Compartilhar gravação</string>
-    <string name="toast_video_encoder_failed">Não foi possível iniciar o codificador de vídeo. Tente uma resolução menor ou outro codificador nas Configurações.</string>
-    <string name="toast_recording_stopped_projection">A gravação foi interrompida: o aplicativo capturado foi fechado ou movido para segundo plano</string>
-    <string name="toast_recording_failed_no_video">Falha na gravação: nenhum vídeo foi capturado</string>
-    <string name="toast_gif_transcode_failed">Não foi possível criar GIF – sua gravação MP4 foi mantida.</string>
+    <string name="share_recording_title">Compartilhar grava\u00E7\u00E3o</string>
+    <string name="toast_video_encoder_failed">N\u00E3o foi poss\u00EDvel iniciar o codificador de v\u00EDdeo. Tente uma resolu\u00E7\u00E3o menor ou outro codificador nas Configura\u00E7\u00F5es.</string>
+    <string name="toast_recording_stopped_projection">A grava\u00E7\u00E3o foi interrompida: o aplicativo capturado foi fechado ou movido para segundo plano</string>
+    <string name="toast_recording_failed_no_video">Falha na grava\u00E7\u00E3o: nenhum v\u00EDdeo foi capturado</string>
+    <string name="toast_gif_transcode_failed">N\u00E3o foi poss\u00EDvel criar GIF \u2013 sua grava\u00E7\u00E3o MP4 foi mantida.</string>
     <string name="toast_gif_saved">GIF salvo em Imagens/CatRec/GIFs</string>
-    <string name="toast_separate_mic_failed">Não foi possível criar um arquivo de áudio separado – o microfone será gravado no vídeo</string>
-    <string name="toast_internal_audio_silent">O áudio interno está silencioso — o aplicativo que está sendo gravado pode não permitir a captura de áudio. Tente gravar o áudio do microfone.</string>
-    <string name="recording_has_separate_audio">Possui trilha de áudio separada</string>
-    <string name="toast_buffer_start_failed">Falha no início do buffer: %1$s</string>
-    <string name="toast_clip_empty">O clipe está vazio – mantenha o buffer por mais tempo</string>
+    <string name="toast_separate_mic_failed">N\u00E3o foi poss\u00EDvel criar um arquivo de \u00E1udio separado \u2013 o microfone ser\u00E1 gravado no v\u00EDdeo</string>
+    <string name="toast_internal_audio_silent">O \u00E1udio interno est\u00E1 silencioso \u2014 o aplicativo que est\u00E1 sendo gravado pode n\u00E3o permitir a captura de \u00E1udio. Tente gravar o \u00E1udio do microfone.</string>
+    <string name="recording_has_separate_audio">Possui trilha de \u00E1udio separada</string>
+    <string name="toast_buffer_start_failed">Falha no in\u00EDcio do buffer: %1$s</string>
+    <string name="toast_clip_empty">O clipe est\u00E1 vazio \u2013 mantenha o buffer por mais tempo</string>
     <string name="toast_clip_saved">Clipe salvo!</string>
     <string name="toast_clip_save_failed">Falha ao salvar clipe: %1$s</string>
-    <string name="notif_camera_overlay_text">A sobreposição da câmera CatRec está ativa – toque para retornar ao aplicativo</string>
+    <string name="notif_camera_overlay_text">A sobreposi\u00E7\u00E3o da c\u00E2mera CatRec est\u00E1 ativa \u2013 toque para retornar ao aplicativo</string>
     <string name="tile_record_label">Registro CatRec</string>
     <string name="tile_clipper_label">Clipper CatRec</string>
-    <string name="notif_channel_camera_overlay">Sobreposição de câmera</string>
-    <string name="notif_channel_camera_overlay_desc">Mostra enquanto a sobreposição da câmera está ativa</string>
-    <string name="notif_camera_in_use_title">Câmera em uso</string>
-    <string name="notif_channel_app_controls">Controles rápidos</string>
-    <string name="notif_channel_app_controls_desc">Gravação, captura de tela e atalhos de sobreposição</string>
-    <string name="notif_channel_recording_interrupted">Gravação interrompida</string>
+    <string name="notif_channel_camera_overlay">Sobreposi\u00E7\u00E3o de c\u00E2mera</string>
+    <string name="notif_channel_camera_overlay_desc">Mostra enquanto a sobreposi\u00E7\u00E3o da c\u00E2mera est\u00E1 ativa</string>
+    <string name="notif_camera_in_use_title">C\u00E2mera em uso</string>
+    <string name="notif_channel_app_controls">Controles r\u00E1pidos</string>
+    <string name="notif_channel_app_controls_desc">Grava\u00E7\u00E3o, captura de tela e atalhos de sobreposi\u00E7\u00E3o</string>
+    <string name="notif_channel_recording_interrupted">Grava\u00E7\u00E3o interrompida</string>
     <string name="notif_channel_recording_interrupted_desc">Mostrado se o sistema parou o CatRec durante uma captura ativa</string>
     <string name="notif_recording_interrupted_title">Captura parada</string>
-    <string name="notif_recording_interrupted_text">O CatRec foi fechado ou reiniciado pelo sistema durante uma gravação ou captura de clip ativa. O último ficheiro pode estar incompleto. Abra o CatRec para começar de novo.</string>
+    <string name="notif_recording_interrupted_text">O CatRec foi fechado ou reiniciado pelo sistema durante uma grava\u00E7\u00E3o ou captura de clip ativa. O \u00FAltimo ficheiro pode estar incompleto. Abra o CatRec para come\u00E7ar de novo.</string>
     <string name="notif_app_controls_title">CatRec</string>
-    <string name="notif_app_controls_text_idle">Inativo – toque em uma ação abaixo</string>
+    <string name="notif_app_controls_text_idle">Inativo \u2013 toque em uma a\u00E7\u00E3o abaixo</string>
     <string name="notif_action_screenshot">Captura de tela</string>
-    <string name="notif_action_overlay_hide">Ocultar sobreposição</string>
-    <string name="notif_action_overlay_show">Mostrar sobreposição</string>
-    <string name="notif_action_overlay_enable_in_settings">Sobreposição desativada</string>
-    <string name="tile_subtitle_recording">Gravação…</string>
-    <string name="tile_subtitle_buffering">Buffer…</string>
+    <string name="notif_action_overlay_hide">Ocultar sobreposi\u00E7\u00E3o</string>
+    <string name="notif_action_overlay_show">Mostrar sobreposi\u00E7\u00E3o</string>
+    <string name="notif_action_overlay_enable_in_settings">Sobreposi\u00E7\u00E3o desativada</string>
+    <string name="tile_subtitle_recording">Grava\u00E7\u00E3o\u2026</string>
+    <string name="tile_subtitle_buffering">Buffer\u2026</string>
     <string name="tile_subtitle_ready">Preparar</string>
     <string name="tile_subtitle_tap_open">Toque para abrir o aplicativo</string>
 
@@ -610,8 +606,8 @@
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>
     <string name="toast_no_email_app">No email app found</string>
     <string name="share_screenshot_chooser_title">Share screenshot</string>
-    <string name="recordings_header_format">LIBRARY · %1$d</string>
-    <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
+    <string name="recordings_header_format">LIBRARY \u00B7 %1$d</string>
+    <string name="screenshots_header_format">SCREENSHOTS \u00B7 %1$d</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
     <string name="format_jpeg">JPEG</string>
@@ -620,66 +616,107 @@
     <string name="content_desc_more_options">More options</string>
     <string name="content_desc_rewind_10">Rewind 10 seconds</string>
     <string name="content_desc_forward_10">Forward 10 seconds</string>
-    <string name="list_bullet">•</string>
+    <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v113_items">
+        <item>"Edge-to-edge corrigido no Android 15+ para eliminar ANRs."</item>
+        <item>"Corrigida a velocidade de abertura da aba Configurações e os engasgos ao rolar."</item>
+    </string-array>
+
+    <string-array name="changelog_v112_items">
+        <item>"Sobreposição da câmera: corrigidas troca frontal/traseira, proporções e rotação da pré-visualização ao girar o dispositivo."</item>
+        <item>"Atualizações de ecrã mais suaves para a sobreposição da câmera, reduzindo ANRs em alguns dispositivos."</item>
+    </string-array>
 
     <string-array name="changelog_v111_items">
-        <item>Força metadados Rec.709 (BT.709) em dispositivos apenas com codificação HEVC — como Poco X7 Pro — para a cor na reprodução ser interpretada corretamente.</item>
-        <item>Novas opções de correção de cor Rec.709 nas Configurações para ajustar brilho e compatibilidade com o dispositivo.</item>
+        <item>"Força metadados Rec.709 (BT.709) em dispositivos apenas com codificação HEVC — como Poco X7 Pro — para a cor na reprodução ser interpretada corretamente."</item>
+        <item>"Novas opções de correção de cor Rec.709 nas Configurações para ajustar brilho e compatibilidade com o dispositivo."</item>
+        <item>"Corrigido o recorte incorreto de marcas d’água circulares e quadradas."</item>
+        <item>Maior estabilidade no Android 14 e superior, incluindo falhas em alguns dispositivos OEM.</item>
+        <item>Menos travamentos por falta de resposta do aplicativo (ANR) nos dispositivos afetados.</item>
     </string-array>
 
     <string-array name="changelog_v110_items">
-        <item>Perfis de cor REC.709 (BT.709) e de gama completa selecionáveis para alinhar o vídeo codificado às práticas comuns de cor em transmissão e masterização.</item>
+        <item>"Perfis de cor REC.709 (BT.709) e de gama completa selecionáveis para alinhar o vídeo codificado às práticas comuns de cor em transmissão e masterização."</item>
     </string-array>
 
     <string-array name="changelog_v107_items">
-        <item>Corrigido um problema que fazia o áudio interno deixar de ser gravado em alguns dispositivos</item>
-        <item>Corrigidas exportações de gravação GIF com taxa de quadros muito baixa</item>
+        <item>"Corrigido um problema que fazia o áudio interno deixar de ser gravado em alguns dispositivos"</item>
+        <item>"Corrigidas exportações de gravação GIF com taxa de quadros muito baixa"</item>
     </string-array>
 
     <string-array name="changelog_v106_items">
-        <item>Reconstruída do zero a interface do overlay de gravação e a lógica subjacente para maior confiabilidade e responsividade</item>
-        <item>Redesenados todos os ícones de overlay e notificação para uma linguagem visual mais limpa e consistente</item>
-        <item>Resolvidos problemas de compatibilidade específicos da OEM em dispositivos Xiaomi, Samsung e Nothing</item>
-        <item>Novo tratamento de falhas de gravação com recuperação automática de resoluções e codecs não suportados</item>
-        <item>Concluídas strings de localização ausentes em todos os idiomas suportados</item>
-        <item>Corrigido recorte incorreto de imagens e melhorada a qualidade das gravações GIF</item>
-        <item>Modo de gravação adaptativo ao desempenho que ajusta automaticamente a qualidade em dispositivos pouco potentes para evitar quadros perdidos e erros do codificador</item>
-        <item>Intervalo do temporizador de contagem regressiva estendido até 30 segundos</item>
+        <item>"Reconstruída do zero a interface do overlay de gravação e a lógica subjacente para maior confiabilidade e responsividade"</item>
+        <item>"Redesenados todos os ícones de overlay e notificação para uma linguagem visual mais limpa e consistente"</item>
+        <item>"Resolvidos problemas de compatibilidade específicos da OEM em dispositivos Xiaomi, Samsung e Nothing"</item>
+        <item>"Novo tratamento de falhas de gravação com recuperação automática de resoluções e codecs não suportados"</item>
+        <item>"Concluídas strings de localização ausentes em todos os idiomas suportados"</item>
+        <item>"Corrigido recorte incorreto de imagens e melhorada a qualidade das gravações GIF"</item>
+        <item>"Modo de gravação adaptativo ao desempenho que ajusta automaticamente a qualidade em dispositivos pouco potentes para evitar quadros perdidos e erros do codificador"</item>
+        <item>"Intervalo do temporizador de contagem regressiva estendido até 30 segundos"</item>
         <item>Melhorado o desempenho geral do aplicativo</item>
     </string-array>
 
     <string-array name="changelog_v100_items">
-        <item>Gravação de tela com suporte a codec H.264 e H.265 (HEVC)</item>
-        <item>Buffer Rolling Clipper (1–5 min, configurável) com costura de segmento contínua e predefinições de duração rápida</item>
-        <item>Botão Salvar Clip enquanto o Clipper está em execução</item>
-        <item>Ampla seleção de resolução para todas as proporções, além de entrada personalizada</item>
-        <item>Rastreamento automático de orientação durante a gravação</item>
-        <item>Temporizador de contagem regressiva antes do início da gravação</item>
-        <item>Opção manter a tela ligada durante a gravação</item>
-        <item>Áudio: microfone, áudio interno ou mixado; trilha de microfone separada opcional com exportação confiável</item>
-        <item>Configurações avançadas de áudio: taxa de bits, taxa de amostragem, canais, codificador; codificação estéreo e CBR precisa</item>
-        <item>Modo de gravação GIF com predefinições de qualidade</item>
-        <item>Sobreposição de controles flutuantes: pausar, parar, silenciar, captura de tela, acesso ao clipe</item>
-        <item>Sobreposição disponível a qualquer momento; comece a gravar ou recortar da sobreposição</item>
-        <item>Autorização de gravação de sobreposição com um toque – solicitações mínimas de permissão repetidas</item>
-        <item>Ferramenta Pincel na sobreposição flutuante</item>
-        <item>Sobreposição de câmera com visualização de câmera facial ao vivo</item>
-        <item>Sobreposição de marca d\'água: imagens personalizadas, forma, opacidade, posição, encaixe no canto; padrão corresponde ao ícone do aplicativo</item>
-        <item>Capturas de tela com configurações de formato e qualidade; capturar da sobreposição</item>
-        <item>Fluxo de compartilhamento/edição pós-captura de tela (opcional)</item>
-        <item>Biblioteca de gravações com miniaturas; aparador no aplicativo; mesclar clipes; vídeo para GIF; editor de imagens e ferramentas de corte</item>
-        <item>Player de vídeo no aplicativo</item>
-        <item>Cor de destaque: predefinições, gradientes e hexadecimais; tema dinâmico em toda a UI</item>
+        <item>"Gravação de tela com suporte a codec H.264 e H.265 (HEVC)"</item>
+        <item>"Buffer Rolling Clipper (1–5 min, configurável) com costura de segmento contínua e predefinições de duração rápida"</item>
+        <item>"Botão Salvar Clip enquanto o Clipper está em execução"</item>
+        <item>"Ampla seleção de resolução para todas as proporções, além de entrada personalizada"</item>
+        <item>"Rastreamento automático de orientação durante a gravação"</item>
+        <item>"Temporizador de contagem regressiva antes do início da gravação"</item>
+        <item>"Opção manter a tela ligada durante a gravação"</item>
+        <item>"Áudio: microfone, áudio interno ou mixado; trilha de microfone separada opcional com exportação confiável"</item>
+        <item>"Configurações avançadas de áudio: taxa de bits, taxa de amostragem, canais, codificador; codificação estéreo e CBR precisa"</item>
+        <item>"Modo de gravação GIF com predefinições de qualidade"</item>
+        <item>"Sobreposição de controles flutuantes: pausar, parar, silenciar, captura de tela, acesso ao clipe"</item>
+        <item>"Sobreposição disponível a qualquer momento; comece a gravar ou recortar da sobreposição"</item>
+        <item>"Autorização de gravação de sobreposição com um toque – solicitações mínimas de permissão repetidas"</item>
+        <item>"Ferramenta Pincel na sobreposição flutuante"</item>
+        <item>"Sobreposição de câmera com visualização de câmera facial ao vivo"</item>
+        <item>"Sobreposição de marca d\'água: imagens personalizadas, forma, opacidade, posição, encaixe no canto; padrão corresponde ao ícone do aplicativo"</item>
+        <item>"Capturas de tela com configurações de formato e qualidade; capturar da sobreposição"</item>
+        <item>"Fluxo de compartilhamento/edição pós-captura de tela (opcional)"</item>
+        <item>"Biblioteca de gravações com miniaturas; aparador no aplicativo; mesclar clipes; vídeo para GIF; editor de imagens e ferramentas de corte"</item>
+        <item>"Player de vídeo no aplicativo"</item>
+        <item>"Cor de destaque: predefinições, gradientes e hexadecimais; tema dinâmico em toda a UI"</item>
         <item>Temas claros e escuros com contraste aprimorado de tema claro</item>
         <item>Modo de desempenho para dispositivos de baixo custo</item>
-        <item>Configurações organizadas: controles, qualidade de gravação, sobreposição, tema, idioma, armazenamento e muito mais</item>
-        <item>Atalho de configurações para permitir o uso irrestrito da bateria para gravação confiável em segundo plano</item>
-        <item>Mais de 16 idiomas com traduções consistentes</item>
+        <item>"Configurações organizadas: controles, qualidade de gravação, sobreposição, tema, idioma, armazenamento e muito mais"</item>
+        <item>"Atalho de configurações para permitir o uso irrestrito da bateria para gravação confiável em segundo plano"</item>
+        <item>"Mais de 16 idiomas com traduções consistentes"</item>
         <item>Seletor de modo RECORD / CLIPPER com indicador de status claro</item>
-        <item>Blocos de configurações rápidas: CatRec Record e CatRec Clipper</item>
-        <item>Gravação de notificação com ações; suporte para sessão de captura preparada</item>
-        <item>Análise opcional de aceitação para melhorar a estabilidade</item>
-        <item>Controles de privacidade: alternadores de análise e personalização de anúncios</item>
+        <item>"Blocos de configurações rápidas: CatRec Record e CatRec Clipper"</item>
+        <item>"Gravação de notificação com ações; suporte para sessão de captura preparada"</item>
+        <item>"Análise opcional de aceitação para melhorar a estabilidade"</item>
+        <item>"Controles de privacidade: alternadores de análise e personalização de anúncios"</item>
         <item>Tela de suporte: changelog, links legais e suporte premiado opcional</item>
     </string-array>
+
+    <!-- Localized additions -->
+    <string name="resolution_preset_4k">4K</string>
+    <string name="resolution_preset_2k">2K</string>
+    <string name="resolution_preset_1080">1080</string>
+    <string name="resolution_preset_720">720</string>
+    <string name="resolution_preset_480">480</string>
+    <string name="error_resolution_required">Insira uma resolu\u00E7\u00E3o.</string>
+    <string name="error_resolution_positive">A largura e a altura devem ser n\u00FAmeros positivos.</string>
+    <string name="error_resolution_even">A largura e a altura devem ser n\u00FAmeros pares.</string>
+    <string name="error_resolution_encoder_unsupported">Esta resolu\u00E7\u00E3o n\u00E3o \u00E9 compat\u00EDvel com o codificador de v\u00EDdeo selecionado.</string>
+    <string name="error_resolution_too_large_for_profile">Esta resolu\u00E7\u00E3o \u00E9 grande demais para o perfil de desempenho deste dispositivo.</string>
+    <string name="pro_feature">Recurso PRO</string>
+    <string name="pro_recording_title">Voc\u00EA est\u00E1 gravando com recursos PRO</string>
+    <string name="pro_recording_body">Assista a um an\u00FAncio para desbloquear recursos PRO por 4 horas, ou remova an\u00FAncios para acesso permanente.</string>
+    <string name="pro_tools_body">Assista a um an\u00FAncio para desbloquear recursos PRO por 4 horas, ou compre Remover an\u00FAncios para acesso permanente?</string>
+    <string name="pro_unlock_watch_ad">Assistir an\u00FAncio</string>
+    <string name="pro_unlock_remove_ads">Remover an\u00FAncios</string>
+    <string name="pro_unlock_ad_unavailable">O an\u00FAncio n\u00E3o est\u00E1 dispon\u00EDvel agora. Tente novamente em breve.</string>
+    <string name="tools_title">Ferramentas</string>
+    <string name="changelog_label_latest">Mais recente</string>
+    <string name="toast_recording_muxer_failed">N\u00E3o foi poss\u00EDvel finalizar a grava\u00E7\u00E3o. Tente novamente.</string>
+    <string name="notif_cc_record">Gravar</string>
+    <string name="notif_cc_shot">Captura</string>
+    <string name="notif_cc_float">Flutuante</string>
+    <string name="notif_cc_home">In\u00EDcio</string>
+    <string name="notif_cc_close">Fechar</string>
+    <string name="notif_cc_stop">Parar</string>
 </resources>

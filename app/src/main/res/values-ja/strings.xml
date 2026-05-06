@@ -1,679 +1,716 @@
-﻿<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
     <!-- App -->
-    <string name="app_name">CatRec - 画面録画</string>
+    <string name="app_name">CatRec</string>
+    <string name="screen_title_default">CatRec</string>
+    <string name="screen_title_player">\u30D7\u30EC\u30FC\u30E4\u30FC</string>
+    <string name="screen_title_trim">\u30C8\u30EA\u30E0</string>
+    <string name="screen_title_crop">\u5207\u308A\u629C\u304D</string>
 
     <string name="brand_catrect">CatRec</string>
-    <string name="faq_content_description">ヘルプとサポート</string>
-    <string name="capture_mode_recording">録音</string>
-    <string name="capture_mode_clipper">クリッパー</string>
-    <string name="capture_mode_gif">GIF録画</string>
+    <string name="faq_content_description">\u30D8\u30EB\u30D7\u3068\u30B5\u30DD\u30FC\u30C8</string>
+    <string name="capture_mode_recording">\u9332\u97F3</string>
+    <string name="capture_mode_clipper">\u30AF\u30EA\u30C3\u30D1\u30FC</string>
+    <string name="capture_mode_gif">GIF\u9332\u753B</string>
 
     <!-- FAQ & feedback -->
-    <string name="faq_title">よくある質問</string>
-    <string name="faq_intro">カテゴリ別に回答を見つけます。質問をタップして展開します。さらにサポートが必要な場合は、以下のお問い合わせをご利用ください。</string>
-    <string name="faq_contact_us">お問い合わせ</string>
-    <string name="feedback_title">フィードバックを送信する</string>
-    <string name="feedback_issue_section_title">何が間違っていたのでしょうか?</string>
-    <string name="feedback_description_title">詳細</string>
-    <string name="feedback_description_hint">何が起こったのか、いつ開始されたのか、すでに試したこと (解像度の低下、携帯電話の再起動など) を説明してください。より詳細な情報を得ることで、より迅速に問題を解決することができます。</string>
-    <string name="feedback_screenshots_title">スクリーンショット</string>
+    <string name="faq_title">\u3088\u304F\u3042\u308B\u8CEA\u554F</string>
+    <string name="faq_intro">\u30AB\u30C6\u30B4\u30EA\u5225\u306B\u56DE\u7B54\u3092\u898B\u3064\u3051\u307E\u3059\u3002\u8CEA\u554F\u3092\u30BF\u30C3\u30D7\u3057\u3066\u5C55\u958B\u3057\u307E\u3059\u3002\u3055\u3089\u306B\u30B5\u30DD\u30FC\u30C8\u304C\u5FC5\u8981\u306A\u5834\u5408\u306F\u3001\u4EE5\u4E0B\u306E\u304A\u554F\u3044\u5408\u308F\u305B\u3092\u3054\u5229\u7528\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="faq_contact_us">\u304A\u554F\u3044\u5408\u308F\u305B</string>
+    <string name="feedback_title">\u30D5\u30A3\u30FC\u30C9\u30D0\u30C3\u30AF\u3092\u9001\u4FE1\u3059\u308B</string>
+    <string name="feedback_issue_section_title">\u4F55\u304C\u9593\u9055\u3063\u3066\u3044\u305F\u306E\u3067\u3057\u3087\u3046\u304B?</string>
+    <string name="feedback_description_title">\u8A73\u7D30</string>
+    <string name="feedback_description_hint">\u4F55\u304C\u8D77\u3053\u3063\u305F\u306E\u304B\u3001\u3044\u3064\u958B\u59CB\u3055\u308C\u305F\u306E\u304B\u3001\u3059\u3067\u306B\u8A66\u3057\u305F\u3053\u3068 (\u89E3\u50CF\u5EA6\u306E\u4F4E\u4E0B\u3001\u643A\u5E2F\u96FB\u8A71\u306E\u518D\u8D77\u52D5\u306A\u3069) \u3092\u8AAC\u660E\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u3088\u308A\u8A73\u7D30\u306A\u60C5\u5831\u3092\u5F97\u308B\u3053\u3068\u3067\u3001\u3088\u308A\u8FC5\u901F\u306B\u554F\u984C\u3092\u89E3\u6C7A\u3059\u308B\u3053\u3068\u304C\u3067\u304D\u307E\u3059\u3002</string>
+    <string name="feedback_screenshots_title">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8</string>
     <string name="feedback_screenshots_count">%1$d / %2$d</string>
-    <string name="feedback_screenshots_hint">最大 5 つの画像 (エラー メッセージ、設定画面、バッテリー ページなど) を追加します。</string>
-    <string name="feedback_add_screenshots">画像を追加する</string>
-    <string name="feedback_send">送信</string>
-    <string name="feedback_send_note">電子メール アプリを開き、%1$s へのメッセージを送信します。配信するには、[送信] をタップします。</string>
-    <string name="feedback_send_chooser_title">電子メールを送信する</string>
-    <string name="feedback_no_email_app">メールアプリが見つかりませんでした。 Gmail または Outlook をインストールするか、次の画面が表示されたら詳細をコピーします。</string>
-    <string name="feedback_select_issue">問題の種類を選択してください。</string>
-    <string name="feedback_description_too_short">サポートできるよう、もう少し詳細 (少なくとも 1 文) を追加してください。</string>
-    <string name="feedback_issue_recording_stopped">録音がランダムに停止する</string>
-    <string name="feedback_issue_crash">アプリがクラッシュしました</string>
-    <string name="feedback_issue_no_sound">音が出ない/オーディオの問題</string>
-    <string name="feedback_issue_video_black">黒い画面/フリーズしたビデオ</string>
-    <string name="feedback_issue_cant_start">録音を開始できません</string>
-    <string name="feedback_issue_overlay">フローティングコントロール/オーバーレイ</string>
-    <string name="feedback_issue_gif_export">GIF またはファイルのエクスポート</string>
-    <string name="feedback_issue_battery_oem">バッテリー / バックグラウンド (Xiaomi など)</string>
-    <string name="feedback_issue_storage">ストレージ / ファイルが見つかりません</string>
-    <string name="feedback_issue_quality">品質/遅延/途切れ</string>
-    <string name="feedback_issue_other">他の</string>
+    <string name="feedback_screenshots_hint">\u6700\u5927 5 \u3064\u306E\u753B\u50CF (\u30A8\u30E9\u30FC \u30E1\u30C3\u30BB\u30FC\u30B8\u3001\u8A2D\u5B9A\u753B\u9762\u3001\u30D0\u30C3\u30C6\u30EA\u30FC \u30DA\u30FC\u30B8\u306A\u3069) \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002</string>
+    <string name="feedback_add_screenshots">\u753B\u50CF\u3092\u8FFD\u52A0\u3059\u308B</string>
+    <string name="feedback_send">\u9001\u4FE1</string>
+    <string name="feedback_send_note">\u96FB\u5B50\u30E1\u30FC\u30EB \u30A2\u30D7\u30EA\u3092\u958B\u304D\u3001%1$s \u3078\u306E\u30E1\u30C3\u30BB\u30FC\u30B8\u3092\u9001\u4FE1\u3057\u307E\u3059\u3002\u914D\u4FE1\u3059\u308B\u306B\u306F\u3001[\u9001\u4FE1] \u3092\u30BF\u30C3\u30D7\u3057\u307E\u3059\u3002</string>
+    <string name="feedback_send_chooser_title">\u96FB\u5B50\u30E1\u30FC\u30EB\u3092\u9001\u4FE1\u3059\u308B</string>
+    <string name="feedback_no_email_app">\u30E1\u30FC\u30EB\u30A2\u30D7\u30EA\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3067\u3057\u305F\u3002 Gmail \u307E\u305F\u306F Outlook \u3092\u30A4\u30F3\u30B9\u30C8\u30FC\u30EB\u3059\u308B\u304B\u3001\u6B21\u306E\u753B\u9762\u304C\u8868\u793A\u3055\u308C\u305F\u3089\u8A73\u7D30\u3092\u30B3\u30D4\u30FC\u3057\u307E\u3059\u3002</string>
+    <string name="feedback_select_issue">\u554F\u984C\u306E\u7A2E\u985E\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="feedback_description_too_short">\u30B5\u30DD\u30FC\u30C8\u3067\u304D\u308B\u3088\u3046\u3001\u3082\u3046\u5C11\u3057\u8A73\u7D30 (\u5C11\u306A\u304F\u3068\u3082 1 \u6587) \u3092\u8FFD\u52A0\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="feedback_issue_recording_stopped">\u9332\u97F3\u304C\u30E9\u30F3\u30C0\u30E0\u306B\u505C\u6B62\u3059\u308B</string>
+    <string name="feedback_issue_crash">\u30A2\u30D7\u30EA\u304C\u30AF\u30E9\u30C3\u30B7\u30E5\u3057\u307E\u3057\u305F</string>
+    <string name="feedback_issue_no_sound">\u97F3\u304C\u51FA\u306A\u3044/\u30AA\u30FC\u30C7\u30A3\u30AA\u306E\u554F\u984C</string>
+    <string name="feedback_issue_video_black">\u9ED2\u3044\u753B\u9762/\u30D5\u30EA\u30FC\u30BA\u3057\u305F\u30D3\u30C7\u30AA</string>
+    <string name="feedback_issue_cant_start">\u9332\u97F3\u3092\u958B\u59CB\u3067\u304D\u307E\u305B\u3093</string>
+    <string name="feedback_issue_overlay">\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB/\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4</string>
+    <string name="feedback_issue_gif_export">GIF \u307E\u305F\u306F\u30D5\u30A1\u30A4\u30EB\u306E\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8</string>
+    <string name="feedback_issue_battery_oem">\u30D0\u30C3\u30C6\u30EA\u30FC / \u30D0\u30C3\u30AF\u30B0\u30E9\u30A6\u30F3\u30C9 (Xiaomi \u306A\u3069)</string>
+    <string name="feedback_issue_storage">\u30B9\u30C8\u30EC\u30FC\u30B8 / \u30D5\u30A1\u30A4\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093</string>
+    <string name="feedback_issue_quality">\u54C1\u8CEA/\u9045\u5EF6/\u9014\u5207\u308C</string>
+    <string name="feedback_issue_other">\u4ED6\u306E</string>
 
     <!-- Bottom Nav Tabs -->
-    <string name="tab_screenshots">スクリーンショット</string>
-    <string name="tab_recordings">録画一覧</string>
-    <string name="tab_settings">設定</string>
-    <string name="tab_support">サポート</string>
-    <string name="tab_editor">エディタ</string>
-    <string name="fab_start_recording">記録</string>
-    <string name="storage_indicator_format">%1$s が使用済み · %2$s が無料</string>
+    <string name="tab_screenshots">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8</string>
+    <string name="tab_recordings">\u9332\u753B\u4E00\u89A7</string>
+    <string name="tab_settings">\u8A2D\u5B9A</string>
+    <string name="tab_support">\u30B5\u30DD\u30FC\u30C8</string>
+    <string name="tab_editor">\u30A8\u30C7\u30A3\u30BF</string>
+    <string name="fab_start_recording">\u8A18\u9332</string>
+    <string name="storage_indicator_format">%1$s \u304C\u4F7F\u7528\u6E08\u307F \u00B7 %2$s \u304C\u7121\u6599</string>
     <!-- AdMob ad unit IDs (app ID is in AndroidManifest meta-data). -->
 
-    <string name="settings_section_recording_quality">録音品質</string>
-    <string name="settings_open_audio_menu">オーディオ設定</string>
-    <string name="settings_open_audio_menu_sub">マイク、内部オーディオ、ビットレート、チャンネル…</string>
-    <string name="settings_open_video_menu">ビデオとGIFの設定</string>
-    <string name="settings_open_video_menu_sub">GIF プリセット、解像度、FPS、ビットレート、エンコーダー…</string>
+    <string name="settings_section_recording_quality">\u9332\u97F3\u54C1\u8CEA</string>
+    <string name="settings_open_audio_menu">\u30AA\u30FC\u30C7\u30A3\u30AA\u8A2D\u5B9A</string>
+    <string name="settings_open_audio_menu_sub">\u30DE\u30A4\u30AF\u3001\u5185\u90E8\u30AA\u30FC\u30C7\u30A3\u30AA\u3001\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8\u3001\u30C1\u30E3\u30F3\u30CD\u30EB\u2026</string>
+    <string name="settings_open_video_menu">\u30D3\u30C7\u30AA\u3068GIF\u306E\u8A2D\u5B9A</string>
+    <string name="settings_open_video_menu_sub">GIF \u30D7\u30EA\u30BB\u30C3\u30C8\u3001\u89E3\u50CF\u5EA6\u3001FPS\u3001\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8\u3001\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC\u2026</string>
 
-    <string name="support_section_help">ヘルプ</string>
-    <string name="support_send_feedback">フィードバックを送信する</string>
-    <string name="support_send_feedback_desc">FAQ の「お問い合わせ」と同じ - バグや提案を報告してください</string>
+    <string name="support_section_help">\u30D8\u30EB\u30D7</string>
+    <string name="support_send_feedback">\u30D5\u30A3\u30FC\u30C9\u30D0\u30C3\u30AF\u3092\u9001\u4FE1\u3059\u308B</string>
+    <string name="support_send_feedback_desc">FAQ \u306E\u300C\u304A\u554F\u3044\u5408\u308F\u305B\u300D\u3068\u540C\u3058 - \u30D0\u30B0\u3084\u63D0\u6848\u3092\u5831\u544A\u3057\u3066\u304F\u3060\u3055\u3044</string>
 
     <!-- Common Actions -->
-    <string name="action_cancel">キャンセル</string>
-    <string name="action_close">閉じる</string>
-    <string name="action_save">保存</string>
-    <string name="action_delete">削除</string>
-    <string name="action_share">共有</string>
-    <string name="action_open">開く</string>
-    <string name="action_edit">編集</string>
-    <string name="consent_analytics_title">使用状況分析</string>
-    <string name="consent_analytics_message">オプションの使用とクラッシュ分析を許可して、CatRec の改善にご協力ください。パーソナライズされた広告は、設定で個別に制御されます (デフォルトでオン)。これは「設定」でいつでも変更できます。</string>
-    <string name="setting_usage_analytics">使用状況分析</string>
-    <string name="setting_usage_analytics_desc">アプリ改善のためのクラッシュと使用統計</string>
-    <string name="setting_personalized_ads">パーソナライズ広告</string>
-    <string name="setting_personalized_ads_on_desc">AdMobが関連性の高い広告のために広告IDを使用できます</string>
-    <string name="setting_personalized_ads_off_desc">非パーソナライズ広告のみ</string>
-    <string name="consent_accept">許可する</string>
-    <string name="consent_decline">衰退</string>
-    <string name="action_apply">適用</string>
-    <string name="action_pause">一時停止</string>
-    <string name="action_resume">再開</string>
+    <string name="action_cancel">\u30AD\u30E3\u30F3\u30BB\u30EB</string>
+    <string name="action_close">\u9589\u3058\u308B</string>
+    <string name="action_save">\u4FDD\u5B58</string>
+    <string name="action_delete">\u524A\u9664</string>
+    <string name="action_share">\u5171\u6709</string>
+    <string name="action_open">\u958B\u304F</string>
+    <string name="action_edit">\u7DE8\u96C6</string>
+    <string name="consent_analytics_title">\u4F7F\u7528\u72B6\u6CC1\u5206\u6790</string>
+    <string name="consent_analytics_message">\u30AA\u30D7\u30B7\u30E7\u30F3\u306E\u4F7F\u7528\u3068\u30AF\u30E9\u30C3\u30B7\u30E5\u5206\u6790\u3092\u8A31\u53EF\u3057\u3066\u3001CatRec \u306E\u6539\u5584\u306B\u3054\u5354\u529B\u304F\u3060\u3055\u3044\u3002\u30D1\u30FC\u30BD\u30CA\u30E9\u30A4\u30BA\u3055\u308C\u305F\u5E83\u544A\u306F\u3001\u8A2D\u5B9A\u3067\u500B\u5225\u306B\u5236\u5FA1\u3055\u308C\u307E\u3059 (\u30C7\u30D5\u30A9\u30EB\u30C8\u3067\u30AA\u30F3)\u3002\u3053\u308C\u306F\u300C\u8A2D\u5B9A\u300D\u3067\u3044\u3064\u3067\u3082\u5909\u66F4\u3067\u304D\u307E\u3059\u3002</string>
+    <string name="setting_usage_analytics">\u4F7F\u7528\u72B6\u6CC1\u5206\u6790</string>
+    <string name="setting_usage_analytics_desc">\u30A2\u30D7\u30EA\u6539\u5584\u306E\u305F\u3081\u306E\u30AF\u30E9\u30C3\u30B7\u30E5\u3068\u4F7F\u7528\u7D71\u8A08</string>
+    <string name="setting_personalized_ads">\u30D1\u30FC\u30BD\u30CA\u30E9\u30A4\u30BA\u5E83\u544A</string>
+    <string name="setting_personalized_ads_on_desc">AdMob\u304C\u95A2\u9023\u6027\u306E\u9AD8\u3044\u5E83\u544A\u306E\u305F\u3081\u306B\u5E83\u544AID\u3092\u4F7F\u7528\u3067\u304D\u307E\u3059</string>
+    <string name="setting_personalized_ads_off_desc">\u975E\u30D1\u30FC\u30BD\u30CA\u30E9\u30A4\u30BA\u5E83\u544A\u306E\u307F</string>
+    <string name="consent_accept">\u8A31\u53EF\u3059\u308B</string>
+    <string name="consent_decline">\u8870\u9000</string>
+    <string name="action_apply">\u9069\u7528</string>
+    <string name="action_pause">\u4E00\u6642\u505C\u6B62</string>
+    <string name="action_resume">\u518D\u958B</string>
 
     <!-- Recording Screen -->
-    <string name="recording_start">録画開始</string>
+    <string name="recording_start">\u9332\u753B\u958B\u59CB</string>
 
     <!-- Settings Screen - Section Headers -->
-    <string name="settings_title">設定</string>
-    <string name="settings_section_controls">コントロール</string>
-    <string name="setting_allow_background_title">バッテリー最適化を無制限に</string>
-    <string name="setting_allow_background_desc">アプリを離れたときに録画・準備済みキャプチャ・オーバーレイが止まりにくくします。システムのバッテリー設定を開きます。</string>
-    <string name="battery_opt_rationale_title">録画の中断を防止</string>
-    <string name="battery_opt_rationale_body">画面録画にはバックグラウンドでの中断のない処理が必要です。システム設定で CatRec のバッテリー使用を「制限なし」に設定してください。</string>
-    <string name="battery_opt_oem_note">お使いのデバイス（%s）は積極的なバッテリー管理を使用しており、バックグラウンドアプリを強制終了させる場合があります。</string>
-    <string name="battery_opt_btn_grant">バッテリー制限なしを許可</string>
-    <string name="battery_opt_btn_oem_settings">%s 設定を開く</string>
-    <string name="battery_opt_btn_learn_more">ビジュアルガイド (dontkillmyapp.com)</string>
-    <string name="battery_opt_btn_not_now">後で</string>
-    <string name="battery_opt_status_exempted">バッテリー: 制限なし ✓</string>
-    <string name="battery_opt_banner_text">このデバイスはバックグラウンドで録画を停止する可能性があります。</string>
-    <string name="battery_opt_banner_fix">修正</string>
-    <string name="settings_section_video">ビデオ</string>
-    <string name="settings_section_gif_recorder">GIFレコーダー</string>
-    <string name="settings_gif_recorder_desc">GIF モードでは、まずビデオを録画してから変換します。品質と長さは以下のプリセットに従います。ビデオ スライダーは、録画に戻ったときのために保存されたままになります。</string>
-    <string name="setting_gif_preset">GIF品質プリセット</string>
-    <string name="video_locked_by_gif_preset">GIF モードが選択されている間、ビデオ オプションは GIF プリセットによって制御されます。</string>
-    <string name="gif_preset_small">小さい (高速で小さいファイル)</string>
-    <string name="gif_preset_medium">中くらい</string>
-    <string name="gif_preset_hd">HD (より大きなファイル)</string>
-    <string name="settings_section_audio">オーディオ</string>
-    <string name="settings_section_overlay">オーバーレイ</string>
-    <string name="settings_section_screenshots">スクリーンショット</string>
-    <string name="settings_section_theme">テーマ</string>
-    <string name="settings_section_language">言語</string>
-    <string name="settings_section_storage">ストレージ</string>
-    <string name="settings_section_general">一般</string>
+    <string name="settings_title">\u8A2D\u5B9A</string>
+    <string name="settings_section_controls">\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB</string>
+    <string name="setting_allow_background_title">\u30D0\u30C3\u30C6\u30EA\u30FC\u6700\u9069\u5316\u3092\u7121\u5236\u9650\u306B</string>
+    <string name="setting_allow_background_desc">\u30A2\u30D7\u30EA\u3092\u96E2\u308C\u305F\u3068\u304D\u306B\u9332\u753B\u30FB\u6E96\u5099\u6E08\u307F\u30AD\u30E3\u30D7\u30C1\u30E3\u30FB\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u304C\u6B62\u307E\u308A\u306B\u304F\u304F\u3057\u307E\u3059\u3002\u30B7\u30B9\u30C6\u30E0\u306E\u30D0\u30C3\u30C6\u30EA\u30FC\u8A2D\u5B9A\u3092\u958B\u304D\u307E\u3059\u3002</string>
+    <string name="battery_opt_rationale_title">\u9332\u753B\u306E\u4E2D\u65AD\u3092\u9632\u6B62</string>
+    <string name="battery_opt_rationale_body">\u753B\u9762\u9332\u753B\u306B\u306F\u30D0\u30C3\u30AF\u30B0\u30E9\u30A6\u30F3\u30C9\u3067\u306E\u4E2D\u65AD\u306E\u306A\u3044\u51E6\u7406\u304C\u5FC5\u8981\u3067\u3059\u3002\u30B7\u30B9\u30C6\u30E0\u8A2D\u5B9A\u3067 CatRec \u306E\u30D0\u30C3\u30C6\u30EA\u30FC\u4F7F\u7528\u3092\u300C\u5236\u9650\u306A\u3057\u300D\u306B\u8A2D\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="battery_opt_oem_note">\u304A\u4F7F\u3044\u306E\u30C7\u30D0\u30A4\u30B9\uFF08%s\uFF09\u306F\u7A4D\u6975\u7684\u306A\u30D0\u30C3\u30C6\u30EA\u30FC\u7BA1\u7406\u3092\u4F7F\u7528\u3057\u3066\u304A\u308A\u3001\u30D0\u30C3\u30AF\u30B0\u30E9\u30A6\u30F3\u30C9\u30A2\u30D7\u30EA\u3092\u5F37\u5236\u7D42\u4E86\u3055\u305B\u308B\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002</string>
+    <string name="battery_opt_btn_grant">\u30D0\u30C3\u30C6\u30EA\u30FC\u5236\u9650\u306A\u3057\u3092\u8A31\u53EF</string>
+    <string name="battery_opt_btn_oem_settings">%s \u8A2D\u5B9A\u3092\u958B\u304F</string>
+    <string name="battery_opt_btn_learn_more">\u30D3\u30B8\u30E5\u30A2\u30EB\u30AC\u30A4\u30C9 (dontkillmyapp.com)</string>
+    <string name="battery_opt_btn_not_now">\u5F8C\u3067</string>
+    <string name="battery_opt_banner_text">\u3053\u306E\u30C7\u30D0\u30A4\u30B9\u306F\u30D0\u30C3\u30AF\u30B0\u30E9\u30A6\u30F3\u30C9\u3067\u9332\u753B\u3092\u505C\u6B62\u3059\u308B\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002</string>
+    <string name="battery_opt_banner_fix">\u4FEE\u6B63</string>
+    <string name="settings_section_video">\u30D3\u30C7\u30AA</string>
+    <string name="settings_section_gif_recorder">GIF\u30EC\u30B3\u30FC\u30C0\u30FC</string>
+    <string name="settings_gif_recorder_desc">GIF \u30E2\u30FC\u30C9\u3067\u306F\u3001\u307E\u305A\u30D3\u30C7\u30AA\u3092\u9332\u753B\u3057\u3066\u304B\u3089\u5909\u63DB\u3057\u307E\u3059\u3002\u54C1\u8CEA\u3068\u9577\u3055\u306F\u4EE5\u4E0B\u306E\u30D7\u30EA\u30BB\u30C3\u30C8\u306B\u5F93\u3044\u307E\u3059\u3002\u30D3\u30C7\u30AA \u30B9\u30E9\u30A4\u30C0\u30FC\u306F\u3001\u9332\u753B\u306B\u623B\u3063\u305F\u3068\u304D\u306E\u305F\u3081\u306B\u4FDD\u5B58\u3055\u308C\u305F\u307E\u307E\u306B\u306A\u308A\u307E\u3059\u3002</string>
+    <string name="setting_gif_preset">GIF\u54C1\u8CEA\u30D7\u30EA\u30BB\u30C3\u30C8</string>
+    <string name="video_locked_by_gif_preset">GIF \u30E2\u30FC\u30C9\u304C\u9078\u629E\u3055\u308C\u3066\u3044\u308B\u9593\u3001\u30D3\u30C7\u30AA \u30AA\u30D7\u30B7\u30E7\u30F3\u306F GIF \u30D7\u30EA\u30BB\u30C3\u30C8\u306B\u3088\u3063\u3066\u5236\u5FA1\u3055\u308C\u307E\u3059\u3002</string>
+    <string name="gif_preset_small">\u5C0F\u3055\u3044 (\u9AD8\u901F\u3067\u5C0F\u3055\u3044\u30D5\u30A1\u30A4\u30EB)</string>
+    <string name="gif_preset_medium">\u4E2D\u304F\u3089\u3044</string>
+    <string name="gif_preset_hd">HD (\u3088\u308A\u5927\u304D\u306A\u30D5\u30A1\u30A4\u30EB)</string>
+    <string name="settings_section_audio">\u30AA\u30FC\u30C7\u30A3\u30AA</string>
+    <string name="settings_section_overlay">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4</string>
+    <string name="settings_section_screenshots">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8</string>
+    <string name="settings_section_theme">\u30C6\u30FC\u30DE</string>
+    <string name="settings_section_language">\u8A00\u8A9E</string>
+    <string name="settings_section_storage">\u30B9\u30C8\u30EC\u30FC\u30B8</string>
+    <string name="settings_section_general">\u4E00\u822C</string>
 
     <!-- Video Settings -->
-    <string name="setting_resolution">解像度</string>
-    <string name="setting_resolution_native">ネイティブ</string>
-    <string name="setting_resolution_custom">カスタム解像度…</string>
-    <string name="setting_resolution_custom_hint">例：1920x1080</string>
-    <string name="setting_fps">フレームレート（FPS）</string>
-    <string name="setting_bitrate">ビデオビットレート</string>
-    <string name="setting_video_encoder">ビデオエンコーダー</string>
-    <string name="setting_color_mode">カラーモード</string>
-    <string name="setting_color_mode_standard">標準（Rec.709）</string>
-    <string name="setting_color_mode_full">フルレンジ</string>
-    <string name="dialog_color_mode">カラーモード</string>
+    <string name="setting_resolution">\u89E3\u50CF\u5EA6</string>
+    <string name="setting_resolution_native">\u30CD\u30A4\u30C6\u30A3\u30D6</string>
+    <string name="setting_resolution_custom">\u30AB\u30B9\u30BF\u30E0\u89E3\u50CF\u5EA6\u2026</string>
+    <string name="setting_resolution_custom_hint">\u4F8B\uFF1A1920x1080</string>
+    <string name="setting_fps">\u30D5\u30EC\u30FC\u30E0\u30EC\u30FC\u30C8\uFF08FPS\uFF09</string>
+    <string name="setting_bitrate">\u30D3\u30C7\u30AA\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8</string>
+    <string name="setting_video_encoder">\u30D3\u30C7\u30AA\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC</string>
+    <string name="setting_color_mode">\u30AB\u30E9\u30FC\u30E2\u30FC\u30C9</string>
+    <string name="setting_color_mode_standard">\u6A19\u6E96\uFF08Rec.709\uFF09</string>
+    <string name="setting_color_mode_full">\u30D5\u30EB\u30EC\u30F3\u30B8</string>
+    <string name="dialog_color_mode">\u30AB\u30E9\u30FC\u30E2\u30FC\u30C9</string>
     <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
     <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">Rec.709 明るさ補正</string>
-    <string name="setting_rec709_brightness_correction_summary">メタデータ修復後に軽いガンマ補正を適用します。エクスポート速度が少し低下する場合があります。</string>
-    <string name="rec709_brightness_correction_off">オフ</string>
-    <string name="rec709_brightness_correction_low">低い明るさ補正</string>
-    <string name="rec709_brightness_correction_medium">中程度の明るさ補正</string>
-    <string name="setting_orientation">向き</string>
-    <string name="setting_orientation_auto">自動</string>
-    <string name="setting_orientation_portrait">縦向き</string>
-    <string name="setting_orientation_landscape">横向き</string>
+    <string name="setting_rec709_brightness_correction">Rec.709 \u660E\u308B\u3055\u88DC\u6B63</string>
+    <string name="setting_rec709_brightness_correction_summary">\u30E1\u30BF\u30C7\u30FC\u30BF\u4FEE\u5FA9\u5F8C\u306B\u8EFD\u3044\u30AC\u30F3\u30DE\u88DC\u6B63\u3092\u9069\u7528\u3057\u307E\u3059\u3002\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u901F\u5EA6\u304C\u5C11\u3057\u4F4E\u4E0B\u3059\u308B\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002</string>
+    <string name="rec709_brightness_correction_off">\u30AA\u30D5</string>
+    <string name="rec709_brightness_correction_low">\u4F4E\u3044\u660E\u308B\u3055\u88DC\u6B63</string>
+    <string name="rec709_brightness_correction_medium">\u4E2D\u7A0B\u5EA6\u306E\u660E\u308B\u3055\u88DC\u6B63</string>
+    <string name="setting_orientation">\u5411\u304D</string>
+    <string name="setting_orientation_auto">\u81EA\u52D5</string>
+    <string name="setting_orientation_portrait">\u7E26\u5411\u304D</string>
+    <string name="setting_orientation_landscape">\u6A2A\u5411\u304D</string>
 
     <!-- Audio Settings -->
-    <string name="setting_microphone">マイク</string>
-    <string name="setting_internal_audio">内部オーディオ</string>
-    <string name="setting_audio_bitrate">オーディオビットレート</string>
-    <string name="setting_audio_sample_rate">サンプルレート</string>
-    <string name="setting_audio_channels">チャンネル</string>
-    <string name="setting_audio_channels_mono">モノラル</string>
-    <string name="setting_audio_channels_stereo">ステレオ</string>
-    <string name="setting_audio_encoder">オーディオエンコーダー</string>
-    <string name="setting_separate_mic">マイクを別トラックで保存</string>
-    <string name="setting_separate_mic_desc">マイクを別の音声ファイルとして保存する</string>
+    <string name="setting_microphone">\u30DE\u30A4\u30AF</string>
+    <string name="setting_internal_audio">\u5185\u90E8\u30AA\u30FC\u30C7\u30A3\u30AA</string>
+    <string name="setting_audio_bitrate">\u30AA\u30FC\u30C7\u30A3\u30AA\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8</string>
+    <string name="setting_audio_sample_rate">\u30B5\u30F3\u30D7\u30EB\u30EC\u30FC\u30C8</string>
+    <string name="setting_audio_channels">\u30C1\u30E3\u30F3\u30CD\u30EB</string>
+    <string name="setting_audio_channels_mono">\u30E2\u30CE\u30E9\u30EB</string>
+    <string name="setting_audio_channels_stereo">\u30B9\u30C6\u30EC\u30AA</string>
+    <string name="setting_audio_encoder">\u30AA\u30FC\u30C7\u30A3\u30AA\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC</string>
+    <string name="setting_separate_mic">\u30DE\u30A4\u30AF\u3092\u5225\u30C8\u30E9\u30C3\u30AF\u3067\u4FDD\u5B58</string>
+    <string name="setting_separate_mic_desc">\u30DE\u30A4\u30AF\u3092\u5225\u306E\u97F3\u58F0\u30D5\u30A1\u30A4\u30EB\u3068\u3057\u3066\u4FDD\u5B58\u3059\u308B</string>
 
     <!-- Overlay Settings -->
-    <string name="setting_floating_controls">フローティングコントロール</string>
-    <string name="setting_hide_floating_while_recording">録音中にフローティング アイコンを非表示にする</string>
-    <string name="settings_hide_floating_while_recording_desc">録音の進行中はフローティング コントロールのバブルを非表示にします</string>
-    <string name="setting_post_screenshot_options">スクリーンショット後のオプション</string>
-    <string name="settings_post_screenshot_options_desc">スクリーンショットの後に、共有または編集するオプションを表示します</string>
-    <string name="setting_record_single_app">単一のアプリを記録する</string>
-    <string name="settings_record_single_app_desc">Android 14 以降では、画面キャプチャを許可するときに 1 つのアプリ ウィンドウまたは全画面を選択します</string>
-    <string name="screenshot_post_edit">編集</string>
-    <string name="screenshot_post_action_failed">共有を開けませんでした</string>
-    <string name="screenshot_post_tap_outside">外側をタップして閉じます</string>
-    <string name="image_editor_title">画像の編集</string>
-    <string name="image_editor_panel_rotate">回転</string>
-    <string name="image_editor_panel_crop">作物</string>
-    <string name="image_editor_panel_draw">描く</string>
-    <string name="image_editor_rotate_ccw">左に回転</string>
-    <string name="image_editor_rotate_cw">右回転</string>
-    <string name="image_editor_saved">画像は Pictures/CatRec/Screenshots に保存されました</string>
-    <string name="image_editor_save_failed">画像を保存できませんでした</string>
-    <string name="image_editor_load_failed">画像を読み込めませんでした</string>
-    <string name="tool_edit_image">画像の編集</string>
-    <string name="brush_line_width">線幅</string>
-    <string name="brush_color_picker_hint">色を選択し、太さを調整して、「適用」をタップします。</string>
-    <string name="brush_color_back">戻る</string>
-    <string name="brush_apply">適用する</string>
-    <string name="brush_tool_pen">描く</string>
-    <string name="brush_tool_eraser">消しゴム</string>
-    <string name="brush_tool_undo">最後のストロークを元に戻す</string>
-    <string name="brush_tool_square">矩形</string>
-    <string name="brush_tool_circle">楕円</string>
-    <string name="brush_tool_arrow">矢印</string>
-    <string name="brush_tool_mosaic">ピクセル化エリア</string>
-    <string name="brush_tool_colors">色と線幅</string>
-    <string name="brush_panel_title">脳卒中</string>
-    <string name="setting_camera_settings">カメラ設定</string>
-    <string name="setting_watermark">CatRecウォーターマーク</string>
-    <string name="setting_watermark_size">ウォーターマークサイズ</string>
-    <string name="setting_watermark_opacity">ウォーターマーク不透明度</string>
+    <string name="setting_floating_controls">\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB</string>
+    <string name="setting_hide_floating_while_recording">\u9332\u97F3\u4E2D\u306B\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0 \u30A2\u30A4\u30B3\u30F3\u3092\u975E\u8868\u793A\u306B\u3059\u308B</string>
+    <string name="settings_hide_floating_while_recording_desc">\u9332\u97F3\u306E\u9032\u884C\u4E2D\u306F\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0 \u30B3\u30F3\u30C8\u30ED\u30FC\u30EB\u306E\u30D0\u30D6\u30EB\u3092\u975E\u8868\u793A\u306B\u3057\u307E\u3059</string>
+    <string name="setting_post_screenshot_options">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u5F8C\u306E\u30AA\u30D7\u30B7\u30E7\u30F3</string>
+    <string name="settings_post_screenshot_options_desc">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u5F8C\u306B\u3001\u5171\u6709\u307E\u305F\u306F\u7DE8\u96C6\u3059\u308B\u30AA\u30D7\u30B7\u30E7\u30F3\u3092\u8868\u793A\u3057\u307E\u3059</string>
+    <string name="setting_record_single_app">\u5358\u4E00\u306E\u30A2\u30D7\u30EA\u3092\u8A18\u9332\u3059\u308B</string>
+    <string name="settings_record_single_app_desc">Android 14 \u4EE5\u964D\u3067\u306F\u3001\u753B\u9762\u30AD\u30E3\u30D7\u30C1\u30E3\u3092\u8A31\u53EF\u3059\u308B\u3068\u304D\u306B 1 \u3064\u306E\u30A2\u30D7\u30EA \u30A6\u30A3\u30F3\u30C9\u30A6\u307E\u305F\u306F\u5168\u753B\u9762\u3092\u9078\u629E\u3057\u307E\u3059</string>
+    <string name="screenshot_post_edit">\u7DE8\u96C6</string>
+    <string name="screenshot_post_action_failed">\u5171\u6709\u3092\u958B\u3051\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="screenshot_post_tap_outside">\u5916\u5074\u3092\u30BF\u30C3\u30D7\u3057\u3066\u9589\u3058\u307E\u3059</string>
+    <string name="image_editor_title">\u753B\u50CF\u306E\u7DE8\u96C6</string>
+    <string name="image_editor_panel_rotate">\u56DE\u8EE2</string>
+    <string name="image_editor_panel_crop">\u4F5C\u7269</string>
+    <string name="image_editor_panel_draw">\u63CF\u304F</string>
+    <string name="image_editor_rotate_ccw">\u5DE6\u306B\u56DE\u8EE2</string>
+    <string name="image_editor_rotate_cw">\u53F3\u56DE\u8EE2</string>
+    <string name="image_editor_saved">\u753B\u50CF\u306F Pictures/CatRec/Screenshots \u306B\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="image_editor_save_failed">\u753B\u50CF\u3092\u4FDD\u5B58\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="image_editor_load_failed">\u753B\u50CF\u3092\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="tool_edit_image">\u753B\u50CF\u306E\u7DE8\u96C6</string>
+    <string name="brush_line_width">\u7DDA\u5E45</string>
+    <string name="brush_color_picker_hint">\u8272\u3092\u9078\u629E\u3057\u3001\u592A\u3055\u3092\u8ABF\u6574\u3057\u3066\u3001\u300C\u9069\u7528\u300D\u3092\u30BF\u30C3\u30D7\u3057\u307E\u3059\u3002</string>
+    <string name="brush_color_back">\u623B\u308B</string>
+    <string name="brush_apply">\u9069\u7528\u3059\u308B</string>
+    <string name="brush_tool_pen">\u63CF\u304F</string>
+    <string name="brush_tool_eraser">\u6D88\u3057\u30B4\u30E0</string>
+    <string name="brush_tool_undo">\u6700\u5F8C\u306E\u30B9\u30C8\u30ED\u30FC\u30AF\u3092\u5143\u306B\u623B\u3059</string>
+    <string name="brush_tool_square">\u77E9\u5F62</string>
+    <string name="brush_tool_circle">\u6955\u5186</string>
+    <string name="brush_tool_arrow">\u77E2\u5370</string>
+    <string name="brush_tool_mosaic">\u30D4\u30AF\u30BB\u30EB\u5316\u30A8\u30EA\u30A2</string>
+    <string name="brush_tool_colors">\u8272\u3068\u7DDA\u5E45</string>
+    <string name="brush_panel_title">\u8133\u5352\u4E2D</string>
+    <string name="setting_camera_settings">\u30AB\u30E1\u30E9\u8A2D\u5B9A</string>
+    <string name="setting_watermark">CatRec\u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF</string>
+    <string name="setting_watermark_size">\u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF\u30B5\u30A4\u30BA</string>
+    <string name="setting_watermark_opacity">\u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF\u4E0D\u900F\u660E\u5EA6</string>
 
     <!-- Camera Settings Dialog -->
     <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">カメラを有効にする</string>
-    <string name="camera_enable_desc">録画中にカメラオーバーレイを表示する</string>
-    <string name="camera_lock_position">位置をロック</string>
-    <string name="camera_facing">カメラ</string>
-    <string name="camera_facing_front">フロント</string>
-    <string name="camera_facing_rear">リア</string>
-    <string name="camera_aspect_ratio">アスペクト比</string>
-    <string name="camera_orientation">向き</string>
-    <string name="camera_size">サイズ</string>
-    <string name="camera_opacity">不透明度</string>
+    <string name="camera_enable">\u30AB\u30E1\u30E9\u3092\u6709\u52B9\u306B\u3059\u308B</string>
+    <string name="camera_enable_desc">\u9332\u753B\u4E2D\u306B\u30AB\u30E1\u30E9\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u3092\u8868\u793A\u3059\u308B</string>
+    <string name="camera_lock_position">\u4F4D\u7F6E\u3092\u30ED\u30C3\u30AF</string>
+    <string name="camera_facing">\u30AB\u30E1\u30E9</string>
+    <string name="camera_facing_front">\u30D5\u30ED\u30F3\u30C8</string>
+    <string name="camera_facing_rear">\u30EA\u30A2</string>
+    <string name="camera_aspect_ratio">\u30A2\u30B9\u30DA\u30AF\u30C8\u6BD4</string>
+    <string name="camera_orientation">\u5411\u304D</string>
+    <string name="camera_size">\u30B5\u30A4\u30BA</string>
+    <string name="camera_opacity">\u4E0D\u900F\u660E\u5EA6</string>
 
     <!-- Screenshot Settings -->
-    <string name="setting_screenshot_format">形式</string>
-    <string name="setting_screenshot_quality">品質</string>
+    <string name="setting_screenshot_format">\u5F62\u5F0F</string>
+    <string name="setting_screenshot_quality">\u54C1\u8CEA</string>
 
     <!-- Theme Settings -->
-    <string name="setting_theme">アプリテーマ</string>
-    <string name="theme_system">システム既定</string>
-    <string name="theme_light">ライト</string>
-    <string name="theme_dark">ダーク</string>
+    <string name="setting_theme">\u30A2\u30D7\u30EA\u30C6\u30FC\u30DE</string>
+    <string name="theme_system">\u30B7\u30B9\u30C6\u30E0\u65E2\u5B9A</string>
+    <string name="theme_light">\u30E9\u30A4\u30C8</string>
+    <string name="theme_dark">\u30C0\u30FC\u30AF</string>
 
     <!-- Language Settings -->
-    <string name="setting_language">アプリの言語</string>
-    <string name="language_system">システム既定</string>
-    <string name="language_english">英語</string>
-    <string name="language_arabic">ああ</string>
-    <string name="language_chinese_simplified">中文（简体）</string>
-    <string name="language_chinese_traditional">中文（繁體）</string>
-    <string name="language_french">フランセ</string>
-    <string name="language_german">ドイツ語</string>
-    <string name="language_hindi">हिन्दी</string>
-    <string name="language_indonesian">インドネシア語</string>
-    <string name="language_italian">イタリアーノ</string>
-    <string name="language_japanese">日本語</string>
-    <string name="language_korean">한국어</string>
-    <string name="language_portuguese">ポルトガル語</string>
-    <string name="language_russian">Русский</string>
-    <string name="language_spanish">スペイン語</string>
-    <string name="language_turkish">テュルクチェ</string>
-    <string name="language_vietnamese">ティエン・ヴィエット</string>
+    <string name="setting_language">\u30A2\u30D7\u30EA\u306E\u8A00\u8A9E</string>
+    <string name="language_system">\u30B7\u30B9\u30C6\u30E0\u65E2\u5B9A</string>
+    <string name="language_english">\u82F1\u8A9E</string>
+    <string name="language_arabic">\u3042\u3042</string>
+    <string name="language_chinese_simplified">\u4E2D\u6587\uFF08\u7B80\u4F53\uFF09</string>
+    <string name="language_chinese_traditional">\u4E2D\u6587\uFF08\u7E41\u9AD4\uFF09</string>
+    <string name="language_french">\u30D5\u30E9\u30F3\u30BB</string>
+    <string name="language_german">\u30C9\u30A4\u30C4\u8A9E</string>
+    <string name="language_hindi">\u0939\u093F\u0928\u094D\u0926\u0940</string>
+    <string name="language_indonesian">\u30A4\u30F3\u30C9\u30CD\u30B7\u30A2\u8A9E</string>
+    <string name="language_italian">\u30A4\u30BF\u30EA\u30A2\u30FC\u30CE</string>
+    <string name="language_japanese">\u65E5\u672C\u8A9E</string>
+    <string name="language_korean">\uD55C\uAD6D\uC5B4</string>
+    <string name="language_portuguese">\u30DD\u30EB\u30C8\u30AC\u30EB\u8A9E</string>
+    <string name="language_russian">\u0420\u0443\u0441\u0441\u043A\u0438\u0439</string>
+    <string name="language_spanish">\u30B9\u30DA\u30A4\u30F3\u8A9E</string>
+    <string name="language_turkish">\u30C6\u30E5\u30EB\u30AF\u30C1\u30A7</string>
+    <string name="language_vietnamese">\u30C6\u30A3\u30A8\u30F3\u30FB\u30F4\u30A3\u30A8\u30C3\u30C8</string>
 
     <!-- Storage Settings -->
-    <string name="setting_save_location">保存先</string>
-    <string name="setting_save_location_default">デフォルト（Movies/CatRec）</string>
-    <string name="setting_filename_pattern">ファイル名パターン</string>
+    <string name="setting_save_location">\u4FDD\u5B58\u5148</string>
+    <string name="setting_save_location_default">\u30C7\u30D5\u30A9\u30EB\u30C8\uFF08Movies/CatRec\uFF09</string>
+    <string name="setting_filename_pattern">\u30D5\u30A1\u30A4\u30EB\u540D\u30D1\u30BF\u30FC\u30F3</string>
 
     <!-- General Settings -->
-    <string name="setting_countdown">カウントダウン</string>
-    <string name="setting_stop_behavior">停止動作</string>
+    <string name="setting_countdown">\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3</string>
+    <string name="setting_stop_behavior">\u505C\u6B62\u52D5\u4F5C</string>
 
     <!-- Screenshots Screen -->
-    <string name="screenshots_empty_title">スクリーンショットはまだありません</string>
-    <string name="screenshots_empty_desc">録画オーバーレイのスクリーンショットボタンをタップして画面をキャプチャしてください</string>
+    <string name="screenshots_empty_title">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306F\u307E\u3060\u3042\u308A\u307E\u305B\u3093</string>
+    <string name="screenshots_empty_desc">\u9332\u753B\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u306E\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u30DC\u30BF\u30F3\u3092\u30BF\u30C3\u30D7\u3057\u3066\u753B\u9762\u3092\u30AD\u30E3\u30D7\u30C1\u30E3\u3057\u3066\u304F\u3060\u3055\u3044</string>
 
     <!-- Recordings Screen -->
-    <string name="recordings_empty_title">録画がありません</string>
-    <string name="recordings_empty_desc">録画を開始すると、ここにビデオが表示されます</string>
+    <string name="recordings_empty_title">\u9332\u753B\u304C\u3042\u308A\u307E\u305B\u3093</string>
+    <string name="recordings_empty_desc">\u9332\u753B\u3092\u958B\u59CB\u3059\u308B\u3068\u3001\u3053\u3053\u306B\u30D3\u30C7\u30AA\u304C\u8868\u793A\u3055\u308C\u307E\u3059</string>
 
     <!-- Support Screen -->
-    <string name="support_subscribe_youtube">YouTube を購読する</string>
-    <string name="support_subscribe_youtube_desc">最新情報については \@ibbie をフォローしてください</string>
-    <string name="support_remove_ads">広告を削除 — $1</string>
-    <string name="support_remove_ads_desc">買い切り、永久に広告なし</string>
-    <string name="support_restore_purchases">購入したものを復元する</string>
-    <string name="support_restore_purchases_desc">Google Play からの広告やその他の購入の削除を同期します</string>
-    <string name="support_restore_purchases_toast">Google Play で購入内容を確認しています…</string>
-    <string name="support_play_promo_title">プロモコード（広告削除）</string>
-    <string name="support_play_promo_desc">広告削除の Google Play 購入画面を開きます。お支払い方法 → コードを引き換え、コードを入力して完了してください。広告が残る場合は下の [購入を復元] をタップ。</string>
-    <string name="support_ads_removed">広告削除済み — ありがとうございます！</string>
-    <string name="support_ads_removed_desc">プレミアム オプションはロック解除されたままになります。視聴する広告はありません。</string>
-    <string name="support_watch_ad">広告を見る</string>
-    <string name="support_donate">コーヒーをおごってください（$1）</string>
-    <string name="support_donate_desc">1 回限りの寄付 — CatRec を存続させます</string>
-    <string name="support_share">CatRecをシェアする</string>
-    <string name="support_share_desc">お友達に私たちのことを教えてください</string>
-    <string name="support_changelog">変更履歴</string>
-    <string name="support_changelog_desc">このバージョンの新機能を確認する</string>
-    <string name="support_credits">クレジット</string>
-    <string name="support_credits_desc">CatRec のテストや宣伝に協力してくれた方々</string>
-    <string name="dialog_credits_title">クレジット</string>
-    <string name="credits_intro">CatRec のテストと共有にご協力いただいた皆様に感謝します。名前をタップするとチャンネルを開きます。</string>
+    <string name="support_subscribe_youtube">YouTube \u3092\u8CFC\u8AAD\u3059\u308B</string>
+    <string name="support_subscribe_youtube_desc">\u6700\u65B0\u60C5\u5831\u306B\u3064\u3044\u3066\u306F \@ibbie \u3092\u30D5\u30A9\u30ED\u30FC\u3057\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="support_remove_ads">\u5E83\u544A\u3092\u524A\u9664 \u2014 $1</string>
+    <string name="support_remove_ads_desc">\u8CB7\u3044\u5207\u308A\u3001\u6C38\u4E45\u306B\u5E83\u544A\u306A\u3057</string>
+    <string name="support_restore_purchases">\u8CFC\u5165\u3057\u305F\u3082\u306E\u3092\u5FA9\u5143\u3059\u308B</string>
+    <string name="support_restore_purchases_desc">Google Play \u304B\u3089\u306E\u5E83\u544A\u3084\u305D\u306E\u4ED6\u306E\u8CFC\u5165\u306E\u524A\u9664\u3092\u540C\u671F\u3057\u307E\u3059</string>
+    <string name="support_restore_purchases_toast">Google Play \u3067\u8CFC\u5165\u5185\u5BB9\u3092\u78BA\u8A8D\u3057\u3066\u3044\u307E\u3059\u2026</string>
+    <string name="support_play_promo_title">\u30D7\u30ED\u30E2\u30B3\u30FC\u30C9\uFF08\u5E83\u544A\u524A\u9664\uFF09</string>
+    <string name="support_play_promo_desc">\u5E83\u544A\u524A\u9664\u306E Google Play \u8CFC\u5165\u753B\u9762\u3092\u958B\u304D\u307E\u3059\u3002\u304A\u652F\u6255\u3044\u65B9\u6CD5 \u2192 \u30B3\u30FC\u30C9\u3092\u5F15\u304D\u63DB\u3048\u3001\u30B3\u30FC\u30C9\u3092\u5165\u529B\u3057\u3066\u5B8C\u4E86\u3057\u3066\u304F\u3060\u3055\u3044\u3002\u5E83\u544A\u304C\u6B8B\u308B\u5834\u5408\u306F\u4E0B\u306E [\u8CFC\u5165\u3092\u5FA9\u5143] \u3092\u30BF\u30C3\u30D7\u3002</string>
+    <string name="support_ads_removed">\u5E83\u544A\u524A\u9664\u6E08\u307F \u2014 \u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\uFF01</string>
+    <string name="support_ads_removed_desc">\u30D7\u30EC\u30DF\u30A2\u30E0 \u30AA\u30D7\u30B7\u30E7\u30F3\u306F\u30ED\u30C3\u30AF\u89E3\u9664\u3055\u308C\u305F\u307E\u307E\u306B\u306A\u308A\u307E\u3059\u3002\u8996\u8074\u3059\u308B\u5E83\u544A\u306F\u3042\u308A\u307E\u305B\u3093\u3002</string>
+    <string name="support_watch_ad">\u5E83\u544A\u3092\u898B\u308B</string>
+    <string name="support_donate">\u30B3\u30FC\u30D2\u30FC\u3092\u304A\u3054\u3063\u3066\u304F\u3060\u3055\u3044\uFF08$1\uFF09</string>
+    <string name="support_donate_desc">1 \u56DE\u9650\u308A\u306E\u5BC4\u4ED8 \u2014 CatRec \u3092\u5B58\u7D9A\u3055\u305B\u307E\u3059</string>
+    <string name="support_share">CatRec\u3092\u30B7\u30A7\u30A2\u3059\u308B</string>
+    <string name="support_share_desc">\u304A\u53CB\u9054\u306B\u79C1\u305F\u3061\u306E\u3053\u3068\u3092\u6559\u3048\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="support_changelog">\u5909\u66F4\u5C65\u6B74</string>
+    <string name="support_changelog_desc">\u3053\u306E\u30D0\u30FC\u30B8\u30E7\u30F3\u306E\u65B0\u6A5F\u80FD\u3092\u78BA\u8A8D\u3059\u308B</string>
+    <string name="support_credits">\u30AF\u30EC\u30B8\u30C3\u30C8</string>
+    <string name="support_credits_desc">CatRec \u306E\u30C6\u30B9\u30C8\u3084\u5BA3\u4F1D\u306B\u5354\u529B\u3057\u3066\u304F\u308C\u305F\u65B9\u3005</string>
+    <string name="dialog_credits_title">\u30AF\u30EC\u30B8\u30C3\u30C8</string>
+    <string name="credits_intro">CatRec \u306E\u30C6\u30B9\u30C8\u3068\u5171\u6709\u306B\u3054\u5354\u529B\u3044\u305F\u3060\u3044\u305F\u7686\u69D8\u306B\u611F\u8B1D\u3057\u307E\u3059\u3002\u540D\u524D\u3092\u30BF\u30C3\u30D7\u3059\u308B\u3068\u30C1\u30E3\u30F3\u30CD\u30EB\u3092\u958B\u304D\u307E\u3059\u3002</string>
 
     <!-- Notifications -->
-    <string name="notif_screenshot_saved">スクリーンショットを保存しました</string>
+    <string name="notif_screenshot_saved">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F</string>
 
     <!-- Errors / Toast -->
-    <string name="error_screenshot_no_projection">スクリーンショットを撮るには先に録画を開始してください</string>
-    <string name="error_screenshot_capture_failed">スクリーンショットをキャプチャできませんでした。もう一度やり直してください。</string>
-    <string name="toast_share_app">CatRec - 最もクールなスクリーンレコーダーをチェックしてください!</string>
+    <string name="error_screenshot_no_projection">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u64AE\u308B\u306B\u306F\u5148\u306B\u9332\u753B\u3092\u958B\u59CB\u3057\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="error_screenshot_capture_failed">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30AD\u30E3\u30D7\u30C1\u30E3\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u3082\u3046\u4E00\u5EA6\u3084\u308A\u76F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="toast_share_app">CatRec - \u6700\u3082\u30AF\u30FC\u30EB\u306A\u30B9\u30AF\u30EA\u30FC\u30F3\u30EC\u30B3\u30FC\u30C0\u30FC\u3092\u30C1\u30A7\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044!</string>
 
     <!-- Actions (extra) -->
-    <string name="action_done">完了</string>
-    <string name="action_grant_now">今すぐ付与</string>
-    <string name="action_not_now">今じゃない</string>
-    <string name="action_rename">名前の変更</string>
-    <string name="action_trim">トリム</string>
-    <string name="action_open_external">外部に開く</string>
-    <string name="action_loading">読み込み中…</string>
-    <string name="action_watch_ad">広告を見る</string>
-    <string name="action_unlock">ロック解除</string>
-    <string name="action_got_it">わかった</string>
-    <string name="action_leave_feedback">フィードバックを残す</string>
-    <string name="action_change">変更</string>
-    <string name="action_enable_anyway">それでも有効にする</string>
-    <string name="action_keep_performance_mode">パフォーマンスモードを維持</string>
+    <string name="action_done">\u5B8C\u4E86</string>
+    <string name="action_grant_now">\u4ECA\u3059\u3050\u4ED8\u4E0E</string>
+    <string name="action_not_now">\u4ECA\u3058\u3083\u306A\u3044</string>
+    <string name="action_rename">\u540D\u524D\u306E\u5909\u66F4</string>
+    <string name="action_trim">\u30C8\u30EA\u30E0</string>
+    <string name="action_open_external">\u5916\u90E8\u306B\u958B\u304F</string>
+    <string name="action_loading">\u8AAD\u307F\u8FBC\u307F\u4E2D\u2026</string>
+    <string name="action_got_it">\u308F\u304B\u3063\u305F</string>
+    <string name="action_leave_feedback">\u30D5\u30A3\u30FC\u30C9\u30D0\u30C3\u30AF\u3092\u6B8B\u3059</string>
+    <string name="action_change">\u5909\u66F4</string>
+    <string name="action_enable_anyway">\u305D\u308C\u3067\u3082\u6709\u52B9\u306B\u3059\u308B</string>
+    <string name="action_keep_performance_mode">\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9\u30E2\u30FC\u30C9\u3092\u7DAD\u6301</string>
 
     <!-- Stop behavior (stable keys use string resources for labels only) -->
-    <string name="stop_behavior_notification">通知</string>
-    <string name="stop_behavior_shake">デバイスを振る</string>
-    <string name="stop_behavior_screen_off">画面オフ</string>
-    <string name="stop_behavior_pause_on_screen_off">画面オフで一時停止</string>
+    <string name="stop_behavior_notification">\u901A\u77E5</string>
+    <string name="stop_behavior_shake">\u30C7\u30D0\u30A4\u30B9\u3092\u632F\u308B</string>
+    <string name="stop_behavior_screen_off">\u753B\u9762\u30AA\u30D5</string>
+    <string name="stop_behavior_pause_on_screen_off">\u753B\u9762\u30AA\u30D5\u3067\u4E00\u6642\u505C\u6B62</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">常に表示されるバブル — どのアプリからでも録画・キャプチャ</string>
-    <string name="settings_show_touches">タッチを表示</string>
-    <string name="settings_show_touches_desc">開発者オプションで有効にする</string>
-    <string name="toast_enable_show_taps">「タップを表示」を手動で有効にしてください</string>
-    <string name="toast_overlay_permission">オーバーレイ許可を付与してください</string>
-    <string name="setting_countdown_off">オフ</string>
+    <string name="settings_floating_controls_desc">\u5E38\u306B\u8868\u793A\u3055\u308C\u308B\u30D0\u30D6\u30EB \u2014 \u3069\u306E\u30A2\u30D7\u30EA\u304B\u3089\u3067\u3082\u9332\u753B\u30FB\u30AD\u30E3\u30D7\u30C1\u30E3</string>
+    <string name="settings_show_touches">\u30BF\u30C3\u30C1\u3092\u8868\u793A</string>
+    <string name="settings_show_touches_desc">\u958B\u767A\u8005\u30AA\u30D7\u30B7\u30E7\u30F3\u3067\u6709\u52B9\u306B\u3059\u308B</string>
+    <string name="toast_enable_show_taps">\u300C\u30BF\u30C3\u30D7\u3092\u8868\u793A\u300D\u3092\u624B\u52D5\u3067\u6709\u52B9\u306B\u3057\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="toast_overlay_permission">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u8A31\u53EF\u3092\u4ED8\u4E0E\u3057\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="setting_countdown_off">\u30AA\u30D5</string>
     <plurals name="setting_countdown_seconds">
-        <item quantity="other">%1$d 秒</item>
+        <item quantity="other">"%1$d 秒"</item>
     </plurals>
-    <string name="setting_internal_audio_note">Android 10以上のみ</string>
-    <string name="gate_feature_separate_mic">マイクを別トラックで保存</string>
-    <string name="gate_feature_camera_overlay">カメラオーバーレイ設定</string>
-    <string name="camera_status_enabled">有効 — %1$s • %2$s</string>
-    <string name="state_disabled">無効</string>
-    <string name="watermark_preview_active">ライブプレビュー有効 — ウォーターマークをドラッグして位置を調整</string>
-    <string name="watermark_preview_recording">録画中はプレビューを利用できません</string>
-    <string name="watermark_preview_need_overlay">ライブプレビューにはオーバーレイ許可が必要です</string>
-    <string name="watermark_snap_dialog_title">位置にスナップ</string>
-    <string name="watermark_snap_custom">カスタム</string>
-    <string name="watermark_snap_corner_title">コーナーにスナップ</string>
-    <string name="watermark_snap_corner_desc">または画面上でドラッグ</string>
-    <string name="watermark_shape">ウォーターマークの形</string>
-    <string name="watermark_image">ウォーターマーク画像</string>
-    <string name="watermark_image_custom">カスタム画像が設定されています</string>
-    <string name="watermark_image_default">デフォルト（アプリアイコン）</string>
-    <string name="watermark_reset_icon">デフォルトアイコンにリセット</string>
+    <string name="setting_internal_audio_note">Android 10\u4EE5\u4E0A\u306E\u307F</string>
+    <string name="camera_status_enabled">\u6709\u52B9 \u2014 %1$s \u2022 %2$s</string>
+    <string name="state_disabled">\u7121\u52B9</string>
+    <string name="watermark_preview_active">\u30E9\u30A4\u30D6\u30D7\u30EC\u30D3\u30E5\u30FC\u6709\u52B9 \u2014 \u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF\u3092\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u4F4D\u7F6E\u3092\u8ABF\u6574</string>
+    <string name="watermark_preview_recording">\u9332\u753B\u4E2D\u306F\u30D7\u30EC\u30D3\u30E5\u30FC\u3092\u5229\u7528\u3067\u304D\u307E\u305B\u3093</string>
+    <string name="watermark_preview_need_overlay">\u30E9\u30A4\u30D6\u30D7\u30EC\u30D3\u30E5\u30FC\u306B\u306F\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u8A31\u53EF\u304C\u5FC5\u8981\u3067\u3059</string>
+    <string name="watermark_snap_dialog_title">\u4F4D\u7F6E\u306B\u30B9\u30CA\u30C3\u30D7</string>
+    <string name="watermark_snap_custom">\u30AB\u30B9\u30BF\u30E0</string>
+    <string name="watermark_snap_corner_title">\u30B3\u30FC\u30CA\u30FC\u306B\u30B9\u30CA\u30C3\u30D7</string>
+    <string name="watermark_snap_corner_desc">\u307E\u305F\u306F\u753B\u9762\u4E0A\u3067\u30C9\u30E9\u30C3\u30B0</string>
+    <string name="watermark_shape">\u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF\u306E\u5F62</string>
+    <string name="watermark_image">\u30A6\u30A9\u30FC\u30BF\u30FC\u30DE\u30FC\u30AF\u753B\u50CF</string>
+    <string name="watermark_image_custom">\u30AB\u30B9\u30BF\u30E0\u753B\u50CF\u304C\u8A2D\u5B9A\u3055\u308C\u3066\u3044\u307E\u3059</string>
+    <string name="watermark_image_default">\u30C7\u30D5\u30A9\u30EB\u30C8\uFF08\u30A2\u30D7\u30EA\u30A2\u30A4\u30B3\u30F3\uFF09</string>
+    <string name="watermark_reset_icon">\u30C7\u30D5\u30A9\u30EB\u30C8\u30A2\u30A4\u30B3\u30F3\u306B\u30EA\u30BB\u30C3\u30C8</string>
     <string name="label_dp">%1$d dp</string>
     <string name="label_percent">%1$d%%</string>
     <string name="label_kbps">kbps</string>
     <string name="label_hz">Hz</string>
-    <string name="perf_auto_low_end">自動有効 — ローエンドデバイスを検出</string>
-    <string name="perf_quality_may_lag">クオリティモード（このデバイスでは遅延する場合があります）</string>
-    <string name="perf_static_glass">スタティックガラス — ブラー無効</string>
-    <string name="perf_dynamic_glass">ダイナミックガラスブラー有効</string>
-    <string name="setting_performance_mode">パフォーマンスモード</string>
-    <string name="setting_adaptive_recording_performance">適応型録画パフォーマンス</string>
-    <string name="setting_adaptive_recording_performance_summary">録画中に端末が重い場合、負荷を自動的に下げます</string>
-    <string name="performance_fallback_active">安定性のため、負荷の少ない録画プロファイルに切り替えました</string>
-    <string name="performance_warning_title">パフォーマンス警告</string>
-    <string name="performance_warning_body">お使いのデバイスはRAMが6GB未満、またはAndroid 11以下で動作しています。リアルタイムのガラスブラーエフェクトを有効にすると、特に録画中にUIの遅延が発生する可能性があります。\n\nそれでもクオリティモードを有効にしますか？</string>
-    <string name="accent_color_title">アクセントカラー</string>
-    <string name="accent_gradient_color_2">グラデーションカラー2</string>
-    <string name="accent_presets">プリセット</string>
-    <string name="label_hex_code">16進数コード</string>
+    <string name="perf_auto_low_end">\u81EA\u52D5\u6709\u52B9 \u2014 \u30ED\u30FC\u30A8\u30F3\u30C9\u30C7\u30D0\u30A4\u30B9\u3092\u691C\u51FA</string>
+    <string name="perf_quality_may_lag">\u30AF\u30AA\u30EA\u30C6\u30A3\u30E2\u30FC\u30C9\uFF08\u3053\u306E\u30C7\u30D0\u30A4\u30B9\u3067\u306F\u9045\u5EF6\u3059\u308B\u5834\u5408\u304C\u3042\u308A\u307E\u3059\uFF09</string>
+    <string name="perf_static_glass">\u30B9\u30BF\u30C6\u30A3\u30C3\u30AF\u30AC\u30E9\u30B9 \u2014 \u30D6\u30E9\u30FC\u7121\u52B9</string>
+    <string name="perf_dynamic_glass">\u30C0\u30A4\u30CA\u30DF\u30C3\u30AF\u30AC\u30E9\u30B9\u30D6\u30E9\u30FC\u6709\u52B9</string>
+    <string name="setting_performance_mode">\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9\u30E2\u30FC\u30C9</string>
+    <string name="setting_adaptive_recording_performance">\u9069\u5FDC\u578B\u9332\u753B\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9</string>
+    <string name="setting_adaptive_recording_performance_summary">\u9332\u753B\u4E2D\u306B\u7AEF\u672B\u304C\u91CD\u3044\u5834\u5408\u3001\u8CA0\u8377\u3092\u81EA\u52D5\u7684\u306B\u4E0B\u3052\u307E\u3059</string>
+    <string name="performance_fallback_active">\u5B89\u5B9A\u6027\u306E\u305F\u3081\u3001\u8CA0\u8377\u306E\u5C11\u306A\u3044\u9332\u753B\u30D7\u30ED\u30D5\u30A1\u30A4\u30EB\u306B\u5207\u308A\u66FF\u3048\u307E\u3057\u305F</string>
+    <string name="performance_warning_title">\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9\u8B66\u544A</string>
+    <string name="performance_warning_body">\u304A\u4F7F\u3044\u306E\u30C7\u30D0\u30A4\u30B9\u306FRAM\u304C6GB\u672A\u6E80\u3001\u307E\u305F\u306FAndroid 11\u4EE5\u4E0B\u3067\u52D5\u4F5C\u3057\u3066\u3044\u307E\u3059\u3002\u30EA\u30A2\u30EB\u30BF\u30A4\u30E0\u306E\u30AC\u30E9\u30B9\u30D6\u30E9\u30FC\u30A8\u30D5\u30A7\u30AF\u30C8\u3092\u6709\u52B9\u306B\u3059\u308B\u3068\u3001\u7279\u306B\u9332\u753B\u4E2D\u306BUI\u306E\u9045\u5EF6\u304C\u767A\u751F\u3059\u308B\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002\n\n\u305D\u308C\u3067\u3082\u30AF\u30AA\u30EA\u30C6\u30A3\u30E2\u30FC\u30C9\u3092\u6709\u52B9\u306B\u3057\u307E\u3059\u304B\uFF1F</string>
+    <string name="accent_color_title">\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC</string>
+    <string name="accent_gradient_color_2">\u30B0\u30E9\u30C7\u30FC\u30B7\u30E7\u30F3\u30AB\u30E9\u30FC2</string>
+    <string name="accent_presets">\u30D7\u30EA\u30BB\u30C3\u30C8</string>
+    <string name="label_hex_code">16\u9032\u6570\u30B3\u30FC\u30C9</string>
     <string name="accent_hex_placeholder">FF0033</string>
-    <string name="accent_gradient_toggle">グラデーションアクセント</string>
-    <string name="accent_gradient_desc">二色の光るボーダー</string>
-    <string name="accent_color_1">カラー1</string>
-    <string name="accent_color_2">カラー2</string>
-    <string name="setting_save_location_custom">カスタムフォルダーが設定されています</string>
-    <string name="setting_auto_delete_title">古い録画を自動削除</string>
-    <string name="setting_auto_delete_desc">最新の50件を保持</string>
-    <string name="setting_keep_screen_on_title">画面をオンに保つ</string>
-    <string name="setting_keep_screen_on_desc">録画中</string>
-    <string name="settings_section_privacy">プライバシー</string>
-    <string name="dialog_custom_resolution_title">カスタム解像度</string>
-    <string name="dialog_custom_resolution_hint">解像度を 幅×高さ で入力（例：1920×1080）</string>
-    <string name="error_resolution_format">形式は 幅×高さ である必要があります（例：1920×1080）</string>
-    <string name="error_resolution_min">最小解像度は 100×100 です</string>
-    <string name="error_resolution_max">最大解像度はいずれかの辺が 7680 です</string>
-    <string name="dialog_resolution_title">解像度</string>
+    <string name="accent_gradient_toggle">\u30B0\u30E9\u30C7\u30FC\u30B7\u30E7\u30F3\u30A2\u30AF\u30BB\u30F3\u30C8</string>
+    <string name="accent_gradient_desc">\u4E8C\u8272\u306E\u5149\u308B\u30DC\u30FC\u30C0\u30FC</string>
+    <string name="accent_color_1">\u30AB\u30E9\u30FC1</string>
+    <string name="accent_color_2">\u30AB\u30E9\u30FC2</string>
+    <string name="setting_save_location_custom">\u30AB\u30B9\u30BF\u30E0\u30D5\u30A9\u30EB\u30C0\u30FC\u304C\u8A2D\u5B9A\u3055\u308C\u3066\u3044\u307E\u3059</string>
+    <string name="setting_auto_delete_title">\u53E4\u3044\u9332\u753B\u3092\u81EA\u52D5\u524A\u9664</string>
+    <string name="setting_auto_delete_desc">\u6700\u65B0\u306E50\u4EF6\u3092\u4FDD\u6301</string>
+    <string name="setting_keep_screen_on_title">\u753B\u9762\u3092\u30AA\u30F3\u306B\u4FDD\u3064</string>
+    <string name="setting_keep_screen_on_desc">\u9332\u753B\u4E2D</string>
+    <string name="settings_section_privacy">\u30D7\u30E9\u30A4\u30D0\u30B7\u30FC</string>
+    <string name="dialog_custom_resolution_title">\u30AB\u30B9\u30BF\u30E0\u89E3\u50CF\u5EA6</string>
+    <string name="dialog_custom_resolution_hint">\u89E3\u50CF\u5EA6\u3092 \u5E45\u00D7\u9AD8\u3055 \u3067\u5165\u529B\uFF08\u4F8B\uFF1A1920\u00D71080\uFF09</string>
+    <string name="error_resolution_format">\u5F62\u5F0F\u306F \u5E45\u00D7\u9AD8\u3055 \u3067\u3042\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059\uFF08\u4F8B\uFF1A1920\u00D71080\uFF09</string>
+    <string name="error_resolution_min">\u6700\u5C0F\u89E3\u50CF\u5EA6\u306F 100\u00D7100 \u3067\u3059</string>
+    <string name="error_resolution_max">\u6700\u5927\u89E3\u50CF\u5EA6\u306F\u3044\u305A\u308C\u304B\u306E\u8FBA\u304C 7680 \u3067\u3059</string>
+    <string name="dialog_resolution_title">\u89E3\u50CF\u5EA6</string>
     <string name="resolution_group_16_9">16:9</string>
-    <string name="resolution_group_20_9">20:9（縦長スマホ）</string>
-    <string name="resolution_group_18_9">18:9（2:1）</string>
-    <string name="resolution_group_21_9">21:9（ウルトラワイド）</string>
+    <string name="resolution_group_20_9">20:9\uFF08\u7E26\u9577\u30B9\u30DE\u30DB\uFF09</string>
+    <string name="resolution_group_18_9">18:9\uFF082:1\uFF09</string>
+    <string name="resolution_group_21_9">21:9\uFF08\u30A6\u30EB\u30C8\u30E9\u30EF\u30A4\u30C9\uFF09</string>
     <string name="resolution_group_4_3">4:3</string>
-    <string name="resolution_group_9_16">9:16（縦向き）</string>
-    <string name="dialog_theme_title">アプリテーマ</string>
-    <string name="dialog_language_title">アプリの言語</string>
-    <string name="dialog_filename_pattern">ファイル名パターン</string>
-    <string name="dialog_countdown_timer">カウントダウンタイマー</string>
-    <string name="countdown_none">なし</string>
-    <string name="countdown_3s">3 秒</string>
-    <string name="countdown_5s">5 秒</string>
-    <string name="countdown_10s">10 秒</string>
-    <string name="countdown_20s">20 秒</string>
-    <string name="countdown_30s">30 秒</string>
-    <string name="dialog_video_encoder">ビデオエンコーダー</string>
-    <string name="dialog_audio_encoder">オーディオエンコーダー</string>
-    <string name="dialog_audio_bitrate">オーディオビットレート</string>
-    <string name="dialog_sample_rate">サンプルレート</string>
-    <string name="dialog_bitrate_title">ビットレート</string>
-    <string name="dialog_fps_title">フレームレート（FPS）</string>
-    <string name="dialog_screenshot_format">スクリーンショット形式</string>
-    <string name="dialog_camera_orientation">カメラの向き</string>
-    <string name="premium_feature_title">プレミアム機能</string>
-    <string name="premium_feature_body">%1$sはプレミアム機能です。</string>
-    <string name="premium_feature_watch_ad">このセッションでのロック解除のために短い広告をご覧ください。</string>
-    <string name="premium_feature_tap_unlock">このセッションで有効にするにはロック解除をタップしてください。</string>
+    <string name="resolution_group_9_16">9:16\uFF08\u7E26\u5411\u304D\uFF09</string>
+    <string name="dialog_theme_title">\u30A2\u30D7\u30EA\u30C6\u30FC\u30DE</string>
+    <string name="dialog_language_title">\u30A2\u30D7\u30EA\u306E\u8A00\u8A9E</string>
+    <string name="dialog_filename_pattern">\u30D5\u30A1\u30A4\u30EB\u540D\u30D1\u30BF\u30FC\u30F3</string>
+    <string name="dialog_countdown_timer">\u30AB\u30A6\u30F3\u30C8\u30C0\u30A6\u30F3\u30BF\u30A4\u30DE\u30FC</string>
+    <string name="countdown_none">\u306A\u3057</string>
+    <string name="countdown_3s">3 \u79D2</string>
+    <string name="countdown_5s">5 \u79D2</string>
+    <string name="countdown_10s">10 \u79D2</string>
+    <string name="countdown_20s">20 \u79D2</string>
+    <string name="countdown_30s">30 \u79D2</string>
+    <string name="dialog_video_encoder">\u30D3\u30C7\u30AA\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC</string>
+    <string name="dialog_audio_encoder">\u30AA\u30FC\u30C7\u30A3\u30AA\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC</string>
+    <string name="dialog_audio_bitrate">\u30AA\u30FC\u30C7\u30A3\u30AA\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8</string>
+    <string name="dialog_sample_rate">\u30B5\u30F3\u30D7\u30EB\u30EC\u30FC\u30C8</string>
+    <string name="dialog_bitrate_title">\u30D3\u30C3\u30C8\u30EC\u30FC\u30C8</string>
+    <string name="dialog_fps_title">\u30D5\u30EC\u30FC\u30E0\u30EC\u30FC\u30C8\uFF08FPS\uFF09</string>
+    <string name="dialog_screenshot_format">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u5F62\u5F0F</string>
+    <string name="dialog_camera_orientation">\u30AB\u30E1\u30E9\u306E\u5411\u304D</string>
     <string name="gate_high_fps">%1$s FPS</string>
-    <string name="camera_drag_hint">カメラの円をドラッグして位置を調整</string>
-    <string name="camera_lock_desc_short">誤操作による移動を防ぐ</string>
-    <string name="shape_square">正方形</string>
-    <string name="shape_circle">円</string>
+    <string name="camera_drag_hint">\u30AB\u30E1\u30E9\u306E\u5186\u3092\u30C9\u30E9\u30C3\u30B0\u3057\u3066\u4F4D\u7F6E\u3092\u8ABF\u6574</string>
+    <string name="camera_lock_desc_short">\u8AA4\u64CD\u4F5C\u306B\u3088\u308B\u79FB\u52D5\u3092\u9632\u3050</string>
+    <string name="shape_square">\u6B63\u65B9\u5F62</string>
+    <string name="shape_circle">\u5186</string>
     <string name="ratio_16_9">16:9</string>
     <string name="ratio_4_3">4:3</string>
-    <string name="watermark_position_top_left">左上</string>
-    <string name="watermark_position_top_right">右上</string>
-    <string name="watermark_position_bottom_left">左下</string>
-    <string name="watermark_position_bottom_right">右下</string>
-    <string name="watermark_position_center">中央</string>
+    <string name="watermark_position_top_left">\u5DE6\u4E0A</string>
+    <string name="watermark_position_top_right">\u53F3\u4E0A</string>
+    <string name="watermark_position_bottom_left">\u5DE6\u4E0B</string>
+    <string name="watermark_position_bottom_right">\u53F3\u4E0B</string>
+    <string name="watermark_position_center">\u4E2D\u592E</string>
 
     <!-- Recording screen -->
     <string name="label_fps">FPS</string>
     <string name="label_mbps">Mbps</string>
     <!-- Arg: Clipper rolling window duration in minutes (1–5) -->
-    <string name="setting_clipper_duration">クリッパーの時間</string>
-    <string name="dialog_clipper_duration_title">クリッパーの時間</string>
-    <string name="clipper_duration_1m">1分</string>
-    <string name="clipper_duration_2m">2分</string>
-    <string name="clipper_duration_3m">3分</string>
-    <string name="clipper_duration_4m">4分</string>
-    <string name="clipper_duration_5m">5分</string>
-    <string name="perm_rationale_intro">CatRec で画面を記録するには、次の権限が必要です。</string>
-    <string name="perm_dialog_title">必要な権限</string>
+    <string name="setting_clipper_duration">\u30AF\u30EA\u30C3\u30D1\u30FC\u306E\u6642\u9593</string>
+    <string name="dialog_clipper_duration_title">\u30AF\u30EA\u30C3\u30D1\u30FC\u306E\u6642\u9593</string>
+    <string name="clipper_duration_1m">1\u5206</string>
+    <string name="clipper_duration_2m">2\u5206</string>
+    <string name="clipper_duration_3m">3\u5206</string>
+    <string name="clipper_duration_4m">4\u5206</string>
+    <string name="clipper_duration_5m">5\u5206</string>
+    <string name="perm_rationale_intro">CatRec \u3067\u753B\u9762\u3092\u8A18\u9332\u3059\u308B\u306B\u306F\u3001\u6B21\u306E\u6A29\u9650\u304C\u5FC5\u8981\u3067\u3059\u3002</string>
+    <string name="perm_dialog_title">\u5FC5\u8981\u306A\u6A29\u9650</string>
     <!-- Recordings / screenshots / player -->
-    <string name="delete_recording_title">録音を削除しますか?</string>
-    <string name="delete_recording_message">「%1$s」は完全に削除されます。</string>
-    <string name="delete_screenshot_title">スクリーンショットを削除しますか?</string>
-    <string name="delete_screenshot_message">「%1$s」は完全に削除されます。</string>
+    <string name="delete_recording_title">\u9332\u97F3\u3092\u524A\u9664\u3057\u307E\u3059\u304B?</string>
+    <string name="delete_recording_message">\u300C%1$s\u300D\u306F\u5B8C\u5168\u306B\u524A\u9664\u3055\u308C\u307E\u3059\u3002</string>
+    <string name="delete_screenshot_title">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u524A\u9664\u3057\u307E\u3059\u304B?</string>
+    <string name="delete_screenshot_message">\u300C%1$s\u300D\u306F\u5B8C\u5168\u306B\u524A\u9664\u3055\u308C\u307E\u3059\u3002</string>
     <plurals name="multiselect_selected_count">
-        <item quantity="other">%1$d 個が選択されました</item>
+        <item quantity="other">"%1$d 個が選択されました"</item>
     </plurals>
-    <string name="multiselect_select_all">すべて選択</string>
-    <string name="multiselect_deselect_all">すべての選択を解除します</string>
+    <string name="multiselect_select_all">\u3059\u3079\u3066\u9078\u629E</string>
+    <string name="multiselect_deselect_all">\u3059\u3079\u3066\u306E\u9078\u629E\u3092\u89E3\u9664\u3057\u307E\u3059</string>
     <plurals name="multiselect_delete_title">
-        <item quantity="other">%1$d 個のアイテムを削除しますか?</item>
+        <item quantity="other">"%1$d 個のアイテムを削除しますか?"</item>
     </plurals>
-    <string name="multiselect_delete_message">これらのファイルは完全に削除されます。</string>
-    <string name="multiselect_share_recordings">録音を共有する</string>
-    <string name="multiselect_share_screenshots">スクリーンショットを共有する</string>
-    <string name="delete_generic_recording">この録音は完全に削除されます。</string>
-    <string name="player_renamed_to">%1$s に名前変更されました</string>
-    <string name="player_rename_failed">名前の変更に失敗しました: %1$s</string>
-    <string name="player_delete_failed">削除に失敗しました: %1$s</string>
-    <string name="player_no_app_video">ビデオを開くアプリが見つかりません</string>
-    <string name="player_video_unavailable">この動画は利用できません。削除されたか、移動された可能性があります。</string>
-    <string name="player_rename_title">名前の変更</string>
-    <string name="player_file_name_label">ファイル名</string>
-    <string name="trim_title">ビデオをトリミングする</string>
-    <string name="trim_set_to_current">現在に設定</string>
-    <string name="trim_start_label">開始: %1$s</string>
-    <string name="trim_end_label">終了: %1$s</string>
-    <string name="trim_duration_summary">トリム期間: %1$s (%2$s → %3$s)</string>
-    <string name="trim_too_short">トリム範囲が短すぎます (最小 0.5 秒)</string>
-    <string name="trim_saved_success">トリムは正常に保存されました</string>
-    <string name="trim_failed_retry">トリムに失敗しました。もう一度試してください。</string>
-    <string name="trim_progress">トリミング中… %1$d%%</string>
-    <string name="trim_save">トリミングして保存</string>
-    <string name="content_desc_back">戻る</string>
-    <string name="content_desc_refresh">リフレッシュ</string>
-    <string name="content_desc_options">オプション</string>
+    <string name="multiselect_delete_message">\u3053\u308C\u3089\u306E\u30D5\u30A1\u30A4\u30EB\u306F\u5B8C\u5168\u306B\u524A\u9664\u3055\u308C\u307E\u3059\u3002</string>
+    <string name="multiselect_share_recordings">\u9332\u97F3\u3092\u5171\u6709\u3059\u308B</string>
+    <string name="multiselect_share_screenshots">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u5171\u6709\u3059\u308B</string>
+    <string name="delete_generic_recording">\u3053\u306E\u9332\u97F3\u306F\u5B8C\u5168\u306B\u524A\u9664\u3055\u308C\u307E\u3059\u3002</string>
+    <string name="player_renamed_to">%1$s \u306B\u540D\u524D\u5909\u66F4\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="player_rename_failed">\u540D\u524D\u306E\u5909\u66F4\u306B\u5931\u6557\u3057\u307E\u3057\u305F: %1$s</string>
+    <string name="player_delete_failed">\u524A\u9664\u306B\u5931\u6557\u3057\u307E\u3057\u305F: %1$s</string>
+    <string name="player_no_app_video">\u30D3\u30C7\u30AA\u3092\u958B\u304F\u30A2\u30D7\u30EA\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093</string>
+    <string name="player_video_unavailable">\u3053\u306E\u52D5\u753B\u306F\u5229\u7528\u3067\u304D\u307E\u305B\u3093\u3002\u524A\u9664\u3055\u308C\u305F\u304B\u3001\u79FB\u52D5\u3055\u308C\u305F\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002</string>
+    <string name="player_rename_title">\u540D\u524D\u306E\u5909\u66F4</string>
+    <string name="player_file_name_label">\u30D5\u30A1\u30A4\u30EB\u540D</string>
+    <string name="trim_title">\u30D3\u30C7\u30AA\u3092\u30C8\u30EA\u30DF\u30F3\u30B0\u3059\u308B</string>
+    <string name="trim_set_to_current">\u73FE\u5728\u306B\u8A2D\u5B9A</string>
+    <string name="trim_start_label">\u958B\u59CB: %1$s</string>
+    <string name="trim_end_label">\u7D42\u4E86: %1$s</string>
+    <string name="trim_duration_summary">\u30C8\u30EA\u30E0\u671F\u9593: %1$s (%2$s \u2192 %3$s)</string>
+    <string name="trim_too_short">\u30C8\u30EA\u30E0\u7BC4\u56F2\u304C\u77ED\u3059\u304E\u307E\u3059 (\u6700\u5C0F 0.5 \u79D2)</string>
+    <string name="trim_saved_success">\u30C8\u30EA\u30E0\u306F\u6B63\u5E38\u306B\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="trim_failed_retry">\u30C8\u30EA\u30E0\u306B\u5931\u6557\u3057\u307E\u3057\u305F\u3002\u3082\u3046\u4E00\u5EA6\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="trim_progress">\u30C8\u30EA\u30DF\u30F3\u30B0\u4E2D\u2026 %1$d%%</string>
+    <string name="trim_save">\u30C8\u30EA\u30DF\u30F3\u30B0\u3057\u3066\u4FDD\u5B58</string>
+    <string name="content_desc_back">\u623B\u308B</string>
+    <string name="content_desc_refresh">\u30EA\u30D5\u30EC\u30C3\u30B7\u30E5</string>
+    <string name="content_desc_options">\u30AA\u30D7\u30B7\u30E7\u30F3</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">ビデオ編集</string>
-    <string name="tools_image_editing">画像編集</string>
-    <string name="tool_video_trim">ビデオトリム</string>
-    <string name="tool_compress">ビデオを圧縮する</string>
-    <string name="tool_video_to_gif">ビデオからGIFへ</string>
-    <string name="tool_merge_clips">クリップを結合する</string>
-    <string name="editor_pick_video_title">ビデオを選択してください</string>
-    <string name="editor_pick_catrec">CatRec 録音</string>
-    <string name="editor_pick_storage">デバイス上のビデオ</string>
-    <string name="editor_export">輸出</string>
-    <string name="editor_saving">保存中…</string>
-    <string name="editor_saved_ok">ムービー/CatRec に保存されました</string>
-    <string name="editor_failed">エクスポートを完了できませんでした。別のファイルまたは品質を試してください。</string>
-    <string name="compress_title">圧縮する</string>
-    <string name="compress_quality_label">目標品質</string>
-    <string name="compress_quality_high">高い</string>
-    <string name="compress_quality_medium">中くらい</string>
-    <string name="compress_quality_low">低い</string>
-    <string name="compress_resolution_label">ターゲット解像度（高さ）</string>
-    <string name="compress_original">元のサイズ</string>
-    <string name="compress_estimated">推定サイズ: ~%1$s</string>
-    <string name="compress_source">ソース: %1$dx%2$d</string>
-    <string name="gif_title">ビデオからGIFへ</string>
+    <string name="tools_video_editing">\u30D3\u30C7\u30AA\u7DE8\u96C6</string>
+    <string name="tools_image_editing">\u753B\u50CF\u7DE8\u96C6</string>
+    <string name="tool_video_trim">\u30D3\u30C7\u30AA\u30C8\u30EA\u30E0</string>
+    <string name="tool_compress">\u30D3\u30C7\u30AA\u3092\u5727\u7E2E\u3059\u308B</string>
+    <string name="tool_video_to_gif">\u30D3\u30C7\u30AA\u304B\u3089GIF\u3078</string>
+    <string name="tool_merge_clips">\u30AF\u30EA\u30C3\u30D7\u3092\u7D50\u5408\u3059\u308B</string>
+    <string name="editor_pick_video_title">\u30D3\u30C7\u30AA\u3092\u9078\u629E\u3057\u3066\u304F\u3060\u3055\u3044</string>
+    <string name="editor_pick_catrec">CatRec \u9332\u97F3</string>
+    <string name="editor_pick_storage">\u30C7\u30D0\u30A4\u30B9\u4E0A\u306E\u30D3\u30C7\u30AA</string>
+    <string name="editor_export">\u8F38\u51FA</string>
+    <string name="editor_saving">\u4FDD\u5B58\u4E2D\u2026</string>
+    <string name="editor_saved_ok">\u30E0\u30FC\u30D3\u30FC/CatRec \u306B\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="editor_failed">\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u3092\u5B8C\u4E86\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u5225\u306E\u30D5\u30A1\u30A4\u30EB\u307E\u305F\u306F\u54C1\u8CEA\u3092\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="compress_title">\u5727\u7E2E\u3059\u308B</string>
+    <string name="compress_quality_label">\u76EE\u6A19\u54C1\u8CEA</string>
+    <string name="compress_quality_high">\u9AD8\u3044</string>
+    <string name="compress_quality_medium">\u4E2D\u304F\u3089\u3044</string>
+    <string name="compress_quality_low">\u4F4E\u3044</string>
+    <string name="compress_resolution_label">\u30BF\u30FC\u30B2\u30C3\u30C8\u89E3\u50CF\u5EA6\uFF08\u9AD8\u3055\uFF09</string>
+    <string name="compress_original">\u5143\u306E\u30B5\u30A4\u30BA</string>
+    <string name="compress_estimated">\u63A8\u5B9A\u30B5\u30A4\u30BA: ~%1$s</string>
+    <string name="compress_source">\u30BD\u30FC\u30B9: %1$dx%2$d</string>
+    <string name="gif_title">\u30D3\u30C7\u30AA\u304B\u3089GIF\u3078</string>
     <string name="gif_fps">FPS: %1$d</string>
-    <string name="gif_quality_label">GIFの品質</string>
-    <string name="gif_quality_small">より小さいファイル</string>
-    <string name="gif_quality_balanced">バランスの取れた</string>
-    <string name="gif_quality_sharper">よりシャープに</string>
-    <string name="gif_convert">GIFの作成</string>
-    <string name="merge_title">クリップを結合する</string>
-    <string name="merge_add_catrec">CatRec から追加</string>
-    <string name="merge_clear_all">すべてクリア</string>
-    <string name="merge_run">結合して保存</string>
-    <string name="merge_need_two">少なくとも 2 つのビデオを追加します (順序は維持されます)。</string>
-    <string name="merge_clip_label">クリップ %1$d</string>
+    <string name="gif_quality_label">GIF\u306E\u54C1\u8CEA</string>
+    <string name="gif_quality_small">\u3088\u308A\u5C0F\u3055\u3044\u30D5\u30A1\u30A4\u30EB</string>
+    <string name="gif_quality_balanced">\u30D0\u30E9\u30F3\u30B9\u306E\u53D6\u308C\u305F</string>
+    <string name="gif_quality_sharper">\u3088\u308A\u30B7\u30E3\u30FC\u30D7\u306B</string>
+    <string name="gif_convert">GIF\u306E\u4F5C\u6210</string>
+    <string name="merge_title">\u30AF\u30EA\u30C3\u30D7\u3092\u7D50\u5408\u3059\u308B</string>
+    <string name="merge_add_catrec">CatRec \u304B\u3089\u8FFD\u52A0</string>
+    <string name="merge_clear_all">\u3059\u3079\u3066\u30AF\u30EA\u30A2</string>
+    <string name="merge_run">\u7D50\u5408\u3057\u3066\u4FDD\u5B58</string>
+    <string name="merge_need_two">\u5C11\u306A\u304F\u3068\u3082 2 \u3064\u306E\u30D3\u30C7\u30AA\u3092\u8FFD\u52A0\u3057\u307E\u3059 (\u9806\u5E8F\u306F\u7DAD\u6301\u3055\u308C\u307E\u3059)\u3002</string>
+    <string name="merge_clip_label">\u30AF\u30EA\u30C3\u30D7 %1$d</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
 
     <!-- Support (extra) -->
-    <string name="support_app_headline">CatRec スクリーンレコーダー</string>
+    <string name="support_app_headline">CatRec \u30B9\u30AF\u30EA\u30FC\u30F3\u30EC\u30B3\u30FC\u30C0\u30FC</string>
     <!-- Arg: BuildConfig.VERSION_NAME -->
-    <string name="support_version_label">バージョン %1$s</string>
+    <string name="support_version_label">\u30D0\u30FC\u30B8\u30E7\u30F3 %1$s</string>
     <string name="changelog_version_template">v%1$s</string>
-    <string name="support_section_support_dev">開発者をサポートする</string>
-    <string name="support_section_legal">法律上の</string>
-    <string name="support_watch_ad_sub_loading">広告を読み込み中…</string>
-    <string name="support_watch_ad_sub">無料でサポートを受ける簡単な方法</string>
-    <string name="support_toast_youtube">YouTubeを開けませんでした</string>
-    <string name="support_toast_ad_failed">広告を表示できませんでした。後でもう一度試してください。</string>
-    <string name="support_toast_thanks_ad">ご覧いただきありがとうございます! 🐱</string>
-    <string name="support_toast_ad_loading">広告を読み込んでいます。お待ちください…</string>
-    <string name="support_toast_no_ad">現在利用可能な広告はありません。後でもう一度試してください。</string>
-    <string name="support_toast_browser">ブラウザを開けませんでした</string>
-    <string name="billing_store_not_ready">Play ストアはまだ準備ができていません。接続を確認して、もう一度試してください。</string>
-    <string name="billing_thanks_support_me">ご支援ありがとうございます！ 🐱</string>
-    <string name="billing_pending">購入は保留中です - 完了するとアクセスできるようになります。</string>
-    <string name="dialog_changelog_title">変更履歴</string>
-    <string name="support_privacy_policy">プライバシーポリシー</string>
-    <string name="support_privacy_policy_desc">CatRec がデータを処理する方法</string>
-    <string name="support_terms_of_service">利用規約</string>
-    <string name="support_terms_of_service_desc">利用規約と免責事項</string>
-    <string name="support_permissions_disclosure">権限の開示</string>
-    <string name="support_permissions_disclosure_desc">それぞれの権限が必要な理由</string>
+    <string name="support_section_support_dev">\u958B\u767A\u8005\u3092\u30B5\u30DD\u30FC\u30C8\u3059\u308B</string>
+    <string name="support_section_legal">\u6CD5\u5F8B\u4E0A\u306E</string>
+    <string name="support_watch_ad_sub_loading">\u5E83\u544A\u3092\u8AAD\u307F\u8FBC\u307F\u4E2D\u2026</string>
+    <string name="support_watch_ad_sub">\u7121\u6599\u3067\u30B5\u30DD\u30FC\u30C8\u3092\u53D7\u3051\u308B\u7C21\u5358\u306A\u65B9\u6CD5</string>
+    <string name="support_toast_youtube">YouTube\u3092\u958B\u3051\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="support_toast_ad_failed">\u5E83\u544A\u3092\u8868\u793A\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u5F8C\u3067\u3082\u3046\u4E00\u5EA6\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="support_toast_thanks_ad">\u3054\u89A7\u3044\u305F\u3060\u304D\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059! \uD83D\uDC31</string>
+    <string name="support_toast_ad_loading">\u5E83\u544A\u3092\u8AAD\u307F\u8FBC\u3093\u3067\u3044\u307E\u3059\u3002\u304A\u5F85\u3061\u304F\u3060\u3055\u3044\u2026</string>
+    <string name="support_toast_no_ad">\u73FE\u5728\u5229\u7528\u53EF\u80FD\u306A\u5E83\u544A\u306F\u3042\u308A\u307E\u305B\u3093\u3002\u5F8C\u3067\u3082\u3046\u4E00\u5EA6\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="support_toast_browser">\u30D6\u30E9\u30A6\u30B6\u3092\u958B\u3051\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="billing_store_not_ready">Play \u30B9\u30C8\u30A2\u306F\u307E\u3060\u6E96\u5099\u304C\u3067\u304D\u3066\u3044\u307E\u305B\u3093\u3002\u63A5\u7D9A\u3092\u78BA\u8A8D\u3057\u3066\u3001\u3082\u3046\u4E00\u5EA6\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="billing_thanks_support_me">\u3054\u652F\u63F4\u3042\u308A\u304C\u3068\u3046\u3054\u3056\u3044\u307E\u3059\uFF01 \uD83D\uDC31</string>
+    <string name="billing_pending">\u8CFC\u5165\u306F\u4FDD\u7559\u4E2D\u3067\u3059 - \u5B8C\u4E86\u3059\u308B\u3068\u30A2\u30AF\u30BB\u30B9\u3067\u304D\u308B\u3088\u3046\u306B\u306A\u308A\u307E\u3059\u3002</string>
+    <string name="dialog_changelog_title">\u5909\u66F4\u5C65\u6B74</string>
+    <string name="support_privacy_policy">\u30D7\u30E9\u30A4\u30D0\u30B7\u30FC\u30DD\u30EA\u30B7\u30FC</string>
+    <string name="support_privacy_policy_desc">CatRec \u304C\u30C7\u30FC\u30BF\u3092\u51E6\u7406\u3059\u308B\u65B9\u6CD5</string>
+    <string name="support_terms_of_service">\u5229\u7528\u898F\u7D04</string>
+    <string name="support_terms_of_service_desc">\u5229\u7528\u898F\u7D04\u3068\u514D\u8CAC\u4E8B\u9805</string>
+    <string name="support_permissions_disclosure">\u6A29\u9650\u306E\u958B\u793A</string>
+    <string name="support_permissions_disclosure_desc">\u305D\u308C\u305E\u308C\u306E\u6A29\u9650\u304C\u5FC5\u8981\u306A\u7406\u7531</string>
 
     <!-- Permissions manager -->
-    <string name="perm_name_notifications">通知</string>
-    <string name="perm_rationale_notifications">録画中に通知シェードに録画コントロールとライブ ステータスを表示するために必要です。</string>
-    <string name="perm_name_microphone">マイクロフォン</string>
-    <string name="perm_rationale_microphone">画面録画と同時にマイク音声をキャプチャするために必要です。</string>
-    <string name="perm_name_camera">カメラ</string>
-    <string name="perm_rationale_camera">画面録画の上にカメラインピクチャーオーバーレイを表示するために必要です。</string>
-    <string name="perm_name_overlay">他のアプリの上に重ねて表示する</string>
-    <string name="perm_rationale_overlay">録画中に他のアプリの上にフローティング コントロールのバブルとカメラ オーバーレイを表示するために必要です。</string>
+    <string name="perm_name_notifications">\u901A\u77E5</string>
+    <string name="perm_rationale_notifications">\u9332\u753B\u4E2D\u306B\u901A\u77E5\u30B7\u30A7\u30FC\u30C9\u306B\u9332\u753B\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB\u3068\u30E9\u30A4\u30D6 \u30B9\u30C6\u30FC\u30BF\u30B9\u3092\u8868\u793A\u3059\u308B\u305F\u3081\u306B\u5FC5\u8981\u3067\u3059\u3002</string>
+    <string name="perm_name_microphone">\u30DE\u30A4\u30AF\u30ED\u30D5\u30A9\u30F3</string>
+    <string name="perm_rationale_microphone">\u753B\u9762\u9332\u753B\u3068\u540C\u6642\u306B\u30DE\u30A4\u30AF\u97F3\u58F0\u3092\u30AD\u30E3\u30D7\u30C1\u30E3\u3059\u308B\u305F\u3081\u306B\u5FC5\u8981\u3067\u3059\u3002</string>
+    <string name="perm_name_camera">\u30AB\u30E1\u30E9</string>
+    <string name="perm_rationale_camera">\u753B\u9762\u9332\u753B\u306E\u4E0A\u306B\u30AB\u30E1\u30E9\u30A4\u30F3\u30D4\u30AF\u30C1\u30E3\u30FC\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u3092\u8868\u793A\u3059\u308B\u305F\u3081\u306B\u5FC5\u8981\u3067\u3059\u3002</string>
+    <string name="perm_name_overlay">\u4ED6\u306E\u30A2\u30D7\u30EA\u306E\u4E0A\u306B\u91CD\u306D\u3066\u8868\u793A\u3059\u308B</string>
+    <string name="perm_rationale_overlay">\u9332\u753B\u4E2D\u306B\u4ED6\u306E\u30A2\u30D7\u30EA\u306E\u4E0A\u306B\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0 \u30B3\u30F3\u30C8\u30ED\u30FC\u30EB\u306E\u30D0\u30D6\u30EB\u3068\u30AB\u30E1\u30E9 \u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u3092\u8868\u793A\u3059\u308B\u305F\u3081\u306B\u5FC5\u8981\u3067\u3059\u3002</string>
     <string name="perm_name_media_library">Photos, videos &amp; music</string>
     <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
-    <string name="service_description_screen_record">録画中のフォアグラウンド サービス: MediaProjection による画面キャプチャ、オプションのマイク音声、常駐通知。</string>
-    <string name="service_description_overlay">フローティング オーバーレイ表示中のフォアグラウンド サービス: ピクチャー イン ピクチャーのカメラプレビューと常駐通知。</string>
+    <string name="service_description_screen_record">\u9332\u753B\u4E2D\u306E\u30D5\u30A9\u30A2\u30B0\u30E9\u30A6\u30F3\u30C9 \u30B5\u30FC\u30D3\u30B9: MediaProjection \u306B\u3088\u308B\u753B\u9762\u30AD\u30E3\u30D7\u30C1\u30E3\u3001\u30AA\u30D7\u30B7\u30E7\u30F3\u306E\u30DE\u30A4\u30AF\u97F3\u58F0\u3001\u5E38\u99D0\u901A\u77E5\u3002</string>
+    <string name="service_description_overlay">\u30D5\u30ED\u30FC\u30C6\u30A3\u30F3\u30B0 \u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u8868\u793A\u4E2D\u306E\u30D5\u30A9\u30A2\u30B0\u30E9\u30A6\u30F3\u30C9 \u30B5\u30FC\u30D3\u30B9: \u30D4\u30AF\u30C1\u30E3\u30FC \u30A4\u30F3 \u30D4\u30AF\u30C1\u30E3\u30FC\u306E\u30AB\u30E1\u30E9\u30D7\u30EC\u30D3\u30E5\u30FC\u3068\u5E38\u99D0\u901A\u77E5\u3002</string>
 
     <!-- Notifications (service) -->
-    <string name="notif_channel_screen_recording">画面録画</string>
-    <string name="notif_channel_recording_complete">録音完了</string>
-    <string name="notif_channel_rolling_buffer">ローリングバッファ</string>
-    <string name="notif_ready_title">CatRec 対応</string>
-    <string name="notif_ready_text">オーバーレイ●ボタンをタップして録音を開始します</string>
-    <string name="notif_action_revoke">取り消す</string>
-    <string name="notif_preparing">準備中…</string>
-    <string name="notif_recording_starting_in">%1$dから録画を開始します…</string>
-    <string name="notif_recording_paused">録音が一時停止されました</string>
-    <string name="notif_recording_muted">録音中(ミュート)…</string>
-    <string name="notif_recording_in_progress">録音中です…</string>
-    <string name="notif_title_short">キャットレック</string>
-    <string name="notif_action_stop">停止</string>
-    <string name="notif_action_pause">一時停止</string>
-    <string name="notif_action_resume">再開する</string>
-    <string name="notif_action_mute">ミュート</string>
-    <string name="notif_action_unmute">ミュートを解除する</string>
-    <string name="notif_action_show_controls">コントロールを表示する</string>
-    <string name="notif_buffer_title">CatRec — ローリング バッファー</string>
-    <string name="notif_buffer_starting">開始バッファ…</string>
-    <string name="notif_buffer_buffering">最後の %1$d 秒をバッファリングしています…</string>
-    <string name="notif_buffer_save_clip">クリップの保存</string>
-    <string name="notif_post_title">録音終了</string>
-    <string name="notif_post_text">タップして録音を開きます</string>
-    <string name="notif_post_open">開ける</string>
-    <string name="notif_post_share">共有</string>
-    <string name="notif_post_delete">消去</string>
-    <string name="share_recording_title">録画を共有する</string>
-    <string name="toast_video_encoder_failed">動画エンコーダーを開始できませんでした。設定から解像度を下げるか別のエンコーダーを試してください。</string>
-    <string name="toast_recording_stopped_projection">記録が停止しました: キャプチャされたアプリが閉じられたか、バックグラウンドに移動されました</string>
-    <string name="toast_recording_failed_no_video">録画に失敗しました: ビデオはキャプチャされませんでした</string>
-    <string name="toast_gif_transcode_failed">GIF を作成できませんでした。MP4 録音は保持されました。</string>
-    <string name="toast_gif_saved">GIF は Pictures/CatRec/GIFs に保存されました</string>
-    <string name="toast_separate_mic_failed">別のオーディオ ファイルを作成できませんでした — 代わりにマイクがビデオに記録されます</string>
-    <string name="toast_internal_audio_silent">内部音声は無音です。録音中のアプリでは音声のキャプチャが許可されていない可能性があります。代わりにマイク音声を録音してみてください。</string>
-    <string name="recording_has_separate_audio">独立したオーディオトラックあり</string>
-    <string name="toast_buffer_start_failed">バッファの開始に失敗しました: %1$s</string>
-    <string name="toast_clip_empty">クリップが空です – バッファリングを長く続けます</string>
-    <string name="toast_clip_saved">クリップが保存されました!</string>
-    <string name="toast_clip_save_failed">クリップの保存に失敗しました: %1$s</string>
-    <string name="notif_camera_overlay_text">CatRec カメラ オーバーレイがアクティブです - タップしてアプリに戻ります</string>
-    <string name="tile_record_label">CatRec レコード</string>
-    <string name="tile_clipper_label">CatRec クリッパー</string>
-    <string name="notif_channel_camera_overlay">カメラオーバーレイ</string>
-    <string name="notif_channel_camera_overlay_desc">カメラオーバーレイがアクティブなときに表示されます</string>
-    <string name="notif_camera_in_use_title">使用中のカメラ</string>
-    <string name="notif_channel_app_controls">クイックコントロール</string>
-    <string name="notif_channel_app_controls_desc">録画、スクリーンショット、オーバーレイのショートカット</string>
-    <string name="notif_channel_recording_interrupted">録画が中断されました</string>
-    <string name="notif_channel_recording_interrupted_desc">アクティブなキャプチャ中にシステムが CatRec を停止した場合に表示されます</string>
-    <string name="notif_recording_interrupted_title">キャプチャを停止しました</string>
-    <string name="notif_recording_interrupted_text">録画またはクリップ保存の最中にシステムによって CatRec が終了または再起動されました。最後のファイルが不完全な場合があります。CatRec を開いて再度お試しください。</string>
-    <string name="notif_app_controls_title">キャットレック</string>
-    <string name="notif_app_controls_text_idle">アイドル — 下のアクションをタップします</string>
-    <string name="notif_action_screenshot">スクリーンショット</string>
-    <string name="notif_action_overlay_hide">オーバーレイを非表示にする</string>
-    <string name="notif_action_overlay_show">オーバーレイを表示する</string>
-    <string name="notif_action_overlay_enable_in_settings">オーバーレイオフ</string>
-    <string name="tile_subtitle_recording">録音中…</string>
-    <string name="tile_subtitle_buffering">バッファリング中…</string>
-    <string name="tile_subtitle_ready">準備ができて</string>
-    <string name="tile_subtitle_tap_open">タップしてアプリを開きます</string>
+    <string name="notif_channel_screen_recording">\u753B\u9762\u9332\u753B</string>
+    <string name="notif_channel_recording_complete">\u9332\u97F3\u5B8C\u4E86</string>
+    <string name="notif_channel_rolling_buffer">\u30ED\u30FC\u30EA\u30F3\u30B0\u30D0\u30C3\u30D5\u30A1</string>
+    <string name="notif_ready_title">CatRec \u5BFE\u5FDC</string>
+    <string name="notif_ready_text">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u25CF\u30DC\u30BF\u30F3\u3092\u30BF\u30C3\u30D7\u3057\u3066\u9332\u97F3\u3092\u958B\u59CB\u3057\u307E\u3059</string>
+    <string name="notif_action_revoke">\u53D6\u308A\u6D88\u3059</string>
+    <string name="notif_preparing">\u6E96\u5099\u4E2D\u2026</string>
+    <string name="notif_recording_starting_in">%1$d\u304B\u3089\u9332\u753B\u3092\u958B\u59CB\u3057\u307E\u3059\u2026</string>
+    <string name="notif_recording_paused">\u9332\u97F3\u304C\u4E00\u6642\u505C\u6B62\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="notif_recording_muted">\u9332\u97F3\u4E2D(\u30DF\u30E5\u30FC\u30C8)\u2026</string>
+    <string name="notif_recording_in_progress">\u9332\u97F3\u4E2D\u3067\u3059\u2026</string>
+    <string name="notif_title_short">\u30AD\u30E3\u30C3\u30C8\u30EC\u30C3\u30AF</string>
+    <string name="notif_action_stop">\u505C\u6B62</string>
+    <string name="notif_action_pause">\u4E00\u6642\u505C\u6B62</string>
+    <string name="notif_action_resume">\u518D\u958B\u3059\u308B</string>
+    <string name="notif_action_mute">\u30DF\u30E5\u30FC\u30C8</string>
+    <string name="notif_action_unmute">\u30DF\u30E5\u30FC\u30C8\u3092\u89E3\u9664\u3059\u308B</string>
+    <string name="notif_action_show_controls">\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB\u3092\u8868\u793A\u3059\u308B</string>
+    <string name="notif_buffer_title">CatRec \u2014 \u30ED\u30FC\u30EA\u30F3\u30B0 \u30D0\u30C3\u30D5\u30A1\u30FC</string>
+    <string name="notif_buffer_starting">\u958B\u59CB\u30D0\u30C3\u30D5\u30A1\u2026</string>
+    <string name="notif_buffer_buffering">\u6700\u5F8C\u306E %1$d \u79D2\u3092\u30D0\u30C3\u30D5\u30A1\u30EA\u30F3\u30B0\u3057\u3066\u3044\u307E\u3059\u2026</string>
+    <string name="notif_buffer_save_clip">\u30AF\u30EA\u30C3\u30D7\u306E\u4FDD\u5B58</string>
+    <string name="notif_post_title">\u9332\u97F3\u7D42\u4E86</string>
+    <string name="notif_post_text">\u30BF\u30C3\u30D7\u3057\u3066\u9332\u97F3\u3092\u958B\u304D\u307E\u3059</string>
+    <string name="notif_post_open">\u958B\u3051\u308B</string>
+    <string name="notif_post_share">\u5171\u6709</string>
+    <string name="notif_post_delete">\u6D88\u53BB</string>
+    <string name="share_recording_title">\u9332\u753B\u3092\u5171\u6709\u3059\u308B</string>
+    <string name="toast_video_encoder_failed">\u52D5\u753B\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC\u3092\u958B\u59CB\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u8A2D\u5B9A\u304B\u3089\u89E3\u50CF\u5EA6\u3092\u4E0B\u3052\u308B\u304B\u5225\u306E\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC\u3092\u8A66\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="toast_recording_stopped_projection">\u8A18\u9332\u304C\u505C\u6B62\u3057\u307E\u3057\u305F: \u30AD\u30E3\u30D7\u30C1\u30E3\u3055\u308C\u305F\u30A2\u30D7\u30EA\u304C\u9589\u3058\u3089\u308C\u305F\u304B\u3001\u30D0\u30C3\u30AF\u30B0\u30E9\u30A6\u30F3\u30C9\u306B\u79FB\u52D5\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="toast_recording_failed_no_video">\u9332\u753B\u306B\u5931\u6557\u3057\u307E\u3057\u305F: \u30D3\u30C7\u30AA\u306F\u30AD\u30E3\u30D7\u30C1\u30E3\u3055\u308C\u307E\u305B\u3093\u3067\u3057\u305F</string>
+    <string name="toast_gif_transcode_failed">GIF \u3092\u4F5C\u6210\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002MP4 \u9332\u97F3\u306F\u4FDD\u6301\u3055\u308C\u307E\u3057\u305F\u3002</string>
+    <string name="toast_gif_saved">GIF \u306F Pictures/CatRec/GIFs \u306B\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="toast_separate_mic_failed">\u5225\u306E\u30AA\u30FC\u30C7\u30A3\u30AA \u30D5\u30A1\u30A4\u30EB\u3092\u4F5C\u6210\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F \u2014 \u4EE3\u308F\u308A\u306B\u30DE\u30A4\u30AF\u304C\u30D3\u30C7\u30AA\u306B\u8A18\u9332\u3055\u308C\u307E\u3059</string>
+    <string name="toast_internal_audio_silent">\u5185\u90E8\u97F3\u58F0\u306F\u7121\u97F3\u3067\u3059\u3002\u9332\u97F3\u4E2D\u306E\u30A2\u30D7\u30EA\u3067\u306F\u97F3\u58F0\u306E\u30AD\u30E3\u30D7\u30C1\u30E3\u304C\u8A31\u53EF\u3055\u308C\u3066\u3044\u306A\u3044\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002\u4EE3\u308F\u308A\u306B\u30DE\u30A4\u30AF\u97F3\u58F0\u3092\u9332\u97F3\u3057\u3066\u307F\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="recording_has_separate_audio">\u72EC\u7ACB\u3057\u305F\u30AA\u30FC\u30C7\u30A3\u30AA\u30C8\u30E9\u30C3\u30AF\u3042\u308A</string>
+    <string name="toast_buffer_start_failed">\u30D0\u30C3\u30D5\u30A1\u306E\u958B\u59CB\u306B\u5931\u6557\u3057\u307E\u3057\u305F: %1$s</string>
+    <string name="toast_clip_empty">\u30AF\u30EA\u30C3\u30D7\u304C\u7A7A\u3067\u3059 \u2013 \u30D0\u30C3\u30D5\u30A1\u30EA\u30F3\u30B0\u3092\u9577\u304F\u7D9A\u3051\u307E\u3059</string>
+    <string name="toast_clip_saved">\u30AF\u30EA\u30C3\u30D7\u304C\u4FDD\u5B58\u3055\u308C\u307E\u3057\u305F!</string>
+    <string name="toast_clip_save_failed">\u30AF\u30EA\u30C3\u30D7\u306E\u4FDD\u5B58\u306B\u5931\u6557\u3057\u307E\u3057\u305F: %1$s</string>
+    <string name="notif_camera_overlay_text">CatRec \u30AB\u30E1\u30E9 \u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u304C\u30A2\u30AF\u30C6\u30A3\u30D6\u3067\u3059 - \u30BF\u30C3\u30D7\u3057\u3066\u30A2\u30D7\u30EA\u306B\u623B\u308A\u307E\u3059</string>
+    <string name="tile_record_label">CatRec \u30EC\u30B3\u30FC\u30C9</string>
+    <string name="tile_clipper_label">CatRec \u30AF\u30EA\u30C3\u30D1\u30FC</string>
+    <string name="notif_channel_camera_overlay">\u30AB\u30E1\u30E9\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4</string>
+    <string name="notif_channel_camera_overlay_desc">\u30AB\u30E1\u30E9\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u304C\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u3068\u304D\u306B\u8868\u793A\u3055\u308C\u307E\u3059</string>
+    <string name="notif_camera_in_use_title">\u4F7F\u7528\u4E2D\u306E\u30AB\u30E1\u30E9</string>
+    <string name="notif_channel_app_controls">\u30AF\u30A4\u30C3\u30AF\u30B3\u30F3\u30C8\u30ED\u30FC\u30EB</string>
+    <string name="notif_channel_app_controls_desc">\u9332\u753B\u3001\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3001\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u306E\u30B7\u30E7\u30FC\u30C8\u30AB\u30C3\u30C8</string>
+    <string name="notif_channel_recording_interrupted">\u9332\u753B\u304C\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="notif_channel_recording_interrupted_desc">\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30AD\u30E3\u30D7\u30C1\u30E3\u4E2D\u306B\u30B7\u30B9\u30C6\u30E0\u304C CatRec \u3092\u505C\u6B62\u3057\u305F\u5834\u5408\u306B\u8868\u793A\u3055\u308C\u307E\u3059</string>
+    <string name="notif_recording_interrupted_title">\u30AD\u30E3\u30D7\u30C1\u30E3\u3092\u505C\u6B62\u3057\u307E\u3057\u305F</string>
+    <string name="notif_recording_interrupted_text">\u9332\u753B\u307E\u305F\u306F\u30AF\u30EA\u30C3\u30D7\u4FDD\u5B58\u306E\u6700\u4E2D\u306B\u30B7\u30B9\u30C6\u30E0\u306B\u3088\u3063\u3066 CatRec \u304C\u7D42\u4E86\u307E\u305F\u306F\u518D\u8D77\u52D5\u3055\u308C\u307E\u3057\u305F\u3002\u6700\u5F8C\u306E\u30D5\u30A1\u30A4\u30EB\u304C\u4E0D\u5B8C\u5168\u306A\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002CatRec \u3092\u958B\u3044\u3066\u518D\u5EA6\u304A\u8A66\u3057\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="notif_app_controls_title">\u30AD\u30E3\u30C3\u30C8\u30EC\u30C3\u30AF</string>
+    <string name="notif_app_controls_text_idle">\u30A2\u30A4\u30C9\u30EB \u2014 \u4E0B\u306E\u30A2\u30AF\u30B7\u30E7\u30F3\u3092\u30BF\u30C3\u30D7\u3057\u307E\u3059</string>
+    <string name="notif_action_screenshot">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8</string>
+    <string name="notif_action_overlay_hide">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u3092\u975E\u8868\u793A\u306B\u3059\u308B</string>
+    <string name="notif_action_overlay_show">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u3092\u8868\u793A\u3059\u308B</string>
+    <string name="notif_action_overlay_enable_in_settings">\u30AA\u30FC\u30D0\u30FC\u30EC\u30A4\u30AA\u30D5</string>
+    <string name="tile_subtitle_recording">\u9332\u97F3\u4E2D\u2026</string>
+    <string name="tile_subtitle_buffering">\u30D0\u30C3\u30D5\u30A1\u30EA\u30F3\u30B0\u4E2D\u2026</string>
+    <string name="tile_subtitle_ready">\u6E96\u5099\u304C\u3067\u304D\u3066</string>
+    <string name="tile_subtitle_tap_open">\u30BF\u30C3\u30D7\u3057\u3066\u30A2\u30D7\u30EA\u3092\u958B\u304D\u307E\u3059</string>
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
-    <string name="toast_screen_capture_denied">画面録画の許可が拒否されました</string>
-    <string name="toast_no_email_app">メールアプリが見つかりません</string>
-    <string name="share_screenshot_chooser_title">スクリーンショットを共有</string>
-    <string name="recordings_header_format">ライブラリ · %1$d</string>
-    <string name="screenshots_header_format">スクリーンショット · %1$d</string>
-    <string name="countdown_subtitle">録画を開始しています…</string>
-    <string name="toast_recorder_start_failed">録画を開始できませんでした: %1$s</string>
+    <string name="toast_screen_capture_denied">\u753B\u9762\u9332\u753B\u306E\u8A31\u53EF\u304C\u62D2\u5426\u3055\u308C\u307E\u3057\u305F</string>
+    <string name="toast_no_email_app">\u30E1\u30FC\u30EB\u30A2\u30D7\u30EA\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093</string>
+    <string name="share_screenshot_chooser_title">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u5171\u6709</string>
+    <string name="recordings_header_format">\u30E9\u30A4\u30D6\u30E9\u30EA \u00B7 %1$d</string>
+    <string name="screenshots_header_format">\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8 \u00B7 %1$d</string>
+    <string name="countdown_subtitle">\u9332\u753B\u3092\u958B\u59CB\u3057\u3066\u3044\u307E\u3059\u2026</string>
+    <string name="toast_recorder_start_failed">\u9332\u753B\u3092\u958B\u59CB\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F: %1$s</string>
     <string name="format_jpeg">JPEG</string>
     <string name="format_png">PNG</string>
     <string name="format_webp">WebP</string>
-    <string name="content_desc_more_options">その他のオプション</string>
-    <string name="content_desc_rewind_10">10秒戻る</string>
-    <string name="content_desc_forward_10">10秒進む</string>
-    <string name="list_bullet">•</string>
+    <string name="content_desc_more_options">\u305D\u306E\u4ED6\u306E\u30AA\u30D7\u30B7\u30E7\u30F3</string>
+    <string name="content_desc_rewind_10">10\u79D2\u623B\u308B</string>
+    <string name="content_desc_forward_10">10\u79D2\u9032\u3080</string>
+    <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v113_items">
+        <item>"Android 15 以降でエッジツーエッジ表示を修正し、ANR を解消。"</item>
+        <item>"設定タブの表示速度とスクロールのもたつきを修正。"</item>
+    </string-array>
+
+    <string-array name="changelog_v112_items">
+        <item>"カメラオーバーレイ：前後切り替え・アスペクト比・端末回転時のプレビュー向きを修正。"</item>
+        <item>"カメラオーバーレイのディスプレイ更新を滑らかにし、一部端末でのANRリスクを低減。"</item>
+    </string-array>
 
     <string-array name="changelog_v111_items">
-        <item>HEVCのみのエンコードに対応する端末（例：Poco X7 Pro）で Rec.709（BT.709）メタデータを強制し、再生時の色解釈を正しくします。</item>
-        <item>設定に Rec.709 の色彩補正オプションを追加し、明るさと端末との相性を調整できるようにしました。</item>
+        <item>"HEVCのみのエンコードに対応する端末（例：Poco X7 Pro）で Rec.709（BT.709）メタデータを強制し、再生時の色解釈を正しくします。"</item>
+        <item>"設定に Rec.709 の色彩補正オプションを追加し、明るさと端末との相性を調整できるようにしました。"</item>
+        <item>"円形・正方形のウォーターマークの誤ったクロップを修正しました。"</item>
+        <item>"Android 14 以降での安定性を改善。特定 OEM 端末でのクラッシュも修正しました。"</item>
+        <item>"該当端末でのアプリ無応答（ANR）を軽減しました。"</item>
     </string-array>
 
     <string-array name="changelog_v110_items">
-        <item>REC.709（BT.709）およびフルレンジのカラープロファイルを選択可能にし、一般的な放送・マスタリングのカラー運用に合わせたエンコードができるようにしました。</item>
+        <item>"REC.709（BT.709）およびフルレンジのカラープロファイルを選択可能にし、一般的な放送・マスタリングのカラー運用に合わせたエンコードができるようにしました。"</item>
     </string-array>
 
     <string-array name="changelog_v107_items">
-        <item>一部デバイスで内部音声が録音されなくなる問題を修正</item>
-        <item>GIF録画の書き出しでフレームレートが極端に低く見える問題を修正</item>
+        <item>"一部デバイスで内部音声が録音されなくなる問題を修正"</item>
+        <item>"GIF録画の書き出しでフレームレートが極端に低く見える問題を修正"</item>
     </string-array>
 
     <string-array name="changelog_v106_items">
-        <item>信頼性と応答性の向上のため、録画オーバーレイUIと内部ロジックを一から再構築</item>
-        <item>よりすっきりした統一感のある見た目にするため、すべてのオーバーレイと通知アイコンを再設計</item>
-        <item>Xiaomi、Samsung、Nothing向けのOEM固有の互換性問題を解消</item>
-        <item>非対応の解像度やコーデックでも自動的に互換設定へフォールバックできるよう録画失敗処理を刷新</item>
-        <item>対応言語すべてで不足していたローカライズ文字列を補完</item>
-        <item>画像トリミングの不具合を修正しGIF録画品質を改善</item>
-        <item>性能に応じて画質を自動調整し、フレーム落ちやエンコードエラーを抑える適応型録画モード</item>
-        <item>カウントダウンタイマーを最大30秒まで拡張</item>
-        <item>アプリ全体のパフォーマンスを改善</item>
+        <item>"信頼性と応答性の向上のため、録画オーバーレイUIと内部ロジックを一から再構築"</item>
+        <item>"よりすっきりした統一感のある見た目にするため、すべてのオーバーレイと通知アイコンを再設計"</item>
+        <item>"Xiaomi、Samsung、Nothing向けのOEM固有の互換性問題を解消"</item>
+        <item>"非対応の解像度やコーデックでも自動的に互換設定へフォールバックできるよう録画失敗処理を刷新"</item>
+        <item>"対応言語すべてで不足していたローカライズ文字列を補完"</item>
+        <item>"画像トリミングの不具合を修正しGIF録画品質を改善"</item>
+        <item>"性能に応じて画質を自動調整し、フレーム落ちやエンコードエラーを抑える適応型録画モード"</item>
+        <item>"カウントダウンタイマーを最大30秒まで拡張"</item>
+        <item>"アプリ全体のパフォーマンスを改善"</item>
     </string-array>
 
     <string-array name="changelog_v100_items">
-        <item>H.264 および H.265 (HEVC) コーデックをサポートした画面録画</item>
-        <item>シームレスなセグメントステッチングとクイック持続時間プリセットを備えたローリングクリッパーバッファー (1 ～ 5 分、構成可能)</item>
-        <item>Clipper の実行中に [クリップを保存] ボタン</item>
-        <item>すべてのアスペクト比に対応する幅広い解像度の選択とカスタム入力</item>
-        <item>録画中の自動方向追跡</item>
-        <item>録音開始前のカウントダウンタイマー</item>
-        <item>録画中に画面をオンにし続けるオプション</item>
-        <item>オーディオ: マイク、内部オーディオ、または混合。オプションで信頼性の高いエクスポートを備えた個別のマイクトラック</item>
-        <item>高度なオーディオ設定: ビットレート、サンプルレート、チャンネル、エンコーダー。正確なステレオと CBR エンコーディング</item>
-        <item>品質プリセットを備えたGIF録画モード</item>
-        <item>フローティング コントロール オーバーレイ: 一時停止、停止、ミュート、スクリーンショット、クリップ アクセス</item>
-        <item>オーバーレイはいつでも利用できます。オーバーレイからの録音またはクリッピングを開始します</item>
-        <item>ワンタップでオーバーレイ録画を承認 - 最小限の繰り返し許可プロンプト</item>
-        <item>フローティング オーバーレイのブラシ ツール</item>
-        <item>ライブフェイスカメラプレビューを備えたカメラオーバーレイ</item>
-        <item>透かしオーバーレイ: カスタム画像、形状、不透明度、位置、コーナーへのスナップ。デフォルトではアプリアイコンと一致します</item>
-        <item>形式と品質設定を含むスクリーンショット。オーバーレイからのキャプチャ</item>
-        <item>スクリーンショット後の共有/編集フロー (オプション)</item>
-        <item>サムネイル付きの録音ライブラリ。アプリ内トリマー;クリップを結合します。ビデオをGIFに変換。画像エディターと切り抜きツール</item>
-        <item>アプリ内ビデオプレーヤー</item>
-        <item>アクセントカラー: プリセット、グラデーション、および 16 進数。 UI全体にわたる動的なテーマ</item>
-        <item>明るいテーマと暗いテーマのコントラストが向上</item>
-        <item>ローエンドデバイス用のパフォーマンスモード</item>
-        <item>整理された設定: コントロール、録音品質、オーバーレイ、テーマ、言語、ストレージなど</item>
-        <item>信頼性の高いバックグラウンド録画のためにバッテリーを無制限に使用できる設定ショートカット</item>
-        <item>16 以上の言語で一貫した翻訳が可能</item>
-        <item>RECORD / CLIPPERモードセレクター、クリアステータスインジケーター付き</item>
-        <item>クイック設定タイル: CatRec Record および CatRec Clipper</item>
-        <item>アクションを含む通知を記録します。準備されたキャプチャセッションのサポート</item>
-        <item>安定性を向上させるためのオプションのオプトイン分析</item>
-        <item>プライバシー管理: 分析と広告のパーソナライゼーションの切り替え</item>
-        <item>サポート画面: 変更ログ、法的リンク、およびオプションの特典付きサポート</item>
+        <item>"H.264 および H.265 (HEVC) コーデックをサポートした画面録画"</item>
+        <item>"シームレスなセグメントステッチングとクイック持続時間プリセットを備えたローリングクリッパーバッファー (1 ～ 5 分、構成可能)"</item>
+        <item>"Clipper の実行中に [クリップを保存] ボタン"</item>
+        <item>"すべてのアスペクト比に対応する幅広い解像度の選択とカスタム入力"</item>
+        <item>"録画中の自動方向追跡"</item>
+        <item>"録音開始前のカウントダウンタイマー"</item>
+        <item>"録画中に画面をオンにし続けるオプション"</item>
+        <item>"オーディオ: マイク、内部オーディオ、または混合。オプションで信頼性の高いエクスポートを備えた個別のマイクトラック"</item>
+        <item>"高度なオーディオ設定: ビットレート、サンプルレート、チャンネル、エンコーダー。正確なステレオと CBR エンコーディング"</item>
+        <item>"品質プリセットを備えたGIF録画モード"</item>
+        <item>"フローティング コントロール オーバーレイ: 一時停止、停止、ミュート、スクリーンショット、クリップ アクセス"</item>
+        <item>"オーバーレイはいつでも利用できます。オーバーレイからの録音またはクリッピングを開始します"</item>
+        <item>"ワンタップでオーバーレイ録画を承認 - 最小限の繰り返し許可プロンプト"</item>
+        <item>"フローティング オーバーレイのブラシ ツール"</item>
+        <item>"ライブフェイスカメラプレビューを備えたカメラオーバーレイ"</item>
+        <item>"透かしオーバーレイ: カスタム画像、形状、不透明度、位置、コーナーへのスナップ。デフォルトではアプリアイコンと一致します"</item>
+        <item>"形式と品質設定を含むスクリーンショット。オーバーレイからのキャプチャ"</item>
+        <item>"スクリーンショット後の共有/編集フロー (オプション)"</item>
+        <item>"サムネイル付きの録音ライブラリ。アプリ内トリマー;クリップを結合します。ビデオをGIFに変換。画像エディターと切り抜きツール"</item>
+        <item>"アプリ内ビデオプレーヤー"</item>
+        <item>"アクセントカラー: プリセット、グラデーション、および 16 進数。 UI全体にわたる動的なテーマ"</item>
+        <item>"明るいテーマと暗いテーマのコントラストが向上"</item>
+        <item>"ローエンドデバイス用のパフォーマンスモード"</item>
+        <item>"整理された設定: コントロール、録音品質、オーバーレイ、テーマ、言語、ストレージなど"</item>
+        <item>"信頼性の高いバックグラウンド録画のためにバッテリーを無制限に使用できる設定ショートカット"</item>
+        <item>"16 以上の言語で一貫した翻訳が可能"</item>
+        <item>"RECORD / CLIPPERモードセレクター、クリアステータスインジケーター付き"</item>
+        <item>"クイック設定タイル: CatRec Record および CatRec Clipper"</item>
+        <item>"アクションを含む通知を記録します。準備されたキャプチャセッションのサポート"</item>
+        <item>"安定性を向上させるためのオプションのオプトイン分析"</item>
+        <item>"プライバシー管理: 分析と広告のパーソナライゼーションの切り替え"</item>
+        <item>"サポート画面: 変更ログ、法的リンク、およびオプションの特典付きサポート"</item>
     </string-array>
+
+    <!-- Localized additions -->
+    <string name="resolution_preset_4k">4K</string>
+    <string name="resolution_preset_2k">2K</string>
+    <string name="resolution_preset_1080">1080</string>
+    <string name="resolution_preset_720">720</string>
+    <string name="resolution_preset_480">480</string>
+    <string name="error_resolution_required">\u89E3\u50CF\u5EA6\u3092\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="error_resolution_positive">\u5E45\u3068\u9AD8\u3055\u306F\u6B63\u306E\u6570\u3067\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="error_resolution_even">\u5E45\u3068\u9AD8\u3055\u306F\u5076\u6570\u3067\u5165\u529B\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="error_resolution_encoder_unsupported">\u3053\u306E\u89E3\u50CF\u5EA6\u306F\u9078\u629E\u3057\u305F\u52D5\u753B\u30A8\u30F3\u30B3\u30FC\u30C0\u30FC\u3067\u30B5\u30DD\u30FC\u30C8\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002</string>
+    <string name="error_resolution_too_large_for_profile">\u3053\u306E\u89E3\u50CF\u5EA6\u306F\u3053\u306E\u7AEF\u672B\u306E\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9\u30D7\u30ED\u30D5\u30A1\u30A4\u30EB\u306B\u306F\u5927\u304D\u3059\u304E\u307E\u3059\u3002</string>
+    <string name="pro_feature">PRO\u6A5F\u80FD</string>
+    <string name="pro_recording_title">PRO\u6A5F\u80FD\u3067\u9332\u753B\u3057\u3066\u3044\u307E\u3059</string>
+    <string name="pro_recording_body">\u5E83\u544A\u3092\u898B\u308B\u3068PRO\u6A5F\u80FD\u30924\u6642\u9593\u89E3\u9664\u3067\u304D\u307E\u3059\u3002\u5E83\u544A\u3092\u524A\u9664\u3059\u308B\u3068\u6C38\u4E45\u306B\u5229\u7528\u3067\u304D\u307E\u3059\u3002</string>
+    <string name="pro_tools_body">\u5E83\u544A\u3092\u898B\u308B\u3068PRO\u6A5F\u80FD\u30924\u6642\u9593\u89E3\u9664\u3067\u304D\u307E\u3059\u3002\u5E83\u544A\u524A\u9664\u3092\u8CFC\u5165\u3057\u3066\u6C38\u4E45\u306B\u5229\u7528\u3057\u307E\u3059\u304B\uFF1F</string>
+    <string name="pro_unlock_watch_ad">\u5E83\u544A\u3092\u898B\u308B</string>
+    <string name="pro_unlock_remove_ads">\u5E83\u544A\u3092\u524A\u9664</string>
+    <string name="pro_unlock_ad_unavailable">\u73FE\u5728\u5E83\u544A\u3092\u5229\u7528\u3067\u304D\u307E\u305B\u3093\u3002\u3057\u3070\u3089\u304F\u3057\u3066\u304B\u3089\u3082\u3046\u4E00\u5EA6\u304A\u8A66\u3057\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="tools_title">\u30C4\u30FC\u30EB</string>
+    <string name="changelog_label_latest">\u6700\u65B0</string>
+    <string name="toast_recording_muxer_failed">\u9332\u753B\u3092\u5B8C\u4E86\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002\u3082\u3046\u4E00\u5EA6\u304A\u8A66\u3057\u304F\u3060\u3055\u3044\u3002</string>
+    <string name="notif_cc_record">\u9332\u753B</string>
+    <string name="notif_cc_shot">\u64AE\u5F71</string>
+    <string name="notif_cc_float">\u30D5\u30ED\u30FC\u30C8</string>
+    <string name="notif_cc_home">\u30DB\u30FC\u30E0</string>
+    <string name="notif_cc_close">\u9589\u3058\u308B</string>
+    <string name="notif_cc_stop">\u505C\u6B62</string>
 </resources>
