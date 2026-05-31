@@ -31,6 +31,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
+import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics
 
 object EditorVideoTransform {
     private const val TAG = "EditorVideoTransform"
@@ -294,6 +295,8 @@ object EditorVideoTransform {
         displayName: String,
         file: File,
     ): Uri? {
+        val srcLen = file.length()
+        if (srcLen <= 0L) return null
         val cv =
             ContentValues().apply {
                 put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
@@ -316,12 +319,32 @@ object EditorVideoTransform {
                 return null
             }
             if (Build.VERSION.SDK_INT >= 29) {
-                resolver.update(
-                    uri,
-                    ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) },
-                    null,
-                    null,
-                )
+                val n =
+                    resolver.update(
+                        uri,
+                        ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) },
+                        null,
+                        null,
+                    )
+                if (n <= 0) {
+                    Log.e(TAG, "insertVideo: finalize rows=$n")
+                    runCatching { resolver.delete(uri, null, null) }
+                    return null
+                }
+                val snap = MediaStorePublishDiagnostics.queryPublishedRow(resolver, uri)
+                val stored = snap?.sizeBytes
+                when {
+                    stored == null ->
+                        MediaStorePublishDiagnostics.log(
+                            "insertVideo",
+                            "SIZE unavailable after publish; accepting api=${Build.VERSION.SDK_INT}",
+                        )
+                    stored < srcLen -> {
+                        Log.e(TAG, "insertVideo: size mismatch src=$srcLen stored=$stored")
+                        runCatching { resolver.delete(uri, null, null) }
+                        return null
+                    }
+                }
             }
             uri
         } catch (e: Exception) {

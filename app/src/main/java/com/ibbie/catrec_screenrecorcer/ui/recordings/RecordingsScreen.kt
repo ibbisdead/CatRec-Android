@@ -1,17 +1,20 @@
 package com.ibbie.catrec_screenrecorcer.ui.recordings
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.text.format.Formatter
+import android.util.LruCache
 import android.util.Size
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -72,7 +75,6 @@ import com.ibbie.catrec_screenrecorcer.media.MediaDeleteResult
 import com.ibbie.catrec_screenrecorcer.media.MediaItem
 import com.ibbie.catrec_screenrecorcer.media.MediaManager
 import com.ibbie.catrec_screenrecorcer.media.screenshotDateLabel
-import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
@@ -84,6 +86,7 @@ import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -123,14 +126,16 @@ fun RecordingsScreen(
         onDispose { suppressRecordFab.value = false }
     }
 
-    // Reload when the tab resumes, when the save folder changes, or when saving completes.
+    // Reload when the tab resumes, when the save folder changes, when saving completes,
+    // or when a recording/clip is saved while this tab is already visible.
     // isSaving is a key so the effect re-fires once the muxer finishes writing; the guard
     // prevents a premature load while isSaving is true (MediaStore won't have the new row yet).
     val lifecycleState by viewModel.sessionLifecycleState.collectAsState()
     val isIdle = lifecycleState is com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState.Idle
     val isSaving by viewModel.isSaving.collectAsState()
+    val recordingSavedCount by viewModel.recordingSavedCount.collectAsState()
 
-    LifecycleResumeEffect(saveLocationUri, isIdle, isSaving) {
+    LifecycleResumeEffect(saveLocationUri, isIdle, isSaving, recordingSavedCount) {
         val job =
             if (!isSaving) {
                 isLoading = true
@@ -434,25 +439,22 @@ fun RecordingCard(
     val context = LocalContext.current
     val accent = LocalAccentColor.current
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var thumbnail by remember(item.uri) { mutableStateOf<Bitmap?>(null) }
+    val thumbnailKey = remember(item.uri, item.dateModifiedMs, item.sizeBytes) {
+        RecordingThumbnailCache.key(item)
+    }
+    var thumbnail by remember(thumbnailKey) {
+        mutableStateOf(RecordingThumbnailCache.get(thumbnailKey))
+    }
 
-    LaunchedEffect(item.uri) {
-        thumbnail =
-            withContext(Dispatchers.IO) {
-                try {
-                    if (Build.VERSION.SDK_INT >= 29) {
-                        context.contentResolver.loadThumbnail(item.uri, Size(160, 120), null)
-                    } else {
-                        val retriever = MediaMetadataRetriever()
-                        retriever.setDataSource(context, item.uri)
-                        val bmp = retriever.getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                        retriever.release()
-                        bmp
-                    }
-                } catch (_: Exception) {
-                    null
-                }
-            }
+    LaunchedEffect(thumbnailKey) {
+        if (thumbnail == null) {
+            thumbnail =
+                RecordingThumbnailCache.load(
+                    context = context.applicationContext,
+                    item = item,
+                    key = thumbnailKey,
+                )
+        }
     }
 
     if (showDeleteDialog) {
@@ -477,34 +479,35 @@ fun RecordingCard(
         )
     }
 
-    Box(
+    val cardShape = RoundedCornerShape(12.dp)
+    val cardColor =
+        if (MaterialTheme.colorScheme.isLightTheme()) {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.96f)
+        } else {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
+        }
+
+    Surface(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .then(
-                    if (isSelected) {
-                        Modifier.border(2.dp, accent, RoundedCornerShape(14.dp))
-                    } else {
-                        Modifier
-                    },
+                .combinedClickable(
+                    onClick = { if (isSelectionMode) onToggleSelect() else onPlay() },
+                    onLongClick = { if (!isSelectionMode) onLongClick() else onToggleSelect() },
                 ),
+        shape = cardShape,
+        color = cardColor,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = if (isSelected) BorderStroke(2.dp, accent) else null,
     ) {
-        GlassCard(
-            modifier = Modifier.fillMaxWidth(),
-            cornerRadius = 14.dp,
-            disableBlur = true,
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = { if (isSelectionMode) onToggleSelect() else onPlay() },
-                            onLongClick = { if (!isSelectionMode) onLongClick() else onToggleSelect() },
-                        ).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
                 // ── Thumbnail ────────────────────────────────────────────────
                 Box(
                     modifier =
@@ -625,18 +628,122 @@ fun RecordingCard(
                 }
 
                 // ── Action icons (hidden in selection mode) ───────────────────
-                if (!isSelectionMode) {
-                    IconButton(onClick = onTrim) {
-                        Icon(Icons.Default.ContentCut, "Trim", tint = accent.copy(alpha = 0.65f))
-                    }
-                    IconButton(onClick = onShare) {
-                        Icon(Icons.Default.Share, "Share", tint = accent.copy(alpha = 0.65f))
-                    }
-                    IconButton(onClick = { showDeleteDialog = true }) {
-                        Icon(Icons.Default.Delete, "Delete", tint = accent)
-                    }
+            if (!isSelectionMode) {
+                IconButton(onClick = onTrim) {
+                    Icon(
+                        Icons.Default.ContentCut,
+                        stringResource(R.string.content_desc_trim),
+                        tint = accent.copy(alpha = 0.65f),
+                    )
+                }
+                IconButton(onClick = onShare) {
+                    Icon(
+                        Icons.Default.Share,
+                        stringResource(R.string.action_share),
+                        tint = accent.copy(alpha = 0.65f),
+                    )
+                }
+                IconButton(onClick = { showDeleteDialog = true }) {
+                    Icon(
+                        Icons.Default.Delete,
+                        stringResource(R.string.action_delete),
+                        tint = accent,
+                    )
                 }
             }
         }
+    }
+}
+
+private object RecordingThumbnailCache {
+    private const val ThumbnailWidthPx = 256
+    private const val ThumbnailHeightPx = 176
+    private const val MaxCacheBytes = 16 * 1024 * 1024
+
+    private val cache =
+        object : LruCache<String, Bitmap>(MaxCacheBytes) {
+            override fun sizeOf(
+                key: String,
+                value: Bitmap,
+            ): Int = value.allocationByteCount.coerceAtLeast(1)
+        }
+
+    fun key(item: MediaItem): String =
+        buildString {
+            append(item.uri)
+            append('|')
+            append(item.dateModifiedMs ?: 0L)
+            append('|')
+            append(item.sizeBytes ?: 0L)
+        }
+
+    fun get(key: String): Bitmap? = synchronized(cache) { cache.get(key) }
+
+    suspend fun load(
+        context: Context,
+        item: MediaItem,
+        key: String,
+    ): Bitmap? {
+        get(key)?.let { return it }
+        val loaded =
+            withContext(Dispatchers.IO) {
+                runCatching { loadBlocking(context, item) }.getOrNull()
+            } ?: return null
+        synchronized(cache) {
+            cache.put(key, loaded)
+        }
+        return loaded
+    }
+
+    private fun loadBlocking(
+        context: Context,
+        item: MediaItem,
+    ): Bitmap? =
+        if (Build.VERSION.SDK_INT >= 29) {
+            runCatching {
+                context.contentResolver.loadThumbnail(item.uri, Size(ThumbnailWidthPx, ThumbnailHeightPx), null)
+            }.getOrNull() ?: loadWithRetriever(context, item)
+        } else {
+            loadWithRetriever(context, item)
+        }
+
+    private fun loadWithRetriever(
+        context: Context,
+        item: MediaItem,
+    ): Bitmap? {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(context, item.uri)
+            if (Build.VERSION.SDK_INT >= 27) {
+                retriever.getScaledFrameAtTime(
+                    500_000,
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    ThumbnailWidthPx,
+                    ThumbnailHeightPx,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                retriever.getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                    ?.scaleDownToThumbnail()
+            }
+        } catch (_: Exception) {
+            null
+        } finally {
+            retriever.release()
+        }
+    }
+
+    private fun Bitmap.scaleDownToThumbnail(): Bitmap {
+        if (width <= ThumbnailWidthPx && height <= ThumbnailHeightPx) return this
+        val scale =
+            minOf(
+                ThumbnailWidthPx.toFloat() / width.toFloat(),
+                ThumbnailHeightPx.toFloat() / height.toFloat(),
+            )
+        val targetW = (width * scale).roundToInt().coerceAtLeast(1)
+        val targetH = (height * scale).roundToInt().coerceAtLeast(1)
+        val scaled = Bitmap.createScaledBitmap(this, targetW, targetH, true)
+        if (scaled !== this) recycle()
+        return scaled
     }
 }

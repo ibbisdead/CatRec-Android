@@ -320,7 +320,10 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                 val barScheme = MaterialTheme.colorScheme
                 Scaffold(
                     containerColor = barScheme.background,
-                    contentWindowInsets = WindowInsets.safeDrawing,
+                    // Bars apply vertical safeDrawing; avoid also folding full safeDrawing into
+                    // content padding (see ScaffoldLayout — horizontal insets still applied to content
+                    // when contentWindowInsets is safeDrawing, doubling with bar-side padding on API 35+).
+                    contentWindowInsets = WindowInsets(0),
                     topBar = {
                         if (!hideChrome) {
                             val chipScroll = rememberScrollState()
@@ -525,13 +528,20 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                     },
                     floatingActionButtonPosition = FabPosition.End,
                 ) { innerPadding ->
+                    val navHostInset =
+                        if (hideChrome) {
+                            WindowInsets.safeDrawing
+                        } else {
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+                        }
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Recordings.route,
                         modifier =
                             Modifier
                                 .padding(innerPadding)
-                                .consumeWindowInsets(innerPadding),
+                                .consumeWindowInsets(innerPadding)
+                                .windowInsetsPadding(navHostInset),
                     ) {
                         composable(Screen.Screenshots.route) {
                             ScreenshotsScreen(
@@ -571,7 +581,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                             VideoToGifScreen(
                                 encodedUri = encodedUri,
                                 navController = navController,
-                                colorMode = ColorMode.resolve(gifColorMode, ColorMode.STANDARD),
+                                colorMode = ColorMode.resolve(gifColorMode, ColorMode.FULL),
                                 forceRec709Compatibility = gifForceRec709,
                             )
                         }

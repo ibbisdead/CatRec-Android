@@ -2,9 +2,6 @@ package com.ibbie.catrec_screenrecorcer.data.recording
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.util.DisplayMetrics
-import android.view.WindowManager
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
@@ -12,6 +9,7 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
+import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,9 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 class DefaultRecordingSessionRepository(
     private val settingsCache: SettingsConfigCache,
@@ -68,6 +63,8 @@ class DefaultRecordingSessionRepository(
                 context.applicationContext,
                 effectiveResolution(snap.captureMode, snap.gifRecorderPresetId, snap.resolution),
                 snap.recordingOrientation,
+                snap.videoEncoder,
+                snap.fps.toInt(),
             )
         val audio =
             when {
@@ -83,7 +80,7 @@ class DefaultRecordingSessionRepository(
             frameRate = effectiveFps(snap.captureMode, snap.gifRecorderPresetId, snap.fps),
             audioSource = audio,
             mediaProjectionResultCode = resultCode,
-            recordSingleApp = snap.recordSingleAppEnabled,
+            recordSingleApp = MediaProjectionIntents.supportsSingleAppSelection(),
         )
     }
 
@@ -97,6 +94,8 @@ class DefaultRecordingSessionRepository(
                 context.applicationContext,
                 snap.resolution,
                 snap.recordingOrientation,
+                snap.videoEncoder,
+                snap.fps.toInt(),
             )
         val audio =
             when {
@@ -112,7 +111,7 @@ class DefaultRecordingSessionRepository(
             frameRate = snap.fps.toInt(),
             audioSource = audio,
             mediaProjectionResultCode = resultCode,
-            recordSingleApp = snap.recordSingleAppEnabled,
+            recordSingleApp = MediaProjectionIntents.supportsSingleAppSelection(),
         )
     }
 
@@ -253,7 +252,7 @@ class DefaultRecordingSessionRepository(
         val gifPreset = if (gif) GifRecordingPresets.byId(snap.gifRecorderPresetId) else null
         return Intent(ctx, ScreenRecordService::class.java).apply {
             action = ScreenRecordService.ACTION_START
-            putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config)
+            putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config.toBundle())
             putExtra(ScreenRecordService.EXTRA_RESULT_CODE, config.mediaProjectionResultCode)
             putExtra(ScreenRecordService.EXTRA_DATA, cloneProjectionIntent(mediaProjectionGrantIntent))
             putExtra(ScreenRecordService.EXTRA_FPS, effectiveFps(snap.captureMode, snap.gifRecorderPresetId, snap.fps))
@@ -286,6 +285,7 @@ class DefaultRecordingSessionRepository(
                 ScreenRecordService.EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION,
                 snap.rec709CompatBrightnessCorrection,
             )
+            putExtra(ScreenRecordService.EXTRA_RECORDING_ENGINE_MODE, snap.recordingEngineMode.storageValue)
             putExtra(ScreenRecordService.EXTRA_SHOW_FLOATING_CONTROLS, snap.floatingControls)
             putExtra(
                 ScreenRecordService.EXTRA_HIDE_FLOATING_ICON_WHILE_RECORDING,
@@ -324,7 +324,7 @@ class DefaultRecordingSessionRepository(
         val snap = settingsCache.current()
         return Intent(ctx, ScreenRecordService::class.java).apply {
             action = ScreenRecordService.ACTION_START_BUFFER
-            putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config)
+            putExtra(ScreenRecordService.EXTRA_SESSION_CONFIG, config.toBundle())
             putExtra(ScreenRecordService.EXTRA_RESULT_CODE, config.mediaProjectionResultCode)
             putExtra(ScreenRecordService.EXTRA_DATA, cloneProjectionIntent(mediaProjectionGrantIntent))
             putExtra(ScreenRecordService.EXTRA_FPS, snap.fps.toInt())
@@ -336,6 +336,7 @@ class DefaultRecordingSessionRepository(
             putExtra(ScreenRecordService.EXTRA_AUDIO_CHANNELS, snap.audioChannels)
             putExtra(ScreenRecordService.EXTRA_AUDIO_ENCODER, snap.audioEncoder)
             putExtra(ScreenRecordService.EXTRA_RESOLUTION, snap.resolution)
+            putExtra(ScreenRecordService.EXTRA_SAVE_LOCATION, snap.saveLocationUri)
             putExtra(ScreenRecordService.EXTRA_VIDEO_ENCODER, snap.videoEncoder)
             putExtra(ScreenRecordService.EXTRA_COLOR_MODE, snap.colorMode)
             putExtra(ScreenRecordService.EXTRA_FORCE_REC709, snap.forceRec709Compatibility)
@@ -343,6 +344,7 @@ class DefaultRecordingSessionRepository(
                 ScreenRecordService.EXTRA_REC709_COMPAT_BRIGHTNESS_CORRECTION,
                 snap.rec709CompatBrightnessCorrection,
             )
+            putExtra(ScreenRecordService.EXTRA_RECORDING_ENGINE_MODE, snap.recordingEngineMode.storageValue)
             putExtra(ScreenRecordService.EXTRA_CLIPPER_DURATION_MINUTES, snap.clipperDurationMinutes)
             putExtra(ScreenRecordService.EXTRA_COUNTDOWN, snap.countdown)
         }
@@ -353,60 +355,18 @@ class DefaultRecordingSessionRepository(
             context: Context,
             resolution: String,
             orientation: String,
+            videoEncoder: String,
+            fps: Int,
         ): Pair<Int, Int> {
-            val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val (nativeWidth, nativeHeight) =
-                if (Build.VERSION.SDK_INT >= 30) {
-                    val b = wm.currentWindowMetrics.bounds
-                    Pair(b.width(), b.height())
-                } else {
-                    @Suppress("DEPRECATION")
-                    val d = wm.defaultDisplay
-                    val dm = DisplayMetrics()
-                    @Suppress("DEPRECATION")
-                    d.getRealMetrics(dm)
-                    Pair(dm.widthPixels, dm.heightPixels)
-                }
-
-            val (baseW, baseH) =
-                when (orientation) {
-                    "Portrait" -> Pair(min(nativeWidth, nativeHeight), max(nativeWidth, nativeHeight))
-                    "Landscape" -> Pair(max(nativeWidth, nativeHeight), min(nativeWidth, nativeHeight))
-                    else -> Pair(nativeWidth, nativeHeight)
-                }
-            val aspectRatio = baseW.toFloat() / baseH.toFloat()
-
-            val raw =
-                when {
-                    resolution == "Native" -> {
-                        val w = (baseW / 16) * 16
-                        val h = (baseH / 16) * 16
-                        w to h
-                    }
-                    resolution.contains("x") -> {
-                        val parts = resolution.split("x")
-                        val w = parts.getOrNull(0)?.toIntOrNull() ?: baseW
-                        val h = parts.getOrNull(1)?.toIntOrNull() ?: baseH
-                        ((w / 16) * 16) to ((h / 16) * 16)
-                    }
-                    else -> {
-                        val targetHeight =
-                            when {
-                                resolution.contains("2160") || resolution.contains("4K") -> 2160
-                                resolution.contains("1440") || resolution.contains("2K") -> 1440
-                                resolution.contains("1080") -> 1080
-                                resolution.contains("720") -> 720
-                                resolution.contains("480") -> 480
-                                resolution.contains("360") -> 360
-                                else -> baseH
-                            }
-                        val targetWidth = (targetHeight * aspectRatio).roundToInt()
-                        ((targetWidth / 16) * 16) to ((targetHeight / 16) * 16)
-                    }
-                }
-            val clamped =
-                RecordingResolutionSupport.clampCaptureForVirtualDisplay(raw.first, raw.second)
-            return clamped.width to clamped.height
+            val captureSize =
+                RecordingResolutionSupport.getEncoderCaptureResolutionFromSetting(
+                    context = context,
+                    resolutionSetting = resolution,
+                    recordingOrientation = orientation,
+                    videoEncoder = videoEncoder,
+                    fps = fps,
+                )
+            return captureSize.width to captureSize.height
         }
     }
 }

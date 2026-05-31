@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">Pemutar</string>
     <string name="screen_title_trim">Pangkas</string>
     <string name="screen_title_crop">Potong</string>
@@ -71,15 +70,11 @@
     <string name="action_share">Bagikan</string>
     <string name="action_open">Buka</string>
     <string name="action_edit">Sunting</string>
-    <string name="consent_analytics_title">Analisis penggunaan</string>
-    <string name="consent_analytics_message">Bantu kami meningkatkan CatRec dengan mengizinkan penggunaan opsional dan analisis kerusakan. Iklan yang dipersonalisasi dikontrol secara terpisah di Pengaturan (diaktifkan secara default). Anda dapat mengubahnya kapan saja di Pengaturan.</string>
     <string name="setting_usage_analytics">Analitik penggunaan</string>
     <string name="setting_usage_analytics_desc">Statistik crash dan penggunaan untuk meningkatkan aplikasi</string>
     <string name="setting_personalized_ads">Iklan yang dipersonalisasi</string>
     <string name="setting_personalized_ads_on_desc">AdMob dapat menggunakan ID iklan Anda untuk iklan yang relevan</string>
     <string name="setting_personalized_ads_off_desc">Hanya iklan yang tidak dipersonalisasi</string>
-    <string name="consent_accept">Mengizinkan</string>
-    <string name="consent_decline">Menolak</string>
     <string name="action_apply">Terapkan</string>
     <string name="action_pause">Jeda</string>
     <string name="action_resume">Lanjutkan</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">Buka Pengaturan %s</string>
     <string name="battery_opt_btn_learn_more">Panduan visual (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">Nanti Saja</string>
-    <string name="battery_opt_banner_text">Perangkat Anda mungkin menghentikan perekaman di latar belakang.</string>
-    <string name="battery_opt_banner_fix">Perbaiki</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_gif_recorder">Perekam GIF</string>
-    <string name="settings_gif_recorder_desc">Mode GIF merekam video terlebih dahulu, lalu mengonversinya. Kualitas dan panjangnya mengikuti preset di bawah ini; penggeser video tetap tersimpan saat Anda beralih kembali ke Perekaman.</string>
+    <string name="settings_gif_recorder_desc">Merekam video terlebih dahulu, lalu mengonversinya ke GIF.</string>
     <string name="setting_gif_preset">Prasetel kualitas GIF</string>
     <string name="video_locked_by_gif_preset">Opsi video dikontrol oleh preset GIF saat mode GIF dipilih.</string>
     <string name="gif_preset_small">Kecil (file lebih cepat dan lebih kecil)</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">Resolusi</string>
-    <string name="setting_resolution_native">Asli</string>
+    <string name="setting_resolution_native">Gunakan resolusi perangkat</string>
     <string name="setting_resolution_custom">Resolusi kustom\u2026</string>
     <string name="setting_resolution_custom_hint">mis. 1920x1080</string>
     <string name="setting_fps">Kecepatan Bingkai (FPS)</string>
     <string name="setting_bitrate">Bitrate Video</string>
     <string name="setting_video_encoder">Encoder Video</string>
     <string name="setting_color_mode">Mode Warna</string>
-    <string name="setting_color_mode_standard">Standar (Rec.709)</string>
-    <string name="setting_color_mode_full">Rentang Penuh</string>
-    <string name="dialog_color_mode">Mode Warna</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">Koreksi kecerahan Rec.709</string>
-    <string name="setting_rec709_brightness_correction_summary">Menerapkan sedikit peningkatan gamma setelah perbaikan metadata. Dapat sedikit mengurangi kecepatan ekspor.</string>
+    <string name="setting_color_mode_standard">Rentang terbatas / mode kompatibilitas</string>
+    <string name="setting_color_mode_full">Rentang penuh / akurat sesuai layar (disarankan)</string>
+    <string name="setting_force_rec709_compat">Perbaiki metadata rentang terbatas</string>
+    <string name="setting_force_rec709_compat_summary">Menandai ulang bitstream dengan metadata BT.709 rentang terbatas yang eksplisit melalui FFmpeg. Hanya diperlukan pada perangkat yang pemutarannya masih terlihat pudar dalam mode Rentang terbatas.</string>
+    <string name="setting_rec709_brightness_correction">Koreksi kecerahan (opsional)</string>
+    <string name="setting_rec709_brightness_correction_summary">Menerapkan sedikit peningkatan gamma setelah perbaikan metadata. Opsional; aktifkan hanya jika video masih terlihat sedikit gelap.</string>
     <string name="rec709_brightness_correction_off">Nonaktif</string>
     <string name="rec709_brightness_correction_low">Koreksi kecerahan rendah</string>
     <string name="rec709_brightness_correction_medium">Koreksi kecerahan sedang</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">Kontrol Mengambang</string>
     <string name="setting_hide_floating_while_recording">Sembunyikan Ikon Mengambang Saat Merekam</string>
-    <string name="settings_hide_floating_while_recording_desc">Sembunyikan gelembung kontrol mengambang saat rekaman sedang berlangsung</string>
+    <string name="settings_hide_floating_while_recording_desc">Sembunyikan overlay saat merekam</string>
     <string name="setting_post_screenshot_options">Opsi Pasca Tangkapan Layar</string>
     <string name="settings_post_screenshot_options_desc">Setelah tangkapan layar, tampilkan opsi untuk membagikan atau mengedit</string>
-    <string name="setting_record_single_app">Rekam Aplikasi Tunggal</string>
-    <string name="settings_record_single_app_desc">Di Android 14+, pilih satu jendela aplikasi atau layar penuh saat Anda memberikan tangkapan layar</string>
     <string name="screenshot_post_edit">Sunting</string>
     <string name="screenshot_post_action_failed">Tidak dapat membuka berbagi</string>
     <string name="screenshot_post_tap_outside">Ketuk di luar untuk menutup</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">Opasitas tanda air</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">Aktifkan Kamera</string>
-    <string name="camera_enable_desc">Tampilkan overlay kamera saat merekam</string>
     <string name="camera_lock_position">Kunci Posisi</string>
     <string name="camera_facing">Kamera</string>
     <string name="camera_facing_front">Depan</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">Jeda saat layar mati</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">Gelembung selalu terlihat \u2014 rekam dan tangkap dari aplikasi apa pun</string>
+    <string name="settings_floating_controls_desc">Rekam, ambil screenshot, dan akses kontrol dari aplikasi apa pun</string>
     <string name="settings_show_touches">Tampilkan Sentuhan</string>
-    <string name="settings_show_touches_desc">Aktifkan di Opsi Pengembang</string>
     <string name="toast_enable_show_taps">Aktifkan \u00ABTampilkan ketukan\u00BB secara manual</string>
     <string name="toast_overlay_permission">Harap berikan izin overlay</string>
     <string name="setting_countdown_off">Nonaktif</string>
@@ -315,8 +301,6 @@
         <item quantity="other">%1$d detik</item>
     </plurals>
     <string name="setting_internal_audio_note">Hanya Android 10+</string>
-    <string name="camera_status_enabled">Aktif \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">Dinonaktifkan</string>
     <string name="watermark_preview_active">Pratinjau langsung aktif \u2014 seret tanda air untuk memposisikan ulang</string>
     <string name="watermark_preview_recording">Pratinjau tidak tersedia saat merekam</string>
     <string name="watermark_preview_need_overlay">Berikan izin overlay untuk pratinjau langsung</string>
@@ -339,7 +323,7 @@
     <string name="perf_dynamic_glass">Blur kaca dinamis diaktifkan</string>
     <string name="setting_performance_mode">Mode Performa</string>
     <string name="setting_adaptive_recording_performance">Kinerja rekaman adaptif</string>
-    <string name="setting_adaptive_recording_performance_summary">Otomatis mengurangi beban jika perangkat kesulitan saat merekam</string>
+    <string name="setting_adaptive_recording_performance_summary">Mengurangi kualitas perekaman saat beban berat untuk mengurangi lag.</string>
     <string name="performance_fallback_active">Beralih ke profil rekaman yang lebih ringan demi stabilitas</string>
     <string name="performance_warning_title">Peringatan performa</string>
     <string name="performance_warning_body">Perangkat Anda memiliki RAM kurang dari 6 GB atau menjalankan Android 11 ke bawah. Mengaktifkan efek blur kaca real-time dapat menyebabkan UI menjadi lambat, terutama saat merekam.\n\nAktifkan Mode Kualitas tetap saja?</string>
@@ -360,7 +344,6 @@
     <string name="settings_section_privacy">Privasi</string>
     <string name="dialog_custom_resolution_title">Resolusi Kustom</string>
     <string name="dialog_custom_resolution_hint">Masukkan resolusi sebagai LEBAR\u00D7TINGGI (mis. 1920\u00D71080)</string>
-    <string name="error_resolution_format">Format harus L\u00D7T (mis. 1920\u00D71080)</string>
     <string name="error_resolution_min">Resolusi minimum adalah 100\u00D7100</string>
     <string name="error_resolution_max">Resolusi maksimum adalah 7680 di sisi mana pun</string>
     <string name="dialog_resolution_title">Resolusi</string>
@@ -412,7 +395,7 @@
     <string name="clipper_duration_3m">3 mnt</string>
     <string name="clipper_duration_4m">4 mnt</string>
     <string name="clipper_duration_5m">5 mnt</string>
-    <string name="perm_rationale_intro">CatRec memerlukan izin berikut untuk merekam layar Anda:</string>
+    <string name="perm_rationale_intro">CatRec akan meminta berikut ini. Item wajib harus diberikan untuk mulai merekam; item opsional meningkatkan library dan kompatibilitas perangkat.</string>
     <string name="perm_dialog_title">Izin diperlukan</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Hapus rekaman?</string>
@@ -453,8 +436,6 @@
     <string name="content_desc_options">Pilihan</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">Pengeditan video</string>
-    <string name="tools_image_editing">Pengeditan gambar</string>
     <string name="tool_video_trim">Pemangkasan video</string>
     <string name="tool_compress">Kompres video</string>
     <string name="tool_video_to_gif">Video ke GIF</string>
@@ -525,8 +506,12 @@
     <string name="perm_rationale_camera">Diperlukan untuk menampilkan hamparan kamera-dalam-gambar di atas rekaman layar Anda.</string>
     <string name="perm_name_overlay">Tampilkan di atas aplikasi lain</string>
     <string name="perm_rationale_overlay">Diperlukan untuk menampilkan gelembung kontrol mengambang dan hamparan kamera di atas aplikasi lain selama perekaman.</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">Foto &amp; video</string>
+    <string name="perm_rationale_media_library">Diperlukan untuk menampilkan rekaman dan screenshot Anda di aplikasi, termasuk file yang disimpan sebelum CatRec diinstal ulang. Jika Android hanya menawarkan akses parsial, pilih izinkan semua atau sertakan Movies/CatRec dan Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_music_audio">Musik &amp; audio</string>
+    <string name="perm_rationale_music_audio">Opsional. Memungkinkan CatRec menampilkan dan mengimpor file audio di library Anda, misalnya track mikrofon terpisah. Anda tetap bisa merekam jika melewatinya.</string>
+    <string name="perm_name_nearby_devices">Perangkat terdekat</string>
+    <string name="perm_rationale_nearby_devices">Opsional. Digunakan untuk akses Bluetooth yang dibutuhkan beberapa perangkat dan library sebelum atau selama perekaman. Anda tetap bisa memakai CatRec jika melewatinya.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">Layanan latar depan saat merekam: tangkapan layar (MediaProjection) dengan audio mikrofon opsional dan notifikasi persisten.</string>
@@ -535,7 +520,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Rekaman layar</string>
     <string name="notif_channel_recording_complete">Perekaman selesai</string>
-    <string name="notif_channel_rolling_buffer">Penyangga bergulir</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec sudah siap</string>
     <string name="notif_ready_text">Ketuk tombol hamparan \u25CF untuk mulai merekam</string>
     <string name="notif_action_revoke">Menarik kembali</string>
@@ -551,9 +536,9 @@
     <string name="notif_action_mute">Bisu</string>
     <string name="notif_action_unmute">Membunyikan</string>
     <string name="notif_action_show_controls">Tampilkan kontrol</string>
-    <string name="notif_buffer_title">CatRec \u2014 Penyangga bergulir</string>
-    <string name="notif_buffer_starting">Memulai penyanggaan\u2026</string>
-    <string name="notif_buffer_buffering">Buffer %1$d detik terakhir\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">Memulai Clipper…</string>
+    <string name="notif_buffer_buffering">Clipper aktif — %1$d dtk terakhir…</string>
     <string name="notif_buffer_save_clip">Simpan klip</string>
     <string name="notif_post_title">Perekaman selesai</string>
     <string name="notif_post_text">Ketuk untuk membuka rekaman Anda</string>
@@ -567,10 +552,10 @@
     <string name="toast_gif_transcode_failed">Tidak dapat membuat GIF \u2014 rekaman MP4 Anda disimpan.</string>
     <string name="toast_gif_saved">GIF disimpan ke Gambar/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">Tidak dapat membuat file audio terpisah \u2014 mikrofon akan direkam dalam video</string>
-    <string name="toast_internal_audio_silent">Tidak ada audio internal terdeteksi. Aplikasi ini mungkin memblokir penangkapan audio atau menggunakan jalur audio yang tidak didukung.</string>
+    <string name="toast_internal_audio_silent">Tidak ada audio internal terdeteksi. Aplikasi ini mungkin memblokir capture audio atau memakai jalur audio yang tidak didukung.</string>
     <string name="recording_has_separate_audio">Memiliki trek audio terpisah</string>
-    <string name="toast_buffer_start_failed">Penyangga gagal dimulai: %1$s</string>
-    <string name="toast_clip_empty">Klip kosong \u2013 simpan buffering lebih lama</string>
+    <string name="toast_buffer_start_failed">Clipper gagal dimulai: %1$s</string>
+    <string name="toast_clip_empty">Clip kosong – biarkan Clipper berjalan lebih lama</string>
     <string name="toast_clip_saved">Klip disimpan!</string>
     <string name="toast_clip_save_failed">Penyimpanan klip gagal: %1$s</string>
     <string name="notif_camera_overlay_text">Hamparan kamera CatRec aktif \u2014 ketuk untuk kembali ke aplikasi</string>
@@ -592,7 +577,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Izin rekam layar ditolak</string>
-    <string name="toast_no_email_app">Aplikasi email tidak ditemukan</string>
     <string name="share_screenshot_chooser_title">Bagikan tangkapan layar</string>
     <string name="recordings_header_format">PERPUSTAKAAN \u00B7 %1$d</string>
     <string name="screenshots_header_format">TANGKAPAN LAYAR \u00B7 %1$d</string>
@@ -604,7 +588,21 @@
     <string name="content_desc_more_options">Opsi lainnya</string>
     <string name="content_desc_rewind_10">Mundur 10 detik</string>
     <string name="content_desc_forward_10">Maju 10 detik</string>
+    <string name="content_desc_trim">Potong</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>Memperbaiki perekaman audio internal pada perangkat di mana audio aplikasi atau game hilang atau sunyi saat perekaman.</item>
+        <item>Label resolusi dan pengaturan yang lebih jelas, termasuk mengembalikan QHD (2K) ke pemilih saat sebelumnya hilang.</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>Peningkatan performa perekaman dengan mesin Performance untuk tangkapan yang lebih mulus dan panas perangkat lebih rendah.</item>
+        <item>Memperbaiki timer overlay Clipper agar menampilkan durasi Clipper yang benar.</item>
+        <item>Meningkatkan performa UI di rekaman, screenshot, dan daftar media.</item>
+        <item>Meningkatkan penanganan status overlay, notifikasi, rekaman yang disiapkan, dan alur Clipper.</item>
+        <item>Menambahkan peningkatan stabilitas pipeline perekaman dan penanganan mode mesin yang lebih rapi.</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>Perbaikan edge-to-edge di Android 15+ untuk menghilangkan ANR.</item>
@@ -647,7 +645,7 @@
 
     <string-array name="changelog_v100_items">
         <item>Perekaman layar dengan dukungan codec H.264 dan H.265 (HEVC).</item>
-        <item>"Rolling Clipper buffer (1–5 menit, dapat dikonfigurasi) dengan penggabungan segmen yang mulus dan preset durasi yang cepat"</item>
+        <item>Clipper (1–5 menit, dapat dikonfigurasi) dengan penyambungan segmen mulus dan preset durasi cepat</item>
         <item>Tombol Simpan Klip saat Clipper sedang berjalan</item>
         <item>Pilihan resolusi luas untuk semua rasio aspek, ditambah input khusus</item>
         <item>Pelacakan orientasi otomatis selama perekaman</item>
@@ -682,10 +680,10 @@
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">Masukkan resolusi.</string>
     <string name="error_resolution_positive">Lebar dan tinggi harus berupa angka positif.</string>
     <string name="error_resolution_even">Lebar dan tinggi harus berupa angka genap.</string>
@@ -693,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">Resolusi ini terlalu besar untuk profil performa perangkat ini.</string>
     <string name="pro_feature">Fitur PRO</string>
     <string name="pro_recording_title">Anda merekam dengan fitur PRO</string>
-    <string name="pro_recording_body">Tonton iklan untuk membuka fitur PRO selama 4 jam, atau hapus iklan untuk akses permanen.</string>
-    <string name="pro_tools_body">Tonton iklan untuk membuka fitur PRO selama 4 jam, atau beli Hapus Iklan untuk akses permanen?</string>
+    <string name="pro_recording_body">Tonton iklan untuk membuka Pro selama 1 jam: 90/120 FPS, video di atas 16 Mbps, kamera, watermark, dan mic terpisah — atau hapus iklan untuk akses permanen.</string>
+    <string name="pro_tools_body">Tonton iklan untuk membuka Pro selama 1 jam: 90/120 FPS, di atas 16 Mbps, gabungkan dan GIF — atau beli Hapus Iklan untuk akses permanen.</string>
     <string name="pro_unlock_watch_ad">Tonton Iklan</string>
     <string name="pro_unlock_remove_ads">Hapus Iklan</string>
     <string name="pro_unlock_ad_unavailable">Iklan belum tersedia saat ini. Coba lagi nanti.</string>
@@ -707,4 +705,30 @@
     <string name="notif_cc_home">Beranda</string>
     <string name="notif_cc_close">Tutup</string>
     <string name="notif_cc_stop">Berhenti</string>
+    <string name="settings_show_touches_status_on">Aktif</string>
+    <string name="settings_show_touches_status_off">Nonaktif — buka Opsi Developer untuk mengaktifkan Tampilkan sentuhan</string>
+    <string name="settings_show_touches_status_unknown">Tidak diketahui — buka Opsi Developer untuk mengaktifkan Tampilkan sentuhan</string>
+    <string name="setting_recording_engine">Mesin perekaman</string>
+    <string name="recording_engine_performance_label">Mesin performa</string>
+    <string name="recording_engine_compatibility_label">Mesin eksperimental</string>
+    <string name="recording_engine_performance_summary">Direkomendasikan untuk sebagian besar pengguna. Memakai pemrosesan lebih sedikit, lebih dingin, dan paling cocok untuk perekaman harian. Screenshot saat merekam dinonaktifkan.</string>
+    <string name="recording_engine_compatibility_summary">Fallback eksperimental. Dapat memakai lebih banyak pemrosesan, menyebabkan panas lebih tinggi, dan menguras baterai lebih cepat. Coba hanya jika mesin Performance bermasalah di perangkat Anda.</string>
+    <string name="recording_engine_advanced_warning">Mesin eksperimental dapat meningkatkan panas atau penggunaan baterai. Gunakan hanya jika mesin Performance default tidak bekerja dengan baik di perangkat Anda.</string>
+    <string name="recording_engine_scope_note">Berlaku untuk perekaman normal dan Clipper.</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Screenshot saat merekam tidak tersedia di mesin performa.</string>
+    <string name="internal_silent_dialog_title">Audio internal hening</string>
+    <string name="internal_silent_dialog_message">Game atau aplikasi ini mungkin memblokir capture audio internal.\n\nGunakan mikrofon fallback untuk menangkap audio speaker?</string>
+    <string name="internal_silent_use_mic_fallback">Gunakan mikrofon fallback</string>
+    <string name="internal_silent_keep_recording_silent">Lanjut merekam tanpa audio</string>
+    <string name="internal_silent_stop_recording">Hentikan perekaman</string>
+    <string name="internal_silent_auto_fallback_checkbox">Gunakan mikrofon otomatis saat aplikasi memblokir perekaman audio internal</string>
+    <string name="setting_auto_mic_fallback_title">Fallback mikrofon</string>
+    <string name="setting_auto_mic_fallback_summary">Gunakan mikrofon saat aplikasi memblokir perekaman audio internal</string>
+    <string name="toast_internal_audio_using_mic_fallback">Audio internal tidak tersedia. Menggunakan mikrofon fallback.</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">Mikrofon fallback memerlukan izin mikrofon. Perekaman akan berlanjut tanpa audio.</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">Mikrofon fallback tidak tersedia saat perekaman mic terpisah aktif. Matikan mic terpisah di Setelan, atau hentikan dan mulai rekaman baru.</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">Mikrofon fallback untuk video utama tidak tersedia saat perekaman mic terpisah aktif. Anda tetap dapat melanjutkan perekaman atau menghentikannya.</string>
+    <string name="toast_audio_permission_required_recording_not_started">Izin mikrofon diperlukan untuk mode audio yang dipilih. Perekaman tidak dimulai.</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">Menggunakan audio internal/aplikasi saja — mikrofon tidak dapat dimulai. Periksa akses mic atau apakah aplikasi lain sedang memakainya.</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">Menggunakan mikrofon saja — capture audio internal/aplikasi tidak dapat dimulai. Coba aplikasi lain di foreground jika Anda mengharapkan audio game.</string>
 </resources>

@@ -4,7 +4,7 @@ coilCompose = "2.7.0"
 ffmpegKitX6kb = "6.1.1"
 firebaseBom = "34.12.0"
 appcompat = "1.7.1"
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 googleServicesPlugin = "4.4.4"
 firebaseCrashlyticsPlugin = "3.0.7"
 coreKtx = "1.18.0"
@@ -22,12 +22,11 @@ media3Effect = "1.10.0"
 navigationCompose = "2.9.8"
 datastore = "1.2.1"
 camerax = "1.6.0"
-cardview = "1.0.0"
 documentfile = "1.1.0"
-playBilling = "8.3.0"
+playBilling = "9.0.0"
 ktlintGradle = "14.2.0"
 mockk = "1.14.9"
-coroutinesTest = "1.10.2"
+coroutinesTest = "1.11.0"
 playFeatureDelivery = "2.1.0"
 playServicesAds = "25.2.0"
 
@@ -66,9 +65,6 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 androidx-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
-
-# View-based libraries
-androidx-cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 
 # CameraX
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }

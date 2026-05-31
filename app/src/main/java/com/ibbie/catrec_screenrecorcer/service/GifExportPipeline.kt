@@ -7,10 +7,12 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
+import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.FileInputStream
@@ -28,12 +30,11 @@ object GifExportPipeline {
      * Writes the final output to Pictures/CatRec/GIFs in the gallery.
      * This function is suspendable and will cancel FFmpeg execution if the coroutine is cancelled.
      *
-     * @param colorMode [ColorMode.STANDARD] (default) adds an explicit limited→full range expansion
-     *   inside both FFmpeg filter passes. This is necessary when the source MP4 was encoded with
-     *   [android.media.MediaFormat.COLOR_RANGE_LIMITED] tagging (Rec.709 mode) so the GIF palette
-     *   is built from full-range (0–255) pixel values rather than the raw limited-range (16–235)
-     *   signal, which would produce a dark or washed-out animated GIF.
-     *   [ColorMode.FULL] skips the expansion (source already encodes full-range data 0–255).
+     * @param colorMode [ColorMode.FULL] (default) skips range expansion — source already contains
+     *   full-range (0–255) pixel data so no adjustment is needed.
+     *   [ColorMode.STANDARD] adds an explicit limited→full range expansion inside both FFmpeg
+     *   filter passes. This is necessary when the source MP4 carries limited-range (16–235)
+     *   tagging so the GIF palette is built from correct full-range RGB values.
      * @param forceRec709Compatibility Metadata-only repair mode for [ColorMode.STANDARD]. It does
      *   not change pixels, so GIF range handling remains the same as normal STANDARD recordings.
      */
@@ -46,7 +47,7 @@ object GifExportPipeline {
         endMs: Long = Long.MAX_VALUE,
         maxColors: Int = 256,
         paletteDither: GifPaletteDither = GifPaletteDither.BAYER_MEDIUM,
-        colorMode: String = ColorMode.STANDARD,
+        colorMode: String = ColorMode.FULL,
         forceRec709Compatibility: Boolean = false,
     ): Boolean {
         val cacheDir = context.cacheDir
@@ -247,6 +248,11 @@ object GifExportPipeline {
         context: Context,
         gifFile: File,
     ): Boolean {
+        if (!gifFile.exists() || gifFile.length() == 0L) {
+            Log.e(TAG, "saveGifToGallery: missing or empty file")
+            return false
+        }
+        val srcLen = gifFile.length()
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val fileName = "GIF_$timestamp.gif"
         val cv =
@@ -261,25 +267,82 @@ object GifExportPipeline {
                     put(MediaStore.Images.Media.IS_PENDING, 1)
                 }
             }
+        val api = Build.VERSION.SDK_INT
+        MediaStorePublishDiagnostics.log("gif_save", "api=$api srcLen=$srcLen")
+        var inserted: Uri? = null
         return try {
             val resolver = context.contentResolver
             val uri =
                 resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv)
                     ?: return false
-            resolver.openOutputStream(uri)?.use { out ->
-                FileInputStream(gifFile).use { it.copyTo(out) }
-            } ?: return false
-            if (Build.VERSION.SDK_INT >= 29) {
-                resolver.update(
-                    uri,
-                    ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
-                    null,
-                    null,
-                )
+            inserted = uri
+            val wrote =
+                resolver.openOutputStream(uri)?.use { out ->
+                    FileInputStream(gifFile).use { it.copyTo(out) }
+                } != null
+            if (!wrote) {
+                try {
+                    resolver.delete(uri, null, null)
+                } catch (_: Exception) {
+                }
+                inserted = null
+                FirebaseCrashlytics.getInstance().log("gif_save_open_stream_null api=$api")
+                false
+            } else if (Build.VERSION.SDK_INT >= 29) {
+                val n =
+                    resolver.update(
+                        uri,
+                        ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
+                        null,
+                        null,
+                    )
+                if (n <= 0) {
+                    try {
+                        resolver.delete(uri, null, null)
+                    } catch (_: Exception) {
+                    }
+                    FirebaseCrashlytics.getInstance().recordException(
+                        IllegalStateException("gif IS_PENDING clear failed api=$api"),
+                    )
+                    false
+                } else {
+                    val snap = MediaStorePublishDiagnostics.queryPublishedRow(resolver, uri)
+                    val stored = snap?.sizeBytes
+                    when {
+                        stored == null -> {
+                            MediaStorePublishDiagnostics.log(
+                                "gif_save",
+                                "SIZE unavailable after write; treating as ok api=$api",
+                            )
+                            true
+                        }
+                        stored < srcLen -> {
+                            try {
+                                resolver.delete(uri, null, null)
+                            } catch (_: Exception) {
+                            }
+                            FirebaseCrashlytics.getInstance().recordException(
+                                IllegalStateException(
+                                    "gif size mismatch api=$api expected=$srcLen stored=$stored",
+                                ),
+                            )
+                            false
+                        }
+                        else -> {
+                            MediaStorePublishDiagnostics.log("gif_save", "ok stored=$stored")
+                            true
+                        }
+                    }
+                }
+            } else {
+                true
             }
-            true
         } catch (e: Exception) {
             Log.e(TAG, "saveGifToGallery failed", e)
+            inserted?.let { u ->
+                runCatching { context.contentResolver.delete(u, null, null) }
+            }
+            FirebaseCrashlytics.getInstance().recordException(e)
             false
         }
     }

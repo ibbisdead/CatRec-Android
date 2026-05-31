@@ -5,19 +5,20 @@ import android.util.Log
 /**
  * Video color output mode persisted in DataStore.
  *
- * [STANDARD] — Rec.709 limited-range SDR. Explicitly tags the bitstream with
- *   BT.709 primaries, limited (16–235) luma range and SDR transfer function so
- *   players (Google Photos, VLC, Premiere, DaVinci) interpret colours correctly.
- *   This is the default and fixes the washed-out / gray appearance caused by
- *   encoders silently outputting full-range data that players treat as limited.
- *
- * [FULL] — Full-range (0–255) SDR. BT.709 primaries, SDR transfer, full range.
- *   Use only when the target player or pipeline explicitly expects full-range.
+ * [FULL] — Full-range (0–255) SDR with BT.709 primaries and SDR transfer. **Default.**
+ *   Matches the raw pixel values the GPU produces and is the most screen-accurate mode
+ *   for typical screen content. GIF export skips any limited→full expansion because the
+ *   source is already full-range.
  *   Note: on devices that ignore [android.media.MediaFormat.KEY_COLOR_RANGE] metadata
- *   the encoder may still output limited-range frames even in this mode. GIF export
- *   skips the limited→full expansion in this mode, so those frames would appear
- *   slightly darker/undersaturated in the resulting GIF. This is an expected
- *   device-level quirk, not a pipeline bug.
+ *   the encoder may still output limited-range frames; this is a hardware quirk, not
+ *   a pipeline bug.
+ *
+ * [STANDARD] — Limited-range (16–235) SDR with BT.709 primaries and SDR transfer.
+ *   Compatibility mode originally added for devices (e.g. Poco X7 Pro with H.264)
+ *   where the encoder ignores full-range metadata and playback looks washed-out.
+ *   GIF export expands limited→full (16–235 → 0–255) to rebuild correct RGB values.
+ *   When [STANDARD] is active, "Repair limited-range metadata" (Force Rec.709) can
+ *   be enabled as an additional post-processing step via FFmpeg stream-copy.
  */
 object ColorMode {
     private const val TAG = "ColorMode"
@@ -29,9 +30,9 @@ object ColorMode {
 
     /**
      * Resolves the effective color mode from up to three sources, in priority order:
-     * 1. [raw]      — from an Intent extra or other untrusted source; accepted only if [isValid].
-     * 2. [cached]   — from [SettingsConfigCache] snapshot; accepted only if [isValid].
-     * 3. [STANDARD] — guaranteed safe fallback; never returns an invalid value.
+     * 1. [raw]    — from an Intent extra or other untrusted source; accepted only if [isValid].
+     * 2. [cached] — from [SettingsConfigCache] snapshot; accepted only if [isValid].
+     * 3. [FULL]   — guaranteed safe fallback (full-range, screen-accurate); never returns an invalid value.
      *
      * Logs a warning whenever [raw] is absent or carries an unrecognised value so that
      * mismatch between sender and receiver is visible in logcat without crashing.
@@ -47,7 +48,7 @@ object ColorMode {
 
         val resolved = if (isRawValid) raw
             else cached?.takeIf(::isValid)
-            ?: STANDARD
+            ?: FULL
 
         if (!isRawValid) {
             Log.d(TAG, "Resolved colorMode=$resolved (raw=$raw, cached=$cached)")

@@ -65,6 +65,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.ibbie.catrec_screenrecorcer.BuildConfig
+import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
@@ -75,9 +77,7 @@ import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGateResul
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import com.ibbie.catrec_screenrecorcer.utils.recordCrashlyticsNonFatal
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.cos
@@ -167,8 +167,12 @@ class OverlayService : LifecycleService() {
             sizeDp: Int,
             xFraction: Float,
             yFraction: Float,
+            opacity: Int = 100,
+            locked: Boolean = false,
+            facing: String = "Front",
+            aspectRatio: String = "Circle",
         ) {
-            instance?.updateCameraPreview(sizeDp, xFraction, yFraction)
+            instance?.updateCameraPreview(sizeDp, xFraction, yFraction, opacity, locked, facing, aspectRatio)
         }
 
         /** Restores floating / brush chrome hidden while a screenshot was taken. Safe to call multiple times. */
@@ -294,6 +298,7 @@ class OverlayService : LifecycleService() {
             }
             OverlayAction.STOP -> BtnSpec(R.drawable.ic_stop_rec, 0xFFFF8C00.toInt()) {
                 cancelAutoCollapse()
+                hideControlsCard()
                 startService(
                     Intent(this, ScreenRecordService::class.java).apply {
                         this.action = if (currentMode == CaptureMode.CLIPPER) ScreenRecordService.ACTION_STOP_BUFFER else ScreenRecordService.ACTION_STOP
@@ -460,7 +465,6 @@ class OverlayService : LifecycleService() {
 
     /** Bubble/card hidden briefly for a screenshot from the floating pill. */
     private var floatingChromeHiddenForScreenshot = false
-    private var controlsCardWasExpandedBeforeScreenshot = false
 
     // Live preview (watermark)
     private var previewBgView: View? = null
@@ -473,6 +477,22 @@ class OverlayService : LifecycleService() {
     private var cameraPreviewOverlayParams: WindowManager.LayoutParams? = null
     private var settingsCameraPreviewView: PreviewView? = null
     private var settingsCameraProvider: ProcessCameraProvider? = null
+    private var settingsCameraLocked: Boolean = false
+    private var settingsCameraFacingFront: Boolean = true
+    private var settingsCameraAspectRatio: String = "Circle"
+    /**
+     * Registry of every root [View] actually added to [WindowManager] for the settings preview
+     * session. [hideCameraPreview] iterates and removes ALL entries so that a stale/orphaned
+     * reference (field ref lost while WM view still exists) never leaks a stuck overlay.
+     */
+    private val settingsPreviewViews: MutableList<View> = mutableListOf()
+    /**
+     * Monotonic counter incremented on every [showCameraPreview] and [hideCameraPreview] call.
+     * The [ProcessCameraProvider.getInstance] future callback captures the generation value at
+     * the time it was scheduled; if the counter has advanced before the callback fires, the
+     * callback knows it is stale and calls [ProcessCameraProvider.unbindAll] instead of binding.
+     */
+    private var settingsPreviewGeneration: Int = 0
 
     private var useFrontCamera = true
     private var cameraPreviewView: PreviewView? = null
@@ -482,6 +502,13 @@ class OverlayService : LifecycleService() {
     private var displayRotationListenerRegistered = false
     private var lastRecordingPreviewBoundRotation = Int.MIN_VALUE
     private var lastSettingsPreviewBoundRotation = Int.MIN_VALUE
+    /**
+     * Rotation seen at the last accepted [DisplayManager.DisplayListener.onDisplayChanged] event.
+     * Seeded when the listener is registered; reset to [Int.MIN_VALUE] when unregistered.
+     * Events whose rotation matches this value are VRR / brightness / mode-only changes and are
+     * discarded before the debounce runnable is even scheduled.
+     */
+    private var lastSeenDisplayRotation: Int = Int.MIN_VALUE
 
     private val scheduleCameraRotationRebindRunnable =
         Runnable { applyDebouncedDisplayRotationRebind() }
@@ -494,7 +521,22 @@ class OverlayService : LifecycleService() {
 
             override fun onDisplayChanged(displayId: Int) {
                 if (displayId != primaryDisplayId()) return
-                if (cameraPreviewView == null && settingsCameraPreviewView == null) return
+                if (cameraPreviewView == null && settingsCameraPreviewView == null) {
+                    // Settings camera preview calls [hideCameraPreview] but a stuck registration
+                    // would otherwise keep receiving CHANGED bursts (VRR) forever.
+                    maybeUnregisterDisplayRotationListener()
+                    return
+                }
+                // Discard VRR / refresh-rate / brightness events: only rotation matters for
+                // CameraX rebind. Reading rotation here is cheap (View-side surface rotation)
+                // and prevents the debounce runnable from being scheduled at all for non-rotation
+                // events (e.g. 165 Hz → 60 Hz switch or HDR pipeline changes).
+                val newRotation = currentDisplayRotation()
+                if (newRotation == lastSeenDisplayRotation) return
+                lastSeenDisplayRotation = newRotation
+                if (BuildConfig.DEBUG) {
+                    Log.d("OverlayService", "displayRotationListener: rotation changed → $newRotation")
+                }
                 displayRotationHandler.removeCallbacks(scheduleCameraRotationRebindRunnable)
                 displayRotationHandler.postDelayed(
                     scheduleCameraRotationRebindRunnable,
@@ -805,14 +847,20 @@ class OverlayService : LifecycleService() {
             }
 
             ACTION_SHOW_CAMERA_PREVIEW -> {
-                hideControlsOverlay(userDismissed = false)
                 val sizeDp = intent.getIntExtra(EXTRA_CAMERA_SIZE, 120)
                 val xFraction = intent.getFloatExtra(EXTRA_CAMERA_X_FRACTION, 0.05f)
                 val yFraction = intent.getFloatExtra(EXTRA_CAMERA_Y_FRACTION, 0.1f)
-                showCameraPreview(sizeDp, xFraction, yFraction)
+                val opacity = intent.getIntExtra(EXTRA_CAMERA_OPACITY, 100)
+                val locked = intent.getBooleanExtra(EXTRA_CAMERA_LOCK_POSITION, false)
+                val facing = intent.getStringExtra(EXTRA_CAMERA_FACING) ?: "Front"
+                val aspectRatio = intent.getStringExtra(EXTRA_CAMERA_ASPECT_RATIO) ?: "Circle"
+                Log.d("OverlayService", "onStartCommand: ACTION_SHOW_CAMERA_PREVIEW sizeDp=$sizeDp opacity=$opacity locked=$locked facing=$facing aspect=$aspectRatio")
+                hideControlsOverlay(userDismissed = false)
+                showCameraPreview(sizeDp, xFraction, yFraction, opacity, locked, facing, aspectRatio)
             }
 
             ACTION_HIDE_CAMERA_PREVIEW -> {
+                Log.d("OverlayService", "onStartCommand: ACTION_HIDE_CAMERA_PREVIEW")
                 hideCameraPreview()
                 if (cameraView == null && watermarkView == null && controlsBubbleView == null) stopSelf()
             }
@@ -1127,11 +1175,26 @@ class OverlayService : LifecycleService() {
     }
 
     private fun primaryDisplayId(): Int =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display?.displayId ?: Display.DEFAULT_DISPLAY
-        } else {
-            Display.DEFAULT_DISPLAY
-        }
+        // Context.display / getDisplay() throws UnsupportedOperationException from a Service
+        // (non-visual) context on API 30+.  DisplayManager does not require a visual context.
+        (getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)
+            ?.getDisplay(Display.DEFAULT_DISPLAY)?.displayId
+            ?: Display.DEFAULT_DISPLAY
+
+    /**
+     * Returns the current physical rotation of the primary display, using the non-deprecated
+     * [Context.display] path on API 30+ and [WindowManager.defaultDisplay] on older versions.
+     * Used to snapshot rotation in [onDisplayChanged] so VRR / refresh-rate-only events are
+     * discarded without scheduling any debounce work.
+     */
+    private fun currentDisplayRotation(): Int {
+        // Context.display / Context.getDisplay() throws UnsupportedOperationException when called
+        // from a non-visual context (Service without a window context) on API 30+ devices.
+        // DisplayManager.getDisplay(DEFAULT_DISPLAY) is the safe, non-deprecated, context-agnostic
+        // way to read the default display rotation from a background service.
+        val dm = getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
+        return dm?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: Surface.ROTATION_0
+    }
 
     private fun applyDebouncedDisplayRotationRebind() {
         cameraPreviewView?.let { pv ->
@@ -1157,6 +1220,8 @@ class OverlayService : LifecycleService() {
     private fun ensureDisplayRotationListener() {
         if (displayRotationListenerRegistered) return
         val dm = getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager ?: return
+        // Seed snapshot so the very first event is only accepted if rotation actually changed.
+        lastSeenDisplayRotation = currentDisplayRotation()
         dm.registerDisplayListener(displayRotationListener, displayRotationHandler)
         displayRotationListenerRegistered = true
     }
@@ -1164,6 +1229,7 @@ class OverlayService : LifecycleService() {
     private fun maybeUnregisterDisplayRotationListener() {
         if (!displayRotationListenerRegistered) return
         if (cameraView != null || cameraPreviewOverlayView != null) return
+        lastSeenDisplayRotation = Int.MIN_VALUE
         displayRotationHandler.removeCallbacks(scheduleCameraRotationRebindRunnable)
         val dm = getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager ?: return
         dm.unregisterDisplayListener(displayRotationListener)
@@ -1206,15 +1272,18 @@ class OverlayService : LifecycleService() {
     private fun bindSettingsCameraPreview(previewView: PreviewView) {
         val provider = settingsCameraProvider ?: return
         val rotation = previewSurfaceRotation(previewView)
+        Log.d("OverlayService", "bindSettingsCameraPreview: rotation=$rotation")
         val preview =
             Preview.Builder()
                 .setTargetRotation(rotation)
                 .build()
                 .also { it.surfaceProvider = previewView.surfaceProvider }
         try {
+            val selector = if (settingsCameraFacingFront) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
             provider.unbindAll()
-            provider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview)
+            provider.bindToLifecycle(this, selector, preview)
             lastSettingsPreviewBoundRotation = rotation
+            Log.d("OverlayService", "bindSettingsCameraPreview: bound successfully facing=${if (settingsCameraFacingFront) "Front" else "Rear"}")
         } catch (e: Exception) {
             Log.e("OverlayService", "Settings camera preview bind failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: settings camera preview bind failed")
@@ -1381,9 +1450,6 @@ class OverlayService : LifecycleService() {
                         outline.setOval(0, 0, view.width, view.height)
                     }
                 }
-            setLayerType(View.LAYER_TYPE_HARDWARE, null)
-            elevation = dpToPx(8).toFloat()
-
             // Mode icon (visible when idle). Two-tone vector XMLs (orange + light blue)
             // carry their own colors, so we do not apply a PorterDuffColorFilter here —
             // it would flatten them to a single hue.
@@ -1603,7 +1669,6 @@ class OverlayService : LifecycleService() {
                             setColor(activeColor)
                             setStroke(dpToPx(2), strokeColor)
                         }
-                    elevation = dpToPx(4).toFloat()
                     alpha = 0f
                 }
             val xText =
@@ -1927,7 +1992,7 @@ class OverlayService : LifecycleService() {
                 .translationY(0f)
                 .scaleX(1f)
                 .scaleY(1f)
-                .alpha(0.92f)
+                .alpha(1f)
                 .setDuration(260)
                 .setStartDelay(i * 45L)
                 .setInterpolator(OvershootInterpolator(1.3f))
@@ -1987,7 +2052,6 @@ class OverlayService : LifecycleService() {
                     setStroke(dpToPx(1), 0x1A000000)
                 }
             setPadding(padPx, padPx, padPx, padPx)
-            elevation = dpToPx(6).toFloat()
             addPressAnim()
             setOnClickListener {
                 performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
@@ -2059,9 +2123,11 @@ class OverlayService : LifecycleService() {
     }
 
     private fun readFloatingControlsEnabled(): Boolean =
-        runBlocking(Dispatchers.IO) {
-            settingsRepo.floatingControls.first()
-        }
+        (application as? CatRecApplication)
+            ?.settingsConfigCache
+            ?.current()
+            ?.floatingControls
+            ?: false
 
     /**
      * Reflects [hideFloatingIconWhileRecordingPref] on the bubble and expanded card while a
@@ -2105,7 +2171,6 @@ class OverlayService : LifecycleService() {
     private fun hideFloatingChromeForScreenshotOnly() {
         if (floatingChromeHiddenForScreenshot) return
         floatingChromeHiddenForScreenshot = true
-        controlsCardWasExpandedBeforeScreenshot = controlsCardExpanded
         hideDismissIndicator()
         hideControlsCard()
         controlsBubbleView?.visibility = View.GONE
@@ -2116,10 +2181,6 @@ class OverlayService : LifecycleService() {
         floatingChromeHiddenForScreenshot = false
         controlsBubbleView?.visibility = View.VISIBLE
         applyRecordingBubbleVisibilityFromPreference()
-        if (controlsCardWasExpandedBeforeScreenshot) {
-            controlsCardExpanded = true
-            showControlsCard()
-        }
     }
 
     private fun restoreAfterScreenshotCapture() {
@@ -2356,86 +2417,106 @@ class OverlayService : LifecycleService() {
         sizeDp: Int,
         xFraction: Float,
         yFraction: Float,
+        opacity: Int = 100,
+        locked: Boolean = false,
+        facing: String = "Front",
+        aspectRatio: String = "Circle",
     ) {
+        Log.d(
+            "OverlayService",
+            "showCameraPreview: sizeDp=$sizeDp opacity=$opacity locked=$locked facing=$facing aspect=$aspectRatio | " +
+                "overlayHash=${cameraPreviewOverlayView?.let { System.identityHashCode(it) }}, " +
+                "bgHash=${cameraPreviewBgView?.let { System.identityHashCode(it) }}, " +
+                "provider=$settingsCameraProvider, registry=${settingsPreviewViews.map { System.identityHashCode(it) }}",
+        )
         if (!hasRuntimeCameraPermission()) {
             Log.w("OverlayService", "Settings camera preview skipped: CAMERA runtime permission not granted")
             crashlyticsLog("Overlay: settings camera preview skipped (CAMERA not granted)")
             return
         }
-        if (cameraPreviewOverlayView != null) {
-            updateCameraPreview(sizeDp, xFraction, yFraction)
-            return
-        }
+        // Always clean up any previous settings preview first so we always start from a known
+        // clean state. This also guarantees the registry is empty before we add new views.
+        hideCameraPreview()
+
+        // Store new settings so the camera provider callback and drag listener can read them.
+        settingsCameraLocked = locked
+        settingsCameraFacingFront = facing != "Rear"
+        settingsCameraAspectRatio = aspectRatio
+
+        // Bump the generation counter so any in-flight ProcessCameraProvider future callbacks
+        // from the previous show know they are stale and must not bind or overwrite fields.
+        settingsPreviewGeneration++
+        val myGeneration = settingsPreviewGeneration
+        Log.d("OverlayService", "showCameraPreview: starting gen=$myGeneration")
+
         val wm = windowManager ?: return
         val metrics = resources.displayMetrics
 
-        val bgParams =
-            WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                overlayType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                PixelFormat.TRANSLUCENT,
-            )
-        val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000) }
-        cameraPreviewBgView = bg
-        try {
-            wm.addView(bg, bgParams)
-            crashlyticsLog("Overlay: camera preview (settings) bg added")
-        } catch (e: Exception) {
-            Log.e("OverlayService", "Camera preview bg add failed", e)
-            recordCrashlyticsNonFatal(e, "Overlay: camera preview bg add failed")
-            cameraPreviewBgView = null
-            return
-        }
+        // No fullscreen dim bg — a bg overlay covers all app-level windows (including dialogs),
+        // which would hide the facing / aspect / orientation pickers. The preview circle alone
+        // is sufficient as a visual indicator, consistent with the watermark preview behaviour.
 
-        val sizePx = dpToPx(sizeDp)
+        val (widthPx, heightPx) = computeCameraViewSize(sizeDp, aspectRatio)
         val screenW = metrics.widthPixels
         val screenH = metrics.heightPixels
+        var containerFlags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        if (locked) containerFlags = containerFlags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         val wmParams =
             WindowManager
                 .LayoutParams(
-                    sizePx,
-                    sizePx,
+                    widthPx,
+                    heightPx,
                     overlayType(),
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    containerFlags,
                     PixelFormat.TRANSLUCENT,
                 ).apply {
                     gravity = Gravity.TOP or Gravity.START
-                    x = fractionToOverlayOffset(xFraction, screenW, sizePx)
-                    y = fractionToOverlayOffset(yFraction, screenH, sizePx)
+                    x = fractionToOverlayOffset(xFraction, screenW, widthPx)
+                    y = fractionToOverlayOffset(yFraction, screenH, heightPx)
                 }
 
-        val container = buildCameraPreviewContainer()
-        container.setOnTouchListener(makeCameraPreviewDragListener(wmParams, container, sizePx))
-        cameraPreviewOverlayView = container
-        cameraPreviewOverlayParams = wmParams
+        val container = buildCameraPreviewContainer(myGeneration, aspectRatio)
+        container.alpha = opacity / 100f
+        if (!locked) {
+            container.setOnTouchListener(makeCameraPreviewDragListener(wmParams, container, widthPx, heightPx))
+        }
 
         try {
             wm.addView(container, wmParams)
+            // Assign ref and add to registry ONLY after addView succeeds.
+            cameraPreviewOverlayView = container
+            cameraPreviewOverlayParams = wmParams
+            settingsPreviewViews.add(container)
+            Log.d("OverlayService", "showCameraPreview: container added hash=${System.identityHashCode(container)} gen=$myGeneration")
             crashlyticsLog("Overlay: camera preview (settings) container added")
             ensureDisplayRotationListener()
         } catch (e: Exception) {
-            Log.e("OverlayService", "Camera preview add failed", e)
-            recordCrashlyticsNonFatal(e, "Overlay: camera preview container add failed")
+            // addView(container) may or may not have succeeded before the exception was thrown
+            // (e.g. ensureDisplayRotationListener throws after a successful addView).
+            // Roll back every view already in the registry so nothing leaks.
+            Log.e("OverlayService", "showCameraPreview: failed after addView, rolling back (hash=${System.identityHashCode(container)})", e)
+            recordCrashlyticsNonFatal(e, "Overlay: camera preview container add or post-add failed")
+            val toRollback = settingsPreviewViews.toList()
+            settingsPreviewViews.clear()
+            cameraPreviewBgView = null
             cameraPreviewOverlayView = null
             cameraPreviewOverlayParams = null
+            for (v in toRollback) {
+                try {
+                    wm.removeView(v)
+                    Log.d("OverlayService", "showCameraPreview rollback: removed hash=${System.identityHashCode(v)}")
+                } catch (re: Exception) {
+                    Log.w("OverlayService", "showCameraPreview rollback: removeView failed hash=${System.identityHashCode(v)}", re)
+                }
+            }
         }
     }
 
-    private fun buildCameraPreviewContainer(): FrameLayout {
+    private fun buildCameraPreviewContainer(generation: Int, aspectRatio: String = "Circle"): FrameLayout {
         val container =
             FrameLayout(this).apply {
                 clipToOutline = true
-                outlineProvider =
-                    object : ViewOutlineProvider() {
-                        override fun getOutline(
-                            view: View,
-                            outline: Outline,
-                        ) {
-                            outline.setOval(0, 0, view.width, view.height)
-                        }
-                    }
+                outlineProvider = buildOutlineProvider(aspectRatio)
                 setBackgroundColor(Color.BLACK)
                 elevation = dpToPx(6).toFloat()
             }
@@ -2450,8 +2531,31 @@ class OverlayService : LifecycleService() {
         val future = ProcessCameraProvider.getInstance(this)
         future.addListener({
             try {
-                settingsCameraProvider = future.get()
-                val previewView = settingsCameraPreviewView ?: return@addListener
+                val provider = future.get()
+                // Double guard: generation check AND null check on settingsCameraPreviewView.
+                //  • If generation mismatches, a newer show() or a hide() already superseded this
+                //    callback — the provider must be unbound immediately.
+                //  • If settingsCameraPreviewView is null, hideCameraPreview() already cleaned up
+                //    — same outcome.
+                val stale = generation != settingsPreviewGeneration || settingsCameraPreviewView == null
+                if (stale) {
+                    Log.d(
+                        "OverlayService",
+                        "buildCameraPreviewContainer: stale callback gen=$generation vs current=$settingsPreviewGeneration, " +
+                            "previewView=${settingsCameraPreviewView?.let { System.identityHashCode(it) }}; unbinding",
+                    )
+                    provider.unbindAll()
+                    return@addListener
+                }
+                val previewView = settingsCameraPreviewView ?: run {
+                    provider.unbindAll()
+                    return@addListener
+                }
+                Log.d(
+                    "OverlayService",
+                    "buildCameraPreviewContainer: provider ready gen=$generation; binding to PreviewView hash=${System.identityHashCode(previewView)}",
+                )
+                settingsCameraProvider = provider
                 bindSettingsCameraPreview(previewView)
             } catch (e: Exception) {
                 Log.e("OverlayService", "Settings camera preview bind failed", e)
@@ -2465,7 +2569,8 @@ class OverlayService : LifecycleService() {
     private fun makeCameraPreviewDragListener(
         params: WindowManager.LayoutParams,
         view: FrameLayout,
-        sizePx: Int,
+        widthPx: Int,
+        heightPx: Int = widthPx,
     ) = View.OnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -2475,8 +2580,8 @@ class OverlayService : LifecycleService() {
             MotionEvent.ACTION_MOVE -> {
                 val (screenW, screenH) = currentScreenSizePx()
                 val tag = view.tag as? FloatArray ?: return@OnTouchListener false
-                val newX = (tag[0] + (event.rawX - tag[2])).toInt().coerceIn(0, (screenW - sizePx).coerceAtLeast(0))
-                val newY = (tag[1] + (event.rawY - tag[3])).toInt().coerceIn(0, (screenH - sizePx).coerceAtLeast(0))
+                val newX = (tag[0] + (event.rawX - tag[2])).toInt().coerceIn(0, (screenW - widthPx).coerceAtLeast(0))
+                val newY = (tag[1] + (event.rawY - tag[3])).toInt().coerceIn(0, (screenH - heightPx).coerceAtLeast(0))
                 params.x = newX
                 params.y = newY
                 try {
@@ -2487,8 +2592,8 @@ class OverlayService : LifecycleService() {
             }
             MotionEvent.ACTION_UP -> {
                 val (screenW, screenH) = currentScreenSizePx()
-                val maxX = (screenW - sizePx).coerceAtLeast(1).toFloat()
-                val maxY = (screenH - sizePx).coerceAtLeast(1).toFloat()
+                val maxX = (screenW - widthPx).coerceAtLeast(1).toFloat()
+                val maxY = (screenH - heightPx).coerceAtLeast(1).toFloat()
                 onCameraPreviewPositionChanged?.invoke((params.x / maxX).coerceIn(0f, 1f), (params.y / maxY).coerceIn(0f, 1f))
                 true
             }
@@ -2500,44 +2605,124 @@ class OverlayService : LifecycleService() {
         sizeDp: Int,
         xFraction: Float,
         yFraction: Float,
+        opacity: Int = 100,
+        locked: Boolean = false,
+        facing: String = "Front",
+        aspectRatio: String = "Circle",
     ) {
         val wm = windowManager ?: return
         val view = cameraPreviewOverlayView ?: return
         val params = cameraPreviewOverlayParams ?: return
         val metrics = resources.displayMetrics
-        val sizePx = dpToPx(sizeDp)
+        val (widthPx, heightPx) = computeCameraViewSize(sizeDp, aspectRatio)
         val screenW = metrics.widthPixels
         val screenH = metrics.heightPixels
-        params.width = sizePx
-        params.height = sizePx
-        params.x = fractionToOverlayOffset(xFraction, screenW, sizePx)
-        params.y = fractionToOverlayOffset(yFraction, screenH, sizePx)
+        params.width = widthPx
+        params.height = heightPx
+        params.x = fractionToOverlayOffset(xFraction, screenW, widthPx)
+        params.y = fractionToOverlayOffset(yFraction, screenH, heightPx)
+        view.alpha = opacity / 100f
+
+        // Update lock state
+        val lockChanged = settingsCameraLocked != locked
+        settingsCameraLocked = locked
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        if (locked) flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        params.flags = flags
+        if (lockChanged) {
+            if (!locked) {
+                view.setOnTouchListener(makeCameraPreviewDragListener(params, view, widthPx, heightPx))
+            } else {
+                view.setOnTouchListener(null)
+            }
+        }
+
+        // Update aspect ratio clip shape if changed
+        val aspectChanged = settingsCameraAspectRatio != aspectRatio
+        settingsCameraAspectRatio = aspectRatio
+        if (aspectChanged) {
+            view.outlineProvider = buildOutlineProvider(aspectRatio)
+            view.clipToOutline = true
+            view.invalidateOutline()
+        }
+
         try {
             wm.updateViewLayout(view, params)
         } catch (_: Exception) {
         }
+
+        // Rebind camera if facing changed
+        val facingFront = facing != "Rear"
+        val facingChanged = settingsCameraFacingFront != facingFront
+        settingsCameraFacingFront = facingFront
+        if (facingChanged) {
+            val pv = settingsCameraPreviewView ?: return
+            bindSettingsCameraPreview(pv)
+        }
     }
 
     private fun hideCameraPreview() {
+        // Increment generation so any in-flight ProcessCameraProvider future callback
+        // from a previous showCameraPreview knows it is now stale and must not bind or
+        // write back to any of the settings-preview fields.
+        settingsPreviewGeneration++
+        Log.d(
+            "OverlayService",
+            "hideCameraPreview: gen=$settingsPreviewGeneration, " +
+                "overlayHash=${cameraPreviewOverlayView?.let { System.identityHashCode(it) }}, " +
+                "bgHash=${cameraPreviewBgView?.let { System.identityHashCode(it) }}, " +
+                "provider=$settingsCameraProvider, " +
+                "registry=${settingsPreviewViews.map { System.identityHashCode(it) }}",
+        )
         lastSettingsPreviewBoundRotation = Int.MIN_VALUE
-        settingsCameraProvider?.unbindAll()
-        settingsCameraProvider = null
+
+        // Null settingsCameraPreviewView FIRST so that any concurrent future callback (already
+        // past the generation check) sees null and cannot write a stale provider back.
         settingsCameraPreviewView = null
-        cameraPreviewBgView?.let {
-            try {
-                windowManager?.removeView(it)
-            } catch (_: Exception) {
-            }
-        }
-        cameraPreviewBgView = null
-        cameraPreviewOverlayView?.let {
-            try {
-                windowManager?.removeView(it)
-            } catch (_: Exception) {
-            }
-        }
+
+        // Capture field refs and null the fields immediately. The registry is the authoritative
+        // source of what actually exists in WindowManager — field refs are belt-and-suspenders.
+        val localOverlay = cameraPreviewOverlayView
+        val localBg = cameraPreviewBgView
         cameraPreviewOverlayView = null
         cameraPreviewOverlayParams = null
+        cameraPreviewBgView = null
+
+        settingsCameraProvider?.unbindAll()
+        settingsCameraProvider = null
+
+        // Remove EVERY view in the registry (primary path).
+        val registered = settingsPreviewViews.toList()
+        settingsPreviewViews.clear()
+        for (v in registered) {
+            try {
+                windowManager?.removeView(v)
+                Log.d("OverlayService", "hideCameraPreview: registry removeView hash=${System.identityHashCode(v)}")
+            } catch (e: Exception) {
+                Log.w("OverlayService", "hideCameraPreview: registry removeView failed hash=${System.identityHashCode(v)}", e)
+            }
+        }
+
+        // Belt-and-suspenders: also attempt removal via field refs in case they were set but
+        // never reached the registry (should not happen in the new flow, but is a safety net).
+        if (localBg != null && !registered.contains(localBg)) {
+            try {
+                windowManager?.removeView(localBg)
+                Log.w("OverlayService", "hideCameraPreview: fallback bg removed hash=${System.identityHashCode(localBg)} (not in registry!)")
+            } catch (e: Exception) {
+                Log.w("OverlayService", "hideCameraPreview: fallback bg removeView failed hash=${System.identityHashCode(localBg)}", e)
+            }
+        }
+        if (localOverlay != null && !registered.contains(localOverlay)) {
+            try {
+                windowManager?.removeView(localOverlay)
+                Log.w("OverlayService", "hideCameraPreview: fallback overlay removed hash=${System.identityHashCode(localOverlay)} (not in registry!)")
+            } catch (e: Exception) {
+                Log.w("OverlayService", "hideCameraPreview: fallback overlay removeView failed hash=${System.identityHashCode(localOverlay)}", e)
+            }
+        }
+
+        maybeUnregisterDisplayRotationListener()
     }
 
     // ── Watermark Live Preview ─────────────────────────────────────────────────
@@ -2834,7 +3019,7 @@ class OverlayService : LifecycleService() {
         }
     }
 
-    /** Real screen bounds in px for overlays (handles rotation reliably). */
+    /** Real screen bounds in px for overlays (handles rotation reliably). Not recording resolution. */
     private fun currentScreenSizePx(): Pair<Int, Int> {
         val wm = windowManager ?: (getSystemService(WINDOW_SERVICE) as WindowManager)
         return if (Build.VERSION.SDK_INT >= 30) {

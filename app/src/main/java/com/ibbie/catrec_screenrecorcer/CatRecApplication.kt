@@ -51,6 +51,9 @@ class CatRecApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         SettingsRepository.prepareDataStoreFilesystem(this)
+        runBlocking {
+            SettingsRepository(this@CatRecApplication).seedAdaptivePerformanceDefaultForFreshInstallIfNeeded()
+        }
         // Warm the shared settings cache as early as possible so the foreground-service
         // grant window path in DefaultRecordingSessionRepository never has to block.
         settingsConfigCache
@@ -78,12 +81,11 @@ class CatRecApplication : Application() {
         MobileAdsInitializer.initializeIfReady(this)
         billingManager = CatRecBillingManager(this)
         billingManager.start()
-        // Arm Crashlytics explicitly so it is active before MainActivity loads the saved
-        // consent preference. The Firebase Sessions SDK (which Crashlytics uses for data
-        // transport) requires an explicit opt-in call when Firebase Analytics collection
-        // has been disabled; without this, crash reports are silently dropped.
-        // MainActivity will later call setCrashlyticsCollectionEnabled(false) if the user
-        // previously declined the analytics consent prompt.
+        // Arm Crashlytics explicitly so it is active before MainActivity applies the user's
+        // analytics / crash reporting preference from DataStore. The Firebase Sessions SDK
+        // (which Crashlytics uses for data transport) requires an explicit opt-in when
+        // Analytics collection is disabled; without startup arming, crash reports can be dropped.
+        // MainActivity sets Crashlytics to match the stored preference on cold start.
         FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
         // Avoid blocking process start; MainActivity re-syncs after reading consent/prefs.
         applicationScope.launch(Dispatchers.IO) {

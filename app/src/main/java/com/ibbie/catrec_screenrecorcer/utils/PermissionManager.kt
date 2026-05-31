@@ -14,6 +14,13 @@ data class PermissionInfo(
     val rationale: String,
 )
 
+enum class StartupPermission {
+    NOTIFICATIONS,
+    MEDIA_LIBRARY,
+    MEDIA_AUDIO,
+    NEARBY_DEVICES,
+}
+
 class PermissionManager(
     private val context: Context,
 ) {
@@ -25,6 +32,8 @@ class PermissionManager(
         private const val KEY_CAMERA_GRANTED = "camera_granted"
         private const val KEY_OVERLAY_GRANTED = "overlay_granted"
         private const val KEY_APP_LAUNCHED_ONCE = "app_launched_once"
+        private const val KEY_STARTUP_PERMISSION_ATTEMPTED_PREFIX = "startup_permission_attempted_"
+        private const val KEY_STARTUP_PERMISSION_REQUEST_BLOCKED_PREFIX = "startup_permission_request_blocked_"
     }
 
     private val prefs by lazy {
@@ -57,7 +66,8 @@ class PermissionManager(
 
     /**
      * Visual read access for recordings/screenshots in the startup Recordings tab.
-     * Audio media, microphone, camera, overlay, and nearby-device permissions are feature-gated.
+     * Granular READ_MEDIA_AUDIO (API 33+) is prompted in the initial setup chain separately.
+     * Microphone, camera, overlay, and legacy Bluetooth remain feature-gated where applicable.
      */
     fun mediaLibraryReadPermissions(): Array<String> =
         when {
@@ -109,29 +119,101 @@ class PermissionManager(
             true
         }
 
-    /** Startup essentials only: notifications plus visual media access. */
+    /** Startup essentials only: notifications plus visual media access (recordings tab). */
     fun areAllGranted(): Boolean =
         isNotificationGranted() &&
             isMediaLibraryReadGranted()
 
-    /** Startup-essential permissions that are still missing. */
-    fun getMissingPermissions(): List<PermissionInfo> =
+    fun getMissingStartupPermissions(): List<StartupPermission> =
         buildList {
-            if (!isNotificationGranted()) {
-                add(
+            if (!isNotificationGranted()) add(StartupPermission.NOTIFICATIONS)
+            if (!isMediaLibraryReadGranted()) add(StartupPermission.MEDIA_LIBRARY)
+            if (Build.VERSION.SDK_INT >= 33 && !isMediaAudioReadGranted()) add(StartupPermission.MEDIA_AUDIO)
+            if (Build.VERSION.SDK_INT >= 31 && !isBluetoothConnectGranted()) add(StartupPermission.NEARBY_DEVICES)
+        }
+
+    fun isStartupPermissionGranted(permission: StartupPermission): Boolean =
+        when (permission) {
+            StartupPermission.NOTIFICATIONS -> isNotificationGranted()
+            StartupPermission.MEDIA_LIBRARY -> isMediaLibraryReadGranted()
+            StartupPermission.MEDIA_AUDIO -> isMediaAudioReadGranted()
+            StartupPermission.NEARBY_DEVICES -> isBluetoothConnectGranted()
+        }
+
+    fun runtimePermissionsForStartupPermission(permission: StartupPermission): Array<String> =
+        when (permission) {
+            StartupPermission.NOTIFICATIONS ->
+                if (Build.VERSION.SDK_INT >= 33) {
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    emptyArray()
+                }
+            StartupPermission.MEDIA_LIBRARY -> mediaLibraryReadPermissions()
+            StartupPermission.MEDIA_AUDIO -> mediaAudioReadPermissions()
+            StartupPermission.NEARBY_DEVICES -> bluetoothPermissions()
+        }
+
+    fun isStartupPermissionFlowComplete(): Boolean = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
+
+    fun markStartupPermissionFlowComplete() = prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
+
+    fun isStartupPermissionRequestBlocked(permission: StartupPermission): Boolean =
+        prefs.getBoolean(startupPermissionRequestBlockedKey(permission), false)
+
+    fun recordStartupPermissionDialogResult(
+        permission: StartupPermission,
+        granted: Boolean,
+        canAskAgain: Boolean,
+    ) {
+        val attemptedKey = startupPermissionAttemptedKey(permission)
+        val blockedKey = startupPermissionRequestBlockedKey(permission)
+        val wasAttempted = prefs.getBoolean(attemptedKey, false)
+        prefs.edit {
+            putBoolean(attemptedKey, true)
+            when {
+                granted || canAskAgain -> remove(blockedKey)
+                wasAttempted -> putBoolean(blockedKey, true)
+                else -> remove(blockedKey)
+            }
+        }
+    }
+
+    fun clearRequestBlocksForGrantedStartupPermissions() {
+        prefs.edit {
+            StartupPermission.entries
+                .filter { isStartupPermissionGranted(it) }
+                .forEach { remove(startupPermissionRequestBlockedKey(it)) }
+        }
+    }
+
+    /**
+     * Human-readable list for existing permission status surfaces.
+     * Essentials determine [areAllGranted]; music/audio (API 33+) and Nearby Devices (API 31+)
+     * are optional and never block recording or setup completion.
+     */
+    fun getMissingPermissions(): List<PermissionInfo> =
+        getMissingStartupPermissions().map { permission ->
+            when (permission) {
+                StartupPermission.NOTIFICATIONS ->
                     PermissionInfo(
                         name = context.getString(R.string.perm_name_notifications),
                         rationale = context.getString(R.string.perm_rationale_notifications),
-                    ),
-                )
-            }
-            if (!isMediaLibraryReadGranted()) {
-                add(
+                    )
+                StartupPermission.MEDIA_LIBRARY ->
                     PermissionInfo(
                         name = context.getString(R.string.perm_name_media_library),
                         rationale = context.getString(R.string.perm_rationale_media_library),
-                    ),
-                )
+                    )
+                StartupPermission.MEDIA_AUDIO ->
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_music_audio),
+                        rationale = context.getString(R.string.perm_rationale_music_audio),
+                    )
+                StartupPermission.NEARBY_DEVICES ->
+                    PermissionInfo(
+                        name = context.getString(R.string.perm_name_nearby_devices),
+                        rationale = context.getString(R.string.perm_rationale_nearby_devices),
+                    )
             }
         }
 
@@ -147,11 +229,17 @@ class PermissionManager(
     fun saveOverlayGranted(granted: Boolean) =
         prefs.edit { putBoolean(KEY_OVERLAY_GRANTED, granted) }
 
-    fun isSetupComplete(): Boolean = prefs.getBoolean(KEY_SETUP_COMPLETE, false)
+    fun isSetupComplete(): Boolean = isStartupPermissionFlowComplete()
 
-    fun markSetupComplete() = prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
+    fun markSetupComplete() = markStartupPermissionFlowComplete()
 
     fun isFirstAppLaunch(): Boolean = !prefs.getBoolean(KEY_APP_LAUNCHED_ONCE, false)
 
     fun markAppLaunchedOnce() = prefs.edit { putBoolean(KEY_APP_LAUNCHED_ONCE, true) }
+
+    private fun startupPermissionAttemptedKey(permission: StartupPermission): String =
+        KEY_STARTUP_PERMISSION_ATTEMPTED_PREFIX + permission.name
+
+    private fun startupPermissionRequestBlockedKey(permission: StartupPermission): String =
+        KEY_STARTUP_PERMISSION_REQUEST_BLOCKED_PREFIX + permission.name
 }

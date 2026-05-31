@@ -1,17 +1,20 @@
 package com.ibbie.catrec_screenrecorcer.service
 
-import android.app.Activity
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
+import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -23,6 +26,23 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
     companion object {
         const val EXTRA_START_AS_BUFFER = "EXTRA_START_AS_BUFFER"
     }
+
+    private val recordAudioPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            PermissionManager(this).saveAudioGranted(granted)
+            if (!granted) {
+                Toast
+                    .makeText(
+                        this,
+                        getString(R.string.toast_audio_permission_required_recording_not_started),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                finish()
+                return@registerForActivityResult
+            }
+            launchProjectionCapture()
+        }
 
     private val projectionCapture =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -61,11 +81,25 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
             finish()
             return
         }
-        val singleApp =
+        val (recordAudio, internalAudio) =
             runBlocking {
-                SettingsRepository(applicationContext).recordSingleAppEnabled.first()
+                val repo = SettingsRepository(applicationContext)
+                Pair(repo.recordAudio.first(), repo.internalAudio.first())
             }
+        val needsAudio = recordAudio || internalAudio
+        if (needsAudio &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            recordAudioPermission.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            launchProjectionCapture()
+        }
+    }
+
+    private fun launchProjectionCapture() {
         AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
-        projectionCapture.launch(MediaProjectionIntents.createScreenCaptureIntent(this, singleApp))
+        projectionCapture.launch(MediaProjectionIntents.createScreenCaptureIntent(this))
     }
 }

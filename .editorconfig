@@ -8,7 +8,6 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 # Namespace uses underscore (catrec_screenrecorcer); ktlint forbids that by default.
 # Compose: @Composable uses PascalCase; allow wildcard layout imports; long lines in services.
-# CatRecIcons uses _paw for val Paw (capital P); ktlint expects strict _foo/foo pairing.
 # Chains like Toast.makeText / NotificationCompat builders conflict with multiline rules on some lines.
 
 

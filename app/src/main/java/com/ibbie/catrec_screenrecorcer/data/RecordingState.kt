@@ -47,6 +47,13 @@ object RecordingState {
     private val _screenshotSavedCount = MutableStateFlow(0)
     val screenshotSavedCount: StateFlow<Int> = _screenshotSavedCount.asStateFlow()
 
+    /**
+     * Monotonically-incrementing counter bumped each time a recording or clip video is
+     * successfully saved. The recordings tab observes this as a refresh key while visible.
+     */
+    private val _recordingSavedCount = MutableStateFlow(0)
+    val recordingSavedCount: StateFlow<Int> = _recordingSavedCount.asStateFlow()
+
     fun setRecording(recording: Boolean) {
         _isRecording.value = recording
     }
@@ -77,5 +84,9 @@ object RecordingState {
 
     fun onScreenshotSaved() {
         _screenshotSavedCount.update { it + 1 }
+    }
+
+    fun onRecordingSaved() {
+        _recordingSavedCount.update { it + 1 }
     }
 }

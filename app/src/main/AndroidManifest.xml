@@ -114,6 +114,18 @@
             android:taskAffinity="" />
 
         <activity
+            android:name=".InternalSilenceFallbackActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.Dialog"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleTop"
+            android:showWhenLocked="false"
+            android:turnScreenOn="false"
+            android:showForAllUsers="false"
+            android:taskAffinity="" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"

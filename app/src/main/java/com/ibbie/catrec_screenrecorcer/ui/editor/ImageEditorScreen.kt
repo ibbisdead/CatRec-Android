@@ -114,16 +114,29 @@ private suspend fun saveMergedToGallery(
             val uri =
                 resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                     ?: return@withContext false
+            var compressedOk = false
             resolver.openOutputStream(uri)?.use { os ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 92, os)
-            } ?: return@withContext false
+                compressedOk = bitmap.compress(Bitmap.CompressFormat.JPEG, 92, os)
+            } ?: run {
+                runCatching { resolver.delete(uri, null, null) }
+                return@withContext false
+            }
+            if (!compressedOk) {
+                runCatching { resolver.delete(uri, null, null) }
+                return@withContext false
+            }
             if (Build.VERSION.SDK_INT >= 29) {
-                resolver.update(
-                    uri,
-                    ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
-                    null,
-                    null,
-                )
+                val n =
+                    resolver.update(
+                        uri,
+                        ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
+                        null,
+                        null,
+                    )
+                if (n <= 0) {
+                    runCatching { resolver.delete(uri, null, null) }
+                    return@withContext false
+                }
             }
             true
         } catch (_: Exception) {

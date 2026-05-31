@@ -47,12 +47,12 @@ import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.createDeleteRequestPendingIntent
 import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
+import com.ibbie.catrec_screenrecorcer.utils.navigationUriArgToUri
 import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +62,7 @@ fun PlayerScreen(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
+    val videoUri = remember(encodedUri) { navigationUriArgToUri(encodedUri) }
     val scope = rememberCoroutineScope()
 
     val mediaReadable =

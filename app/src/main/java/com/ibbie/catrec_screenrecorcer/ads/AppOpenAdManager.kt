@@ -113,15 +113,18 @@ object AppOpenAdManager {
         activity: Activity,
         adUnitId: String,
         foregroundEventId: Long = ensureForegroundEvent(),
+        onDecisionComplete: () -> Unit = {},
     ) {
         if (adsDisabled) {
             Log.d(TAG, "blocked: ads_disabled")
             clearPendingShow()
+            notifyDecisionComplete(onDecisionComplete)
             return
         }
         if (activity.isFinishing || activity.isDestroyed) {
             Log.d(TAG, "blocked: invalid_activity")
             clearPendingShow()
+            notifyDecisionComplete(onDecisionComplete)
             return
         }
         if (isShowingAd) {
@@ -133,6 +136,7 @@ object AppOpenAdManager {
             Log.d(TAG, "blocked: already_shown_for_foreground_event id=$foregroundEventId")
             clearPendingShow()
             load(activity.applicationContext, adUnitId)
+            notifyDecisionComplete(onDecisionComplete)
             return
         }
 
@@ -146,6 +150,7 @@ object AppOpenAdManager {
             )
             clearPendingShow()
             load(activity.applicationContext, adUnitId)
+            notifyDecisionComplete(onDecisionComplete)
             return
         }
 
@@ -156,6 +161,7 @@ object AppOpenAdManager {
             pendingShowUnitId = adUnitId
             pendingShowForegroundEventId = foregroundEventId
             load(activity.applicationContext, adUnitId)
+            notifyDecisionComplete(onDecisionComplete)
             return
         }
 
@@ -169,6 +175,7 @@ object AppOpenAdManager {
                     appOpenAd = null
                     isShowingAd = false
                     load(activity.applicationContext, adUnitId)
+                    notifyDecisionComplete(onDecisionComplete)
                 }
 
                 override fun onAdFailedToShowFullScreenContent(error: AdError) {
@@ -177,6 +184,7 @@ object AppOpenAdManager {
                     appOpenAd = null
                     isShowingAd = false
                     load(activity.applicationContext, adUnitId)
+                    notifyDecisionComplete(onDecisionComplete)
                 }
 
                 override fun onAdShowedFullScreenContent() = Unit
@@ -218,5 +226,13 @@ object AppOpenAdManager {
         pendingShowActivity = null
         pendingShowUnitId = null
         pendingShowForegroundEventId = 0
+    }
+
+    private fun notifyDecisionComplete(onDecisionComplete: () -> Unit) {
+        try {
+            onDecisionComplete()
+        } catch (e: Exception) {
+            Log.w(TAG, "app-open decision callback failed", e)
+        }
     }
 }

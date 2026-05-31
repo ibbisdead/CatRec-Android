@@ -62,11 +62,19 @@ class CatRecControlReceiver : BroadcastReceiver() {
                     Log.d(TAG, "ACTION_EXIT_APP: stop overlay, exit capture service, cancel idle notif")
                 }
                 app.stopService(Intent(app, OverlayService::class.java))
-                app.startService(
-                    Intent(app, ScreenRecordService::class.java).apply {
-                        action = ScreenRecordService.ACTION_EXIT_SERVICE
-                    },
-                )
+                // On Android 8.0+ (API 26+) startService() throws IllegalStateException when
+                // the app is in the background. If the service isn't running there is nothing
+                // to exit; if it is running it will have been promoted to a foreground service
+                // by its own recording/prepared logic, so a failed start just means nothing to do.
+                runCatching {
+                    app.startService(
+                        Intent(app, ScreenRecordService::class.java).apply {
+                            action = ScreenRecordService.ACTION_EXIT_SERVICE
+                        },
+                    )
+                }.onFailure { e ->
+                    Log.w(TAG, "ACTION_EXIT_APP: startService failed (app in background) — ignoring", e)
+                }
                 AppControlNotification.cancel(app)
                 // Post so the broadcast runs after this receiver returns; avoids competing with the
                 // notification shade / input dispatcher for the same frame as notification exit.
@@ -84,18 +92,22 @@ class CatRecControlReceiver : BroadcastReceiver() {
     private fun handleRecordToggle(app: Context) {
         when {
             RecordingState.isBuffering.value -> {
-                app.startService(
-                    Intent(app, ScreenRecordService::class.java).apply {
-                        action = ScreenRecordService.ACTION_STOP_BUFFER
-                    },
-                )
+                runCatching {
+                    app.startService(
+                        Intent(app, ScreenRecordService::class.java).apply {
+                            action = ScreenRecordService.ACTION_STOP_BUFFER
+                        },
+                    )
+                }.onFailure { e -> Log.w(TAG, "handleRecordToggle STOP_BUFFER startService failed", e) }
             }
             RecordingState.isRecording.value -> {
-                app.startService(
-                    Intent(app, ScreenRecordService::class.java).apply {
-                        action = ScreenRecordService.ACTION_TOGGLE_PAUSE
-                    },
-                )
+                runCatching {
+                    app.startService(
+                        Intent(app, ScreenRecordService::class.java).apply {
+                            action = ScreenRecordService.ACTION_TOGGLE_PAUSE
+                        },
+                    )
+                }.onFailure { e -> Log.w(TAG, "handleRecordToggle TOGGLE_PAUSE startService failed", e) }
             }
             RecordingState.isPrepared.value -> {
                 val mode = RecordingState.currentMode.value
@@ -105,7 +117,9 @@ class CatRecControlReceiver : BroadcastReceiver() {
                     } else {
                         ScreenRecordService.ACTION_START_FROM_OVERLAY
                     }
-                app.startService(Intent(app, ScreenRecordService::class.java).apply { this.action = action })
+                runCatching {
+                    app.startService(Intent(app, ScreenRecordService::class.java).apply { this.action = action })
+                }.onFailure { e -> Log.w(TAG, "handleRecordToggle overlay-start startService failed", e) }
             }
             else -> {
                 val asBuffer = RecordingState.currentMode.value == CaptureMode.CLIPPER
@@ -122,11 +136,13 @@ class CatRecControlReceiver : BroadcastReceiver() {
     private fun handleScreenshotOrPause(app: Context) {
         when {
             RecordingState.isRecording.value -> {
-                app.startService(
-                    Intent(app, ScreenRecordService::class.java).apply {
-                        action = ScreenRecordService.ACTION_STOP
-                    },
-                )
+                runCatching {
+                    app.startService(
+                        Intent(app, ScreenRecordService::class.java).apply {
+                            action = ScreenRecordService.ACTION_STOP
+                        },
+                    )
+                }.onFailure { e -> Log.w(TAG, "handleScreenshotOrPause ACTION_STOP startService failed", e) }
             }
             else -> {
                 // Bring a transparent activity to the foreground first so the notification shade
@@ -165,17 +181,21 @@ class CatRecControlReceiver : BroadcastReceiver() {
             return
         }
         if (OverlayService.idleControlsBubbleVisible) {
-            app.startService(
-                Intent(app, OverlayService::class.java).apply {
-                    action = OverlayService.ACTION_CLOSE_OVERLAY
-                },
-            )
+            runCatching {
+                app.startService(
+                    Intent(app, OverlayService::class.java).apply {
+                        action = OverlayService.ACTION_CLOSE_OVERLAY
+                    },
+                )
+            }.onFailure { e -> Log.w(TAG, "handleOverlayToggle CLOSE_OVERLAY startService failed", e) }
         } else {
-            app.startService(
-                Intent(app, OverlayService::class.java).apply {
-                    action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
-                },
-            )
+            runCatching {
+                app.startService(
+                    Intent(app, OverlayService::class.java).apply {
+                        action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                    },
+                )
+            }.onFailure { e -> Log.w(TAG, "handleOverlayToggle SHOW_IDLE_CONTROLS startService failed", e) }
         }
     }
 

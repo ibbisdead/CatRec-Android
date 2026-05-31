@@ -413,7 +413,6 @@ internal class BrushOverlayLayout(
         LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             background = AppCompatResources.getDrawable(context, R.drawable.bg_brush_toolbar)
-            elevation = 12f * context.resources.displayMetrics.density
         }
 
     private val surface =

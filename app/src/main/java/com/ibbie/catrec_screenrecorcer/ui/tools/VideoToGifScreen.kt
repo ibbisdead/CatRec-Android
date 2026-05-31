@@ -1,7 +1,6 @@
 package com.ibbie.catrec_screenrecorcer.ui.tools
 
 import android.app.Activity
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -36,22 +35,22 @@ import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
 import com.ibbie.catrec_screenrecorcer.ui.components.logProGateCheck
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.formatElapsedMinutesSecondsMs
+import com.ibbie.catrec_screenrecorcer.utils.navigationUriArgToUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VideoToGifScreen(
     encodedUri: String,
     navController: NavController,
-    colorMode: String = ColorMode.STANDARD,
+    colorMode: String = ColorMode.FULL,
     forceRec709Compatibility: Boolean = false,
 ) {
     val context = LocalContext.current
-    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
+    val videoUri = remember(encodedUri) { navigationUriArgToUri(encodedUri) }
     val scope = rememberCoroutineScope()
     val repository = remember { SettingsRepository(context) }
     val adsDisabled by repository.adsDisabled.collectAsState(initial = false)

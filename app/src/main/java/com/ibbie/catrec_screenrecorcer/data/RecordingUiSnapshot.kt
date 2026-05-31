@@ -20,7 +20,6 @@ data class RecordingUiSnapshot(
     val captureMode: String = CaptureMode.RECORD,
     val recordAudio: Boolean = false,
     val internalAudio: Boolean = false,
-    val recordSingleAppEnabled: Boolean = false,
     val isPrepared: Boolean = false,
     val isRecordingPaused: Boolean = false,
     val isSaving: Boolean = false,

@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">\u64AD\u653E\u5668</string>
     <string name="screen_title_trim">\u526A\u8F91</string>
     <string name="screen_title_crop">\u88C1\u526A</string>
@@ -71,15 +70,11 @@
     <string name="action_share">\u5206\u4EAB</string>
     <string name="action_open">\u6253\u5F00</string>
     <string name="action_edit">\u7F16\u8F91</string>
-    <string name="consent_analytics_title">\u4F7F\u7528\u60C5\u51B5\u5206\u6790</string>
-    <string name="consent_analytics_message">\u901A\u8FC7\u5141\u8BB8\u53EF\u9009\u7684\u4F7F\u7528\u548C\u5D29\u6E83\u5206\u6790\u6765\u5E2E\u52A9\u6211\u4EEC\u6539\u8FDB CatRec\u3002\u4E2A\u6027\u5316\u5E7F\u544A\u5728\u201C\u8BBE\u7F6E\u201D\u4E2D\u5355\u72EC\u63A7\u5236\uFF08\u9ED8\u8BA4\u60C5\u51B5\u4E0B\u5904\u4E8E\u6253\u5F00\u72B6\u6001\uFF09\u3002\u60A8\u53EF\u4EE5\u968F\u65F6\u5728\u201C\u8BBE\u7F6E\u201D\u4E2D\u66F4\u6539\u6B64\u8BBE\u7F6E\u3002</string>
     <string name="setting_usage_analytics">\u4F7F\u7528\u60C5\u51B5\u5206\u6790</string>
     <string name="setting_usage_analytics_desc">\u5D29\u6E83\u548C\u4F7F\u7528\u7EDF\u8BA1\uFF0C\u7528\u4E8E\u6539\u5584\u5E94\u7528</string>
     <string name="setting_personalized_ads">\u4E2A\u6027\u5316\u5E7F\u544A</string>
     <string name="setting_personalized_ads_on_desc">AdMob \u53EF\u4F7F\u7528\u60A8\u7684\u5E7F\u544A ID \u6295\u653E\u76F8\u5173\u5E7F\u544A</string>
     <string name="setting_personalized_ads_off_desc">\u4EC5\u663E\u793A\u975E\u4E2A\u6027\u5316\u5E7F\u544A</string>
-    <string name="consent_accept">\u5141\u8BB8</string>
-    <string name="consent_decline">\u8870\u9000</string>
     <string name="action_apply">\u5E94\u7528</string>
     <string name="action_pause">\u6682\u505C</string>
     <string name="action_resume">\u7EE7\u7EED</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">\u6253\u5F00 %s \u8BBE\u7F6E</string>
     <string name="battery_opt_btn_learn_more">\u53EF\u89C6\u5316\u6307\u5357 (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">\u6682\u4E0D</string>
-    <string name="battery_opt_banner_text">\u60A8\u7684\u8BBE\u5907\u53EF\u80FD\u4F1A\u5728\u540E\u53F0\u505C\u6B62\u5F55\u5236\u3002</string>
-    <string name="battery_opt_banner_fix">\u7ACB\u5373\u4FEE\u590D</string>
     <string name="settings_section_video">\u89C6\u9891</string>
     <string name="settings_section_gif_recorder">GIF \u5F55\u97F3\u673A</string>
-    <string name="settings_gif_recorder_desc">GIF \u6A21\u5F0F\u5148\u5F55\u5236\u89C6\u9891\uFF0C\u7136\u540E\u518D\u8FDB\u884C\u8F6C\u6362\u3002\u8D28\u91CF\u548C\u957F\u5EA6\u9075\u5FAA\u4EE5\u4E0B\u9884\u8BBE\uFF1B\u5F53\u60A8\u5207\u6362\u56DE\u201C\u5F55\u5236\u201D\u65F6\uFF0C\u89C6\u9891\u6ED1\u5757\u4F1A\u4FDD\u7559\u4E0B\u6765\u3002</string>
+    <string name="settings_gif_recorder_desc">\u5148\u5F55\u5236\u89C6\u9891\uFF0C\u518D\u8F6C\u6362\u4E3A GIF\u3002</string>
     <string name="setting_gif_preset">GIF \u8D28\u91CF\u9884\u8BBE</string>
     <string name="video_locked_by_gif_preset">\u9009\u62E9 GIF \u6A21\u5F0F\u65F6\uFF0C\u89C6\u9891\u9009\u9879\u7531 GIF \u9884\u8BBE\u63A7\u5236\u3002</string>
     <string name="gif_preset_small">\u5C0F\uFF08\u66F4\u5FEB\uFF0C\u6587\u4EF6\u66F4\u5C0F\uFF09</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">\u5206\u8FA8\u7387</string>
-    <string name="setting_resolution_native">\u539F\u751F</string>
+    <string name="setting_resolution_native">\u4F7F\u7528\u8BBE\u5907\u5206\u8FA8\u7387</string>
     <string name="setting_resolution_custom">\u81EA\u5B9A\u4E49\u5206\u8FA8\u7387\u2026</string>
     <string name="setting_resolution_custom_hint">\u4F8B\u5982\uFF1A1920x1080</string>
     <string name="setting_fps">\u5E27\u7387\uFF08FPS\uFF09</string>
     <string name="setting_bitrate">\u89C6\u9891\u7801\u7387</string>
     <string name="setting_video_encoder">\u89C6\u9891\u7F16\u7801\u5668</string>
     <string name="setting_color_mode">\u8272\u5F69\u6A21\u5F0F</string>
-    <string name="setting_color_mode_standard">\u6807\u51C6 (Rec.709)</string>
-    <string name="setting_color_mode_full">\u5168\u8303\u56F4</string>
-    <string name="dialog_color_mode">\u8272\u5F69\u6A21\u5F0F</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">Rec.709 \u4EAE\u5EA6\u6821\u6B63</string>
-    <string name="setting_rec709_brightness_correction_summary">\u5728\u4FEE\u590D\u5143\u6570\u636E\u540E\u5E94\u7528\u8F7B\u5FAE\u7684\u4F3D\u9A6C\u63D0\u5347\u3002\u53EF\u80FD\u4F1A\u7565\u5FAE\u964D\u4F4E\u5BFC\u51FA\u901F\u5EA6\u3002</string>
+    <string name="setting_color_mode_standard">有限范围 / 兼容模式</string>
+    <string name="setting_color_mode_full">完整范围 / 屏幕准确（推荐）</string>
+    <string name="setting_force_rec709_compat">修复有限范围元数据</string>
+    <string name="setting_force_rec709_compat_summary">通过 FFmpeg 为码流重新标记明确的有限范围 BT.709 元数据。仅在有限范围模式下播放仍然发灰的设备上需要。</string>
+    <string name="setting_rec709_brightness_correction">亮度校正（可选）</string>
+    <string name="setting_rec709_brightness_correction_summary">在修复元数据后应用轻微的 gamma 提升。可选；仅在视频仍然略暗时启用。</string>
     <string name="rec709_brightness_correction_off">\u5173\u95ED</string>
     <string name="rec709_brightness_correction_low">\u4F4E\u4EAE\u5EA6\u6821\u6B63</string>
     <string name="rec709_brightness_correction_medium">\u4E2D\u7B49\u4EAE\u5EA6\u6821\u6B63</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">\u60AC\u6D6E\u63A7\u5236</string>
     <string name="setting_hide_floating_while_recording">\u5F55\u5236\u65F6\u9690\u85CF\u6D6E\u52A8\u56FE\u6807</string>
-    <string name="settings_hide_floating_while_recording_desc">\u5F55\u5236\u8FC7\u7A0B\u4E2D\u9690\u85CF\u6D6E\u52A8\u63A7\u4EF6\u6C14\u6CE1</string>
+    <string name="settings_hide_floating_while_recording_desc">\u5F55\u5236\u65F6\u9690\u85CF\u60AC\u6D6E\u5C42</string>
     <string name="setting_post_screenshot_options">\u5C4F\u5E55\u622A\u56FE\u540E\u9009\u9879</string>
     <string name="settings_post_screenshot_options_desc">\u5C4F\u5E55\u622A\u56FE\u540E\uFF0C\u663E\u793A\u7528\u4E8E\u5171\u4EAB\u6216\u7F16\u8F91\u7684\u9009\u9879</string>
-    <string name="setting_record_single_app">\u5F55\u5236\u5355\u4E2A\u5E94\u7528\u7A0B\u5E8F</string>
-    <string name="settings_record_single_app_desc">\u5728 Android 14 \u53CA\u66F4\u9AD8\u7248\u672C\u4E0A\uFF0C\u5F53\u60A8\u6388\u4E88\u5C4F\u5E55\u622A\u56FE\u65F6\uFF0C\u9009\u62E9\u4E00\u4E2A\u5E94\u7528\u7A97\u53E3\u6216\u5168\u5C4F</string>
     <string name="screenshot_post_edit">\u7F16\u8F91</string>
     <string name="screenshot_post_action_failed">\u65E0\u6CD5\u6253\u5F00\u5171\u4EAB</string>
     <string name="screenshot_post_tap_outside">\u70B9\u51FB\u5916\u90E8\u5373\u53EF\u5173\u95ED</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">\u6C34\u5370\u4E0D\u900F\u660E\u5EA6</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">\u542F\u7528\u6444\u50CF\u5934</string>
-    <string name="camera_enable_desc">\u5F55\u5236\u65F6\u663E\u793A\u6444\u50CF\u5934\u53E0\u52A0\u5C42</string>
     <string name="camera_lock_position">\u9501\u5B9A\u4F4D\u7F6E</string>
     <string name="camera_facing">\u6444\u50CF\u5934</string>
     <string name="camera_facing_front">\u524D\u7F6E</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">\u5C4F\u5E55\u7184\u706D\u65F6\u6682\u505C</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">\u59CB\u7EC8\u53EF\u89C1\u7684\u6C14\u6CE1 \u2014 \u4ECE\u4EFB\u4F55\u5E94\u7528\u5F55\u5236\u548C\u622A\u56FE</string>
+    <string name="settings_floating_controls_desc">\u53EF\u5728\u4EFB\u610F\u5E94\u7528\u4E2D\u5F55\u5236\u3001\u622A\u5C4F\u548C\u8BBF\u95EE\u63A7\u4EF6</string>
     <string name="settings_show_touches">\u663E\u793A\u89E6\u6478</string>
-    <string name="settings_show_touches_desc">\u5728\u5F00\u53D1\u8005\u9009\u9879\u4E2D\u542F\u7528</string>
     <string name="toast_enable_show_taps">\u8BF7\u624B\u52A8\u542F\u7528\u300C\u663E\u793A\u70B9\u51FB\u64CD\u4F5C\u300D</string>
     <string name="toast_overlay_permission">\u8BF7\u6388\u4E88\u60AC\u6D6E\u7A97\u6743\u9650</string>
     <string name="setting_countdown_off">\u5173\u95ED</string>
@@ -315,8 +301,6 @@
         <item quantity="other">"%1$d 秒"</item>
     </plurals>
     <string name="setting_internal_audio_note">\u4EC5\u9650 Android 10+</string>
-    <string name="camera_status_enabled">\u5DF2\u542F\u7528 \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">\u5DF2\u7981\u7528</string>
     <string name="watermark_preview_active">\u5B9E\u65F6\u9884\u89C8\u5DF2\u6FC0\u6D3B \u2014 \u62D6\u52A8\u6C34\u5370\u91CD\u65B0\u5B9A\u4F4D</string>
     <string name="watermark_preview_recording">\u5F55\u5236\u65F6\u65E0\u6CD5\u9884\u89C8</string>
     <string name="watermark_preview_need_overlay">\u6388\u4E88\u60AC\u6D6E\u7A97\u6743\u9650\u4EE5\u4F7F\u7528\u5B9E\u65F6\u9884\u89C8</string>
@@ -339,7 +323,7 @@
     <string name="perf_dynamic_glass">\u52A8\u6001\u73BB\u7483\u6A21\u7CCA\u5DF2\u542F\u7528</string>
     <string name="setting_performance_mode">\u6027\u80FD\u6A21\u5F0F</string>
     <string name="setting_adaptive_recording_performance">\u81EA\u9002\u5E94\u5F55\u5236\u6027\u80FD</string>
-    <string name="setting_adaptive_recording_performance_summary">\u5F55\u5236\u65F6\u82E5\u8BBE\u5907\u5403\u529B\uFF0C\u4F1A\u81EA\u52A8\u964D\u4F4E\u8D1F\u8F7D</string>
+    <string name="setting_adaptive_recording_performance_summary">\u9AD8\u8D1F\u8F7D\u65F6\u964D\u4F4E\u5F55\u5236\u8D28\u91CF\u4EE5\u51CF\u5C11\u5361\u987F\u3002</string>
     <string name="performance_fallback_active">\u4E3A\u7A33\u5B9A\u8D77\u89C1\uFF0C\u5DF2\u5207\u6362\u5230\u8F83\u8F7B\u7684\u5F55\u5236\u914D\u7F6E</string>
     <string name="performance_warning_title">\u6027\u80FD\u8B66\u544A</string>
     <string name="performance_warning_body">\u60A8\u7684\u8BBE\u5907 RAM \u4E0D\u8DB3 6 GB \u6216\u8FD0\u884C Android 11 \u53CA\u4EE5\u4E0B\u7248\u672C\u3002\u542F\u7528\u5B9E\u65F6\u73BB\u7483\u6A21\u7CCA\u6548\u679C\u53EF\u80FD\u5BFC\u81F4\u754C\u9762\u5361\u987F\uFF0C\u5C24\u5176\u662F\u5728\u5F55\u5236\u671F\u95F4\u3002\n\n\u4ECD\u8981\u542F\u7528\u8D28\u91CF\u6A21\u5F0F\u5417\uFF1F</string>
@@ -360,7 +344,6 @@
     <string name="settings_section_privacy">\u9690\u79C1</string>
     <string name="dialog_custom_resolution_title">\u81EA\u5B9A\u4E49\u5206\u8FA8\u7387</string>
     <string name="dialog_custom_resolution_hint">\u4EE5\u5BBD\u5EA6\u00D7\u9AD8\u5EA6\u683C\u5F0F\u8F93\u5165\uFF08\u4F8B\u5982\uFF1A1920\u00D71080\uFF09</string>
-    <string name="error_resolution_format">\u683C\u5F0F\u5FC5\u987B\u4E3A\u5BBD\u00D7\u9AD8\uFF08\u4F8B\u5982\uFF1A1920\u00D71080\uFF09</string>
     <string name="error_resolution_min">\u6700\u5C0F\u5206\u8FA8\u7387\u4E3A 100\u00D7100</string>
     <string name="error_resolution_max">\u4EFB\u610F\u65B9\u5411\u6700\u5927\u5206\u8FA8\u7387\u4E3A 7680</string>
     <string name="dialog_resolution_title">\u5206\u8FA8\u7387</string>
@@ -412,7 +395,7 @@
     <string name="clipper_duration_3m">3 \u5206\u949F</string>
     <string name="clipper_duration_4m">4 \u5206\u949F</string>
     <string name="clipper_duration_5m">5 \u5206\u949F</string>
-    <string name="perm_rationale_intro">CatRec \u9700\u8981\u4EE5\u4E0B\u6743\u9650\u6765\u5F55\u5236\u60A8\u7684\u5C4F\u5E55\uFF1A</string>
+    <string name="perm_rationale_intro">CatRec 将请求以下权限。必须授予必需项才能开始录制；可选项可改善媒体库和设备兼容性。</string>
     <string name="perm_dialog_title">\u6240\u9700\u6743\u9650</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">\u5220\u9664\u5F55\u97F3\uFF1F</string>
@@ -453,8 +436,6 @@
     <string name="content_desc_options">\u9009\u9879</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">\u89C6\u9891\u7F16\u8F91</string>
-    <string name="tools_image_editing">\u56FE\u50CF\u7F16\u8F91</string>
     <string name="tool_video_trim">\u89C6\u9891\u4FEE\u526A</string>
     <string name="tool_compress">\u538B\u7F29\u89C6\u9891</string>
     <string name="tool_video_to_gif">\u89C6\u9891\u8F6CGIF</string>
@@ -525,8 +506,12 @@
     <string name="perm_rationale_camera">\u9700\u8981\u5728\u5C4F\u5E55\u5F55\u5236\u7684\u9876\u90E8\u663E\u793A\u76F8\u673A\u753B\u4E2D\u753B\u53E0\u52A0\u5C42\u3002</string>
     <string name="perm_name_overlay">\u663E\u793A\u5728\u5176\u4ED6\u5E94\u7528\u4E4B\u4E0A</string>
     <string name="perm_rationale_overlay">\u9700\u8981\u5728\u5F55\u5236\u671F\u95F4\u5728\u5176\u4ED6\u5E94\u7528\u7A0B\u5E8F\u4E4B\u4E0A\u663E\u793A\u6D6E\u52A8\u63A7\u4EF6\u6C14\u6CE1\u548C\u76F8\u673A\u8986\u76D6\u3002</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">照片和视频</string>
+    <string name="perm_rationale_media_library">需要此权限以在应用中显示你的录制和截图，包括重新安装 CatRec 前保存的文件。如果 Android 仅提供部分访问，请选择允许全部，或包含 Movies/CatRec 和 Pictures/CatRec/Screenshots。</string>
+    <string name="perm_name_music_audio">音乐和音频</string>
+    <string name="perm_rationale_music_audio">可选。让 CatRec 显示和导入媒体库中的音频相关文件，例如独立麦克风轨道。跳过后仍可录制。</string>
+    <string name="perm_name_nearby_devices">附近设备</string>
+    <string name="perm_rationale_nearby_devices">可选。用于某些设备和库在录制前或录制期间需要的蓝牙访问。跳过后仍可使用 CatRec。</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">\u5F55\u5236\u671F\u95F4\u7684\u524D\u53F0\u670D\u52A1\uFF1A\u901A\u8FC7 MediaProjection \u8FDB\u884C\u5C4F\u5E55\u6355\u83B7\uFF0C\u53EF\u9009\u9EA6\u514B\u98CE\u97F3\u9891\uFF0C\u5E76\u663E\u793A\u6301\u7EED\u901A\u77E5\u3002</string>
@@ -535,7 +520,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">\u5C4F\u5E55\u5F55\u5236</string>
     <string name="notif_channel_recording_complete">\u5F55\u97F3\u5B8C\u6210</string>
-    <string name="notif_channel_rolling_buffer">\u6EDA\u52A8\u7F13\u51B2\u5668</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec \u51C6\u5907\u5C31\u7EEA</string>
     <string name="notif_ready_text">\u70B9\u51FB\u53E0\u52A0\u6309\u94AE\u5F00\u59CB\u5F55\u5236</string>
     <string name="notif_action_revoke">\u64A4\u9500</string>
@@ -551,9 +536,9 @@
     <string name="notif_action_mute">\u6C89\u9ED8\u7684</string>
     <string name="notif_action_unmute">\u53D6\u6D88\u9759\u97F3</string>
     <string name="notif_action_show_controls">\u663E\u793A\u63A7\u4EF6</string>
-    <string name="notif_buffer_title">CatRec \u2014 \u6EDA\u52A8\u7F13\u51B2\u533A</string>
-    <string name="notif_buffer_starting">\u542F\u52A8\u7F13\u51B2\u533A\u2026</string>
-    <string name="notif_buffer_buffering">\u6B63\u5728\u7F13\u51B2\u6700\u540E %1$d \u79D2\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">正在启动 Clipper…</string>
+    <string name="notif_buffer_buffering">Clipper 运行中 — 最近 %1$d 秒…</string>
     <string name="notif_buffer_save_clip">\u4FDD\u5B58\u526A\u8F91</string>
     <string name="notif_post_title">\u5F55\u97F3\u5B8C\u6210</string>
     <string name="notif_post_text">\u70B9\u51FB\u5373\u53EF\u6253\u5F00\u5F55\u97F3</string>
@@ -567,10 +552,10 @@
     <string name="toast_gif_transcode_failed">\u65E0\u6CD5\u521B\u5EFA GIF \u2014 \u60A8\u7684 MP4 \u5F55\u97F3\u5DF2\u4FDD\u7559\u3002</string>
     <string name="toast_gif_saved">GIF \u4FDD\u5B58\u5230 Pictures/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">\u65E0\u6CD5\u521B\u5EFA\u5355\u72EC\u7684\u97F3\u9891\u6587\u4EF6 - \u9EA6\u514B\u98CE\u5C06\u5F55\u5236\u5728\u89C6\u9891\u4E2D</string>
-    <string name="toast_internal_audio_silent">未检测到内部音频。此应用可能会阻止音频捕获或使用不受支持的音频路径。</string>
+    <string name="toast_internal_audio_silent">未检测到内部音频。此应用可能会阻止音频捕获，或使用不受支持的音频路径。</string>
     <string name="recording_has_separate_audio">\u6709\u72EC\u7ACB\u7684\u97F3\u8F68</string>
-    <string name="toast_buffer_start_failed">\u7F13\u51B2\u533A\u542F\u52A8\u5931\u8D25\uFF1A%1$s</string>
-    <string name="toast_clip_empty">\u526A\u8F91\u4E3A\u7A7A \u2013 \u4FDD\u6301\u7F13\u51B2\u65F6\u95F4\u66F4\u957F</string>
+    <string name="toast_buffer_start_failed">Clipper 启动失败：%1$s</string>
+    <string name="toast_clip_empty">剪辑为空 – 请让 Clipper 运行更久</string>
     <string name="toast_clip_saved">\u526A\u8F91\u5DF2\u4FDD\u5B58\uFF01</string>
     <string name="toast_clip_save_failed">\u526A\u8F91\u4FDD\u5B58\u5931\u8D25\uFF1A%1$s</string>
     <string name="notif_camera_overlay_text">CatRec \u76F8\u673A\u53E0\u52A0\u5C42\u5904\u4E8E\u6D3B\u52A8\u72B6\u6001 \u2014 \u70B9\u51FB\u5373\u53EF\u8FD4\u56DE\u5E94\u7528\u7A0B\u5E8F</string>
@@ -592,7 +577,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">\u5DF2\u62D2\u7EDD\u5C4F\u5E55\u5F55\u5236\u6743\u9650</string>
-    <string name="toast_no_email_app">\u672A\u627E\u5230\u7535\u5B50\u90AE\u4EF6\u5E94\u7528</string>
     <string name="share_screenshot_chooser_title">\u5206\u4EAB\u622A\u56FE</string>
     <string name="recordings_header_format">\u5A92\u4F53\u5E93 \u00B7 %1$d</string>
     <string name="screenshots_header_format">\u622A\u56FE \u00B7 %1$d</string>
@@ -604,7 +588,21 @@
     <string name="content_desc_more_options">\u66F4\u591A\u9009\u9879</string>
     <string name="content_desc_rewind_10">\u540E\u9000 10 \u79D2</string>
     <string name="content_desc_forward_10">\u524D\u8FDB 10 \u79D2</string>
+    <string name="content_desc_trim">\u526A\u8F91</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>\u4FEE\u590D\u90E8\u5206\u8BBE\u5907\u5728\u5F55\u5236\u65F6\u5E94\u7528\u6216\u6E38\u620F\u5185\u90E8\u97F3\u9891\u7F3A\u5931\u6216\u9759\u97F3\u7684\u95EE\u9898\u3002</item>
+        <item>\u66F4\u6E05\u6670\u7684\u5206\u8FA8\u7387\u4E0E\u8BBE\u7F6E\u6807\u7B7E\uFF0C\u5E76\u5728\u4E4B\u524D\u7F3A\u5931\u7684\u8BBE\u5907\u4E0A\u6062\u590D\u9009\u62E9\u5668\u4E2D\u7684 QHD (2K)\u3002</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>使用 Performance 引擎提升录制性能，捕获更流畅，设备发热更低。</item>
+        <item>修复 Clipper 悬浮层计时器，现在会显示正确的 Clipper 时长。</item>
+        <item>提升录制、截图和媒体列表中的界面性能。</item>
+        <item>改进悬浮层、通知、预备录制和 Clipper 流程的状态处理。</item>
+        <item>增加录制管线稳定性改进，并优化引擎模式处理。</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>"修复 Android 15+ 上的边到边显示，消除 ANR。"</item>
@@ -675,17 +673,17 @@
         <item>"带清晰状态指示器的 RECORD / CLIPPER 模式选择器"</item>
         <item>"快速设置图块：CatRec Record 和 CatRec Clipper"</item>
         <item>"记录带有操作的通知；准备捕获会话支持"</item>
-        <item>"可选的选择加入分析以提高稳定性"</item>
+        <item>用于提升稳定性的可选使用情况分析（设置中可切换）</item>
         <item>"隐私控制：分析和广告个性化切换"</item>
         <item>"支持屏幕：变更日志、法律链接和可选的奖励支持"</item>
     </string-array>
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">\u8BF7\u8F93\u5165\u5206\u8FA8\u7387\u3002</string>
     <string name="error_resolution_positive">\u5BBD\u5EA6\u548C\u9AD8\u5EA6\u5FC5\u987B\u4E3A\u6B63\u6570\u3002</string>
     <string name="error_resolution_even">\u5BBD\u5EA6\u548C\u9AD8\u5EA6\u5FC5\u987B\u4E3A\u5076\u6570\u3002</string>
@@ -693,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\u6B64\u5206\u8FA8\u7387\u5BF9\u4E8E\u6B64\u8BBE\u5907\u7684\u6027\u80FD\u914D\u7F6E\u8FC7\u9AD8\u3002</string>
     <string name="pro_feature">PRO \u529F\u80FD</string>
     <string name="pro_recording_title">\u4F60\u6B63\u5728\u4F7F\u7528 PRO \u529F\u80FD\u5F55\u5236</string>
-    <string name="pro_recording_body">\u89C2\u770B\u5E7F\u544A\u5373\u53EF\u89E3\u9501 PRO \u529F\u80FD 4 \u5C0F\u65F6\uFF0C\u6216\u79FB\u9664\u5E7F\u544A\u4EE5\u6C38\u4E45\u4F7F\u7528\u3002</string>
-    <string name="pro_tools_body">\u89C2\u770B\u5E7F\u544A\u5373\u53EF\u89E3\u9501 PRO \u529F\u80FD 4 \u5C0F\u65F6\uFF0C\u6216\u8D2D\u4E70\u79FB\u9664\u5E7F\u544A\u4EE5\u6C38\u4E45\u4F7F\u7528\uFF1F</string>
+    <string name="pro_recording_body">观看广告可解锁 Pro 1 小时：90/120 FPS、超过 16 Mbps 的视频、摄像头、水印和独立麦克风；或移除广告获得永久访问。</string>
+    <string name="pro_tools_body">观看广告可解锁 Pro 1 小时：90/120 FPS、超过 16 Mbps、合并和 GIF；或购买移除广告获得永久访问。</string>
     <string name="pro_unlock_watch_ad">\u89C2\u770B\u5E7F\u544A</string>
     <string name="pro_unlock_remove_ads">\u79FB\u9664\u5E7F\u544A</string>
     <string name="pro_unlock_ad_unavailable">\u5E7F\u544A\u6682\u4E0D\u53EF\u7528\u3002\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002</string>
@@ -707,4 +705,30 @@
     <string name="notif_cc_home">\u4E3B\u9875</string>
     <string name="notif_cc_close">\u5173\u95ED</string>
     <string name="notif_cc_stop">\u505C\u6B62</string>
+    <string name="settings_show_touches_status_on">开启</string>
+    <string name="settings_show_touches_status_off">关闭 — 打开开发者选项以启用显示触摸操作</string>
+    <string name="settings_show_touches_status_unknown">未知 — 打开开发者选项以启用显示触摸操作</string>
+    <string name="setting_recording_engine">录制引擎</string>
+    <string name="recording_engine_performance_label">性能引擎</string>
+    <string name="recording_engine_compatibility_label">\u5B9E\u9A8C\u5F15\u64CE</string>
+    <string name="recording_engine_performance_summary">推荐大多数用户使用。处理开销更低、运行更凉，更适合日常录制。录制时截图已禁用。</string>
+    <string name="recording_engine_compatibility_summary">实验性备用方案。可能使用更多处理资源、增加发热并更快消耗电量。仅在 Performance 引擎在你的设备上出现问题时尝试。</string>
+    <string name="recording_engine_advanced_warning">\u5B9E\u9A8C\u5F15\u64CE\u53EF\u80FD\u589E\u52A0\u53D1\u70ED\u6216\u7535\u6C60\u6D88\u8017\u3002\u4EC5\u5728\u9ED8\u8BA4 Performance \u5F15\u64CE\u65E0\u6CD5\u5728\u4F60\u7684\u8BBE\u5907\u4E0A\u826F\u597D\u5DE5\u4F5C\u65F6\u4F7F\u7528\u3002</string>
+    <string name="recording_engine_scope_note">适用于普通录制和 Clipper。</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">性能引擎中无法在录制时截图。</string>
+    <string name="internal_silent_dialog_title">内部音频无声</string>
+    <string name="internal_silent_dialog_message">此游戏或应用可能会阻止内部音频捕获。\n\n是否改用麦克风 fallback 来捕获扬声器音频？</string>
+    <string name="internal_silent_use_mic_fallback">使用麦克风 fallback</string>
+    <string name="internal_silent_keep_recording_silent">继续静音录制</string>
+    <string name="internal_silent_stop_recording">停止录制</string>
+    <string name="internal_silent_auto_fallback_checkbox">\u5F53\u5E94\u7528\u963B\u6B62\u5F55\u5236\u5185\u90E8\u97F3\u9891\u65F6\u81EA\u52A8\u4F7F\u7528\u9EA6\u514B\u98CE</string>
+    <string name="setting_auto_mic_fallback_title">\u9EA6\u514B\u98CE fallback</string>
+    <string name="setting_auto_mic_fallback_summary">\u5F53\u5E94\u7528\u963B\u6B62\u5F55\u5236\u5185\u90E8\u97F3\u9891\u65F6\u4F7F\u7528\u9EA6\u514B\u98CE</string>
+    <string name="toast_internal_audio_using_mic_fallback">内部音频不可用。正在使用麦克风 fallback。</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">麦克风 fallback 需要麦克风权限。录制将继续静音。</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">启用独立麦克风录制时，麦克风 fallback 不可用。请在设置中关闭独立麦克风，或停止后开始新的录制。</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">启用独立麦克风录制时，主视频无法使用麦克风 fallback。你仍可继续录制或停止。</string>
+    <string name="toast_audio_permission_required_recording_not_started">所选音频模式需要麦克风权限。录制未开始。</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">仅使用内部/应用音频 — 无法启动麦克风。请检查麦克风访问权限，或是否有其他应用正在使用。</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">仅使用麦克风 — 无法启动内部/应用音频捕获。如果你期望游戏音频，请尝试另一个前台应用。</string>
 </resources>

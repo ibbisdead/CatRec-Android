@@ -1,12 +1,17 @@
-package com.ibbie.catrec_screenrecorcer.ui.settings
+﻿package com.ibbie.catrec_screenrecorcer.ui.settings
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.display.DisplayManager
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.Display
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -52,6 +57,9 @@ import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
+import com.ibbie.catrec_screenrecorcer.data.recording.FREE_VIDEO_BITRATE_MBPS
+import com.ibbie.catrec_screenrecorcer.data.recording.PRO_RECORDING_FPS_THRESHOLD
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionInvalidReason
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionPreset
@@ -69,12 +77,33 @@ import androidx.core.graphics.toColorInt
 import androidx.core.content.ContextCompat
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
+import android.util.Log
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     return pm.isIgnoringBatteryOptimizations(context.packageName)
 }
+
+private enum class ShowTouchesStatus {
+    ON,
+    OFF,
+    UNKNOWN,
+}
+
+private const val SHOW_TOUCHES_SETTING_KEY = "show_touches"
+private const val SHOW_TOUCHES_UNKNOWN_VALUE = -1
+
+private fun readShowTouchesStatus(context: Context): ShowTouchesStatus =
+    try {
+        when (Settings.System.getInt(context.contentResolver, SHOW_TOUCHES_SETTING_KEY, SHOW_TOUCHES_UNKNOWN_VALUE)) {
+            1 -> ShowTouchesStatus.ON
+            0 -> ShowTouchesStatus.OFF
+            else -> ShowTouchesStatus.UNKNOWN
+        }
+    } catch (_: SecurityException) {
+        ShowTouchesStatus.UNKNOWN
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,12 +117,27 @@ fun SettingsScreen(
     val accent = LocalAccentColor.current
     val uiState by viewModel.settingsUiState.collectAsState()
     val isLowEndDevice = rememberIsLowEndDevice()
-    val canDrawOverlays = Settings.canDrawOverlays(context)
+
+    // Reactive: re-read the real Android overlay permission every time the screen resumes
+    // (e.g. after returning from the "Display over other apps" system settings page).
+    // Using a plain val here was the root cause of Bug 1 — the value was computed once at
+    // composition time and never updated, so Camera Overlay kept routing back to the permission
+    // screen even after the user had already granted it.
+    var canDrawOverlays by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
 
     var batteryOptimizationIgnored by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
+    var showTouchesStatus by remember { mutableStateOf(readShowTouchesStatus(context)) }
     var showBatteryRationaleDialog by remember { mutableStateOf(false) }
     LifecycleResumeEffect(Unit) {
         batteryOptimizationIgnored = isIgnoringBatteryOptimizations(context)
+        showTouchesStatus = readShowTouchesStatus(context)
+        // Refresh the Android overlay permission on every resume. This is the key fix: when the
+        // user returns from the system "Display over other apps" settings, Compose was still
+        // reading the stale false value captured at first composition. Now we always get the
+        // current value from the system.
+        val freshOverlayPerm = Settings.canDrawOverlays(context)
+        Log.d("CatRec/Settings", "onResume: canDrawOverlays=$freshOverlayPerm (was $canDrawOverlays)")
+        canDrawOverlays = freshOverlayPerm
         onPauseOrDispose { }
     }
 
@@ -105,6 +149,12 @@ fun SettingsScreen(
             stringResource(R.string.clipper_duration_4m),
             stringResource(R.string.clipper_duration_5m),
         )
+    val showTouchesSummary =
+        when (showTouchesStatus) {
+            ShowTouchesStatus.ON -> stringResource(R.string.settings_show_touches_status_on)
+            ShowTouchesStatus.OFF -> stringResource(R.string.settings_show_touches_status_off)
+            ShowTouchesStatus.UNKNOWN -> stringResource(R.string.settings_show_touches_status_unknown)
+        }
 
     // Watermark live preview
     if (uiState.showWatermark && canDrawOverlays && !uiState.isRecording) {
@@ -145,6 +195,58 @@ fun SettingsScreen(
         }
     }
 
+    // Camera overlay live preview (Settings, not recording)
+    if (uiState.cameraOverlay && canDrawOverlays && !uiState.isRecording) {
+        DisposableEffect(Unit) {
+            Log.d("CatRec/Settings", "DisposableEffect: sending ACTION_SHOW_CAMERA_PREVIEW " +
+                "(cameraOverlay=${uiState.cameraOverlay}, canDrawOverlays=$canDrawOverlays, isRecording=${uiState.isRecording})")
+            context.startService(
+                Intent(context, OverlayService::class.java).apply {
+                    action = OverlayService.ACTION_SHOW_CAMERA_PREVIEW
+                    putExtra(OverlayService.EXTRA_CAMERA_SIZE, uiState.cameraOverlaySize)
+                    putExtra(OverlayService.EXTRA_CAMERA_X_FRACTION, uiState.cameraXFraction)
+                    putExtra(OverlayService.EXTRA_CAMERA_Y_FRACTION, uiState.cameraYFraction)
+                    putExtra(OverlayService.EXTRA_CAMERA_OPACITY, uiState.cameraOpacity)
+                    putExtra(OverlayService.EXTRA_CAMERA_LOCK_POSITION, uiState.cameraLockPosition)
+                    putExtra(OverlayService.EXTRA_CAMERA_FACING, uiState.cameraFacing)
+                    putExtra(OverlayService.EXTRA_CAMERA_ASPECT_RATIO, uiState.cameraAspectRatio)
+                },
+            )
+            OverlayService.onCameraPreviewPositionChanged = { x, y ->
+                viewModel.setCameraXFraction(x)
+                viewModel.setCameraYFraction(y)
+            }
+            onDispose {
+                Log.d("CatRec/Settings", "DisposableEffect onDispose: sending ACTION_HIDE_CAMERA_PREVIEW")
+                context.startService(
+                    Intent(context, OverlayService::class.java).apply {
+                        action = OverlayService.ACTION_HIDE_CAMERA_PREVIEW
+                    },
+                )
+                OverlayService.onCameraPreviewPositionChanged = null
+            }
+        }
+        LaunchedEffect(
+            uiState.cameraOverlaySize,
+            uiState.cameraXFraction,
+            uiState.cameraYFraction,
+            uiState.cameraOpacity,
+            uiState.cameraLockPosition,
+            uiState.cameraFacing,
+            uiState.cameraAspectRatio,
+        ) {
+            OverlayService.updateCameraPreviewIfActive(
+                uiState.cameraOverlaySize,
+                uiState.cameraXFraction,
+                uiState.cameraYFraction,
+                uiState.cameraOpacity,
+                uiState.cameraLockPosition,
+                uiState.cameraFacing,
+                uiState.cameraAspectRatio,
+            )
+        }
+    }
+
     val folderPickerLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             if (uri != null) {
@@ -155,6 +257,18 @@ fun SettingsScreen(
                 viewModel.setSaveLocationUri(uri.toString())
             }
         }
+    fun launchFolderPicker() {
+        try {
+            folderPickerLauncher.launch(null)
+        } catch (e: ActivityNotFoundException) {
+            Log.w("CatRec/Settings", "No activity available for ACTION_OPEN_DOCUMENT_TREE", e)
+            Toast.makeText(
+                context,
+                resources.getString(R.string.toast_folder_picker_unavailable),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
     val imagePickerLauncher =
         rememberLauncherForActivityResult(PickVisualMedia()) { uri ->
             if (uri != null) {
@@ -170,14 +284,41 @@ fun SettingsScreen(
     val permissionManager = remember { PermissionManager(context) }
     var pendingEnableMicrophone by remember { mutableStateOf(false) }
     var pendingEnableInternalAudio by remember { mutableStateOf(false) }
+    var pendingEnableAutoMicFallback by remember { mutableStateOf(false) }
     val microphonePermissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
             permissionManager.saveAudioGranted(granted)
             if (granted && pendingEnableMicrophone) viewModel.setRecordAudio(true)
             if (granted && pendingEnableInternalAudio) viewModel.setInternalAudio(true)
+            if (granted && pendingEnableAutoMicFallback) viewModel.setAutoMicFallbackWhenInternalSilent(true)
             pendingEnableMicrophone = false
             pendingEnableInternalAudio = false
+            pendingEnableAutoMicFallback = false
+        }
+
+    var pendingEnableCamera by remember { mutableStateOf(false) }
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            Log.d("CatRec/Settings", "cameraPermissionLauncher: granted=$granted, pendingEnableCamera=$pendingEnableCamera")
+            if (granted && pendingEnableCamera) {
+                // Re-read from the system rather than relying on the remembered state, which may
+                // not yet have been refreshed by the LifecycleResumeEffect when this callback fires.
+                val overlayGranted = Settings.canDrawOverlays(context)
+                canDrawOverlays = overlayGranted
+                Log.d("CatRec/Settings", "cameraPermissionLauncher: overlayGranted=$overlayGranted")
+                if (!overlayGranted) {
+                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                    context.startActivity(
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+                    )
+                } else {
+                    viewModel.setCameraOverlay(true)
+                }
+            }
+            pendingEnableCamera = false
         }
 
     // Dialog states
@@ -186,6 +327,8 @@ fun SettingsScreen(
     var showResolutionDialog by remember { mutableStateOf(false) }
     var showCustomResolutionDialog by remember { mutableStateOf(false) }
     var showVideoEncoderDialog by remember { mutableStateOf(false) }
+    var showRecordingEngineDialog by remember { mutableStateOf(false) }
+    var showAdvancedEngineWarningDialog by remember { mutableStateOf(false) }
     var showColorModeDialog by remember { mutableStateOf(false) }
     var showRec709BrightnessCorrectionDialog by remember { mutableStateOf(false) }
     var showOrientationDialog by remember { mutableStateOf(false) }
@@ -199,7 +342,9 @@ fun SettingsScreen(
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showScreenshotFormatDialog by remember { mutableStateOf(false) }
-    var showCameraSettingsDialog by remember { mutableStateOf(false) }
+    var showCameraFacingDialog by remember { mutableStateOf(false) }
+    var showCameraAspectDialog by remember { mutableStateOf(false) }
+    var showCameraOrientationDialog by remember { mutableStateOf(false) }
     var showWatermarkLocDialog2 by remember { mutableStateOf(false) }
     var showLagWarningDialog by remember { mutableStateOf(false) }
     var showAccentPickerDialog by remember { mutableStateOf(false) }
@@ -212,11 +357,49 @@ fun SettingsScreen(
     val audioMenuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val videoMenuSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    var displayChangeVersion by remember { mutableIntStateOf(0) }
+    DisposableEffect(context, uiState.recordingOrientation) {
+        val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        fun presetSizeKey(): String {
+            val panel =
+                RecordingResolutionSupport.getPanelNativeResolution(
+                    context,
+                    uiState.recordingOrientation,
+                )
+            val logical =
+                RecordingResolutionSupport.getCurrentLogicalDisplayResolution(
+                    context,
+                    uiState.recordingOrientation,
+                )
+            return "${panel.setting}|${logical.setting}"
+        }
+        var lastSizeKey = presetSizeKey()
+        val listener =
+            object : DisplayManager.DisplayListener {
+                override fun onDisplayAdded(displayId: Int) = Unit
+
+                override fun onDisplayRemoved(displayId: Int) = Unit
+
+                override fun onDisplayChanged(displayId: Int) {
+                    if (displayId != Display.DEFAULT_DISPLAY) return
+                    val key = presetSizeKey()
+                    if (key != lastSizeKey) {
+                        lastSizeKey = key
+                        displayChangeVersion++
+                    }
+                }
+            }
+        dm.registerDisplayListener(listener, Handler(Looper.getMainLooper()))
+        onDispose { dm.unregisterDisplayListener(listener) }
+    }
+
     val resolutionPresets =
         remember(
+            displayChangeVersion,
             configuration.orientation,
             configuration.screenWidthDp,
             configuration.screenHeightDp,
+            configuration.densityDpi,
             uiState.recordingOrientation,
             uiState.videoEncoder,
             uiState.fps,
@@ -285,32 +468,21 @@ fun SettingsScreen(
         }
     val langIdx = languageCodes.indexOf(uiState.appLanguage).takeIf { it >= 0 } ?: 0
     val languageDisplay = stringResource(languageLabelIds.getOrElse(langIdx) { R.string.language_system })
-
-    // ── Dialogs (all logic unchanged) ──────────────────────────────────────────
+    // Dialogs (all logic unchanged)
     if (showFpsDialog) {
-        SingleChoiceDialog(
-            title = stringResource(R.string.dialog_fps_title),
-            options = listOf("24", "30", "45", "60", "90", "120"),
+        FpsProChoiceDialog(
             selectedOption = "${uiState.fps.toInt()}",
-            onOptionSelected = { selected ->
-                viewModel.setFps(selected.toFloat())
-            },
+            onOptionSelected = { selected -> viewModel.setFps(selected.toFloat()) },
             onDismiss = { showFpsDialog = false },
         )
     }
 
     if (showBitrateDialog) {
         val bitrateKeys = listOf(1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200)
-        val mbpsLabel = stringResource(R.string.label_mbps)
-        val bitrateLabels = bitrateKeys.map { "$it $mbpsLabel" }
-        SingleChoiceDialog(
-            title = stringResource(R.string.dialog_bitrate_title),
-            options = bitrateLabels,
-            selectedOption = "${uiState.bitrate.toInt()} $mbpsLabel",
-            onOptionSelected = { label ->
-                val idx = bitrateLabels.indexOf(label)
-                if (idx >= 0) viewModel.setBitrate(bitrateKeys[idx].toFloat())
-            },
+        BitrateProChoiceDialog(
+            bitrateKeys = bitrateKeys,
+            selectedMbps = uiState.bitrate.toInt(),
+            onOptionSelected = { mbps -> viewModel.setBitrate(mbps.toFloat()) },
             onDismiss = { showBitrateDialog = false },
         )
     }
@@ -355,14 +527,62 @@ fun SettingsScreen(
             onDismiss = { showVideoEncoderDialog = false },
         )
     }
+    if (showRecordingEngineDialog) {
+        RecordingEngineModeDialog(
+            selectedMode = uiState.recordingEngineMode,
+            onPerformanceSelected = {
+                viewModel.setRecordingEngineMode(RecordingEngineMode.PERFORMANCE)
+                showRecordingEngineDialog = false
+            },
+            onAdvancedSelected = {
+                showRecordingEngineDialog = false
+                if (uiState.recordingEngineMode == RecordingEngineMode.COMPATIBILITY) {
+                    viewModel.setRecordingEngineMode(RecordingEngineMode.COMPATIBILITY)
+                } else {
+                    showAdvancedEngineWarningDialog = true
+                }
+            },
+            onDismiss = { showRecordingEngineDialog = false },
+        )
+    }
+    if (showAdvancedEngineWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { showAdvancedEngineWarningDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(28.dp),
+                )
+            },
+            title = { Text(stringResource(R.string.recording_engine_compatibility_label)) },
+            text = { Text(stringResource(R.string.recording_engine_advanced_warning)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.setRecordingEngineMode(RecordingEngineMode.COMPATIBILITY)
+                        showAdvancedEngineWarningDialog = false
+                    },
+                ) {
+                    Text(stringResource(R.string.recording_engine_compatibility_label), color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAdvancedEngineWarningDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
     if (showColorModeDialog) {
         val colorModeOptions = listOf(
-            ColorMode.STANDARD,
             ColorMode.FULL,
+            ColorMode.STANDARD,
         )
         val colorModeLabels = listOf(
-            stringResource(R.string.setting_color_mode_standard),
             stringResource(R.string.setting_color_mode_full),
+            stringResource(R.string.setting_color_mode_standard),
         )
         SingleChoiceDialog(
             title = stringResource(R.string.setting_color_mode),
@@ -615,26 +835,65 @@ fun SettingsScreen(
             onDismiss = { showScreenshotFormatDialog = false },
         )
     }
-    if (showCameraSettingsDialog) {
-        CameraSettingsDialog(
-            viewModel = viewModel,
-            cameraOverlay = uiState.cameraOverlay,
-            cameraLockPosition = uiState.cameraLockPosition,
-            cameraFacing = uiState.cameraFacing,
-            cameraAspectRatio = uiState.cameraAspectRatio,
-            cameraOpacity = uiState.cameraOpacity,
-            cameraOverlaySize = uiState.cameraOverlaySize,
-            cameraXFraction = uiState.cameraXFraction,
-            cameraYFraction = uiState.cameraYFraction,
-            cameraOrientation = uiState.cameraOrientation,
-            isRecording = uiState.isRecording,
-            canDrawOverlays = canDrawOverlays,
-            context = context,
-            onDismiss = { showCameraSettingsDialog = false },
+    if (showCameraFacingDialog) {
+        val facingKeys = listOf("Front", "Rear")
+        val facingLabels =
+            listOf(
+                stringResource(R.string.camera_facing_front),
+                stringResource(R.string.camera_facing_rear),
+            )
+        SingleChoiceDialog(
+            title = stringResource(R.string.camera_facing),
+            options = facingLabels,
+            selectedOption = facingLabels[facingKeys.indexOf(uiState.cameraFacing).coerceIn(0, facingLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = facingLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraFacing(facingKeys[idx])
+            },
+            onDismiss = { showCameraFacingDialog = false },
+        )
+    }
+    if (showCameraAspectDialog) {
+        val aspectKeys = listOf("Circle", "Square", "16:9", "4:3")
+        val aspectLabels =
+            listOf(
+                stringResource(R.string.shape_circle),
+                stringResource(R.string.shape_square),
+                stringResource(R.string.ratio_16_9),
+                stringResource(R.string.ratio_4_3),
+            )
+        SingleChoiceDialog(
+            title = stringResource(R.string.camera_aspect_ratio),
+            options = aspectLabels,
+            selectedOption = aspectLabels[aspectKeys.indexOf(uiState.cameraAspectRatio).coerceIn(0, aspectLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = aspectLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraAspectRatio(aspectKeys[idx])
+            },
+            onDismiss = { showCameraAspectDialog = false },
+        )
+    }
+    if (showCameraOrientationDialog) {
+        val orientKeys = listOf("Auto", "Portrait", "Landscape")
+        val orientLabels =
+            listOf(
+                stringResource(R.string.setting_orientation_auto),
+                stringResource(R.string.setting_orientation_portrait),
+                stringResource(R.string.setting_orientation_landscape),
+            )
+        SingleChoiceDialog(
+            title = stringResource(R.string.dialog_camera_orientation),
+            options = orientLabels,
+            selectedOption = orientLabels[orientKeys.indexOf(uiState.cameraOrientation).coerceIn(0, orientLabels.lastIndex)],
+            onOptionSelected = { label ->
+                val idx = orientLabels.indexOf(label)
+                if (idx >= 0) viewModel.setCameraOrientation(orientKeys[idx])
+            },
+            onDismiss = { showCameraOrientationDialog = false },
         )
     }
 
-    // ── Main layout (no nested Scaffold: outer NavGraph already has the tab header) ──
+    // Main layout (no nested Scaffold: outer NavGraph already has the tab header)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 8.dp),
@@ -656,7 +915,7 @@ fun SettingsScreen(
 
         item(key = "settings_content", contentType = "settings_card") {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
-                // ── CONTROLS ──────────────────────────────────────────────────────
+                // Controls
             GlassSectionHeader(stringResource(R.string.settings_section_controls))
             SwitchSettingItem(
                 Icons.Default.ControlCamera,
@@ -668,8 +927,10 @@ fun SettingsScreen(
                     Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
                     AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
                     context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            "package:${context.packageName}".toUri()),
+                        Intent(
+                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                            "package:${context.packageName}".toUri(),
+                        ),
                     )
                 } else {
                     viewModel.setFloatingControls(it)
@@ -700,27 +961,17 @@ fun SettingsScreen(
                     stringResource(R.string.settings_post_screenshot_options_desc),
                     uiState.postScreenshotOptions,
                 ) { viewModel.setPostScreenshotOptions(it) }
-                SwitchSettingItem(
-                    Icons.Default.Apps,
-                    stringResource(R.string.setting_record_single_app),
-                    stringResource(R.string.settings_record_single_app_desc),
-                    uiState.recordSingleAppEnabled,
-                ) { viewModel.setRecordSingleAppEnabled(it) }
-                SwitchSettingItem(
+                ClickableSettingItem(
                     Icons.Default.TouchApp,
                     stringResource(R.string.settings_show_touches),
-                    stringResource(R.string.settings_show_touches_desc),
-                    uiState.touchOverlay,
+                    showTouchesSummary,
                 ) {
-                    viewModel.setTouchOverlay(it)
-                    if (it) {
-                        try {
-                            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-                            context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
-                        } catch (_: Exception) {
-                        }
-                        Toast.makeText(context, resources.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
+                    try {
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+                    } catch (_: Exception) {
                     }
+                    Toast.makeText(context, resources.getString(R.string.toast_enable_show_taps), Toast.LENGTH_LONG).show()
                 }
                 ClickableSettingItem(
                     Icons.Default.Timer,
@@ -747,73 +998,131 @@ fun SettingsScreen(
                 ) { showBatteryRationaleDialog = true }
             }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── Recording quality (open audio / video+GIF menus) ───────────────
+                Spacer(Modifier.height(16.dp))
+                // Recording quality (open audio / video+GIF menus)
             GlassSectionHeader(stringResource(R.string.settings_section_recording_quality))
-            ListItem(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { showAudioMenuSheet = true },
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.settings_open_audio_menu),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        stringResource(R.string.settings_open_audio_menu_sub),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                leadingContent = { Icon(Icons.Default.GraphicEq, null, tint = accent.copy(alpha = 0.7f)) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            )
-            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-            ListItem(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { showVideoMenuSheet = true },
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.settings_open_video_menu),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        stringResource(R.string.settings_open_video_menu_sub),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                leadingContent = { Icon(Icons.Default.VideoSettings, null, tint = accent.copy(alpha = 0.7f)) },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            )
-
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── OVERLAY ───────────────────────────────────────────────────────
-            GlassSectionHeader(stringResource(R.string.settings_section_overlay))
             ClickableSettingItem(
+                Icons.Default.GraphicEq,
+                stringResource(R.string.settings_open_audio_menu),
+                stringResource(R.string.settings_open_audio_menu_sub),
+            ) { showAudioMenuSheet = true }
+            ClickableSettingItem(
+                Icons.Default.VideoSettings,
+                stringResource(R.string.settings_open_video_menu),
+                stringResource(R.string.settings_open_video_menu_sub),
+            ) { showVideoMenuSheet = true }
+
+                Spacer(Modifier.height(16.dp))
+                // Overlay
+            GlassSectionHeader(stringResource(R.string.settings_section_overlay))
+            SwitchSettingItem(
                 Icons.Default.CameraAlt,
                 stringResource(R.string.setting_camera_settings),
-                if (uiState.cameraOverlay) {
-                    stringResource(R.string.camera_status_enabled, uiState.cameraAspectRatio, uiState.cameraFacing)
-                } else {
-                    stringResource(R.string.state_disabled)
-                },
+                null,
+                uiState.cameraOverlay,
                 isPro = true,
-            ) {
-                showCameraSettingsDialog = true
+            ) { checked ->
+                val hasCamPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                val freshOverlay = Settings.canDrawOverlays(context).also { canDrawOverlays = it }
+                Log.d("CatRec/Settings", "cameraOverlay toggle: checked=$checked, hasCamPerm=$hasCamPerm, canDrawOverlays=$freshOverlay")
+                if (checked && !hasCamPerm) {
+                    pendingEnableCamera = true
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                } else if (checked && !freshOverlay) {
+                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                    context.startActivity(
+                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+                    )
+                } else {
+                    viewModel.setCameraOverlay(checked)
+                }
+            }
+
+            if (uiState.cameraOverlay) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+                    color = Color(0x33006633),
+                    shape = MaterialTheme.shapes.small,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            if (canDrawOverlays && !uiState.isRecording) {
+                                stringResource(R.string.camera_drag_hint)
+                            } else if (uiState.isRecording) {
+                                stringResource(R.string.watermark_preview_recording)
+                            } else {
+                                stringResource(R.string.watermark_preview_need_overlay)
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFFAADDAA),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                SwitchSettingItem(
+                    Icons.Default.Lock,
+                    stringResource(R.string.camera_lock_position),
+                    stringResource(R.string.camera_lock_desc_short),
+                    uiState.cameraLockPosition,
+                ) { viewModel.setCameraLockPosition(it) }
+
+                ClickableSettingItem(
+                    Icons.Default.Cameraswitch,
+                    stringResource(R.string.camera_facing),
+                    when (uiState.cameraFacing) {
+                        "Front" -> stringResource(R.string.camera_facing_front)
+                        "Rear" -> stringResource(R.string.camera_facing_rear)
+                        else -> uiState.cameraFacing
+                    },
+                ) { showCameraFacingDialog = true }
+
+                ClickableSettingItem(
+                    Icons.Default.AspectRatio,
+                    stringResource(R.string.camera_aspect_ratio),
+                    when (uiState.cameraAspectRatio) {
+                        "Circle" -> stringResource(R.string.shape_circle)
+                        "Square" -> stringResource(R.string.shape_square)
+                        "16:9" -> stringResource(R.string.ratio_16_9)
+                        "4:3" -> stringResource(R.string.ratio_4_3)
+                        else -> uiState.cameraAspectRatio
+                    },
+                ) { showCameraAspectDialog = true }
+
+                ClickableSettingItem(
+                    Icons.Default.ScreenRotation,
+                    stringResource(R.string.camera_orientation),
+                    when (uiState.cameraOrientation) {
+                        "Auto" -> stringResource(R.string.setting_orientation_auto)
+                        "Portrait" -> stringResource(R.string.setting_orientation_portrait)
+                        "Landscape" -> stringResource(R.string.setting_orientation_landscape)
+                        else -> uiState.cameraOrientation
+                    },
+                ) { showCameraOrientationDialog = true }
+
+                GlassSlider(
+                    stringResource(R.string.camera_size),
+                    safeStringResource(R.string.label_dp, uiState.cameraOverlaySize),
+                    uiState.cameraOverlaySize.toFloat(),
+                    60f..240f,
+                    35,
+                ) { viewModel.setCameraOverlaySize(it.toInt()) }
+
+                GlassSlider(
+                    stringResource(R.string.camera_opacity),
+                    safeStringResource(R.string.label_percent, uiState.cameraOpacity),
+                    uiState.cameraOpacity.toFloat(),
+                    10f..100f,
+                    17,
+                ) { viewModel.setCameraOpacity(it.toInt()) }
             }
 
             SwitchSettingItem(
@@ -953,10 +1262,8 @@ fun SettingsScreen(
                 }
         }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── SCREENSHOTS ───────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // Screenshots
             GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
             val screenshotFormatDisplay =
                 when (uiState.screenshotFormat) {
@@ -980,10 +1287,8 @@ fun SettingsScreen(
                 viewModel.setScreenshotQuality(it.toInt())
             }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── THEME ─────────────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // Theme
             GlassSectionHeader(stringResource(R.string.settings_section_theme))
             val themeDisplay =
                 when (uiState.appTheme) {
@@ -997,7 +1302,7 @@ fun SettingsScreen(
                 themeDisplay,
             ) { showThemeDialog = true }
 
-            // ── Accent Color row ─────────────────────────────────────────
+            // Accent color row
             val parsedAccent =
                 remember(uiState.accentHex) {
                     runCatching { Color("#${uiState.accentHex.removePrefix("#").take(6)}".toColorInt()) }
@@ -1023,7 +1328,7 @@ fun SettingsScreen(
                 supportingContent = {
                     Text(
                         if (uiState.accentGradient) {
-                            "#${uiState.accentHex.uppercase()}  →  #${uiState.accentHex2.uppercase()}"
+                            "#${uiState.accentHex.uppercase()}  ->  #${uiState.accentHex2.uppercase()}"
                         } else {
                             "#${uiState.accentHex.uppercase()}"
                         },
@@ -1108,7 +1413,7 @@ fun SettingsScreen(
                             } else {
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
@@ -1117,7 +1422,7 @@ fun SettingsScreen(
                         checked = uiState.performanceMode,
                         onCheckedChange = { enabled ->
                             if (!enabled && isLowEndDevice) {
-                                // User is trying to enable blur on a low-end device → warn
+                                // User is trying to enable blur on a low-end device -> warn
                                 showLagWarningDialog = true
                             } else {
                                 viewModel.setPerformanceMode(enabled)
@@ -1134,10 +1439,8 @@ fun SettingsScreen(
                 },
             )
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── LANGUAGE ──────────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // Language
             GlassSectionHeader(stringResource(R.string.settings_section_language))
             ClickableSettingItem(
                 Icons.Default.Language,
@@ -1145,10 +1448,8 @@ fun SettingsScreen(
                 languageDisplay,
             ) { showLanguageDialog = true }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── STORAGE ───────────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // Storage
             GlassSectionHeader(stringResource(R.string.settings_section_storage))
             ClickableSettingItem(
                 Icons.Default.Folder,
@@ -1160,7 +1461,7 @@ fun SettingsScreen(
                 } else {
                     stringResource(R.string.setting_save_location_default)
                 },
-            ) { folderPickerLauncher.launch(null) }
+            ) { launchFolderPicker() }
             ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), uiState.filenamePattern) {
                 showPatternDialog = true
             }
@@ -1173,10 +1474,8 @@ fun SettingsScreen(
                 viewModel.setAutoDelete(it)
             }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── GENERAL ───────────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // General
             GlassSectionHeader(stringResource(R.string.settings_section_general))
             SwitchSettingItem(
                 Icons.Default.Smartphone,
@@ -1187,10 +1486,8 @@ fun SettingsScreen(
                 viewModel.setKeepScreenOn(it)
             }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                Spacer(Modifier.height(4.dp))
-                // ── PRIVACY ───────────────────────────────────────────────────────
+                Spacer(Modifier.height(16.dp))
+                // Privacy
             GlassSectionHeader(stringResource(R.string.settings_section_privacy))
             SwitchSettingItem(
                 Icons.Default.Analytics,
@@ -1248,7 +1545,7 @@ fun SettingsScreen(
                 val idx = snapLabels.indexOf(label)
                 if (idx < 0) return@SingleChoiceDialog
                 val pos = snapKeys[idx]
-                // Fractions are offset / (screen − watermark), so 0/1 are true corners for any size & DPI.
+                // Fractions are offset / (screen - watermark), so 0/1 are true corners for any size & DPI.
                 val (x, y) =
                     when (pos) {
                         "Top Left" -> Pair(0f, 0f)
@@ -1298,7 +1595,7 @@ fun SettingsScreen(
             )
         }
 
-        // ── ACCENT COLOR PICKER DIALOG ────────────────────────────────────
+        // Accent color picker dialog
         if (showAccentPickerDialog) {
             val accentPresets =
                 listOf(
@@ -1523,6 +1820,20 @@ fun SettingsScreen(
                         viewModel.setInternalAudio(it)
                     }
                 }
+                SwitchSettingItem(
+                    Icons.Default.RecordVoiceOver,
+                    stringResource(R.string.setting_auto_mic_fallback_title),
+                    stringResource(R.string.setting_auto_mic_fallback_summary),
+                    uiState.autoMicFallbackWhenInternalSilent,
+                ) { enabled ->
+                    if (enabled && !permissionManager.isAudioGranted()) {
+                        pendingEnableAutoMicFallback = true
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        microphonePermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        viewModel.setAutoMicFallbackWhenInternalSilent(enabled)
+                    }
+                }
                 ClickableSettingItem(
                     Icons.Default.GraphicEq,
                     stringResource(R.string.setting_audio_bitrate),
@@ -1663,14 +1974,13 @@ fun SettingsScreen(
                     stringResource(R.string.setting_fps),
                     "${uiState.fps.toInt()} ${stringResource(R.string.label_fps)}",
                     enabled = !videoLocked,
-                    isPro = true,
                 ) {
                     if (!videoLocked) showFpsDialog = true
                 }
                 ClickableSettingItem(
                     Icons.Default.DataUsage,
                     stringResource(R.string.setting_bitrate),
-                    "${uiState.bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
+                    subtitle = "${uiState.bitrate.toInt()} ${stringResource(R.string.label_mbps)}",
                     enabled = !videoLocked,
                 ) {
                     if (!videoLocked) showBitrateDialog = true
@@ -1698,6 +2008,24 @@ fun SettingsScreen(
                     enabled = !videoLocked,
                 ) {
                     if (!videoLocked) showVideoEncoderDialog = true
+                }
+                val recordingEngineLabel =
+                    when (uiState.recordingEngineMode) {
+                        RecordingEngineMode.PERFORMANCE -> stringResource(R.string.recording_engine_performance_label)
+                        RecordingEngineMode.COMPATIBILITY -> stringResource(R.string.recording_engine_compatibility_label)
+                    }
+                val recordingEngineSummary =
+                    when (uiState.recordingEngineMode) {
+                        RecordingEngineMode.PERFORMANCE -> stringResource(R.string.recording_engine_performance_summary)
+                        RecordingEngineMode.COMPATIBILITY -> stringResource(R.string.recording_engine_compatibility_summary)
+                    }
+                ClickableSettingItem(
+                    Icons.Default.Settings,
+                    stringResource(R.string.setting_recording_engine),
+                    "$recordingEngineLabel\n$recordingEngineSummary",
+                    enabled = !videoLocked,
+                ) {
+                    if (!videoLocked) showRecordingEngineDialog = true
                 }
                 val colorModeDisplay = when (uiState.colorMode) {
                     ColorMode.FULL -> stringResource(R.string.setting_color_mode_full)
@@ -1752,327 +2080,72 @@ fun SettingsScreen(
     }
 }
 
-// ── Camera Settings Dialog (logic fully preserved) ────────────────────────────
-
 @Composable
-private fun CameraSettingsDialog(
-    viewModel: RecordingViewModel,
-    cameraOverlay: Boolean,
-    cameraLockPosition: Boolean,
-    cameraFacing: String,
-    cameraAspectRatio: String,
-    cameraOpacity: Int,
-    cameraOverlaySize: Int,
-    cameraXFraction: Float,
-    cameraYFraction: Float,
-    cameraOrientation: String,
-    isRecording: Boolean,
-    canDrawOverlays: Boolean,
-    context: Context,
+private fun RecordingEngineModeDialog(
+    selectedMode: RecordingEngineMode,
+    onPerformanceSelected: () -> Unit,
+    onAdvancedSelected: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val resources = LocalResources.current
-    val accent = LocalAccentColor.current
-    var showCameraFacingDialog by remember { mutableStateOf(false) }
-    var showCameraAspectDialog by remember { mutableStateOf(false) }
-    var showCameraOrientationDialog by remember { mutableStateOf(false) }
-    var pendingEnableCamera by remember { mutableStateOf(false) }
-    val cameraPermissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-            if (granted && pendingEnableCamera) {
-                if (!canDrawOverlays) {
-                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-                    context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
-                    )
-                } else {
-                    viewModel.setCameraOverlay(true)
-                }
-            }
-            pendingEnableCamera = false
-        }
-
-    fun setCameraOverlayChecked(checked: Boolean) {
-        if (checked &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
-        ) {
-            pendingEnableCamera = true
-            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-            return
-        }
-        if (checked && !canDrawOverlays) {
-            Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-            context.startActivity(
-                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
-            )
-        } else {
-            viewModel.setCameraOverlay(checked)
-        }
-    }
-
-    if (showCameraFacingDialog) {
-        val facingKeys = listOf("Front", "Rear")
-        val facingLabels =
-            listOf(
-                stringResource(R.string.camera_facing_front),
-                stringResource(R.string.camera_facing_rear),
-            )
-        SingleChoiceDialog(
-            title = stringResource(R.string.camera_facing),
-            options = facingLabels,
-            selectedOption = facingLabels[facingKeys.indexOf(cameraFacing).coerceIn(0, facingLabels.lastIndex)],
-            onOptionSelected = { label ->
-                val idx = facingLabels.indexOf(label)
-                if (idx >= 0) viewModel.setCameraFacing(facingKeys[idx])
-            },
-            onDismiss = { showCameraFacingDialog = false },
-        )
-    }
-    if (showCameraAspectDialog) {
-        val aspectKeys = listOf("Circle", "Square", "16:9", "4:3")
-        val aspectLabels =
-            listOf(
-                stringResource(R.string.shape_circle),
-                stringResource(R.string.shape_square),
-                stringResource(R.string.ratio_16_9),
-                stringResource(R.string.ratio_4_3),
-            )
-        SingleChoiceDialog(
-            title = stringResource(R.string.camera_aspect_ratio),
-            options = aspectLabels,
-            selectedOption = aspectLabels[aspectKeys.indexOf(cameraAspectRatio).coerceIn(0, aspectLabels.lastIndex)],
-            onOptionSelected = { label ->
-                val idx = aspectLabels.indexOf(label)
-                if (idx >= 0) viewModel.setCameraAspectRatio(aspectKeys[idx])
-            },
-            onDismiss = { showCameraAspectDialog = false },
-        )
-    }
-    if (showCameraOrientationDialog) {
-        val orientKeys = listOf("Auto", "Portrait", "Landscape")
-        val orientLabels =
-            listOf(
-                stringResource(R.string.setting_orientation_auto),
-                stringResource(R.string.setting_orientation_portrait),
-                stringResource(R.string.setting_orientation_landscape),
-            )
-        SingleChoiceDialog(
-            title = stringResource(R.string.dialog_camera_orientation),
-            options = orientLabels,
-            selectedOption = orientLabels[orientKeys.indexOf(cameraOrientation).coerceIn(0, orientLabels.lastIndex)],
-            onOptionSelected = { label ->
-                val idx = orientLabels.indexOf(label)
-                if (idx >= 0) viewModel.setCameraOrientation(orientKeys[idx])
-            },
-            onDismiss = { showCameraOrientationDialog = false },
-        )
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.camera_settings_title), fontWeight = FontWeight.Bold)
-                Spacer(Modifier.width(6.dp))
-                ProBadge()
-            }
-        },
+        title = { Text(stringResource(R.string.setting_recording_engine)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                ListItem(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { setCameraOverlayChecked(!cameraOverlay) },
-                    headlineContent = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(stringResource(R.string.camera_enable))
-                            Spacer(Modifier.width(8.dp))
-                            ProBadge()
-                        }
-                    },
-                    supportingContent = {
-                        Text(stringResource(R.string.camera_enable_desc))
-                    },
-                    leadingContent = { Icon(Icons.Default.CameraAlt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    trailingContent = {
-                        Switch(checked = cameraOverlay, onCheckedChange = {
-                            setCameraOverlayChecked(it)
-                        })
-                    },
+                RecordingEngineOptionRow(
+                    selected = selectedMode == RecordingEngineMode.PERFORMANCE,
+                    title = stringResource(R.string.recording_engine_performance_label),
+                    summary = stringResource(R.string.recording_engine_performance_summary),
+                    onClick = onPerformanceSelected,
                 )
-
-                if (cameraOverlay) {
-                    if (canDrawOverlays && !isRecording) {
-                        DisposableEffect(Unit) {
-                            context.startService(
-                                Intent(context, OverlayService::class.java).apply {
-                                    action = OverlayService.ACTION_SHOW_CAMERA_PREVIEW
-                                    putExtra(OverlayService.EXTRA_CAMERA_SIZE, cameraOverlaySize)
-                                    putExtra(OverlayService.EXTRA_CAMERA_X_FRACTION, cameraXFraction)
-                                    putExtra(OverlayService.EXTRA_CAMERA_Y_FRACTION, cameraYFraction)
-                                },
-                            )
-                            OverlayService.onCameraPreviewPositionChanged = { x, y ->
-                                viewModel.setCameraXFraction(x)
-                                viewModel.setCameraYFraction(y)
-                            }
-                            onDispose {
-                                context.startService(
-                                    Intent(context, OverlayService::class.java).apply {
-                                        action = OverlayService.ACTION_HIDE_CAMERA_PREVIEW
-                                    },
-                                )
-                                OverlayService.onCameraPreviewPositionChanged = null
-                            }
-                        }
-                        LaunchedEffect(cameraOverlaySize, cameraXFraction, cameraYFraction) {
-                            OverlayService.updateCameraPreviewIfActive(cameraOverlaySize, cameraXFraction, cameraYFraction)
-                        }
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = MaterialTheme.shapes.small,
-                        ) {
-                            Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Visibility,
-                                    null,
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    stringResource(R.string.camera_drag_hint),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                )
-                            }
-                        }
-                    }
-
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { viewModel.setCameraLockPosition(!cameraLockPosition) },
-                        headlineContent = { Text(stringResource(R.string.camera_lock_position)) },
-                        supportingContent = { Text(stringResource(R.string.camera_lock_desc_short)) },
-                        leadingContent = { Icon(Icons.Default.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        trailingContent = {
-                            Switch(checked = cameraLockPosition, onCheckedChange = { viewModel.setCameraLockPosition(it) })
-                        },
-                    )
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { showCameraFacingDialog = true },
-                        headlineContent = { Text(stringResource(R.string.camera_facing)) },
-                        supportingContent = {
-                            Text(
-                                when (cameraFacing) {
-                                    "Front" -> stringResource(R.string.camera_facing_front)
-                                    "Rear" -> stringResource(R.string.camera_facing_rear)
-                                    else -> cameraFacing
-                                },
-                            )
-                        },
-                        leadingContent = { Icon(Icons.Default.Cameraswitch, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    )
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { showCameraAspectDialog = true },
-                        headlineContent = { Text(stringResource(R.string.camera_aspect_ratio)) },
-                        supportingContent = {
-                            Text(
-                                when (cameraAspectRatio) {
-                                    "Circle" -> stringResource(R.string.shape_circle)
-                                    "Square" -> stringResource(R.string.shape_square)
-                                    "16:9" -> stringResource(R.string.ratio_16_9)
-                                    "4:3" -> stringResource(R.string.ratio_4_3)
-                                    else -> cameraAspectRatio
-                                },
-                            )
-                        },
-                        leadingContent = { Icon(Icons.Default.AspectRatio, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    )
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { showCameraOrientationDialog = true },
-                        headlineContent = { Text(stringResource(R.string.camera_orientation)) },
-                        supportingContent = {
-                            Text(
-                                when (cameraOrientation) {
-                                    "Auto" -> stringResource(R.string.setting_orientation_auto)
-                                    "Portrait" -> stringResource(R.string.setting_orientation_portrait)
-                                    "Landscape" -> stringResource(R.string.setting_orientation_landscape)
-                                    else -> cameraOrientation
-                                },
-                            )
-                        },
-                        leadingContent = { Icon(Icons.Default.ScreenRotation, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    )
-
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(R.string.camera_size), style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                safeStringResource(R.string.label_dp, cameraOverlaySize),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = accent,
-                            )
-                        }
-                        Slider(
-                            value = cameraOverlaySize.toFloat(),
-                            onValueChange = { viewModel.setCameraOverlaySize(it.toInt()) },
-                            valueRange = 60f..240f,
-                            steps = 35,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors =
-                                SliderDefaults.colors(
-                                    thumbColor = accent,
-                                    activeTrackColor = accent,
-                                    inactiveTrackColor = accent.copy(alpha = 0.4f),
-                                ),
-                        )
-                    }
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(stringResource(R.string.camera_opacity), style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                safeStringResource(R.string.label_percent, cameraOpacity),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = accent,
-                            )
-                        }
-                        Slider(
-                            value = cameraOpacity.toFloat(),
-                            onValueChange = { viewModel.setCameraOpacity(it.toInt()) },
-                            valueRange = 10f..100f,
-                            steps = 17,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors =
-                                SliderDefaults.colors(
-                                    thumbColor = accent,
-                                    activeTrackColor = accent,
-                                    inactiveTrackColor = accent.copy(alpha = 0.4f),
-                                ),
-                        )
-                    }
-                }
+                RecordingEngineOptionRow(
+                    selected = selectedMode == RecordingEngineMode.COMPATIBILITY,
+                    title = stringResource(R.string.recording_engine_compatibility_label),
+                    summary = stringResource(R.string.recording_engine_compatibility_summary),
+                    onClick = onAdvancedSelected,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.recording_engine_scope_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
     )
+}
+
+@Composable
+private fun RecordingEngineOptionRow(
+    selected: Boolean,
+    title: String,
+    summary: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .selectable(selected = selected, onClick = onClick)
+                .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Column(modifier = Modifier.padding(start = 16.dp).weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 /**
@@ -2103,21 +2176,34 @@ private fun SettingsListRow(
     }
 }
 
-@Composable
-private fun resolutionPresetLabel(preset: RecordingResolutionPreset): String {
-    val title =
-        when (preset.kind) {
-            RecordingResolutionPresetKind.NATIVE -> stringResource(R.string.setting_resolution_native)
-            RecordingResolutionPresetKind.UHD_4K -> stringResource(R.string.resolution_preset_4k)
-            RecordingResolutionPresetKind.QHD_2K -> stringResource(R.string.resolution_preset_2k)
-            RecordingResolutionPresetKind.TIER_1080 -> stringResource(R.string.resolution_preset_1080)
-            RecordingResolutionPresetKind.TIER_720 -> stringResource(R.string.resolution_preset_720)
-            RecordingResolutionPresetKind.TIER_480 -> stringResource(R.string.resolution_preset_480)
-        }
-    return "$title (${preset.size.setting})"
+private val resolutionPickerKindOrder =
+    listOf(
+        RecordingResolutionPresetKind.QHD_2K,
+        RecordingResolutionPresetKind.TIER_1080,
+        RecordingResolutionPresetKind.TIER_720,
+        RecordingResolutionPresetKind.TIER_480,
+        RecordingResolutionPresetKind.NATIVE,
+    )
+
+private fun resolutionPresetsForPicker(presets: List<RecordingResolutionPreset>): List<RecordingResolutionPreset> {
+    val order = resolutionPickerKindOrder.withIndex().associate { (index, kind) -> kind to index }
+    return presets
+        .filter { it.kind in order }
+        .sortedBy { order.getValue(it.kind) }
 }
 
-// ── Custom Resolution Dialog ───────────────────────────────────────────────────
+@Composable
+private fun resolutionPresetLabel(preset: RecordingResolutionPreset): String =
+    when (preset.kind) {
+        RecordingResolutionPresetKind.NATIVE -> stringResource(R.string.setting_resolution_native)
+        RecordingResolutionPresetKind.UHD_4K -> stringResource(R.string.resolution_preset_4k)
+        RecordingResolutionPresetKind.QHD_2K -> stringResource(R.string.resolution_preset_2k)
+        RecordingResolutionPresetKind.TIER_1080 -> stringResource(R.string.resolution_preset_1080)
+        RecordingResolutionPresetKind.TIER_720 -> stringResource(R.string.resolution_preset_720)
+        RecordingResolutionPresetKind.TIER_480 -> stringResource(R.string.resolution_preset_480)
+    }
+
+// Custom resolution dialog
 
 @Composable
 private fun CustomResolutionDialog(
@@ -2200,7 +2286,7 @@ private fun CustomResolutionDialog(
     )
 }
 
-// ── Resolution Dialog (handles separators) ────────────────────────────────────
+// Resolution dialog
 
 @Composable
 private fun ResolutionDialog(
@@ -2215,7 +2301,7 @@ private fun ResolutionDialog(
         title = { Text(stringResource(R.string.dialog_resolution_title)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                presets.forEach { preset ->
+                resolutionPresetsForPicker(presets).forEach { preset ->
                     val isSelected = selectedOption == preset.setting
                     Row(
                         modifier =
@@ -2253,11 +2339,7 @@ private fun ResolutionDialog(
                     } else {
                         Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
                     }
-                    val customText =
-                        RecordingResolutionSupport.parseSize(selectedOption)
-                            ?.takeIf { customSelected }
-                            ?.let { "${stringResource(R.string.setting_resolution_custom)} (${it.setting})" }
-                            ?: stringResource(R.string.setting_resolution_custom)
+                    val customText = stringResource(R.string.setting_resolution_custom)
                     Text(
                         customText,
                         modifier = Modifier.padding(start = 16.dp),
@@ -2271,7 +2353,118 @@ private fun ResolutionDialog(
     )
 }
 
-// ── Shared Composables ─────────────────────────────────────────────────────────
+// Shared composables
+
+@Composable
+private fun FpsProChoiceDialog(
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val options = listOf("24", "30", "45", "60", "90", "120")
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_fps_title)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                options.forEach { option ->
+                    val fps = option.toIntOrNull() ?: 0
+                    val isProFps = fps >= PRO_RECORDING_FPS_THRESHOLD
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = option == selectedOption,
+                                    onClick = {
+                                        onOptionSelected(option)
+                                        onDismiss()
+                                    },
+                                ).padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = option == selectedOption,
+                            onClick = {
+                                onOptionSelected(option)
+                                onDismiss()
+                            },
+                        )
+                        Text(
+                            stringResource(R.string.gate_high_fps, option),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp).weight(1f),
+                        )
+                        if (isProFps) {
+                            ProBadge()
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun BitrateProChoiceDialog(
+    bitrateKeys: List<Int>,
+    selectedMbps: Int,
+    onOptionSelected: (Int) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val mbpsLabel = stringResource(R.string.label_mbps)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_bitrate_title)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                bitrateKeys.forEach { mbps ->
+                    val label = "$mbps $mbpsLabel"
+                    val isPro = mbps.toFloat() > FREE_VIDEO_BITRATE_MBPS
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(
+                                    selected = mbps == selectedMbps,
+                                    onClick = {
+                                        onOptionSelected(mbps)
+                                        onDismiss()
+                                    },
+                                ).padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = mbps == selectedMbps,
+                            onClick = {
+                                onOptionSelected(mbps)
+                                onDismiss()
+                            },
+                        )
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp).weight(1f),
+                        )
+                        if (isPro) {
+                            ProBadge()
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
+}
 
 @Composable
 fun SingleChoiceDialog(
@@ -2346,7 +2539,7 @@ fun SwitchSettingItem(
                     Text(
                         subtitle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
@@ -2408,7 +2601,7 @@ fun ClickableSettingItem(
                     Text(
                         subtitle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }

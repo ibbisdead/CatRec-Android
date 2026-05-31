@@ -3,7 +3,6 @@ package com.ibbie.catrec_screenrecorcer.ui.components
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import android.os.PowerManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -92,19 +91,6 @@ fun rememberCanUseBlur(): Boolean {
         val info = ActivityManager.MemoryInfo()
         am.getMemoryInfo(info)
         info.totalMem / (1024L * 1024L * 1024L) >= 6
-    }
-}
-
-/**
- * True when the device is in Battery Saver mode.
- * When true, the Crimson Pulse animation on the record button is disabled.
- */
-@Composable
-fun rememberIsBatterySaver(): Boolean {
-    val context = LocalContext.current
-    return remember {
-        val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        pm.isPowerSaveMode
     }
 }
 

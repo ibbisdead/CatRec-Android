@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">\u0627\u0644\u0645\u0634\u063A\u0651\u0644</string>
     <string name="screen_title_trim">\u0642\u0635 \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="screen_title_crop">\u0642\u0635 \u0627\u0644\u0635\u0648\u0631\u0629</string>
@@ -71,15 +70,11 @@
     <string name="action_share">\u0645\u0634\u0627\u0631\u0643\u0629</string>
     <string name="action_open">\u0641\u062A\u062D</string>
     <string name="action_edit">\u062A\u0639\u062F\u064A\u0644</string>
-    <string name="consent_analytics_title">\u062A\u062D\u0644\u064A\u0644\u0627\u062A \u0627\u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645</string>
-    <string name="consent_analytics_message">\u0633\u0627\u0639\u062F\u0646\u0627 \u0639\u0644\u0649 \u062A\u062D\u0633\u064A\u0646 CatRec \u0645\u0646 \u062E\u0644\u0627\u0644 \u0627\u0644\u0633\u0645\u0627\u062D \u0628\u062A\u062D\u0644\u064A\u0644\u0627\u062A \u0627\u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0648\u0627\u0644\u0623\u0639\u0637\u0627\u0644 \u0627\u0644\u0627\u062E\u062A\u064A\u0627\u0631\u064A\u0629. \u064A\u0645\u0643\u0646\u0643 \u062A\u063A\u064A\u064A\u0631 \u0647\u0630\u0627 \u0641\u064A \u0623\u064A \u0648\u0642\u062A \u0645\u0646 \u0627\u0644\u0625\u0639\u062F\u0627\u062F\u0627\u062A.</string>
     <string name="setting_usage_analytics">\u062A\u062D\u0644\u064A\u0644\u0627\u062A \u0627\u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645</string>
     <string name="setting_usage_analytics_desc">\u0625\u062D\u0635\u0627\u0621\u0627\u062A \u0627\u0644\u0623\u0639\u0637\u0627\u0644 \u0648\u0627\u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0644\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062A\u0637\u0628\u064A\u0642</string>
     <string name="setting_personalized_ads">\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A \u0627\u0644\u0645\u062E\u0635\u0635\u0629</string>
     <string name="setting_personalized_ads_on_desc">\u0642\u062F \u064A\u0633\u062A\u062E\u062F\u0645 AdMob \u0645\u0639\u0631\u0651\u0641 \u0625\u0639\u0644\u0627\u0646\u0643 \u0644\u0639\u0631\u0636 \u0625\u0639\u0644\u0627\u0646\u0627\u062A \u0630\u0627\u062A \u0635\u0644\u0629</string>
     <string name="setting_personalized_ads_off_desc">\u0625\u0639\u0644\u0627\u0646\u0627\u062A \u063A\u064A\u0631 \u0645\u062E\u0635\u0635\u0629 \u0641\u0642\u0637</string>
-    <string name="consent_accept">\u0627\u0644\u0633\u0645\u0627\u062D</string>
-    <string name="consent_decline">\u0631\u0641\u0636</string>
     <string name="action_apply">\u062A\u0637\u0628\u064A\u0642</string>
     <string name="action_pause">\u0625\u064A\u0642\u0627\u0641 \u0645\u0624\u0642\u062A</string>
     <string name="action_resume">\u0627\u0633\u062A\u0626\u0646\u0627\u0641</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">\u0641\u062A\u062D \u0625\u0639\u062F\u0627\u062F\u0627\u062A %s</string>
     <string name="battery_opt_btn_learn_more">\u062F\u0644\u064A\u0644 \u0645\u0631\u0626\u064A (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">\u0644\u064A\u0633 \u0627\u0644\u0622\u0646</string>
-    <string name="battery_opt_banner_text">\u0642\u062F \u064A\u0648\u0642\u0641 \u062C\u0647\u0627\u0632\u0643 \u0627\u0644\u062A\u0633\u062C\u064A\u0644\u0627\u062A \u0641\u064A \u0627\u0644\u062E\u0644\u0641\u064A\u0629.</string>
-    <string name="battery_opt_banner_fix">\u0625\u0635\u0644\u0627\u062D</string>
     <string name="settings_section_video">\u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="settings_section_gif_recorder">\u0645\u0633\u062C\u0644 GIF</string>
-    <string name="settings_gif_recorder_desc">\u064A\u0642\u0648\u0645 \u0648\u0636\u0639 GIF \u0628\u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0623\u0648\u0644\u0627\u064B\u060C \u062B\u0645 \u064A\u0642\u0648\u0645 \u0628\u062A\u062D\u0648\u064A\u0644\u0647. \u0627\u0644\u062C\u0648\u062F\u0629 \u0648\u0627\u0644\u0637\u0648\u0644 \u064A\u062A\u0628\u0639\u0627\u0646 \u0627\u0644\u0625\u0639\u062F\u0627\u062F \u0627\u0644\u0645\u0633\u0628\u0642 \u0623\u062F\u0646\u0627\u0647\u061B \u062A\u0638\u0644 \u0623\u0634\u0631\u0637\u0629 \u062A\u0645\u0631\u064A\u0631 \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0645\u062D\u0641\u0648\u0638\u0629 \u0639\u0646\u062F \u0627\u0644\u062A\u0628\u062F\u064A\u0644 \u0645\u0631\u0629 \u0623\u062E\u0631\u0649 \u0625\u0644\u0649 \u0627\u0644\u062A\u0633\u062C\u064A\u0644.</string>
+    <string name="settings_gif_recorder_desc">\u064A\u0633\u062C\u0651\u0644 \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0623\u0648\u0644\u0627\u064B \u062B\u0645 \u064A\u062D\u0648\u0651\u0644\u0647 \u0625\u0644\u0649 GIF.</string>
     <string name="setting_gif_preset">\u062C\u0648\u062F\u0629 GIF \u0645\u062D\u062F\u062F\u0629 \u0645\u0633\u0628\u0642\u064B\u0627</string>
     <string name="video_locked_by_gif_preset">\u064A\u062A\u0645 \u0627\u0644\u062A\u062D\u0643\u0645 \u0641\u064A \u062E\u064A\u0627\u0631\u0627\u062A \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0645\u0646 \u062E\u0644\u0627\u0644 \u0625\u0639\u062F\u0627\u062F GIF \u0627\u0644\u0645\u0633\u0628\u0642 \u0623\u062B\u0646\u0627\u0621 \u062A\u062D\u062F\u064A\u062F \u0648\u0636\u0639 GIF.</string>
     <string name="gif_preset_small">\u0635\u063A\u064A\u0631 (\u0645\u0644\u0641 \u0623\u0633\u0631\u0639 \u0648\u0623\u0635\u063A\u0631)</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">\u0627\u0644\u062F\u0642\u0629</string>
-    <string name="setting_resolution_native">\u0623\u0635\u0644\u064A\u0629</string>
+    <string name="setting_resolution_native">\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u062F\u0642\u0629 \u0627\u0644\u062C\u0647\u0627\u0632</string>
     <string name="setting_resolution_custom">\u062F\u0642\u0629 \u0645\u062E\u0635\u0635\u0629\u2026</string>
     <string name="setting_resolution_custom_hint">\u0645\u062B\u0627\u0644: 1920x1080</string>
     <string name="setting_fps">\u0645\u0639\u062F\u0644 \u0627\u0644\u0625\u0637\u0627\u0631\u0627\u062A (FPS)</string>
     <string name="setting_bitrate">\u0645\u0639\u062F\u0644 \u0646\u0642\u0644 \u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="setting_video_encoder">\u0645\u0634\u0641\u0631 \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="setting_color_mode">\u0648\u0636\u0639 \u0627\u0644\u0623\u0644\u0648\u0627\u0646</string>
-    <string name="setting_color_mode_standard">\u0642\u064A\u0627\u0633\u064A (Rec.709)</string>
-    <string name="setting_color_mode_full">\u0646\u0637\u0627\u0642 \u0643\u0627\u0645\u0644</string>
-    <string name="dialog_color_mode">\u0648\u0636\u0639 \u0627\u0644\u0623\u0644\u0648\u0627\u0646</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">\u062A\u0635\u062D\u064A\u062D \u0633\u0637\u0648\u0639 Rec.709</string>
-    <string name="setting_rec709_brightness_correction_summary">\u064A\u0637\u0628\u0642 \u0631\u0641\u0639 \u063A\u0627\u0645\u0627 \u062E\u0641\u064A\u0641\u064B\u0627 \u0628\u0639\u062F \u0625\u0635\u0644\u0627\u062D \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u0627\u0644\u0648\u0635\u0641\u064A\u0629. \u0642\u062F \u064A\u0642\u0644\u0644 \u0633\u0631\u0639\u0629 \u0627\u0644\u062A\u0635\u062F\u064A\u0631 \u0642\u0644\u064A\u0644\u064B\u0627.</string>
+    <string name="setting_color_mode_standard">نطاق محدود / وضع التوافق</string>
+    <string name="setting_color_mode_full">نطاق كامل / مطابق للشاشة (موصى به)</string>
+    <string name="setting_force_rec709_compat">إصلاح بيانات النطاق المحدود</string>
+    <string name="setting_force_rec709_compat_summary">يعيد وسم تدفق الفيديو ببيانات BT.709 محدودة النطاق صريحة عبر FFmpeg. استخدمه فقط على الأجهزة التي لا يزال التشغيل عليها يبدو باهتا في وضع النطاق المحدود.</string>
+    <string name="setting_rec709_brightness_correction">تصحيح السطوع (اختياري)</string>
+    <string name="setting_rec709_brightness_correction_summary">يطبق رفعا خفيفا للغاما بعد إصلاح البيانات. اختياري، فعله فقط إذا كان الفيديو لا يزال يبدو داكنا قليلا.</string>
     <string name="rec709_brightness_correction_off">\u0625\u064A\u0642\u0627\u0641</string>
     <string name="rec709_brightness_correction_low">\u062A\u0635\u062D\u064A\u062D \u0633\u0637\u0648\u0639 \u0645\u0646\u062E\u0641\u0636</string>
     <string name="rec709_brightness_correction_medium">\u062A\u0635\u062D\u064A\u062D \u0633\u0637\u0648\u0639 \u0645\u062A\u0648\u0633\u0637</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">\u062A\u062D\u0643\u0645 \u0639\u0627\u0626\u0645</string>
     <string name="setting_hide_floating_while_recording">\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u0623\u064A\u0642\u0648\u0646\u0629 \u0627\u0644\u0639\u0627\u0626\u0645\u0629 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
-    <string name="settings_hide_floating_while_recording_desc">\u0625\u062E\u0641\u0627\u0621 \u0641\u0642\u0627\u0639\u0629 \u0627\u0644\u062A\u062D\u0643\u0645 \u0627\u0644\u0639\u0627\u0626\u0645\u0629 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
+    <string name="settings_hide_floating_while_recording_desc">\u0625\u062E\u0641\u0627\u0621 \u0627\u0644\u062A\u0631\u0627\u0643\u0628 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
     <string name="setting_post_screenshot_options">\u062E\u064A\u0627\u0631\u0627\u062A \u0645\u0627 \u0628\u0639\u062F \u0644\u0642\u0637\u0629 \u0627\u0644\u0634\u0627\u0634\u0629</string>
     <string name="settings_post_screenshot_options_desc">\u0628\u0639\u062F \u0627\u0644\u062A\u0642\u0627\u0637 \u0644\u0642\u0637\u0629 \u0627\u0644\u0634\u0627\u0634\u0629\u060C \u0642\u0645 \u0628\u0625\u0638\u0647\u0627\u0631 \u062E\u064A\u0627\u0631\u0627\u062A \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u0629 \u0623\u0648 \u0627\u0644\u062A\u0639\u062F\u064A\u0644</string>
-    <string name="setting_record_single_app">\u0633\u062C\u0644 \u062A\u0637\u0628\u064A\u0642\u064B\u0627 \u0648\u0627\u062D\u062F\u064B\u0627</string>
-    <string name="settings_record_single_app_desc">\u0641\u064A \u0646\u0638\u0627\u0645 \u0627\u0644\u062A\u0634\u063A\u064A\u0644 Android 14+\u060C \u0627\u062E\u062A\u0631 \u0646\u0627\u0641\u0630\u0629 \u062A\u0637\u0628\u064A\u0642 \u0648\u0627\u062D\u062F\u0629 \u0623\u0648 \u0645\u0644\u0621 \u0627\u0644\u0634\u0627\u0634\u0629 \u0639\u0646\u062F\u0645\u0627 \u062A\u0645\u0646\u062D \u0645\u064A\u0632\u0629 \u0627\u0644\u062A\u0642\u0627\u0637 \u0627\u0644\u0634\u0627\u0634\u0629</string>
     <string name="screenshot_post_edit">\u064A\u062D\u0631\u0631</string>
     <string name="screenshot_post_action_failed">\u062A\u0639\u0630\u0631 \u0641\u062A\u062D \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u0629</string>
     <string name="screenshot_post_tap_outside">\u0627\u0636\u063A\u0637 \u0628\u0627\u0644\u062E\u0627\u0631\u062C \u0644\u0644\u0625\u063A\u0644\u0627\u0642</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">\u0634\u0641\u0627\u0641\u064A\u0629 \u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u0627\u0644\u0645\u0627\u0626\u064A\u0629</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">\u062A\u0641\u0639\u064A\u0644 \u0627\u0644\u0643\u0627\u0645\u064A\u0631\u0627</string>
-    <string name="camera_enable_desc">\u0625\u0638\u0647\u0627\u0631 \u062A\u0631\u0627\u0643\u0628 \u0627\u0644\u0643\u0627\u0645\u064A\u0631\u0627 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
     <string name="camera_lock_position">\u0642\u0641\u0644 \u0627\u0644\u0645\u0648\u0636\u0639</string>
     <string name="camera_facing">\u0627\u0644\u0643\u0627\u0645\u064A\u0631\u0627</string>
     <string name="camera_facing_front">\u0623\u0645\u0627\u0645\u064A\u0629</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">\u0625\u064A\u0642\u0627\u0641 \u0645\u0624\u0642\u062A \u0639\u0646\u062F \u0625\u0637\u0641\u0627\u0621 \u0627\u0644\u0634\u0627\u0634\u0629</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">\u0641\u0642\u0627\u0639\u0629 \u062F\u0627\u0626\u0645\u0629 \u2014 \u0633\u062C\u0651\u0644 \u0648\u0627\u0644\u062A\u0642\u0637 \u0644\u0642\u0637\u0627\u062A \u0634\u0627\u0634\u0629 \u0645\u0646 \u0623\u064A \u062A\u0637\u0628\u064A\u0642</string>
+    <string name="settings_floating_controls_desc">\u0633\u062C\u0651\u0644 \u0648\u0627\u0644\u062A\u0642\u0637 \u0644\u0642\u0637\u0627\u062A \u0627\u0644\u0634\u0627\u0634\u0629 \u0648\u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0639\u0646\u0627\u0635\u0631 \u0627\u0644\u062A\u062D\u0643\u0645 \u0645\u0646 \u0623\u064A \u062A\u0637\u0628\u064A\u0642</string>
     <string name="settings_show_touches">\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u0644\u0645\u0633\u0627\u062A</string>
-    <string name="settings_show_touches_desc">\u062A\u0641\u0639\u064A\u0644\u0647 \u0641\u064A \u062E\u064A\u0627\u0631\u0627\u062A \u0627\u0644\u0645\u0637\u0648\u0631</string>
     <string name="toast_enable_show_taps">\u0641\u0639\u0651\u0644 \u00AB\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u0646\u0642\u0631\u0627\u062A\u00BB \u064A\u062F\u0648\u064A\u0627\u064B</string>
     <string name="toast_overlay_permission">\u064A\u0631\u062C\u0649 \u0645\u0646\u062D \u0625\u0630\u0646 \u0627\u0644\u062A\u0631\u0627\u0643\u0628</string>
     <string name="setting_countdown_off">\u0644\u0627 \u064A\u0648\u062C\u062F</string>
@@ -320,8 +306,6 @@
         <item quantity="other">"%1$d ثوانٍ"</item>
     </plurals>
     <string name="setting_internal_audio_note">\u0623\u0646\u062F\u0631\u0648\u064A\u062F 10 \u0648\u0623\u0639\u0644\u0649 \u0641\u0642\u0637</string>
-    <string name="camera_status_enabled">\u0645\u0641\u0639\u0651\u0644 \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">\u0645\u0639\u0637\u0651\u0644</string>
     <string name="watermark_preview_active">\u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0627\u0644\u0645\u0628\u0627\u0634\u0631\u0629 \u0646\u0634\u0637\u0629 \u2014 \u0627\u0633\u062D\u0628 \u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u0627\u0644\u0645\u0627\u0626\u064A\u0629 \u0644\u062A\u063A\u064A\u064A\u0631 \u0645\u0648\u0636\u0639\u0647\u0627</string>
     <string name="watermark_preview_recording">\u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D\u0629 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
     <string name="watermark_preview_need_overlay">\u0627\u0645\u0646\u062D \u0625\u0630\u0646 \u0627\u0644\u062A\u0631\u0627\u0643\u0628 \u0644\u0631\u0624\u064A\u0629 \u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0627\u0644\u0645\u0628\u0627\u0634\u0631\u0629</string>
@@ -344,7 +328,7 @@
     <string name="perf_dynamic_glass">\u0627\u0644\u0636\u0628\u0627\u0628\u064A\u0629 \u0627\u0644\u0632\u062C\u0627\u062C\u064A\u0629 \u0627\u0644\u062F\u064A\u0646\u0627\u0645\u064A\u0643\u064A\u0629 \u0645\u0641\u0639\u0651\u0644\u0629</string>
     <string name="setting_performance_mode">\u0648\u0636\u0639 \u0627\u0644\u0623\u062F\u0627\u0621</string>
     <string name="setting_adaptive_recording_performance">\u0623\u062F\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u062A\u0643\u064A\u0641\u064A</string>
-    <string name="setting_adaptive_recording_performance_summary">\u064A\u0642\u0644\u0644 \u0627\u0644\u062D\u0645\u0644 \u062A\u0644\u0642\u0627\u0626\u064A\u0627\u064B \u0625\u0630\u0627 \u0648\u0627\u062C\u0647 \u0627\u0644\u062C\u0647\u0627\u0632 \u0635\u0639\u0648\u0628\u0629 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
+    <string name="setting_adaptive_recording_performance_summary">\u064A\u0642\u0644\u0644 \u062C\u0648\u062F\u0629 \u0627\u0644\u062A\u0633\u062C\u064A\u0644 \u062A\u062D\u062A \u0627\u0644\u062D\u0645\u0644 \u0627\u0644\u0634\u062F\u064A\u062F \u0644\u062A\u0642\u0644\u064A\u0644 \u0627\u0644\u062A\u0623\u062E\u064A\u0631.</string>
     <string name="performance_fallback_active">\u062A\u0645 \u0627\u0644\u062A\u0628\u062F\u064A\u0644 \u0625\u0644\u0649 \u0645\u0644\u0641 \u062A\u0639\u0631\u064A\u0641 \u062A\u0633\u062C\u064A\u0644 \u0623\u062E\u0641 \u0644\u0632\u064A\u0627\u062F\u0629 \u0627\u0644\u0627\u0633\u062A\u0642\u0631\u0627\u0631</string>
     <string name="performance_warning_title">\u062A\u062D\u0630\u064A\u0631 \u0627\u0644\u0623\u062F\u0627\u0621</string>
     <string name="performance_warning_body">\u062C\u0647\u0627\u0632\u0643 \u064A\u062D\u062A\u0648\u064A \u0639\u0644\u0649 \u0623\u0642\u0644 \u0645\u0646 6 \u062C\u064A\u062C\u0627\u0628\u0627\u064A\u062A \u0645\u0646 \u0627\u0644\u0630\u0627\u0643\u0631\u0629 \u0623\u0648 \u064A\u0639\u0645\u0644 \u0628\u0646\u0638\u0627\u0645 Android 11 \u0623\u0648 \u0623\u0642\u0644. \u0642\u062F \u064A\u0624\u062F\u064A \u062A\u0645\u0643\u064A\u0646 \u062A\u0623\u062B\u064A\u0631\u0627\u062A \u0627\u0644\u0636\u0628\u0627\u0628\u064A\u0629 \u0627\u0644\u0632\u062C\u0627\u062C\u064A\u0629 \u0641\u064A \u0627\u0644\u0648\u0642\u062A \u0627\u0644\u0641\u0639\u0644\u064A \u0625\u0644\u0649 \u062A\u0623\u062E\u0631 \u0641\u064A \u0627\u0644\u0648\u0627\u062C\u0647\u0629\u060C \u062E\u0627\u0635\u0629\u064B \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644.\n\n\u0647\u0644 \u062A\u0631\u064A\u062F \u062A\u0645\u0643\u064A\u0646 \u0648\u0636\u0639 \u0627\u0644\u062C\u0648\u062F\u0629 \u0639\u0644\u0649 \u0623\u064A \u062D\u0627\u0644\u061F</string>
@@ -365,7 +349,6 @@
     <string name="settings_section_privacy">\u0627\u0644\u062E\u0635\u0648\u0635\u064A\u0629</string>
     <string name="dialog_custom_resolution_title">\u062F\u0642\u0629 \u0645\u062E\u0635\u0635\u0629</string>
     <string name="dialog_custom_resolution_hint">\u0623\u062F\u062E\u0644 \u0627\u0644\u062F\u0642\u0629 \u0628\u0627\u0644\u0635\u064A\u063A\u0629 \u0627\u0644\u0639\u0631\u0636\u00D7\u0627\u0644\u0627\u0631\u062A\u0641\u0627\u0639 (\u0645\u062B\u0627\u0644: 1920\u00D71080)</string>
-    <string name="error_resolution_format">\u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0627\u0644\u062A\u0646\u0633\u064A\u0642 \u0627\u0644\u0639\u0631\u0636\u00D7\u0627\u0644\u0627\u0631\u062A\u0641\u0627\u0639 (\u0645\u062B\u0627\u0644: 1920\u00D71080)</string>
     <string name="error_resolution_min">\u0623\u062F\u0646\u0649 \u062F\u0642\u0629 \u0647\u064A 100\u00D7100</string>
     <string name="error_resolution_max">\u0623\u0642\u0635\u0649 \u062F\u0642\u0629 \u0647\u064A 7680 \u0639\u0644\u0649 \u0623\u064A \u062C\u0627\u0646\u0628</string>
     <string name="dialog_resolution_title">\u0627\u0644\u062F\u0642\u0629</string>
@@ -417,7 +400,7 @@
     <string name="clipper_duration_3m">3 \u062F</string>
     <string name="clipper_duration_4m">4 \u062F</string>
     <string name="clipper_duration_5m">5 \u062F</string>
-    <string name="perm_rationale_intro">\u064A\u062D\u062A\u0627\u062C CatRec \u0625\u0644\u0649 \u0627\u0644\u0623\u0630\u0648\u0646\u0627\u062A \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u0644\u062A\u0633\u062C\u064A\u0644 \u0634\u0627\u0634\u062A\u0643:</string>
+    <string name="perm_rationale_intro">سيطلب CatRec ما يلي. يجب منح العناصر المطلوبة لبدء التسجيل؛ وتحسن العناصر الاختيارية المكتبة وتوافق الجهاز.</string>
     <string name="perm_dialog_title">\u0627\u0644\u0623\u0630\u0648\u0646\u0627\u062A \u0645\u0637\u0644\u0648\u0628\u0629</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">\u062D\u0630\u0641 \u0627\u0644\u062A\u0633\u062C\u064A\u0644\u061F</string>
@@ -468,8 +451,6 @@
     <string name="content_desc_options">\u062E\u064A\u0627\u0631\u0627\u062A</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">\u062A\u062D\u0631\u064A\u0631 \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
-    <string name="tools_image_editing">\u062A\u062D\u0631\u064A\u0631 \u0627\u0644\u0635\u0648\u0631</string>
     <string name="tool_video_trim">\u062A\u0642\u0644\u064A\u0645 \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="tool_compress">\u0636\u063A\u0637 \u0627\u0644\u0641\u064A\u062F\u064A\u0648</string>
     <string name="tool_video_to_gif">\u0641\u064A\u062F\u064A\u0648 \u0625\u0644\u0649 GIF</string>
@@ -540,8 +521,12 @@
     <string name="perm_rationale_camera">\u0645\u0637\u0644\u0648\u0628 \u0644\u0639\u0631\u0636 \u062A\u0631\u0627\u0643\u0628 \u0627\u0644\u0643\u0627\u0645\u064A\u0631\u0627 \u062F\u0627\u062E\u0644 \u0627\u0644\u0635\u0648\u0631\u0629 \u0623\u0639\u0644\u0649 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0634\u0627\u0634\u0629.</string>
     <string name="perm_name_overlay">\u0627\u0644\u0639\u0631\u0636 \u0641\u0648\u0642 \u062A\u0637\u0628\u064A\u0642\u0627\u062A \u0623\u062E\u0631\u0649</string>
     <string name="perm_rationale_overlay">\u0645\u0637\u0644\u0648\u0628 \u0644\u0639\u0631\u0636 \u0641\u0642\u0627\u0639\u0629 \u0627\u0644\u062A\u062D\u0643\u0645 \u0627\u0644\u0639\u0627\u0626\u0645\u0629 \u0648\u062A\u0631\u0627\u0643\u0628 \u0627\u0644\u0643\u0627\u0645\u064A\u0631\u0627 \u0641\u0648\u0642 \u0627\u0644\u062A\u0637\u0628\u064A\u0642\u0627\u062A \u0627\u0644\u0623\u062E\u0631\u0649 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644.</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">الصور والفيديوهات</string>
+    <string name="perm_rationale_media_library">مطلوب لعرض تسجيلاتك ولقطات الشاشة داخل التطبيق، بما في ذلك الملفات المحفوظة قبل إعادة تثبيت CatRec. إذا عرض Android وصولا جزئيا فقط، اختر السماح للجميع أو أضف Movies/CatRec وPictures/CatRec/Screenshots.</string>
+    <string name="perm_name_music_audio">الموسيقى والصوت</string>
+    <string name="perm_rationale_music_audio">اختياري. يسمح لـ CatRec بعرض واستيراد ملفات الصوت في مكتبتك، مثل مسارات الميكروفون المنفصلة. يمكنك التسجيل حتى إذا تخطيت ذلك.</string>
+    <string name="perm_name_nearby_devices">الأجهزة القريبة</string>
+    <string name="perm_rationale_nearby_devices">اختياري. يستخدم لوصول Bluetooth الذي تحتاجه بعض الأجهزة والمكتبات قبل التسجيل أو أثناءه. يمكنك استخدام CatRec حتى إذا تخطيت ذلك.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">\u062E\u062F\u0645\u0629 \u0623\u0645\u0627\u0645\u064A\u0629 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644: \u0627\u0644\u062A\u0642\u0627\u0637 \u0627\u0644\u0634\u0627\u0634\u0629 (MediaProjection) \u0645\u0639 \u0635\u0648\u062A \u0645\u064A\u0643\u0631\u0648\u0641\u0648\u0646 \u0627\u062E\u062A\u064A\u0627\u0631\u064A \u0648\u0625\u0634\u0639\u0627\u0631 \u062F\u0627\u0626\u0645.</string>
@@ -550,7 +535,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">\u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0634\u0627\u0634\u0629</string>
     <string name="notif_channel_recording_complete">\u0627\u0643\u062A\u0645\u0644 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
-    <string name="notif_channel_rolling_buffer">\u0627\u0644\u0645\u062E\u0632\u0646 \u0627\u0644\u0645\u062A\u062F\u0627\u0648\u0644</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec \u062C\u0627\u0647\u0632</string>
     <string name="notif_ready_text">\u0627\u0636\u063A\u0637 \u0632\u0631 \u0627\u0644\u062A\u0631\u0627\u0643\u0628 \u25CF \u0644\u0628\u062F\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
     <string name="notif_action_revoke">\u0625\u0644\u063A\u0627\u0621</string>
@@ -566,9 +551,9 @@
     <string name="notif_action_mute">\u0643\u062A\u0645</string>
     <string name="notif_action_unmute">\u0625\u0644\u063A\u0627\u0621 \u0627\u0644\u0643\u062A\u0645</string>
     <string name="notif_action_show_controls">\u0625\u0638\u0647\u0627\u0631 \u0627\u0644\u062A\u062D\u0643\u0645</string>
-    <string name="notif_buffer_title">CatRec \u2014 \u0627\u0644\u0645\u062E\u0632\u0646 \u0627\u0644\u0645\u062A\u062F\u0627\u0648\u0644</string>
-    <string name="notif_buffer_starting">\u062C\u0627\u0631\u064D \u0628\u062F\u0621 \u0627\u0644\u0645\u062E\u0632\u0646\u2026</string>
-    <string name="notif_buffer_buffering">\u062A\u062E\u0632\u064A\u0646 \u0622\u062E\u0631 %1$d \u062B\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">جار بدء Clipper…</string>
+    <string name="notif_buffer_buffering">Clipper نشط — آخر %1$d ث…</string>
     <string name="notif_buffer_save_clip">\u062D\u0641\u0638 \u0627\u0644\u0645\u0642\u0637\u0639</string>
     <string name="notif_post_title">\u0627\u0646\u062A\u0647\u0649 \u0627\u0644\u062A\u0633\u062C\u064A\u0644</string>
     <string name="notif_post_text">\u0627\u0636\u063A\u0637 \u0644\u0641\u062A\u062D \u062A\u0633\u062C\u064A\u0644\u0643</string>
@@ -584,8 +569,8 @@
     <string name="toast_separate_mic_failed">\u062A\u0639\u0630\u0651\u0631 \u0625\u0646\u0634\u0627\u0621 \u0645\u0644\u0641 \u0635\u0648\u062A\u064A \u0645\u0646\u0641\u0635\u0644 \u2014 \u0633\u064A\u064F\u0633\u062C\u064E\u0651\u0644 \u0627\u0644\u0645\u064A\u0643\u0631\u0648\u0641\u0648\u0646 \u0641\u064A \u0627\u0644\u0641\u064A\u062F\u064A\u0648 \u0628\u062F\u0644\u0627\u064B \u0645\u0646 \u0630\u0644\u0643</string>
     <string name="toast_internal_audio_silent">لم يتم اكتشاف صوت داخلي. قد يحظر هذا التطبيق التقاط الصوت أو يستخدم مسار صوت غير مدعوم.</string>
     <string name="recording_has_separate_audio">\u064A\u062D\u062A\u0648\u064A \u0639\u0644\u0649 \u0645\u0633\u0627\u0631 \u0635\u0648\u062A\u064A \u0645\u0646\u0641\u0635\u0644</string>
-    <string name="toast_buffer_start_failed">\u0641\u0634\u0644 \u0628\u062F\u0621 \u0627\u0644\u0645\u062E\u0632\u0646: %1$s</string>
-    <string name="toast_clip_empty">\u0627\u0644\u0645\u0642\u0637\u0639 \u0641\u0627\u0631\u063A \u2014 \u0627\u0633\u062A\u0645\u0631 \u0641\u064A \u0627\u0644\u062A\u062E\u0632\u064A\u0646 \u0644\u0641\u062A\u0631\u0629 \u0623\u0637\u0648\u0644</string>
+    <string name="toast_buffer_start_failed">فشل بدء Clipper: %1$s</string>
+    <string name="toast_clip_empty">المقطع فارغ — أبق Clipper قيد التشغيل مدة أطول</string>
     <string name="toast_clip_saved">\u062A\u0645 \u062D\u0641\u0638 \u0627\u0644\u0645\u0642\u0637\u0639!</string>
     <string name="toast_clip_save_failed">\u0641\u0634\u0644 \u062D\u0641\u0638 \u0627\u0644\u0645\u0642\u0637\u0639: %1$s</string>
     <string name="notif_camera_overlay_text">\u062A\u0631\u0627\u0643\u0628 \u0643\u0627\u0645\u064A\u0631\u0627 CatRec \u0646\u0634\u0637 \u2014 \u0627\u0636\u063A\u0637 \u0644\u0644\u0639\u0648\u062F\u0629 \u0625\u0644\u0649 \u0627\u0644\u062A\u0637\u0628\u064A\u0642</string>
@@ -607,7 +592,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">\u062A\u0645 \u0631\u0641\u0636 \u0625\u0630\u0646 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0634\u0627\u0634\u0629</string>
-    <string name="toast_no_email_app">\u0644\u0645 \u064A\u062A\u0645 \u0627\u0644\u0639\u062B\u0648\u0631 \u0639\u0644\u0649 \u062A\u0637\u0628\u064A\u0642 \u0628\u0631\u064A\u062F</string>
     <string name="share_screenshot_chooser_title">\u0645\u0634\u0627\u0631\u0643\u0629 \u0644\u0642\u0637\u0629 \u0627\u0644\u0634\u0627\u0634\u0629</string>
     <string name="recordings_header_format">\u0627\u0644\u0645\u0643\u062A\u0628\u0629 \u00B7 %1$d</string>
     <string name="screenshots_header_format">\u0644\u0642\u0637\u0627\u062A \u0627\u0644\u0634\u0627\u0634\u0629 \u00B7 %1$d</string>
@@ -619,7 +603,21 @@
     <string name="content_desc_more_options">\u0627\u0644\u0645\u0632\u064A\u062F \u0645\u0646 \u0627\u0644\u062E\u064A\u0627\u0631\u0627\u062A</string>
     <string name="content_desc_rewind_10">\u0625\u0631\u062C\u0627\u0639 10 \u062B\u0648\u0627\u0646\u064D</string>
     <string name="content_desc_forward_10">\u062A\u0642\u062F\u064A\u0645 10 \u062B\u0648\u0627\u0646\u064D</string>
+    <string name="content_desc_trim">\u0642\u0635</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>\u062A\u0645 \u0625\u0635\u0644\u0627\u062D \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0635\u0648\u062A \u0627\u0644\u062F\u0627\u062E\u0644\u064A \u0639\u0644\u0649 \u0627\u0644\u0623\u062C\u0647\u0632\u0629 \u0627\u0644\u062A\u064A \u0643\u0627\u0646 \u0635\u0648\u062A \u0627\u0644\u062A\u0637\u0628\u064A\u0642 \u0623\u0648 \u0627\u0644\u0644\u0639\u0628\u0629 \u0645\u0641\u0642\u0648\u062F\u064B\u0627 \u0623\u0648 \u0635\u0627\u0645\u062A\u064B\u0627 \u0623\u062B\u0646\u0627\u0621 \u0627\u0644\u062A\u0633\u062C\u064A\u0644.</item>
+        <item>\u062A\u0633\u0645\u064A\u0627\u062A \u0623\u0648\u0636\u062D \u0644\u0644\u062F\u0642\u0629 \u0648\u0627\u0644\u0625\u0639\u062F\u0627\u062F\u0627\u062A\u060C \u0628\u0645\u0627 \u0641\u064A \u0630\u0644\u0643 \u0625\u0639\u0627\u062F\u0629 QHD (2K) \u0625\u0644\u0649 \u0645\u0646\u062A\u0642\u064A \u0627\u0644\u062F\u0642\u0629 \u062D\u064A\u062B \u0643\u0627\u0646\u062A \u0645\u0641\u0642\u0648\u062F\u0629.</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>تحسين أداء التسجيل باستخدام محرك Performance لالتقاط أكثر سلاسة وحرارة أقل للجهاز.</item>
+        <item>إصلاح مؤقت تراكب Clipper ليعرض مدة Clipper الصحيحة.</item>
+        <item>تحسين أداء الواجهة في التسجيلات ولقطات الشاشة وقوائم الوسائط.</item>
+        <item>تحسين التعامل مع حالات التراكب والإشعارات والتسجيلات المُحضّرة وتدفقات Clipper.</item>
+        <item>إضافة تحسينات ثبات لمسار التسجيل وتعامل أنظف مع وضع المحرك.</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>"إصلاح العرض من الحافة إلى الحافة على Android 15+ للحد من ANR"</item>
@@ -662,7 +660,7 @@
 
     <string-array name="changelog_v100_items">
         <item>"تسجيل الشاشة مع دعم برامج الترميز H.264 وH.265 (HEVC)."</item>
-        <item>"المخزن المؤقت Rolling Clipper (من 1 إلى 5 دقائق، قابل للتكوين) مع خياطة مقطعية سلسة وإعدادات مسبقة للمدة السريعة"</item>
+        <item>Clipper (من 1 إلى 5 دقائق، قابل للتكوين) مع دمج سلس للمقاطع وإعدادات مدة سريعة</item>
         <item>"زر حفظ المقطع أثناء تشغيل Clipper"</item>
         <item>"مجموعة واسعة من الدقة لجميع نسب العرض إلى الارتفاع، بالإضافة إلى الإدخال المخصص"</item>
         <item>"تتبع الاتجاه التلقائي أثناء التسجيل"</item>
@@ -690,17 +688,17 @@
         <item>"محدد وضع التسجيل / المقص مع مؤشر الحالة الواضح"</item>
         <item>"مربعات الإعدادات السريعة: CatRec Record وCatRec Clipper"</item>
         <item>"تسجيل الإخطار مع الإجراءات. دعم جلسة الالتقاط المجهزة"</item>
-        <item>"تحليلات الاشتراك الاختيارية لتحسين الاستقرار"</item>
+        <item>تحليلات استخدام اختيارية لتحسين الاستقرار (مفتاح في الإعدادات)</item>
         <item>"ضوابط الخصوصية: تبديل التحليلات وتخصيص الإعلانات"</item>
         <item>"شاشة الدعم: سجل التغيير، والروابط القانونية، والدعم الاختياري بمكافأة"</item>
     </string-array>
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">\u0623\u062F\u062E\u0644 \u0627\u0644\u062F\u0642\u0629.</string>
     <string name="error_resolution_positive">\u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0627\u0644\u0639\u0631\u0636 \u0648\u0627\u0644\u0627\u0631\u062A\u0641\u0627\u0639 \u0631\u0642\u0645\u064A\u0646 \u0645\u0648\u062C\u0628\u064A\u0646.</string>
     <string name="error_resolution_even">\u064A\u062C\u0628 \u0623\u0646 \u064A\u0643\u0648\u0646 \u0627\u0644\u0639\u0631\u0636 \u0648\u0627\u0644\u0627\u0631\u062A\u0641\u0627\u0639 \u0631\u0642\u0645\u064A\u0646 \u0632\u0648\u062C\u064A\u064A\u0646.</string>
@@ -708,8 +706,8 @@
     <string name="error_resolution_too_large_for_profile">\u0647\u0630\u0647 \u0627\u0644\u062F\u0642\u0629 \u0643\u0628\u064A\u0631\u0629 \u062C\u062F\u064B\u0627 \u0644\u0645\u0644\u0641 \u0623\u062F\u0627\u0621 \u0647\u0630\u0627 \u0627\u0644\u062C\u0647\u0627\u0632.</string>
     <string name="pro_feature">\u0645\u064A\u0632\u0629 PRO</string>
     <string name="pro_recording_title">\u0623\u0646\u062A \u062A\u0633\u062C\u0644 \u0628\u0627\u0633\u062A\u062E\u062F\u0627\u0645 \u0645\u064A\u0632\u0627\u062A PRO</string>
-    <string name="pro_recording_body">\u0634\u0627\u0647\u062F \u0625\u0639\u0644\u0627\u0646\u064B\u0627 \u0644\u0641\u062A\u062D \u0645\u064A\u0632\u0627\u062A PRO \u0644\u0645\u062F\u0629 4 \u0633\u0627\u0639\u0627\u062A\u060C \u0623\u0648 \u0623\u0632\u0644 \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A \u0644\u0644\u0648\u0635\u0648\u0644 \u0627\u0644\u062F\u0627\u0626\u0645.</string>
-    <string name="pro_tools_body">\u0634\u0627\u0647\u062F \u0625\u0639\u0644\u0627\u0646\u064B\u0627 \u0644\u0641\u062A\u062D \u0645\u064A\u0632\u0627\u062A PRO \u0644\u0645\u062F\u0629 4 \u0633\u0627\u0639\u0627\u062A\u060C \u0623\u0648 \u0627\u0634\u062A\u0631\u0650 \u0625\u0632\u0627\u0644\u0629 \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A \u0644\u0644\u0648\u0635\u0648\u0644 \u0627\u0644\u062F\u0627\u0626\u0645\u061F</string>
+    <string name="pro_recording_body">شاهد إعلانا لفتح Pro لمدة ساعة: 90/120 FPS، فيديو أعلى من 16 Mbps، الكاميرا، العلامة المائية، وميكروفون منفصل — أو أزل الإعلانات للوصول الدائم.</string>
+    <string name="pro_tools_body">شاهد إعلانا لفتح Pro لمدة ساعة: 90/120 FPS، أكثر من 16 Mbps، الدمج وGIF — أو اشتر إزالة الإعلانات للوصول الدائم؟</string>
     <string name="pro_unlock_watch_ad">\u0645\u0634\u0627\u0647\u062F\u0629 \u0625\u0639\u0644\u0627\u0646</string>
     <string name="pro_unlock_remove_ads">\u0625\u0632\u0627\u0644\u0629 \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A</string>
     <string name="pro_unlock_ad_unavailable">\u0627\u0644\u0625\u0639\u0644\u0627\u0646 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D \u0627\u0644\u0622\u0646. \u064A\u0631\u062C\u0649 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0642\u0631\u064A\u0628\u064B\u0627.</string>
@@ -722,4 +720,30 @@
     <string name="notif_cc_home">\u0627\u0644\u0631\u0626\u064A\u0633\u064A\u0629</string>
     <string name="notif_cc_close">\u0625\u063A\u0644\u0627\u0642</string>
     <string name="notif_cc_stop">\u0625\u064A\u0642\u0627\u0641</string>
+    <string name="settings_show_touches_status_on">قيد التشغيل</string>
+    <string name="settings_show_touches_status_off">متوقف — افتح خيارات المطور لتفعيل إظهار اللمسات</string>
+    <string name="settings_show_touches_status_unknown">غير معروف — افتح خيارات المطور لتفعيل إظهار اللمسات</string>
+    <string name="setting_recording_engine">محرك التسجيل</string>
+    <string name="recording_engine_performance_label">محرك الأداء</string>
+    <string name="recording_engine_compatibility_label">\u0627\u0644\u0645\u062D\u0631\u0643 \u0627\u0644\u062A\u062C\u0631\u064A\u0628\u064A</string>
+    <string name="recording_engine_performance_summary">موصى به لمعظم المستخدمين. يستخدم معالجة أقل، ويعمل بحرارة أقل، وهو الأفضل للتسجيل اليومي. لقطات الشاشة أثناء التسجيل معطلة.</string>
+    <string name="recording_engine_compatibility_summary">خيار احتياطي تجريبي. قد يستخدم معالجة أكثر، ويسبب حرارة أعلى، ويستهلك البطارية أسرع. جرّبه فقط إذا تسبب محرك الأداء بمشكلات على جهازك.</string>
+    <string name="recording_engine_advanced_warning">\u0627\u0644\u0645\u062D\u0631\u0643 \u0627\u0644\u062A\u062C\u0631\u064A\u0628\u064A \u0642\u062F \u064A\u0632\u064A\u062F \u0627\u0644\u062D\u0631\u0627\u0631\u0629 \u0623\u0648 \u0627\u0633\u062A\u0647\u0644\u0627\u0643 \u0627\u0644\u0628\u0637\u0627\u0631\u064A\u0629. \u0627\u0633\u062A\u062E\u062F\u0645\u0647 \u0641\u0642\u0637 \u0625\u0630\u0627 \u0643\u0627\u0646 \u0645\u062D\u0631\u0643 \u0627\u0644\u0623\u062F\u0627\u0621 \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A \u0644\u0627 \u064A\u0639\u0645\u0644 \u062C\u064A\u062F\u064B\u0627 \u0639\u0644\u0649 \u062C\u0647\u0627\u0632\u0643.</string>
+    <string name="recording_engine_scope_note">ينطبق على التسجيلات العادية وClipper.</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">لقطات الشاشة أثناء التسجيل غير متاحة في محرك الأداء.</string>
+    <string name="internal_silent_dialog_title">الصوت الداخلي صامت</string>
+    <string name="internal_silent_dialog_message">قد تحظر هذه اللعبة أو هذا التطبيق التقاط الصوت الداخلي.\n\nاستخدام الميكروفون كخيار احتياطي لالتقاط صوت السماعة بدلا من ذلك؟</string>
+    <string name="internal_silent_use_mic_fallback">استخدام الميكروفون الاحتياطي</string>
+    <string name="internal_silent_keep_recording_silent">متابعة التسجيل بصمت</string>
+    <string name="internal_silent_stop_recording">إيقاف التسجيل</string>
+    <string name="internal_silent_auto_fallback_checkbox">\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u064A\u0643\u0631\u0648\u0641\u0648\u0646 \u062A\u0644\u0642\u0627\u0626\u064A\u064B\u0627 \u0639\u0646\u062F\u0645\u0627 \u064A\u0645\u0646\u0639 \u0627\u0644\u062A\u0637\u0628\u064A\u0642 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0635\u0648\u062A \u0627\u0644\u062F\u0627\u062E\u0644\u064A</string>
+    <string name="setting_auto_mic_fallback_title">\u0627\u0644\u0628\u062F\u064A\u0644 \u0644\u0644\u0645\u064A\u0643\u0631\u0648\u0641\u0648\u0646</string>
+    <string name="setting_auto_mic_fallback_summary">\u0627\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0645\u064A\u0643\u0631\u0648\u0641\u0648\u0646 \u0639\u0646\u062F\u0645\u0627 \u064A\u0645\u0646\u0639 \u0627\u0644\u062A\u0637\u0628\u064A\u0642 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0635\u0648\u062A \u0627\u0644\u062F\u0627\u062E\u0644\u064A</string>
+    <string name="toast_internal_audio_using_mic_fallback">الصوت الداخلي غير متاح. جار استخدام الميكروفون.</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">يتطلب الميكروفون الاحتياطي إذن الميكروفون. سيستمر التسجيل بصمت.</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">الميكروفون الاحتياطي غير متاح أثناء تشغيل تسجيل الميكروفون المنفصل. أوقف الميكروفون المنفصل في الإعدادات، أو أوقف التسجيل وابدأ تسجيلا جديدا.</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">الميكروفون الاحتياطي للفيديو الرئيسي غير متاح أثناء تفعيل تسجيل الميكروفون المنفصل. لا يزال بإمكانك متابعة التسجيل أو إيقافه.</string>
+    <string name="toast_audio_permission_required_recording_not_started">إذن الميكروفون مطلوب لوضع الصوت المحدد. لم يبدأ التسجيل.</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">يتم استخدام الصوت الداخلي/صوت التطبيق فقط — تعذر بدء الميكروفون. تحقق من وصول الميكروفون أو مما إذا كان تطبيق آخر يستخدمه.</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">يتم استخدام الميكروفون فقط — تعذر بدء التقاط الصوت الداخلي للتطبيق. جرب تطبيقا آخر في المقدمة إذا كنت تتوقع صوت اللعبة.</string>
 </resources>

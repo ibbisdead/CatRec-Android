@@ -44,7 +44,8 @@ private const val PRO_GATE_TAG = "ProGate"
 private const val PRO_REWARDED_AD_UNIT_ID = "ca-app-pub-7741372232895726/8137302121"
 
 enum class ProFeature(val logName: String) {
-    RECORDING_120_FPS("pro_120fps"),
+    RECORDING_HIGH_FPS("pro_high_fps"),
+    HIGH_BITRATE("pro_high_bitrate"),
     SEPARATE_AUDIO_TRACKS("pro_separate_audio_tracks"),
     CAMERA_OVERLAY("pro_camera_overlay"),
     WATERMARK("pro_watermark"),
@@ -214,6 +215,6 @@ fun logProGateCheck(
     Log.d(PRO_GATE_TAG, "Pro gate checked features=$names adsDisabled=$adsDisabled unlockedUntil=$proUnlockedUntilMillis now=$now")
     when {
         adsDisabled -> Log.d(PRO_GATE_TAG, "Pro gate bypassed due to Remove Ads features=$names")
-        proUnlockedUntilMillis > now -> Log.d(PRO_GATE_TAG, "Pro gate bypassed due to active 4-hour unlock features=$names")
+        proUnlockedUntilMillis > now -> Log.d(PRO_GATE_TAG, "Pro gate bypassed due to active timed unlock features=$names")
     }
 }

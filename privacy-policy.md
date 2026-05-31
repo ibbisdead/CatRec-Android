@@ -1,84 +1,110 @@
 # Privacy Policy
 
-**CatRec – Screen Recorder** · Last updated: April 18, 2026
+**CatRec – Screen Recorder** · Last updated: May 27, 2026
 
 ---
 
 ## Overview
 
-CatRec – Screen Recorder ("the App", "we", "our") is developed by **ibbie**. This Privacy Policy explains what information the App collects, how it is used, and your rights.
+CatRec – Screen Recorder ("the App", "we", "our") is developed by **ibbie**. This Privacy Policy explains what information the App processes, how it is used, and your choices.
 
-We are committed to protecting your privacy. The App is designed to operate primarily on-device, and we do not collect, sell, or share your personal data with third parties—except as described below (Google AdMob).
-
----
-
-## Information We Collect
-
-The App does **not** collect or transmit any of the following:
-
-- Your name, email address, or account information
-- Your screen recordings or screenshots
-- Your microphone or camera footage
-- Your location
-- Your contacts or calendar
-
-All recordings, screenshots, and clips you create are saved **locally on your device** and are never uploaded to any server by the App.
+The App is built to work primarily on your device. Screen recordings, screenshots, and clips you create are stored locally and are not uploaded to our servers by the App. Third-party services described below (Google AdMob, Firebase, Google Play) may process limited data when you use those features.
 
 ---
 
-## Permissions Used
+## Information We Do Not Collect From You Directly
 
-The App requests the following permissions solely to deliver its core features:
+We do not operate user accounts and we do not ask for your name or email to use the App. We do not collect, sell, or rent your screen recordings, screenshots, microphone audio, camera preview, or contacts.
 
-`RECORD_AUDIO` · `FOREGROUND_SERVICE` · `POST_NOTIFICATIONS` · `CAMERA` · `READ_MEDIA_AUDIO` · `READ_EXTERNAL_STORAGE` (older Android only) · `WRITE_EXTERNAL_STORAGE` (Android 8 and below only) · `SYSTEM_ALERT_WINDOW`
+If you choose **Contact us** in the App, your email app sends a message you write to us. That message may include optional attachments and automatic diagnostic lines (app version, device model, Android version) added by the App to help support. We only receive what you choose to send.
 
-For photos and videos you choose from your library (for example tools, watermark image, or merge), the App uses the **system Photo Picker** and does **not** request broad access to all images or videos on your device.
+---
 
-> None of these permissions are used to collect or transmit personal data outside of your device.
+## Data Stored on Your Device
+
+The App stores the following locally (for example in Android `SharedPreferences`, DataStore, and MediaStore paths under `Movies/CatRec` and `Pictures/CatRec`):
+
+- Recording and UI preferences (resolution, FPS, bitrate, audio sources, overlay options, theme, language, and similar settings)
+- Your recordings, screenshots, GIF exports, and optional separate microphone sidecar files
+- Purchase state for **Remove Ads** (so ads stay off after you buy it)
+- Optional temporary **Pro** unlock timestamps when you watch a rewarded ad
+- A random anonymous identifier used only when analytics/crash reporting is enabled (see below)
+
+You can delete media from within the App or from your device file manager at any time.
+
+---
+
+## Permissions
+
+The App requests Android permissions only to provide its features (recording, overlay controls, library, camera bubble, notifications, and related tools). A detailed permission-by-permission explanation is in our [Permissions Disclosure](https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md).
+
+Permissions are not used to build a profile of you or to upload your recordings to us.
 
 ---
 
 ## Advertising (Google AdMob)
 
-The App uses **Google AdMob** to serve rewarded ads. AdMob may collect certain device information to serve personalized or non-personalized advertisements. This includes:
+On the free tier, the App may show **banner**, **app open**, and **rewarded** ads through **Google AdMob**. If you purchase **Remove Ads**, ad loading is disabled.
 
-- Advertising ID (resettable in Android Settings)
-- Device hardware and OS information
-- IP address (used for general location, e.g. country)
-- Ad interaction data (impressions, clicks)
+AdMob may collect device and ad-interaction data to deliver and measure ads, including:
 
-This data is collected and processed by Google, not by us. Please review Google's privacy policy for full details: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+- Advertising ID (resettable in Android Settings → Privacy → Ads)
+- Device and OS information
+- IP address (often used for coarse location such as country)
+- Ad impressions and clicks
 
-You can opt out of personalized ads at any time in your device's **Settings → Privacy → Ads**.
+This data is processed by Google under its policies: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+
+In **Settings**, you can turn off **Personalized ads**. When off, the App requests non-personalized ads (`npa=1`) from AdMob. You can also limit ad personalization in system settings.
 
 ---
 
-## Data Storage & Retention
+## Analytics & Crash Reporting (Firebase)
 
-The App stores your preferences (resolution, FPS, audio settings, theme, accent color, language) locally on your device using Android's `SharedPreferences`. This data never leaves your device.
+The App uses **Firebase Analytics** and **Firebase Crashlytics** (Google) to understand crashes and improve stability. When enabled, this may include:
 
-Recordings and screenshots are saved to your device's storage and remain under your full control. You can delete them at any time from within the App or from your device's file manager.
+- Crash stack traces and diagnostic logs
+- App version, device model, and OS/API level
+- General usage events (for example feature flows), not the content of your recordings
+- An anonymous per-install user ID generated by the App (not your name or email)
+
+You can disable **Usage analytics** in **Settings**. When disabled, Analytics and Crashlytics collection are turned off and Firebase user IDs are cleared. Crash reporting preferences stay aligned with that toggle.
+
+Firebase is governed by Google’s privacy policy: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+
+---
+
+## In-App Purchases (Google Play)
+
+Purchases such as **Remove Ads** and optional **Support me** tips are processed by **Google Play Billing**. Payment and purchase records are handled by Google; we receive only what Play provides to confirm entitlements (for example that ads should remain removed). We do not receive your full payment card details.
+
+---
+
+## Internet Access
+
+The App uses network access for ads (when not removed), Play Billing, and Firebase when analytics is enabled. Recording itself does not require uploading your video to our servers.
 
 ---
 
 ## Children's Privacy
 
-The App is not directed at children under 13 years of age. We do not knowingly collect personal information from children. If you believe a child has provided personal information through the App, please contact us so we can take appropriate action.
+The App is not directed at children under 13. We do not knowingly collect personal information from children. If you believe a child has contacted us with personal information, email us and we will take appropriate steps.
 
 ---
 
 ## Changes to This Policy
 
-We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date at the top of this page. Continued use of the App after changes constitutes acceptance of the updated policy.
+We may update this Privacy Policy from time to time. The "Last updated" date at the top will change when we do. Continued use of the App after changes means you accept the updated policy.
 
 ---
 
 ## Contact Us
 
-If you have any questions or concerns about this Privacy Policy, you can reach us at:
+Questions about this Privacy Policy:
 
-- YouTube: [youtube.com/@ibbie](https://youtube.com/@ibbie)
-- Google Play Store listing for CatRec – Screen Recorder
+- **Email:** [ibbisdead@proton.me](mailto:ibbisdead@proton.me)
+- **YouTube:** [youtube.com/@ibbie](https://youtube.com/@ibbie)
+- **Google Play** listing for CatRec – Screen Recorder
 
 ---
 

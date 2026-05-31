@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">Oynat\u0131c\u0131</string>
     <string name="screen_title_trim">Kes</string>
     <string name="screen_title_crop">K\u0131rp</string>
@@ -71,15 +70,11 @@
     <string name="action_share">Share</string>
     <string name="action_open">Open</string>
     <string name="action_edit">D\u00FCzenle</string>
-    <string name="consent_analytics_title">Kullan\u0131m analiti\u011Fi</string>
-    <string name="consent_analytics_message">\u0130ste\u011Fe ba\u011Fl\u0131 kullan\u0131ma ve kilitlenme analizlerine izin vererek CatRec\'i geli\u015Ftirmemize yard\u0131mc\u0131 olun. Ki\u015Fiselle\u015Ftirilmi\u015F reklamlar Ayarlar\'da ayr\u0131 olarak kontrol edilir (varsay\u0131lan olarak a\u00E7\u0131kt\u0131r). Bunu istedi\u011Finiz zaman Ayarlar\'dan de\u011Fi\u015Ftirebilirsiniz.</string>
     <string name="setting_usage_analytics">Usage analytics</string>
     <string name="setting_usage_analytics_desc">Crash and usage statistics to improve the app</string>
     <string name="setting_personalized_ads">Personalized ads</string>
     <string name="setting_personalized_ads_on_desc">AdMob may use your advertising ID for relevant ads</string>
     <string name="setting_personalized_ads_off_desc">Non-personalized ads only</string>
-    <string name="consent_accept">\u0130zin vermek</string>
-    <string name="consent_decline">Reddetmek</string>
     <string name="action_apply">Apply</string>
     <string name="action_pause">Pause</string>
     <string name="action_resume">Resume</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">%s Ayarlar\u0131n\u0131 A\u00E7</string>
     <string name="battery_opt_btn_learn_more">G\u00F6rsel rehber (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">\u015Eimdi De\u011Fil</string>
-    <string name="battery_opt_banner_text">Cihaz\u0131n\u0131z arka planda kay\u0131tlar\u0131 durdurabilir.</string>
-    <string name="battery_opt_banner_fix">D\u00FCzelt</string>
     <string name="settings_section_video">Video</string>
     <string name="settings_section_gif_recorder">GIF Kaydedici</string>
-    <string name="settings_gif_recorder_desc">GIF modu \u00F6nce videoyu kaydeder, ard\u0131ndan d\u00F6n\u00FC\u015Ft\u00FCr\u00FCr. Kalite ve uzunluk a\u015Fa\u011F\u0131daki \u00F6n ayar\u0131 takip eder; Kayda geri d\u00F6nd\u00FC\u011F\u00FCn\u00FCzde video kayd\u0131r\u0131c\u0131lar\u0131 kay\u0131tl\u0131 kal\u0131r.</string>
+    <string name="settings_gif_recorder_desc">\u00D6nce videoyu kaydeder, ard\u0131ndan GIF\'e d\u00F6n\u00FC\u015Ft\u00FCr\u00FCr.</string>
     <string name="setting_gif_preset">GIF kalitesi \u00F6n ayar\u0131</string>
     <string name="video_locked_by_gif_preset">GIF modu se\u00E7iliyken video se\u00E7enekleri GIF \u00F6n ayar\u0131 taraf\u0131ndan kontrol edilir.</string>
     <string name="gif_preset_small">K\u00FC\u00E7\u00FCk (daha h\u0131zl\u0131, daha k\u00FC\u00E7\u00FCk dosya)</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">Resolution</string>
-    <string name="setting_resolution_native">Native</string>
-    <string name="setting_resolution_custom">Custom resolution\u2026</string>
-    <string name="setting_resolution_custom_hint">e.g. 1920x1080</string>
+    <string name="setting_resolution_native">Cihaz \u00E7\u00F6z\u00FCn\u00FCrl\u00FC\u011F\u00FCn\u00FC kullan</string>
+    <string name="setting_resolution_custom">\u00D6zel \u00E7\u00F6z\u00FCn\u00FCrl\u00FCk\u2026</string>
+    <string name="setting_resolution_custom_hint">\u00F6rn. 1920x1080</string>
     <string name="setting_fps">Frame Rate (FPS)</string>
     <string name="setting_bitrate">Video Bitrate</string>
     <string name="setting_video_encoder">Video Encoder</string>
     <string name="setting_color_mode">Renk Modu</string>
-    <string name="setting_color_mode_standard">Standart (Rec.709)</string>
-    <string name="setting_color_mode_full">Tam Aral\u0131k</string>
-    <string name="dialog_color_mode">Renk Modu</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">Rec.709 parlakl\u0131k d\u00FCzeltmesi</string>
-    <string name="setting_rec709_brightness_correction_summary">Meta veri onar\u0131m\u0131ndan sonra hafif bir gama art\u0131\u015F\u0131 uygular. D\u0131\u015Fa aktarma h\u0131z\u0131n\u0131 biraz azaltabilir.</string>
+    <string name="setting_color_mode_standard">Sınırlı aralık / uyumluluk modu</string>
+    <string name="setting_color_mode_full">Tam aralık / ekrana doğru (önerilir)</string>
+    <string name="setting_force_rec709_compat">Sınırlı aralık meta verisini onar</string>
+    <string name="setting_force_rec709_compat_summary">Bit akışını FFmpeg ile açık sınırlı aralık BT.709 meta verisiyle yeniden etiketler. Yalnızca Sınırlı aralık modunda oynatma hâlâ soluk görünüyorsa gerekir.</string>
+    <string name="setting_rec709_brightness_correction">Parlaklık düzeltmesi (isteğe bağlı)</string>
+    <string name="setting_rec709_brightness_correction_summary">Meta veri onarımından sonra hafif gamma yükseltmesi uygular. İsteğe bağlıdır; yalnızca video hâlâ biraz koyu görünüyorsa açın.</string>
     <string name="rec709_brightness_correction_off">Kapal\u0131</string>
     <string name="rec709_brightness_correction_low">D\u00FC\u015F\u00FCk parlakl\u0131k d\u00FCzeltmesi</string>
     <string name="rec709_brightness_correction_medium">Orta parlakl\u0131k d\u00FCzeltmesi</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">Floating Controls</string>
     <string name="setting_hide_floating_while_recording">Kay\u0131t S\u0131ras\u0131nda Kayan Simgeyi Gizle</string>
-    <string name="settings_hide_floating_while_recording_desc">Kay\u0131t devam ederken kayan kontrol balonunu gizleyin</string>
+    <string name="settings_hide_floating_while_recording_desc">Kay\u0131t s\u0131ras\u0131nda katman\u0131 gizle</string>
     <string name="setting_post_screenshot_options">Ekran G\u00F6r\u00FCnt\u00FCs\u00FC Sonras\u0131 Se\u00E7enekleri</string>
     <string name="settings_post_screenshot_options_desc">Ekran g\u00F6r\u00FCnt\u00FCs\u00FCnden sonra payla\u015Fma veya d\u00FCzenleme se\u00E7eneklerini g\u00F6sterin</string>
-    <string name="setting_record_single_app">Tek Bir Uygulamay\u0131 Kaydetme</string>
-    <string name="settings_record_single_app_desc">Android 14 ve sonraki s\u00FCr\u00FCmlerde ekran yakalama izni verirken bir uygulama penceresi veya tam ekran se\u00E7in</string>
     <string name="screenshot_post_edit">D\u00FCzenlemek</string>
     <string name="screenshot_post_action_failed">Payla\u015F\u0131m a\u00E7\u0131lamad\u0131</string>
     <string name="screenshot_post_tap_outside">Kapatmak i\u00E7in d\u0131\u015Far\u0131ya dokunun</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">Watermark Opacity</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">Enable Camera</string>
-    <string name="camera_enable_desc">Show camera overlay during recording</string>
     <string name="camera_lock_position">Lock Position</string>
     <string name="camera_facing">Camera</string>
     <string name="camera_facing_front">Front</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">Pause on screen off</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">Always-on bubble \u2014 record, screenshot &amp; controls from any app</string>
+    <string name="settings_floating_controls_desc">Herhangi bir uygulamadan kay\u0131t al\u0131n, ekran g\u00F6r\u00FCnt\u00FCs\u00FC al\u0131n ve kontrollere eri\u015Fin</string>
     <string name="settings_show_touches">Show Touches</string>
-    <string name="settings_show_touches_desc">Enable in Developer Options</string>
     <string name="toast_enable_show_taps">Enable \'Show Taps\' manually</string>
     <string name="toast_overlay_permission">Please grant overlay permission</string>
     <string name="setting_countdown_off">Off</string>
@@ -316,8 +302,6 @@
         <item quantity="other">%1$d saniye</item>
     </plurals>
     <string name="setting_internal_audio_note">Android 10+ only</string>
-    <string name="camera_status_enabled">Enabled \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">Disabled</string>
     <string name="watermark_preview_active">Live preview active \u2014 drag watermark to reposition</string>
     <string name="watermark_preview_recording">Preview unavailable while recording</string>
     <string name="watermark_preview_need_overlay">Grant overlay permission to see live preview</string>
@@ -340,7 +324,7 @@
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
     <string name="setting_adaptive_recording_performance">Uyarlanabilir kay\u0131t performans\u0131</string>
-    <string name="setting_adaptive_recording_performance_summary">Kay\u0131t s\u0131ras\u0131nda cihaz zorlan\u0131rsa y\u00FCk\u00FC otomatik olarak azalt\u0131r</string>
+    <string name="setting_adaptive_recording_performance_summary">Gecikmeyi azaltmak i\u00E7in yo\u011Fun y\u00FCk alt\u0131nda kay\u0131t kalitesini d\u00FC\u015F\u00FCr\u00FCr.</string>
     <string name="performance_fallback_active">Kararl\u0131l\u0131k i\u00E7in daha hafif bir kay\u0131t profiline ge\u00E7ildi</string>
     <string name="performance_warning_title">Performance warning</string>
     <string name="performance_warning_body">Your device has less than 6 GB of RAM or is running Android 11 or below. Enabling real-time glass blur effects may cause UI lag, especially during recording.\n\nDo you want to enable Quality Mode anyway?</string>
@@ -359,12 +343,11 @@
     <string name="setting_keep_screen_on_title">Keep screen on</string>
     <string name="setting_keep_screen_on_desc">During recording</string>
     <string name="settings_section_privacy">Privacy</string>
-    <string name="dialog_custom_resolution_title">Custom resolution</string>
-    <string name="dialog_custom_resolution_hint">Enter resolution as WIDTH\u00D7HEIGHT (e.g. 1920\u00D71080)</string>
-    <string name="error_resolution_format">Format must be W\u00D7H (e.g. 1920\u00D71080)</string>
+    <string name="dialog_custom_resolution_title">\u00D6zel \u00E7\u00F6z\u00FCn\u00FCrl\u00FCk</string>
+    <string name="dialog_custom_resolution_hint">\u00C7\u00F6z\u00FCn\u00FCrl\u00FC\u011F\u00FC GEN\u0130\u015EL\u0130K\u00D7Y\u00DCKSEKL\u0130K olarak girin (\u00F6rn. 1920\u00D71080)</string>
     <string name="error_resolution_min">Minimum resolution is 100\u00D7100</string>
     <string name="error_resolution_max">Maximum resolution is 7680 on either side</string>
-    <string name="dialog_resolution_title">Resolution</string>
+    <string name="dialog_resolution_title">\u00C7\u00F6z\u00FCn\u00FCrl\u00FCk</string>
     <string name="resolution_group_16_9">16:9</string>
     <string name="resolution_group_20_9">20:9 (tall phone)</string>
     <string name="resolution_group_18_9">18:9 (2:1)</string>
@@ -413,7 +396,7 @@
     <string name="clipper_duration_3m">3 min</string>
     <string name="clipper_duration_4m">4 min</string>
     <string name="clipper_duration_5m">5 min</string>
-    <string name="perm_rationale_intro">CatRec\'in ekran\u0131n\u0131z\u0131 kaydetmek i\u00E7in a\u015Fa\u011F\u0131daki izinlere ihtiyac\u0131 vard\u0131r:</string>
+    <string name="perm_rationale_intro">CatRec şunları isteyecek. Kaydı başlatmak için gerekli öğelere izin verilmelidir; isteğe bağlı öğeler kitaplığı ve cihaz uyumluluğunu iyileştirir.</string>
     <string name="perm_dialog_title">Gerekli izinler</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">Kay\u0131t silinsin mi?</string>
@@ -456,8 +439,6 @@
     <string name="content_desc_options">Se\u00E7enekler</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">Video d\u00FCzenleme</string>
-    <string name="tools_image_editing">Resim d\u00FCzenleme</string>
     <string name="tool_video_trim">Video k\u0131rpma</string>
     <string name="tool_compress">Videoyu s\u0131k\u0131\u015Ft\u0131r</string>
     <string name="tool_video_to_gif">Videoyu GIF\'e d\u00F6n\u00FC\u015Ft\u00FCrme</string>
@@ -528,8 +509,12 @@
     <string name="perm_rationale_camera">Resim i\u00E7inde kamera kaplamas\u0131n\u0131 ekran kayd\u0131n\u0131z\u0131n \u00FCst\u00FCnde g\u00F6stermek i\u00E7in gereklidir.</string>
     <string name="perm_name_overlay">Di\u011Fer uygulamalar\u0131n \u00FCzerinde g\u00F6r\u00FCnt\u00FCle</string>
     <string name="perm_rationale_overlay">Kay\u0131t s\u0131ras\u0131nda kayan kontrol balonunu ve kamera katman\u0131n\u0131 di\u011Fer uygulamalar\u0131n \u00FCzerinde g\u00F6stermek i\u00E7in gereklidir.</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">Fotoğraflar ve videolar</string>
+    <string name="perm_rationale_media_library">CatRec’i yeniden kurmadan önce kaydedilen dosyalar dahil, kayıtlarınızı ve ekran görüntülerinizi uygulamada göstermek için gereklidir. Android yalnızca kısmi erişim sunarsa tümüne izin verin veya Movies/CatRec ve Pictures/CatRec/Screenshots klasörlerini dahil edin.</string>
+    <string name="perm_name_music_audio">Müzik ve ses</string>
+    <string name="perm_rationale_music_audio">İsteğe bağlı. CatRec’in kitaplığınızdaki ses dosyalarını, örneğin ayrı mikrofon parçalarını göstermesini ve içe aktarmasını sağlar. Bunu atlasanız da kayıt yapabilirsiniz.</string>
+    <string name="perm_name_nearby_devices">Yakındaki cihazlar</string>
+    <string name="perm_rationale_nearby_devices">İsteğe bağlı. Bazı cihazların ve kitaplıkların kayıt öncesinde veya sırasında ihtiyaç duyduğu Bluetooth erişimi için kullanılır. Bunu atlasanız da CatRec’i kullanabilirsiniz.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">Kay\u0131t s\u0131ras\u0131nda \u00F6n plan hizmeti: MediaProjection ile ekran yakalama, iste\u011Fe ba\u011Fl\u0131 mikrofon sesi ve kal\u0131c\u0131 bildirim.</string>
@@ -538,7 +523,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Ekran kayd\u0131</string>
     <string name="notif_channel_recording_complete">Kay\u0131t tamamland\u0131</string>
-    <string name="notif_channel_rolling_buffer">Yuvarlanan tampon</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec\'e haz\u0131r</string>
     <string name="notif_ready_text">Kayd\u0131 ba\u015Flatmak i\u00E7in kaplama \u25CF d\u00FC\u011Fmesine dokunun</string>
     <string name="notif_action_revoke">Geri \u00E7ekmek</string>
@@ -554,9 +539,9 @@
     <string name="notif_action_mute">Sesini kapatmak</string>
     <string name="notif_action_unmute">Sesini a\u00E7mak</string>
     <string name="notif_action_show_controls">Kontrolleri g\u00F6ster</string>
-    <string name="notif_buffer_title">CatRec \u2014 D\u00F6nen arabellek</string>
-    <string name="notif_buffer_starting">Tampon ba\u015Flat\u0131l\u0131yor\u2026</string>
-    <string name="notif_buffer_buffering">Son %1$d saniye ara belle\u011Fe al\u0131n\u0131yor\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">Clipper başlatılıyor…</string>
+    <string name="notif_buffer_buffering">Clipper aktif — son %1$d sn…</string>
     <string name="notif_buffer_save_clip">Klibi kaydet</string>
     <string name="notif_post_title">Kay\u0131t tamamland\u0131</string>
     <string name="notif_post_text">Kayd\u0131n\u0131z\u0131 a\u00E7mak i\u00E7in dokunun</string>
@@ -570,10 +555,10 @@
     <string name="toast_gif_transcode_failed">GIF olu\u015Fturulamad\u0131; MP4 kayd\u0131n\u0131z sakland\u0131.</string>
     <string name="toast_gif_saved">GIF, Resimler/CatRec/GIF\'lere kaydedildi</string>
     <string name="toast_separate_mic_failed">Ayr\u0131 ses dosyas\u0131 olu\u015Fturulamad\u0131; bunun yerine videoya mikrofon kaydedilecek</string>
-    <string name="toast_internal_audio_silent">Dahili ses algılanmadı. Bu uygulama ses yakalamayı engelliyor veya desteklenmeyen bir ses yolu kullanıyor olabilir.</string>
+    <string name="toast_internal_audio_silent">Dahili ses algılanmadı. Bu uygulama ses yakalamayı engelleyebilir veya desteklenmeyen bir ses yolu kullanabilir.</string>
     <string name="recording_has_separate_audio">Ayr\u0131 ses par\u00E7as\u0131 var</string>
-    <string name="toast_buffer_start_failed">Arabellek ba\u015Flat\u0131lamad\u0131: %1$s</string>
-    <string name="toast_clip_empty">Klip bo\u015F; ara belle\u011Fe almaya daha uzun s\u00FCre devam edin</string>
+    <string name="toast_buffer_start_failed">Clipper başlatılamadı: %1$s</string>
+    <string name="toast_clip_empty">Klip boş – Clipper daha uzun süre çalışsın</string>
     <string name="toast_clip_saved">Klip kaydedildi!</string>
     <string name="toast_clip_save_failed">Klip kaydedilemedi: %1$s</string>
     <string name="notif_camera_overlay_text">CatRec kamera katman\u0131 etkin; uygulamaya d\u00F6nmek i\u00E7in dokunun</string>
@@ -595,7 +580,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">Screen recording permission denied</string>
-    <string name="toast_no_email_app">No email app found</string>
     <string name="share_screenshot_chooser_title">Share screenshot</string>
     <string name="recordings_header_format">LIBRARY \u00B7 %1$d</string>
     <string name="screenshots_header_format">SCREENSHOTS \u00B7 %1$d</string>
@@ -606,8 +590,22 @@
     <string name="format_webp">WebP</string>
     <string name="content_desc_more_options">More options</string>
     <string name="content_desc_rewind_10">Rewind 10 seconds</string>
-    <string name="content_desc_forward_10">Forward 10 seconds</string>
+    <string name="content_desc_forward_10">10 saniye ileri</string>
+    <string name="content_desc_trim">K\u0131rp</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>Baz\u0131 cihazlarda uygulama veya oyun sesinin kay\u0131t s\u0131ras\u0131nda eksik ya da sessiz kalmas\u0131na neden olan dahili ses kayd\u0131 d\u00FCzeltildi.</item>
+        <item>\u00C7\u00F6z\u00FCn\u00FCrl\u00FCk ve ayar etiketleri daha anla\u015F\u0131l\u0131r hale getirildi; eksik oldu\u011Fu yerlerde se\u00E7icide QHD (2K) geri eklendi.</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>Performance motoruyla kayıt performansı iyileştirildi; daha akıcı yakalama ve daha düşük cihaz ısısı.</item>
+        <item>Clipper kaplama zamanlayıcısı doğru Clipper süresini gösterecek şekilde düzeltildi.</item>
+        <item>Kayıtlar, ekran görüntüleri ve medya listelerinde arayüz performansı iyileştirildi.</item>
+        <item>Kaplama, bildirim, hazırlanmış kayıt ve Clipper akışlarında durum yönetimi iyileştirildi.</item>
+        <item>Kayıt hattı kararlılığı iyileştirildi ve motor modu yönetimi daha temiz hale getirildi.</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>"Android 15 ve üzerinde kenardan kenara görünüm düzeltildi; ANR\'lar giderildi."</item>
@@ -650,7 +648,7 @@
 
     <string-array name="changelog_v100_items">
         <item>"H.264 ve H.265 (HEVC) codec desteğiyle ekran kaydı"</item>
-        <item>"Kesintisiz segment dikişi ve hızlı süre ön ayarlarıyla Rolling Clipper arabelleği (1–5 dakika, yapılandırılabilir)"</item>
+        <item>Clipper (1–5 dk, yapılandırılabilir), kesintisiz segment birleştirme ve hızlı süre ön ayarlarıyla</item>
         <item>"Clipper çalışırken Klibi Kaydet düğmesi"</item>
         <item>"Tüm en-boy oranları için geniş çözünürlük seçimi ve özel giriş"</item>
         <item>"Kayıt sırasında otomatik yönlendirme takibi"</item>
@@ -685,10 +683,10 @@
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">Bir \u00E7\u00F6z\u00FCn\u00FCrl\u00FCk girin.</string>
     <string name="error_resolution_positive">Geni\u015Flik ve y\u00FCkseklik pozitif say\u0131lar olmal\u0131d\u0131r.</string>
     <string name="error_resolution_even">Geni\u015Flik ve y\u00FCkseklik \u00E7ift say\u0131lar olmal\u0131d\u0131r.</string>
@@ -696,8 +694,8 @@
     <string name="error_resolution_too_large_for_profile">Bu \u00E7\u00F6z\u00FCn\u00FCrl\u00FCk, bu cihaz\u0131n performans profili i\u00E7in \u00E7ok b\u00FCy\u00FCk.</string>
     <string name="pro_feature">PRO \u00F6zellik</string>
     <string name="pro_recording_title">PRO \u00F6zelliklerle kay\u0131t yap\u0131yorsunuz</string>
-    <string name="pro_recording_body">PRO \u00F6zellikleri 4 saat a\u00E7mak i\u00E7in reklam izleyin veya kal\u0131c\u0131 eri\u015Fim i\u00E7in reklamlar\u0131 kald\u0131r\u0131n.</string>
-    <string name="pro_tools_body">PRO \u00F6zellikleri 4 saat a\u00E7mak i\u00E7in reklam izleyin veya kal\u0131c\u0131 eri\u015Fim i\u00E7in Reklamlar\u0131 Kald\u0131r sat\u0131n al\u0131n?</string>
+    <string name="pro_recording_body">Pro’yu 1 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri video, kamera, filigran ve ayrı mikrofon — veya kalıcı erişim için reklamları kaldırın.</string>
+    <string name="pro_tools_body">Pro’yu 1 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri, birleştirme ve GIF — veya kalıcı erişim için Reklamları Kaldır satın alın.</string>
     <string name="pro_unlock_watch_ad">Reklam \u0130zle</string>
     <string name="pro_unlock_remove_ads">Reklamlar\u0131 Kald\u0131r</string>
     <string name="pro_unlock_ad_unavailable">Reklam \u015Fu anda kullan\u0131lam\u0131yor. L\u00FCtfen biraz sonra tekrar deneyin.</string>
@@ -710,4 +708,30 @@
     <string name="notif_cc_home">Ana ekran</string>
     <string name="notif_cc_close">Kapat</string>
     <string name="notif_cc_stop">Durdur</string>
+    <string name="settings_show_touches_status_on">Açık</string>
+    <string name="settings_show_touches_status_off">Kapalı — Dokunuşları göster seçeneğini açmak için Geliştirici seçeneklerini açın</string>
+    <string name="settings_show_touches_status_unknown">Bilinmiyor — Dokunuşları göster seçeneğini açmak için Geliştirici seçeneklerini açın</string>
+    <string name="setting_recording_engine">Kayıt motoru</string>
+    <string name="recording_engine_performance_label">Performans motoru</string>
+    <string name="recording_engine_compatibility_label">Deneysel motor</string>
+    <string name="recording_engine_performance_summary">Çoğu kullanıcı için önerilir. Daha az işlem kullanır, daha serin çalışır ve günlük kayıt için en iyisidir. Kayıt sırasında ekran görüntüleri devre dışıdır.</string>
+    <string name="recording_engine_compatibility_summary">Deneysel fallback. Daha fazla işlem kullanabilir, daha fazla ısıya neden olabilir ve pili daha hızlı tüketebilir. Bunu yalnızca Performance motoru cihazınızda sorun çıkarırsa deneyin.</string>
+    <string name="recording_engine_advanced_warning">Deneysel motor \u0131s\u0131y\u0131 veya pil kullan\u0131m\u0131n\u0131 art\u0131rabilir. Yaln\u0131zca varsay\u0131lan Performance motoru cihaz\u0131n\u0131zda iyi \u00E7al\u0131\u015Fm\u0131yorsa kullan\u0131n.</string>
+    <string name="recording_engine_scope_note">Normal kayıtlar ve Clipper için geçerlidir.</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Performans motorunda kayıt sırasında ekran görüntüleri kullanılamaz.</string>
+    <string name="internal_silent_dialog_title">Dahili ses sessiz</string>
+    <string name="internal_silent_dialog_message">Bu oyun veya uygulama dahili ses yakalamayı engelleyebilir.\n\nBunun yerine hoparlör sesini yakalamak için mikrofon fallback kullanılsın mı?</string>
+    <string name="internal_silent_use_mic_fallback">Mikrofon fallback kullan</string>
+    <string name="internal_silent_keep_recording_silent">Sessiz kayda devam et</string>
+    <string name="internal_silent_stop_recording">Kaydı durdur</string>
+    <string name="internal_silent_auto_fallback_checkbox">Bir uygulama dahili ses kayd\u0131n\u0131 engelledi\u011Finde mikrofonu otomatik kullan</string>
+    <string name="setting_auto_mic_fallback_title">Mikrofon fallback</string>
+    <string name="setting_auto_mic_fallback_summary">Bir uygulama dahili ses kayd\u0131n\u0131 engelledi\u011Finde mikrofonu kullan</string>
+    <string name="toast_internal_audio_using_mic_fallback">Dahili ses yok. Mikrofon fallback kullanılıyor.</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">Mikrofon fallback için mikrofon izni gerekir. Kayıt sessiz devam edecek.</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">Ayrı mikrofon kaydı açıkken mikrofon fallback kullanılamaz. Ayarlar’da ayrı mikrofonu kapatın veya kaydı durdurup yeni kayıt başlatın.</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">Ayrı mikrofon kaydı açıkken ana video için mikrofon fallback kullanılamaz. Kayda devam edebilir veya durdurabilirsiniz.</string>
+    <string name="toast_audio_permission_required_recording_not_started">Seçilen ses modu için mikrofon izni gerekir. Kayıt başlatılmadı.</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">Yalnızca dahili/uygulama sesi kullanılıyor — mikrofon başlatılamadı. Mikrofon erişimini veya başka bir uygulamanın kullanıp kullanmadığını kontrol edin.</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">Yalnızca mikrofon kullanılıyor — dahili/uygulama sesi yakalama başlatılamadı. Oyun sesi bekliyorsanız öndeki başka bir uygulamayı deneyin.</string>
 </resources>

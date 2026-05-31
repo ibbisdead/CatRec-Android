@@ -8,6 +8,7 @@ import android.media.MediaMuxer
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -37,6 +38,7 @@ import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.service.ClipMerger
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
+import com.ibbie.catrec_screenrecorcer.utils.navigationUriArgToUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,7 +48,6 @@ import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,7 +56,7 @@ fun TrimScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
-    val videoUri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
+    val videoUri = remember(encodedUri) { navigationUriArgToUri(encodedUri) }
     val scope = rememberCoroutineScope()
 
     val mediaReadable =
@@ -369,6 +370,10 @@ private suspend fun trimVideo(
 ): Uri? =
     withContext(Dispatchers.IO) {
         val extractor = MediaExtractor()
+        var insertedUri: Uri? = null
+        var muxer: MediaMuxer? = null
+        var pfd: ParcelFileDescriptor? = null
+        val cr = context.contentResolver
         try {
             extractor.setDataSource(context, inputUri, null)
 
@@ -388,30 +393,35 @@ private suspend fun trimVideo(
                     }
                 }
 
-            val outputUri =
-                context.contentResolver.insert(
+            val outUri =
+                cr.insert(
                     MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     contentValues,
                 ) ?: return@withContext null
+            insertedUri = outUri
 
-            val pfd =
-                context.contentResolver.openFileDescriptor(outputUri, "w")
-                    ?: return@withContext null
+            pfd =
+                cr.openFileDescriptor(outUri, "w") ?: run {
+                    runCatching { cr.delete(outUri, null, null) }
+                    insertedUri = null
+                    return@withContext null
+                }
 
-            val muxer = MediaMuxer(pfd.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            val mux = MediaMuxer(pfd.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer = mux
 
             val trackCount = extractor.trackCount
-            val trackMap = mutableMapOf<Int, Int>() // extractor index -> muxer track
+            val trackMap = mutableMapOf<Int, Int>()
 
             for (i in 0 until trackCount) {
                 val format = extractor.getTrackFormat(i)
                 val mime = format.getString(MediaFormat.KEY_MIME) ?: continue
                 if (mime.startsWith("video/") || mime.startsWith("audio/")) {
-                    trackMap[i] = muxer.addTrack(format)
+                    trackMap[i] = mux.addTrack(format)
                 }
             }
 
-            muxer.start()
+            mux.start()
 
             val startUs = startMs * 1000L
             val endUs = endMs * 1000L
@@ -420,10 +430,8 @@ private suspend fun trimVideo(
             val buffer = ByteBuffer.allocate(2 * 1024 * 1024)
             val info = MediaCodec.BufferInfo()
 
-            // Select all relevant tracks
             for (track in trackMap.keys) extractor.selectTrack(track)
 
-            // Seek all tracks to start (nearest sync point)
             extractor.seekTo(startUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
 
             while (true) {
@@ -446,32 +454,53 @@ private suspend fun trimVideo(
                 info.presentationTimeUs = (sampleTime - startUs).coerceAtLeast(0L)
                 info.flags = ClipMerger.sampleFlagsForMuxer(extractor.sampleFlags)
 
-                muxer.writeSampleData(muxerTrack, buffer, info)
+                mux.writeSampleData(muxerTrack, buffer, info)
                 extractor.advance()
 
-                // Report progress
                 val elapsed = (sampleTime - startUs).coerceAtLeast(0L)
                 withContext(Dispatchers.Main) {
                     onProgress((elapsed.toFloat() / durationUs).coerceIn(0f, 1f))
                 }
             }
 
-            muxer.stop()
-            muxer.release()
+            mux.stop()
+            mux.release()
+            muxer = null
             pfd.close()
+            pfd = null
 
-            // Clear pending flag
             if (Build.VERSION.SDK_INT >= 29) {
-                val values = ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }
-                context.contentResolver.update(outputUri, values, null, null)
+                val n =
+                    cr.update(
+                        outUri,
+                        ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) },
+                        null,
+                        null,
+                    )
+                if (n <= 0) {
+                    runCatching { cr.delete(outUri, null, null) }
+                    insertedUri = null
+                    return@withContext null
+                }
             }
 
             withContext(Dispatchers.Main) { onProgress(1f) }
-            outputUri
+            outUri
         } catch (e: Exception) {
             android.util.Log.e("TrimScreen", "Trim failed", e)
+            insertedUri?.let { u -> runCatching { cr.delete(u, null, null) } }
             null
         } finally {
+            runCatching {
+                muxer?.run {
+                    try {
+                        stop()
+                    } catch (_: Exception) {
+                    }
+                    release()
+                }
+            }
+            runCatching { pfd?.close() }
             extractor.release()
         }
     }

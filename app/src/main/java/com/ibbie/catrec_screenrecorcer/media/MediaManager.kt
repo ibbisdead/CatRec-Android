@@ -11,6 +11,7 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingEntry
 import com.ibbie.catrec_screenrecorcer.ui.recordings.ensureCatRecMediaIndexed
 import com.ibbie.catrec_screenrecorcer.ui.recordings.loadAppRecordings
+import com.ibbie.catrec_screenrecorcer.ui.recordings.shouldRunCatRecMediaRecoveryIndex
 import com.ibbie.catrec_screenrecorcer.utils.CatRecMediaDeleteResult
 import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMediaDetailed
 import kotlinx.coroutines.Dispatchers
@@ -32,19 +33,25 @@ enum class MediaDeleteResult {
  * previous [ScreenshotsScreen] / [loadAppRecordings] behavior; deletion delegates to [trySilentDeleteMediaDetailed].
  */
 object MediaManager {
-    suspend fun loadScreenshots(context: Context): List<MediaItem> =
+    suspend fun loadScreenshots(
+        context: Context,
+        refreshIndex: Boolean = false,
+    ): List<MediaItem> =
         withContext(Dispatchers.IO) {
-            Log.d(TAG, "loadScreenshots start")
-            val list = queryScreenshots(context)
+            Log.d(TAG, "loadScreenshots start refreshIndex=$refreshIndex")
+            val list = queryScreenshots(context, refreshIndex)
             Log.d(TAG, "loadScreenshots done count=${list.size}")
             list
         }
 
-    suspend fun loadRecordings(context: Context): List<MediaItem> =
+    suspend fun loadRecordings(
+        context: Context,
+        refreshIndex: Boolean = false,
+    ): List<MediaItem> =
         withContext(Dispatchers.IO) {
             val saveUri = SettingsRepository(context).saveLocationUri.first()
-            Log.d(TAG, "loadRecordings start")
-            val entries = loadAppRecordings(context, saveUri)
+            Log.d(TAG, "loadRecordings start refreshIndex=$refreshIndex")
+            val entries = loadAppRecordings(context, saveUri, refreshIndex = refreshIndex)
             val list = entries.map { it.toMediaItem() }
             Log.d(TAG, "loadRecordings done count=${list.size}")
             list
@@ -122,9 +129,21 @@ private fun readPositiveInt(
     }
 }
 
-private fun queryScreenshots(context: Context): List<MediaItem> {
+private fun queryScreenshots(
+    context: Context,
+    refreshIndex: Boolean,
+): List<MediaItem> {
+    if (refreshIndex) {
+        ensureCatRecMediaIndexed(context)
+    }
+    val first = queryScreenshotsOnce(context)
+    if (first.isNotEmpty() || refreshIndex) return first
+    if (!shouldRunCatRecMediaRecoveryIndex("screenshots")) return first
     ensureCatRecMediaIndexed(context)
+    return queryScreenshotsOnce(context)
+}
 
+private fun queryScreenshotsOnce(context: Context): List<MediaItem> {
     val collections =
         when {
             Build.VERSION.SDK_INT >= 30 -> {

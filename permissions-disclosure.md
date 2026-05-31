@@ -1,73 +1,92 @@
 # CatRec — Permissions Disclosure
 
-This document explains every permission CatRec requests, why it is needed, and how it is used. CatRec does not collect, upload, or share any personal data. All recordings and screenshots are stored locally on your device.
+This document explains every permission CatRec requests, why it is needed, and how it is used. CatRec does not upload your recordings or screenshots to developer servers. Optional analytics and ads are described in the [Privacy Policy](https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md).
 
 ---
 
 ## Permissions Used
 
+### `INTERNET`
+**Why needed:** Loads ads (free tier), communicates with Google Play Billing, and sends Firebase Analytics/Crashlytics data when you leave usage analytics enabled. Not used to upload your recordings to us.
+
+### `com.android.vending.BILLING`
+**Why needed:** Processes in-app purchases (**Remove Ads**, optional **Support me**) through Google Play.
+
 ### `FOREGROUND_SERVICE`
-**Why needed:** Android requires this permission for any app that runs a long-lived background task. CatRec uses it to keep the screen recording and overlay services active while you are using other apps.
+**Why needed:** Android requires this for long-running background work. CatRec uses foreground services while recording or showing the floating overlay.
 
 ### `FOREGROUND_SERVICE_MEDIA_PROJECTION`
-**Why needed:** Required on Android 10+ to run a Media Projection foreground service (the service that captures your screen). Without it, the system would terminate the recording service while the app is in the background.
+**Why needed:** On Android 10+, required for the Media Projection foreground service that captures your screen (and, when enabled, internal app audio via playback capture tied to the same projection).
 
 ### `FOREGROUND_SERVICE_MICROPHONE`
-**Why needed:** Required on Android 10+ when a foreground service accesses the microphone. CatRec uses it to record your voice alongside the screen capture when microphone audio is enabled.
+**Why needed:** On Android 10+, required when a foreground service records from the microphone (optional mic track or mic-only audio).
 
 ### `FOREGROUND_SERVICE_CAMERA`
-**Why needed:** Required on Android 10+ when a foreground service accesses the camera. CatRec uses it to show a live camera preview overlay (webcam bubble) on top of your screen during recording.
+**Why needed:** On Android 10+, required when the overlay foreground service shows the live camera preview bubble.
 
 ### `POST_NOTIFICATIONS`
-**Why needed:** Required on Android 13+ to display notifications. CatRec uses notifications to:
-- Show ongoing recording / buffer status.
-- Provide quick Stop / Pause / Mute controls without switching apps.
-- Show a completion notification with the recording thumbnail after stopping.
+**Why needed:** On Android 13+, required to show notifications for ongoing recording/buffer status, quick controls (stop, pause, mute, screenshot), and completion notices.
 
 ### `RECORD_AUDIO`
-**Why needed:** Allows CatRec to record audio from your device's microphone. This is only used when you enable microphone audio in settings. Your audio is saved directly to your device and never uploaded.
+**Why needed:** Records microphone audio when you enable mic audio or separate mic recording. Audio is saved on your device only.
 
-### `CAPTURE_AUDIO_OUTPUT`
-**Why needed:** Allows CatRec to capture internal device audio (system sounds and app audio). This is only used when you enable "Internal Audio" in settings. This permission is reserved for screen-recorder use cases by Android.
+### Internal audio (playback capture — no separate manifest permission)
+**How it works:** When you enable **Internal audio** on Android 10+, CatRec captures app/system playback using Android’s **audio playback capture** API together with your approved screen-capture (Media Projection) session—not a standalone `CAPTURE_AUDIO_OUTPUT` permission. Some apps block capture or use unsupported audio paths; the App may notify you or offer fallbacks where supported.
 
-### `READ_MEDIA_AUDIO`
-**Why needed:** On Android 13 and above, this lets CatRec discover optional microphone sidecar files (`.m4a` under CatRec music/recordings paths in MediaStore) so the Library can show when a separate mic track exists for a recording. It is **not** used to scan your general music library.
+### `READ_MEDIA_VIDEO` · `READ_MEDIA_IMAGES` · `READ_MEDIA_VISUAL_USER_SELECTED` (Android 13+)
+**Why needed:** Lets the in-app **Recordings** and **Screenshots** libraries find videos and images CatRec saved (including after reinstall, when MediaStore indexing requires read access). On Android 14+, partial visual access via **Select photos and videos** is supported when you choose it.
 
-### `READ_EXTERNAL_STORAGE`
-**Why needed:** On Android 12 and below, used for the same MediaStore discovery and compatibility with older storage rules. On Android 13+, CatRec does **not** request broad photo/video storage access.
+### `READ_MEDIA_AUDIO` (Android 13+)
+**Why needed:** Discovers optional microphone sidecar files (`.m4a` under CatRec music/recording paths) so the library can show when a separate mic track exists. Not used to scan your entire music library.
 
-**Photos & videos you pick:** When you choose an image or video (tools, watermark, merge, feedback attachments, etc.), CatRec uses Android’s **Photo Picker** (`PickVisualMedia`). You select specific items; the App does **not** use `READ_MEDIA_IMAGES` or `READ_MEDIA_VIDEO` for full-library access.
+### `READ_EXTERNAL_STORAGE` (Android 12 and below)
+**Why needed:** Same library and MediaStore discovery on older Android versions. Not requested on Android 13+.
 
-**Your CatRec recordings list:** Videos and screenshots you created with CatRec are shown using MediaStore and paths under `Movies/CatRec` and `Pictures/CatRec`; the App does not require broad read access to all media on the device for that purpose.
-
-### `WRITE_EXTERNAL_STORAGE`
-**Why needed:** Required on Android 8 and below to save recordings to external storage. On Android 9+, CatRec uses the MediaStore API instead and this permission is not requested.
+### `WRITE_EXTERNAL_STORAGE` (Android 8 and below)
+**Why needed:** Saves recordings to external storage on very old devices. On Android 9+, CatRec uses MediaStore instead and does not request this.
 
 ### `WAKE_LOCK`
-**Why needed:** Allows CatRec to prevent the screen from turning off during recording when you enable the "Keep Screen On" option in settings. It is never acquired without your explicit opt-in.
+**Why needed:** Optional **Keep screen on** during recording so the display does not sleep. Only used when you enable that setting.
 
-### `SYSTEM_ALERT_WINDOW` (Draw Over Other Apps)
-**Why needed:** Allows CatRec to display the floating controls overlay (the draggable bubble with pause, stop, mute, and screenshot buttons) on top of other apps. This is the core feature that lets you control recordings without switching apps. You grant this permission manually in Android Settings.
+### `SYSTEM_ALERT_WINDOW` (Display over other apps)
+**Why needed:** Shows the floating controls bubble and overlay UI on top of other apps. You grant this manually in Android Settings.
 
 ### `CAMERA`
-**Why needed:** Allows CatRec to show a live camera preview as a floating overlay during recording (webcam/face-cam bubble). It is only accessed when you enable the Camera Overlay feature. The camera is never accessed in the background without your knowledge.
+**Why needed:** Live camera preview overlay during recording or in settings preview. Only used when you enable the camera overlay feature.
+
+### `BLUETOOTH` (Android 11 and below) · `BLUETOOTH_CONNECT` (Android 12+)
+**Why needed:** Required on newer Android versions so the Google Mobile Ads SDK can initialize reliably on some devices. CatRec does not pair with or control your Bluetooth accessories for recording.
+
+### `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+**Why needed:** Optional prompt so you can exempt CatRec from aggressive battery restrictions on some OEMs, reducing recording stops in the background. You choose whether to allow it.
 
 ---
 
-## Data Practices
+## Picking files from your gallery
 
-| Data type | Collected? | Uploaded? |
-|-----------|-----------|----------|
-| Screen recordings | Saved locally only | Never |
-| Screenshots | Saved locally only | Never |
-| Microphone audio | Saved locally only | Never |
-| Device identifiers | No | No |
-| Usage analytics | Optional, opt-out available | No |
+When you choose an image or video (watermark, merge, GIF tool, feedback attachments, etc.), CatRec uses Android’s **Photo Picker** where available so you select specific items. Broad library read permissions above are for **your CatRec media** in the app libraries, not for silently scanning all photos on your phone for unrelated purposes.
+
+---
+
+## Data practices summary
+
+| Data type | Stored on device? | Uploaded by CatRec to developer servers? |
+|-----------|-------------------|------------------------------------------|
+| Screen recordings & screenshots | Yes | No |
+| Microphone / internal audio tracks | Yes | No |
+| Settings & purchase flags | Yes | No |
+| Ad / analytics data (if enabled) | Processed by Google | Via Google services only |
+| Support email you send | In your mail app | Only if you send it to us |
 
 ---
 
 ## Contact
 
-If you have questions about these permissions, please contact: **ibbiedead@gmail.com**
+Questions about these permissions:
 
-_Last updated: April 2026_
+- **Email:** [ibbisdead@proton.me](mailto:ibbisdead@proton.me)
+- **YouTube:** [youtube.com/@ibbie](https://youtube.com/@ibbie)
+
+---
+
+_Last updated: May 27, 2026_

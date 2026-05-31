@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -66,7 +67,6 @@ import com.ibbie.catrec_screenrecorcer.media.MediaManager
 import com.ibbie.catrec_screenrecorcer.media.screenshotDateLabel
 import com.ibbie.catrec_screenrecorcer.media.screenshotDisplayAspect
 import com.ibbie.catrec_screenrecorcer.media.screenshotSizeKb
-import com.ibbie.catrec_screenrecorcer.ui.components.GlassCard
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentBrush
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.LocalSuppressRecordFabForListSelection
@@ -95,6 +95,7 @@ fun ScreenshotsScreen(
 
     /** Increment to force a reload while this tab is visible (toolbar refresh control). */
     var manualRefreshKey by remember { mutableIntStateOf(0) }
+    var lastIndexedManualRefreshKey by remember { mutableIntStateOf(0) }
     var selectedUris by remember { mutableStateOf<Set<Uri>>(emptySet()) }
     val isSelectionMode = selectedUris.isNotEmpty()
     var showBulkDeleteDialog by remember { mutableStateOf(false) }
@@ -131,12 +132,16 @@ fun ScreenshotsScreen(
     val screenshotSavedCount by viewModel.screenshotSavedCount.collectAsState()
 
     LifecycleResumeEffect(manualRefreshKey, isIdle, screenshotSavedCount) {
+        val refreshIndex = manualRefreshKey > lastIndexedManualRefreshKey
         isLoading = true
         val job =
             scope.launch {
                 try {
-                    val list = MediaManager.loadScreenshots(context)
+                    val list = MediaManager.loadScreenshots(context, refreshIndex = refreshIndex)
                     screenshots = list
+                    if (refreshIndex) {
+                        lastIndexedManualRefreshKey = manualRefreshKey
+                    }
                 } finally {
                     isLoading = false
                 }
@@ -629,54 +634,43 @@ private fun ScreenshotCard(
     val errorColor = MaterialTheme.colorScheme.errorContainer
     val errorPainter = remember(errorColor) { ColorPainter(errorColor) }
 
-    Box(
+    val cardShape = RoundedCornerShape(12.dp)
+    Surface(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .then(
-                    if (isSelected) {
-                        Modifier.border(2.dp, accent, RoundedCornerShape(12.dp))
-                    } else {
-                        Modifier
+                .combinedClickable(
+                    onClick = {
+                        if (isSelectionMode) onToggleSelect() else onPreviewClick()
+                    },
+                    onLongClick = {
+                        if (!isSelectionMode) onLongClick() else onToggleSelect()
                     },
                 ),
+        shape = cardShape,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = if (isSelected) BorderStroke(2.dp, accent) else null,
     ) {
-        GlassCard(
-            modifier = Modifier.fillMaxWidth(),
-            cornerRadius = 12.dp,
-            disableBlur = true,
-        ) {
+        Box {
             Box(
                 modifier =
                     Modifier
-                        .combinedClickable(
-                            onClick = {
-                                if (isSelectionMode) onToggleSelect() else onPreviewClick()
-                            },
-                            onLongClick = {
-                                if (!isSelectionMode) onLongClick() else onToggleSelect()
-                            },
-                        ),
+                        .fillMaxWidth()
+                        .aspectRatio(displayAspect)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(displayAspect)
-                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    AsyncImage(
-                        model = thumbRequest,
-                        contentDescription = item.name ?: "",
-                        contentScale = ContentScale.Fit,
-                        placeholder = placeholderPainter,
-                        error = errorPainter,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                AsyncImage(
+                    model = thumbRequest,
+                    contentDescription = item.name ?: "",
+                    contentScale = ContentScale.Fit,
+                    placeholder = placeholderPainter,
+                    error = errorPainter,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
 
                 Box(
                     modifier =
@@ -753,42 +747,40 @@ private fun ScreenshotCard(
                     }
                 }
 
-                // Selection overlay
-                if (isSelectionMode) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(displayAspect)
-                                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                                .background(
-                                    if (isSelected) accent.copy(alpha = 0.30f) else Color(0x44000000),
-                                ),
-                    )
-                    Box(
-                        modifier =
-                            Modifier
-                                .align(Alignment.TopStart)
-                                .padding(8.dp)
-                                .size(24.dp)
-                                .background(
-                                    if (isSelected) accent else Color(0x88000000),
-                                    CircleShape,
-                                ).border(
-                                    2.dp,
-                                    if (isSelected) accent else Color.White.copy(alpha = 0.7f),
-                                    CircleShape,
-                                ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (isSelected) {
-                            Icon(
-                                Icons.Default.Check,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp),
-                            )
-                        }
+            // Selection overlay
+            if (isSelectionMode) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(displayAspect)
+                            .background(
+                                if (isSelected) accent.copy(alpha = 0.30f) else Color(0x44000000),
+                            ),
+                )
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .size(24.dp)
+                            .background(
+                                if (isSelected) accent else Color(0x88000000),
+                                CircleShape,
+                            ).border(
+                                2.dp,
+                                if (isSelected) accent else Color.White.copy(alpha = 0.7f),
+                                CircleShape,
+                            ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp),
+                        )
                     }
                 }
             }

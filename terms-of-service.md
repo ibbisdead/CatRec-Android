@@ -1,18 +1,26 @@
 # Terms of Service
 
-**CatRec – Screen Recorder** · Last updated: March 19, 2026
+**CatRec – Screen Recorder** · Last updated: May 27, 2026
 
 ---
 
 ## 1. Acceptance of Terms
 
-By downloading, installing, or using CatRec – Screen Recorder ("the App"), you agree to be bound by these Terms of Service. If you do not agree, do not use the App.
+By downloading, installing, or using CatRec – Screen Recorder ("the App"), you agree to these Terms of Service. If you do not agree, do not use the App.
 
 ---
 
 ## 2. Description of Service
 
-CatRec is a screen recording application for Android that allows you to record your device screen, capture screenshots, use a rolling clip buffer (Clipper mode), and overlay camera or watermark content onto recordings. The App is provided by **ibbie** ("Developer", "we", "us").
+CatRec is an Android screen recorder that lets you:
+
+- Record your device screen (standard recording and rolling **Clipper** buffer mode)
+- Capture screenshots from the overlay or in-app controls
+- Optionally record microphone audio, internal app audio (where supported), and separate mic tracks
+- Use floating overlay controls, drawing tools, camera bubble, and watermark options
+- Manage recordings in a library, trim videos, export GIFs, and use related editing tools
+
+The App is provided by **ibbie** ("Developer", "we", "us"). Features may vary by device, Android version, and OEM restrictions.
 
 ---
 
@@ -20,70 +28,80 @@ CatRec is a screen recording application for Android that allows you to record y
 
 You may use the App only for lawful purposes. You agree **not** to use the App to:
 
-- Record calls, conversations, or screen activity of other people without their knowledge and consent
-- Record content that infringes copyright, trademarks, or other intellectual property rights
-- Record or distribute illegal content of any kind
-- Circumvent digital rights management (DRM) systems
-- Use the App in any way that violates applicable local, national, or international law
+- Record people, calls, meetings, or private conversations without consent where required by law
+- Record or distribute content that infringes copyright, trademarks, or other rights
+- Record or distribute illegal content
+- Circumvent DRM or other technical protection measures
+- Use the App in violation of applicable local, national, or international law
 
-You are solely responsible for any content you record using the App and for ensuring your use complies with all applicable laws in your jurisdiction.
+You are solely responsible for content you record and for complying with laws in your jurisdiction (including wiretap, workplace, and broadcast rules).
 
 ---
 
 ## 4. Intellectual Property
 
-The App, including its code, design, and assets, is the intellectual property of the Developer. You are granted a limited, non-exclusive, non-transferable, revocable license to use the App on your personal Android device. You may not copy, modify, distribute, sell, or reverse-engineer the App.
+The App, including its code, design, branding, and assets, is owned by the Developer. You receive a limited, non-exclusive, non-transferable, revocable license to use the App on your personal Android devices. You may not copy, modify, distribute, sell, sublicense, or reverse-engineer the App except as allowed by applicable law.
 
 ---
 
-## 5. In-App Purchases & Advertising
+## 5. Free Tier, Pro Features, Advertising & Purchases
 
-The App may display advertisements through Google AdMob. In-app purchases (such as "Remove Ads") are processed through the Google Play Billing system. All purchases are final and non-refundable except where required by applicable law.
+### Advertising
+The free tier may show Google **AdMob** ads (including banner, app open, and rewarded formats). Ad behavior is described in our [Privacy Policy](https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md).
+
+### Pro features
+Some options (for example high FPS, high bitrate, separate audio tracks, camera overlay, or custom watermark) may require **Pro** access. Pro can be unlocked temporarily by watching a rewarded ad or by purchasing **Remove Ads**, which also disables ads. Availability and limits may change in updates.
+
+### In-app purchases
+**Remove Ads** and optional **Support me** purchases are processed through **Google Play Billing**. Prices and availability are shown in the Play Store. Purchases are generally final and non-refundable except where Google Play or applicable law requires otherwise.
 
 ---
 
 ## 6. Disclaimer of Warranties
 
-The App is provided **"as is"** and **"as available"** without any warranties of any kind, either express or implied. The Developer does not warrant that the App will be error-free, uninterrupted, or free from harmful components.
+THE APP IS PROVIDED **"AS IS"** AND **"AS AVAILABLE"** WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. We do not warrant uninterrupted, error-free, or secure operation. Recording quality, internal audio capture, and background behavior depend on your device, Android version, and other apps.
 
 ---
 
 ## 7. Limitation of Liability
 
-To the fullest extent permitted by applicable law, the Developer shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the App, even if the Developer has been advised of the possibility of such damages.
+TO THE FULLEST EXTENT PERMITTED BY LAW, THE DEVELOPER SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF DATA, PROFITS, OR GOODWILL, ARISING FROM YOUR USE OF OR INABILITY TO USE THE APP, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE APP SHALL NOT EXCEED THE AMOUNT YOU PAID FOR THE APP IN THE TWELVE MONTHS BEFORE THE CLAIM (OR ZERO IF YOU PAID NOTHING).
+
+Some jurisdictions do not allow certain limitations; in those cases, our liability is limited to the maximum permitted by law.
 
 ---
 
 ## 8. Privacy
 
-Your use of the App is also governed by our [Privacy Policy](https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md), which is incorporated into these Terms by reference.
+Your use of the App is also governed by our [Privacy Policy](https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md) and [Permissions Disclosure](https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md), incorporated by reference.
 
 ---
 
 ## 9. Changes to Terms
 
-We reserve the right to update these Terms at any time. Continued use of the App after changes are posted constitutes your acceptance of the revised Terms. The "Last updated" date at the top of this page reflects the most recent revision.
+We may update these Terms at any time. The "Last updated" date reflects the latest revision. Continued use after changes constitutes acceptance of the revised Terms.
 
 ---
 
 ## 10. Termination
 
-We reserve the right to terminate or suspend your access to the App at any time, without notice, for conduct that we believe violates these Terms or is otherwise harmful.
+We may suspend or stop offering the App (or any part of it) at any time. You may stop using the App by uninstalling it. Sections that by nature should survive (including disclaimers and liability limits) survive termination.
 
 ---
 
 ## 11. Governing Law
 
-These Terms shall be governed by and construed in accordance with applicable law. Any disputes shall be resolved in the courts of competent jurisdiction.
+These Terms are governed by applicable law in the Developer’s jurisdiction, without regard to conflict-of-law rules. Disputes shall be brought in courts of competent jurisdiction unless mandatory consumer protection laws in your country require otherwise.
 
 ---
 
 ## 12. Contact
 
-If you have questions about these Terms, contact us at:
+Questions about these Terms:
 
-- YouTube: [youtube.com/@ibbie](https://youtube.com/@ibbie)
-- Google Play Store listing for CatRec – Screen Recorder
+- **Email:** [ibbisdead@proton.me](mailto:ibbisdead@proton.me)
+- **YouTube:** [youtube.com/@ibbie](https://youtube.com/@ibbie)
+- **Google Play** listing for CatRec – Screen Recorder
 
 ---
 
