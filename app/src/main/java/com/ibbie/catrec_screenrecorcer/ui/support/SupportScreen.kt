@@ -462,6 +462,8 @@ fun SupportScreen(
     }
 
     if (showChangelogDialog) {
+        val changelog121Items = stringArrayResource(R.array.changelog_v121_items).toList()
+        val changelog120Items = stringArrayResource(R.array.changelog_v120_items).toList()
         val changelog113Items = stringArrayResource(R.array.changelog_v113_items).toList()
         val changelog112Items = stringArrayResource(R.array.changelog_v112_items).toList()
         val changelog111Items = stringArrayResource(R.array.changelog_v111_items).toList()
@@ -478,8 +480,20 @@ fun SupportScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_template, "1.1.3"),
+                        version = stringResource(R.string.changelog_version_template, "1.2.1"),
                         label = stringResource(R.string.changelog_label_latest),
+                        changes = changelog121Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.2.0"),
+                        label = null,
+                        changes = changelog120Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.1.3"),
+                        label = null,
                         changes = changelog113Items,
                     )
                     Spacer(Modifier.height(24.dp))

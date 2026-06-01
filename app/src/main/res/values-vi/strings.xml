@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">Tr\u00ECnh ph\u00E1t</string>
     <string name="screen_title_trim">C\u1EAFt video</string>
     <string name="screen_title_crop">C\u1EAFt \u1EA3nh</string>
@@ -71,15 +70,11 @@
     <string name="action_share">Chia s\u1EBB</string>
     <string name="action_open">M\u1EDF</string>
     <string name="action_edit">S\u1EEDa</string>
-    <string name="consent_analytics_title">Ph\u00E2n t\u00EDch s\u1EED d\u1EE5ng</string>
-    <string name="consent_analytics_message">H\u00E3y gi\u00FAp ch\u00FAng t\u00F4i c\u1EA3i thi\u1EC7n CatRec b\u1EB1ng c\u00E1ch cho ph\u00E9p ph\u00E2n t\u00EDch s\u1EF1 c\u1ED1 v\u00E0 s\u1EED d\u1EE5ng t\u00F9y ch\u1ECDn. Qu\u1EA3ng c\u00E1o \u0111\u01B0\u1EE3c c\u00E1 nh\u00E2n h\u00F3a \u0111\u01B0\u1EE3c ki\u1EC3m so\u00E1t ri\u00EAng trong C\u00E0i \u0111\u1EB7t (b\u1EADt theo m\u1EB7c \u0111\u1ECBnh). B\u1EA1n c\u00F3 th\u1EC3 thay \u0111\u1ED5i \u0111i\u1EC1u n\u00E0y b\u1EA5t c\u1EE9 l\u00FAc n\u00E0o trong C\u00E0i \u0111\u1EB7t.</string>
     <string name="setting_usage_analytics">Ph\u00E2n t\u00EDch s\u1EED d\u1EE5ng</string>
     <string name="setting_usage_analytics_desc">Th\u1ED1ng k\u00EA s\u1EF1 c\u1ED1 v\u00E0 s\u1EED d\u1EE5ng \u0111\u1EC3 c\u1EA3i thi\u1EC7n \u1EE9ng d\u1EE5ng</string>
     <string name="setting_personalized_ads">Qu\u1EA3ng c\u00E1o c\u00E1 nh\u00E2n h\u00F3a</string>
     <string name="setting_personalized_ads_on_desc">AdMob c\u00F3 th\u1EC3 s\u1EED d\u1EE5ng ID qu\u1EA3ng c\u00E1o c\u1EE7a b\u1EA1n cho c\u00E1c qu\u1EA3ng c\u00E1o li\u00EAn quan</string>
     <string name="setting_personalized_ads_off_desc">Ch\u1EC9 qu\u1EA3ng c\u00E1o kh\u00F4ng c\u00E1 nh\u00E2n h\u00F3a</string>
-    <string name="consent_accept">Cho ph\u00E9p</string>
-    <string name="consent_decline">S\u1EF1 suy s\u1EE5p</string>
     <string name="action_apply">\u00C1p d\u1EE5ng</string>
     <string name="action_pause">T\u1EA1m d\u1EEBng</string>
     <string name="action_resume">Ti\u1EBFp t\u1EE5c</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">M\u1EDF C\u00E0i \u0110\u1EB7t %s</string>
     <string name="battery_opt_btn_learn_more">H\u01B0\u1EDBng d\u1EABn tr\u1EF1c quan (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">\u0110\u1EC3 Sau</string>
-    <string name="battery_opt_banner_text">Thi\u1EBFt b\u1ECB c\u1EE7a b\u1EA1n c\u00F3 th\u1EC3 d\u1EEBng ghi h\u00ECnh \u1EDF n\u1EC1n.</string>
-    <string name="battery_opt_banner_fix">S\u1EEDa</string>
     <string name="settings_section_video">B\u0103ng h\u00ECnh</string>
     <string name="settings_section_gif_recorder">M\u00E1y ghi \u1EA3nh GIF</string>
-    <string name="settings_gif_recorder_desc">Ch\u1EBF \u0111\u1ED9 GIF ghi l\u1EA1i video tr\u01B0\u1EDBc, sau \u0111\u00F3 chuy\u1EC3n \u0111\u1ED5i n\u00F3. Ch\u1EA5t l\u01B0\u1EE3ng v\u00E0 \u0111\u1ED9 d\u00E0i tu\u00E2n theo c\u00E0i \u0111\u1EB7t tr\u01B0\u1EDBc b\u00EAn d\u01B0\u1EDBi; thanh tr\u01B0\u1EE3t video v\u1EABn \u0111\u01B0\u1EE3c l\u01B0u khi b\u1EA1n quay l\u1EA1i Ghi.</string>
+    <string name="settings_gif_recorder_desc">Ghi video tr\u01B0\u1EDBc, sau \u0111\u00F3 chuy\u1EC3n \u0111\u1ED5i sang GIF.</string>
     <string name="setting_gif_preset">\u0110\u1EB7t tr\u01B0\u1EDBc ch\u1EA5t l\u01B0\u1EE3ng GIF</string>
     <string name="video_locked_by_gif_preset">C\u00E1c t\u00F9y ch\u1ECDn video \u0111\u01B0\u1EE3c ki\u1EC3m so\u00E1t b\u1EDFi c\u00E0i \u0111\u1EB7t s\u1EB5n GIF trong khi ch\u1EBF \u0111\u1ED9 GIF \u0111\u01B0\u1EE3c ch\u1ECDn.</string>
     <string name="gif_preset_small">Nh\u1ECF (t\u1EC7p nhanh h\u01A1n, nh\u1ECF h\u01A1n)</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">\u0110\u1ED9 ph\u00E2n gi\u1EA3i</string>
-    <string name="setting_resolution_native">G\u1ED1c</string>
+    <string name="setting_resolution_native">D\u00F9ng \u0111\u1ED9 ph\u00E2n gi\u1EA3i thi\u1EBFt b\u1ECB</string>
     <string name="setting_resolution_custom">\u0110\u1ED9 ph\u00E2n gi\u1EA3i t\u00F9y ch\u1EC9nh\u2026</string>
     <string name="setting_resolution_custom_hint">vd. 1920x1080</string>
     <string name="setting_fps">T\u1ED1c \u0111\u1ED9 khung h\u00ECnh (FPS)</string>
     <string name="setting_bitrate">T\u1ED1c \u0111\u1ED9 bit video</string>
     <string name="setting_video_encoder">B\u1ED9 m\u00E3 h\u00F3a video</string>
     <string name="setting_color_mode">Ch\u1EBF \u0111\u1ED9 m\u00E0u</string>
-    <string name="setting_color_mode_standard">Ti\u00EAu chu\u1EA9n (Rec.709)</string>
-    <string name="setting_color_mode_full">Ph\u1EA1m vi \u0111\u1EA7y \u0111\u1EE7</string>
-    <string name="dialog_color_mode">Ch\u1EBF \u0111\u1ED9 m\u00E0u</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">S\u1EEDa \u0111\u1ED9 s\u00E1ng Rec.709</string>
-    <string name="setting_rec709_brightness_correction_summary">\u00C1p d\u1EE5ng t\u0103ng gamma nh\u1EB9 sau khi s\u1EEDa si\u00EAu d\u1EEF li\u1EC7u. C\u00F3 th\u1EC3 l\u00E0m gi\u1EA3m nh\u1EB9 t\u1ED1c \u0111\u1ED9 xu\u1EA5t.</string>
+    <string name="setting_color_mode_standard">Dải giới hạn / chế độ tương thích</string>
+    <string name="setting_color_mode_full">Dải đầy đủ / đúng với màn hình (khuyên dùng)</string>
+    <string name="setting_force_rec709_compat">Sửa siêu dữ liệu dải giới hạn</string>
+    <string name="setting_force_rec709_compat_summary">Gắn lại nhãn bitstream bằng siêu dữ liệu BT.709 dải giới hạn rõ ràng qua FFmpeg. Chỉ cần trên thiết bị mà phát lại vẫn bị nhạt màu ở chế độ Dải giới hạn.</string>
+    <string name="setting_rec709_brightness_correction">Sửa độ sáng (tùy chọn)</string>
+    <string name="setting_rec709_brightness_correction_summary">Áp dụng tăng gamma nhẹ sau khi sửa siêu dữ liệu. Tùy chọn; chỉ bật nếu video vẫn hơi tối.</string>
     <string name="rec709_brightness_correction_off">T\u1EAFt</string>
     <string name="rec709_brightness_correction_low">S\u1EEDa \u0111\u1ED9 s\u00E1ng th\u1EA5p</string>
     <string name="rec709_brightness_correction_medium">S\u1EEDa \u0111\u1ED9 s\u00E1ng trung b\u00ECnh</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">\u0110i\u1EC1u khi\u1EC3n n\u1ED5i</string>
     <string name="setting_hide_floating_while_recording">\u1EA8n bi\u1EC3u t\u01B0\u1EE3ng n\u1ED5i khi ghi</string>
-    <string name="settings_hide_floating_while_recording_desc">\u1EA8n bong b\u00F3ng \u0111i\u1EC1u khi\u1EC3n n\u1ED5i trong khi \u0111ang ghi</string>
+    <string name="settings_hide_floating_while_recording_desc">\u1EA8n overlay khi \u0111ang ghi</string>
     <string name="setting_post_screenshot_options">T\u00F9y ch\u1ECDn sau \u1EA3nh ch\u1EE5p m\u00E0n h\u00ECnh</string>
     <string name="settings_post_screenshot_options_desc">Sau khi ch\u1EE5p \u1EA3nh m\u00E0n h\u00ECnh, hi\u1EC3n th\u1ECB c\u00E1c t\u00F9y ch\u1ECDn \u0111\u1EC3 chia s\u1EBB ho\u1EB7c ch\u1EC9nh s\u1EEDa</string>
-    <string name="setting_record_single_app">Ghi l\u1EA1i m\u1ED9t \u1EE9ng d\u1EE5ng</string>
-    <string name="settings_record_single_app_desc">Tr\u00EAn Android 14+, ch\u1ECDn m\u1ED9t c\u1EEDa s\u1ED5 \u1EE9ng d\u1EE5ng ho\u1EB7c to\u00E0n m\u00E0n h\u00ECnh khi b\u1EA1n c\u1EA5p quy\u1EC1n ch\u1EE5p \u1EA3nh m\u00E0n h\u00ECnh</string>
     <string name="screenshot_post_edit">Bi\u00EAn t\u1EADp</string>
     <string name="screenshot_post_action_failed">Kh\u00F4ng th\u1EC3 m\u1EDF chia s\u1EBB</string>
     <string name="screenshot_post_tap_outside">Nh\u1EA5n v\u00E0o b\u00EAn ngo\u00E0i \u0111\u1EC3 \u0111\u00F3ng</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">\u0110\u1ED9 m\u1EDD h\u00ECnh m\u1EDD</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">B\u1EADt camera</string>
-    <string name="camera_enable_desc">Hi\u1EC3n th\u1ECB overlay camera trong khi ghi h\u00ECnh</string>
     <string name="camera_lock_position">Kh\u00F3a v\u1ECB tr\u00ED</string>
     <string name="camera_facing">M\u00E1y \u1EA3nh</string>
     <string name="camera_facing_front">Tr\u01B0\u1EDBc</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">T\u1EA1m d\u1EEBng khi t\u1EAFt m\u00E0n h\u00ECnh</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">Bong b\u00F3ng lu\u00F4n hi\u1EC3n th\u1ECB \u2014 ghi h\u00ECnh v\u00E0 ch\u1EE5p t\u1EEB b\u1EA5t k\u1EF3 \u1EE9ng d\u1EE5ng n\u00E0o</string>
+    <string name="settings_floating_controls_desc">Ghi h\u00ECnh, ch\u1EE5p m\u00E0n h\u00ECnh v\u00E0 truy c\u1EADp \u0111i\u1EC1u khi\u1EC3n t\u1EEB m\u1ECDi \u1EE9ng d\u1EE5ng</string>
     <string name="settings_show_touches">Hi\u1EC3n th\u1ECB ch\u1EA1m</string>
-    <string name="settings_show_touches_desc">B\u1EADt trong T\u00F9y ch\u1ECDn nh\u00E0 ph\u00E1t tri\u1EC3n</string>
     <string name="toast_enable_show_taps">B\u1EADt \u00ABHi\u1EC3n th\u1ECB thao t\u00E1c ch\u1EA1m\u00BB th\u1EE7 c\u00F4ng</string>
     <string name="toast_overlay_permission">Vui l\u00F2ng c\u1EA5p quy\u1EC1n overlay</string>
     <string name="setting_countdown_off">T\u1EAFt</string>
@@ -315,8 +301,6 @@
         <item quantity="other">"%1$d giây"</item>
     </plurals>
     <string name="setting_internal_audio_note">Ch\u1EC9 Android 10+</string>
-    <string name="camera_status_enabled">\u0110ang b\u1EADt \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">\u0110\u00E3 t\u1EAFt</string>
     <string name="watermark_preview_active">Xem tr\u01B0\u1EDBc tr\u1EF1c ti\u1EBFp \u2014 k\u00E9o h\u00ECnh m\u1EDD \u0111\u1EC3 \u0111\u1ECBnh v\u1ECB l\u1EA1i</string>
     <string name="watermark_preview_recording">Xem tr\u01B0\u1EDBc kh\u00F4ng kh\u1EA3 d\u1EE5ng khi \u0111ang ghi h\u00ECnh</string>
     <string name="watermark_preview_need_overlay">C\u1EA5p quy\u1EC1n overlay \u0111\u1EC3 xem tr\u01B0\u1EDBc tr\u1EF1c ti\u1EBFp</string>
@@ -339,7 +323,7 @@
     <string name="perf_dynamic_glass">L\u00E0m m\u1EDD k\u00EDnh \u0111\u1ED9ng \u0111\u00E3 b\u1EADt</string>
     <string name="setting_performance_mode">Ch\u1EBF \u0111\u1ED9 hi\u1EC7u su\u1EA5t</string>
     <string name="setting_adaptive_recording_performance">Hi\u1EC7u su\u1EA5t ghi \u00E2m th\u00EDch \u1EE9ng</string>
-    <string name="setting_adaptive_recording_performance_summary">T\u1EF1 \u0111\u1ED9ng gi\u1EA3m t\u1EA3i n\u1EBFu thi\u1EBFt b\u1ECB g\u1EB7p kh\u00F3 kh\u0103n khi \u0111ang ghi</string>
+    <string name="setting_adaptive_recording_performance_summary">Gi\u1EA3m ch\u1EA5t l\u01B0\u1EE3ng ghi khi t\u1EA3i n\u1EB7ng \u0111\u1EC3 gi\u1EA3m lag.</string>
     <string name="performance_fallback_active">\u0110\u00E3 chuy\u1EC3n sang h\u1ED3 s\u01A1 ghi nh\u1EB9 h\u01A1n \u0111\u1EC3 \u1ED5n \u0111\u1ECBnh</string>
     <string name="performance_warning_title">C\u1EA3nh b\u00E1o hi\u1EC7u su\u1EA5t</string>
     <string name="performance_warning_body">Thi\u1EBFt b\u1ECB c\u1EE7a b\u1EA1n c\u00F3 \u00EDt h\u01A1n 6 GB RAM ho\u1EB7c \u0111ang ch\u1EA1y Android 11 tr\u1EDF xu\u1ED1ng. B\u1EADt hi\u1EC7u \u1EE9ng l\u00E0m m\u1EDD k\u00EDnh th\u1EDDi gian th\u1EF1c c\u00F3 th\u1EC3 g\u00E2y tr\u1EC5 giao di\u1EC7n, \u0111\u1EB7c bi\u1EC7t trong khi ghi h\u00ECnh.\n\nB\u1EA1n c\u00F3 mu\u1ED1n b\u1EADt Ch\u1EBF \u0111\u1ED9 Ch\u1EA5t l\u01B0\u1EE3ng kh\u00F4ng?</string>
@@ -360,7 +344,6 @@
     <string name="settings_section_privacy">Quy\u1EC1n ri\u00EAng t\u01B0</string>
     <string name="dialog_custom_resolution_title">\u0110\u1ED9 ph\u00E2n gi\u1EA3i t\u00F9y ch\u1EC9nh</string>
     <string name="dialog_custom_resolution_hint">Nh\u1EADp \u0111\u1ED9 ph\u00E2n gi\u1EA3i d\u1EA1ng R\u1ED8NG\u00D7CAO (vd. 1920\u00D71080)</string>
-    <string name="error_resolution_format">\u0110\u1ECBnh d\u1EA1ng ph\u1EA3i l\u00E0 R\u00D7C (vd. 1920\u00D71080)</string>
     <string name="error_resolution_min">\u0110\u1ED9 ph\u00E2n gi\u1EA3i t\u1ED1i thi\u1EC3u l\u00E0 100\u00D7100</string>
     <string name="error_resolution_max">\u0110\u1ED9 ph\u00E2n gi\u1EA3i t\u1ED1i \u0111a l\u00E0 7680 \u1EDF b\u1EA5t k\u1EF3 c\u1EA1nh n\u00E0o</string>
     <string name="dialog_resolution_title">\u0110\u1ED9 ph\u00E2n gi\u1EA3i</string>
@@ -412,7 +395,7 @@
     <string name="clipper_duration_3m">3 ph\u00FAt</string>
     <string name="clipper_duration_4m">4 ph\u00FAt</string>
     <string name="clipper_duration_5m">5 ph\u00FAt</string>
-    <string name="perm_rationale_intro">CatRec c\u1EA7n c\u00F3 c\u00E1c quy\u1EC1n sau \u0111\u1EC3 ghi l\u1EA1i m\u00E0n h\u00ECnh c\u1EE7a b\u1EA1n:</string>
+    <string name="perm_rationale_intro">CatRec sẽ yêu cầu các mục sau. Mục bắt buộc phải được cấp để bắt đầu ghi; mục tùy chọn cải thiện thư viện và khả năng tương thích thiết bị.</string>
     <string name="perm_dialog_title">Y\u00EAu c\u1EA7u quy\u1EC1n</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">X\u00F3a b\u1EA3n ghi?</string>
@@ -453,8 +436,6 @@
     <string name="content_desc_options">T\u00F9y ch\u1ECDn</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">Ch\u1EC9nh s\u1EEDa video</string>
-    <string name="tools_image_editing">Ch\u1EC9nh s\u1EEDa h\u00ECnh \u1EA3nh</string>
     <string name="tool_video_trim">C\u1EAFt video</string>
     <string name="tool_compress">N\u00E9n video</string>
     <string name="tool_video_to_gif">Video sang GIF</string>
@@ -525,8 +506,12 @@
     <string name="perm_rationale_camera">B\u1EAFt bu\u1ED9c ph\u1EA3i hi\u1EC3n th\u1ECB l\u1EDBp ph\u1EE7 camera trong \u1EA3nh \u1EDF \u0111\u1EA7u b\u1EA3n ghi m\u00E0n h\u00ECnh c\u1EE7a b\u1EA1n.</string>
     <string name="perm_name_overlay">Hi\u1EC3n th\u1ECB tr\u00EAn c\u00E1c \u1EE9ng d\u1EE5ng kh\u00E1c</string>
     <string name="perm_rationale_overlay">B\u1EAFt bu\u1ED9c ph\u1EA3i hi\u1EC3n th\u1ECB bong b\u00F3ng \u0111i\u1EC1u khi\u1EC3n n\u1ED5i v\u00E0 l\u1EDBp ph\u1EE7 camera l\u00EAn tr\u00EAn c\u00E1c \u1EE9ng d\u1EE5ng kh\u00E1c trong khi ghi.</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">Ảnh và video</string>
+    <string name="perm_rationale_media_library">Cần để hiển thị bản ghi và ảnh chụp màn hình trong ứng dụng, bao gồm tệp đã lưu trước khi cài lại CatRec. Nếu Android chỉ cho truy cập một phần, hãy chọn cho phép tất cả hoặc bao gồm Movies/CatRec và Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_music_audio">Nhạc và âm thanh</string>
+    <string name="perm_rationale_music_audio">Tùy chọn. Cho phép CatRec hiển thị và nhập tệp âm thanh trong thư viện, ví dụ track mic riêng. Bạn vẫn có thể ghi nếu bỏ qua.</string>
+    <string name="perm_name_nearby_devices">Thiết bị lân cận</string>
+    <string name="perm_rationale_nearby_devices">Tùy chọn. Dùng cho truy cập Bluetooth mà một số thiết bị và thư viện cần trước hoặc trong khi ghi. Bạn vẫn có thể dùng CatRec nếu bỏ qua.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">D\u1ECBch v\u1EE5 n\u1EC1n khi \u0111ang ghi: ch\u1EE5p m\u00E0n h\u00ECnh (MediaProjection) v\u1EDBi t\u00F9y ch\u1ECDn \u00E2m thanh micr\u00F4 v\u00E0 th\u00F4ng b\u00E1o li\u00EAn t\u1EE5c.</string>
@@ -535,7 +520,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">Ghi m\u00E0n h\u00ECnh</string>
     <string name="notif_channel_recording_complete">Ghi \u00E2m ho\u00E0n t\u1EA5t</string>
-    <string name="notif_channel_rolling_buffer">B\u1ED9 \u0111\u1EC7m l\u0103n</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec \u0111\u00E3 s\u1EB5n s\u00E0ng</string>
     <string name="notif_ready_text">Nh\u1EA5n v\u00E0o n\u00FAt l\u1EDBp ph\u1EE7 \u25CF \u0111\u1EC3 b\u1EAFt \u0111\u1EA7u ghi</string>
     <string name="notif_action_revoke">Thu h\u1ED3i</string>
@@ -551,9 +536,9 @@
     <string name="notif_action_mute">T\u1EAFt ti\u1EBFng</string>
     <string name="notif_action_unmute">B\u1EADt ti\u1EBFng</string>
     <string name="notif_action_show_controls">Hi\u1EC3n th\u1ECB \u0111i\u1EC1u khi\u1EC3n</string>
-    <string name="notif_buffer_title">CatRec - B\u1ED9 \u0111\u1EC7m cu\u1ED9n</string>
-    <string name="notif_buffer_starting">\u0110ang kh\u1EDFi \u0111\u1ED9ng b\u1ED9 \u0111\u1EC7m\u2026</string>
-    <string name="notif_buffer_buffering">\u0110ang l\u01B0u v\u00E0o b\u1ED9 nh\u1EDB \u0111\u1EC7m %1$d gi\u00E2y cu\u1ED1i c\u00F9ng\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">Đang khởi động Clipper…</string>
+    <string name="notif_buffer_buffering">Clipper đang chạy — %1$d giây cuối…</string>
     <string name="notif_buffer_save_clip">L\u01B0u \u0111o\u1EA1n phim</string>
     <string name="notif_post_title">\u0110\u00E3 ghi xong</string>
     <string name="notif_post_text">Nh\u1EA5n \u0111\u1EC3 m\u1EDF b\u1EA3n ghi c\u1EE7a b\u1EA1n</string>
@@ -567,10 +552,10 @@
     <string name="toast_gif_transcode_failed">Kh\u00F4ng th\u1EC3 t\u1EA1o GIF - b\u1EA3n ghi MP4 c\u1EE7a b\u1EA1n \u0111\u00E3 \u0111\u01B0\u1EE3c gi\u1EEF l\u1EA1i.</string>
     <string name="toast_gif_saved">GIF \u0111\u01B0\u1EE3c l\u01B0u v\u00E0o \u1EA2nh/CatRec/GIF</string>
     <string name="toast_separate_mic_failed">Kh\u00F4ng th\u1EC3 t\u1EA1o t\u1EC7p \u00E2m thanh ri\u00EAng - thay v\u00E0o \u0111\u00F3 micr\u00F4 s\u1EBD \u0111\u01B0\u1EE3c ghi trong video</string>
-    <string name="toast_internal_audio_silent">Không phát hiện âm thanh nội bộ. Ứng dụng này có thể chặn thu âm hoặc dùng đường âm thanh không được hỗ trợ.</string>
+    <string name="toast_internal_audio_silent">Không phát hiện âm thanh nội bộ. Ứng dụng này có thể chặn capture âm thanh hoặc dùng đường âm thanh không được hỗ trợ.</string>
     <string name="recording_has_separate_audio">C\u00F3 track \u00E2m thanh ri\u00EAng bi\u1EC7t</string>
-    <string name="toast_buffer_start_failed">Kh\u1EDFi \u0111\u1ED9ng b\u1ED9 \u0111\u1EC7m kh\u00F4ng th\u00E0nh c\u00F4ng: %1$s</string>
-    <string name="toast_clip_empty">Clip tr\u1ED1ng - ti\u1EBFp t\u1EE5c l\u01B0u v\u00E0o b\u1ED9 \u0111\u1EC7m l\u00E2u h\u01A1n</string>
+    <string name="toast_buffer_start_failed">Không thể khởi động Clipper: %1$s</string>
+    <string name="toast_clip_empty">Clip trống – hãy để Clipper chạy lâu hơn</string>
     <string name="toast_clip_saved">\u0110\u00E3 l\u01B0u clip!</string>
     <string name="toast_clip_save_failed">L\u01B0u clip kh\u00F4ng th\u00E0nh c\u00F4ng: %1$s</string>
     <string name="notif_camera_overlay_text">L\u1EDBp ph\u1EE7 camera CatRec \u0111ang ho\u1EA1t \u0111\u1ED9ng - nh\u1EA5n \u0111\u1EC3 quay l\u1EA1i \u1EE9ng d\u1EE5ng</string>
@@ -592,7 +577,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">\u0110\u00E3 t\u1EEB ch\u1ED1i quy\u1EC1n ghi m\u00E0n h\u00ECnh</string>
-    <string name="toast_no_email_app">Kh\u00F4ng t\u00ECm th\u1EA5y \u1EE9ng d\u1EE5ng email</string>
     <string name="share_screenshot_chooser_title">Chia s\u1EBB \u1EA3nh ch\u1EE5p m\u00E0n h\u00ECnh</string>
     <string name="recordings_header_format">TH\u01AF VI\u1EC6N \u00B7 %1$d</string>
     <string name="screenshots_header_format">\u1EA2NH CH\u1EE4P M\u00C0N H\u00CCNH \u00B7 %1$d</string>
@@ -604,7 +588,21 @@
     <string name="content_desc_more_options">T\u00F9y ch\u1ECDn kh\u00E1c</string>
     <string name="content_desc_rewind_10">Tua l\u1EA1i 10 gi\u00E2y</string>
     <string name="content_desc_forward_10">Tua t\u1EDBi 10 gi\u00E2y</string>
+    <string name="content_desc_trim">C\u1EAFt</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>S\u1EEDa l\u1ED7i ghi \u00E2m thanh n\u1ED9i b\u1ED9 tr\u00EAn thi\u1EBFt b\u1ECB m\u00E0 \u00E2m thanh \u1EE9ng d\u1EE5ng ho\u1EB7c tr\u00F2 ch\u01A1i b\u1ECB thi\u1EBFu ho\u1EB7c im l\u1EB7ng khi ghi.</item>
+        <item>Nh\u00E3n \u0111\u1ED9 ph\u00E2n gi\u1EA3i v\u00E0 c\u00E0i \u0111\u1EB7t r\u00F5 r\u00E0ng h\u01A1n, bao g\u1ED3m kh\u00F4i ph\u1EE5c QHD (2K) trong b\u1ED9 ch\u1ECDn n\u01A1i tr\u01B0\u1EDBc \u0111\u00F3 b\u1ECB thi\u1EBFu.</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>Cải thiện hiệu năng ghi bằng động cơ Performance để quay mượt hơn và thiết bị ít nóng hơn.</item>
+        <item>Sửa bộ đếm giờ lớp phủ Clipper để hiển thị đúng thời lượng Clipper.</item>
+        <item>Cải thiện hiệu năng giao diện trong bản ghi, ảnh chụp màn hình và danh sách phương tiện.</item>
+        <item>Cải thiện xử lý trạng thái cho lớp phủ, thông báo, phiên ghi đã chuẩn bị và luồng Clipper.</item>
+        <item>Bổ sung cải thiện độ ổn định cho pipeline ghi và xử lý chế độ động cơ gọn gàng hơn.</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>"Sửa hiển thị edge-to-edge trên Android 15+ để loại bỏ ANR."</item>
@@ -647,7 +645,7 @@
 
     <string-array name="changelog_v100_items">
         <item>"Ghi màn hình với hỗ trợ codec H.264 và H.265 (HEVC)"</item>
-        <item>"Bộ đệm Rolling Clipper (1–5 phút, có thể định cấu hình) với khả năng ghép đoạn liền mạch và cài đặt trước thời lượng nhanh"</item>
+        <item>Clipper (1–5 phút, có thể cấu hình) với ghép đoạn liền mạch và preset thời lượng nhanh</item>
         <item>"Nút Lưu Clip trong khi Clipper đang chạy"</item>
         <item>"Lựa chọn độ phân giải rộng cho tất cả các tỷ lệ khung hình, cộng với đầu vào tùy chỉnh"</item>
         <item>"Tự động theo dõi hướng trong quá trình ghi"</item>
@@ -675,17 +673,17 @@
         <item>"Bộ chọn chế độ GHI / CLIPPER với chỉ báo trạng thái rõ ràng"</item>
         <item>"Các ô cài đặt nhanh: CatRec Record và CatRec Clipper"</item>
         <item>"Ghi lại thông báo bằng hành động; hỗ trợ phiên chụp chuẩn bị"</item>
-        <item>"Phân tích chọn tham gia tùy chọn để cải thiện tính ổn định"</item>
+        <item>Phân tích sử dụng tùy chọn để cải thiện độ ổn định (công tắc trong Cài đặt)</item>
         <item>"Kiểm soát quyền riêng tư: chuyển đổi phân tích và cá nhân hóa quảng cáo"</item>
         <item>"Màn hình hỗ trợ: nhật ký thay đổi, liên kết pháp lý và hỗ trợ có tặng thưởng tùy chọn"</item>
     </string-array>
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">Nh\u1EADp \u0111\u1ED9 ph\u00E2n gi\u1EA3i.</string>
     <string name="error_resolution_positive">Chi\u1EC1u r\u1ED9ng v\u00E0 chi\u1EC1u cao ph\u1EA3i l\u00E0 s\u1ED1 d\u01B0\u01A1ng.</string>
     <string name="error_resolution_even">Chi\u1EC1u r\u1ED9ng v\u00E0 chi\u1EC1u cao ph\u1EA3i l\u00E0 s\u1ED1 ch\u1EB5n.</string>
@@ -693,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\u0110\u1ED9 ph\u00E2n gi\u1EA3i n\u00E0y qu\u00E1 l\u1EDBn \u0111\u1ED1i v\u1EDBi h\u1ED3 s\u01A1 hi\u1EC7u n\u0103ng c\u1EE7a thi\u1EBFt b\u1ECB n\u00E0y.</string>
     <string name="pro_feature">T\u00EDnh n\u0103ng PRO</string>
     <string name="pro_recording_title">B\u1EA1n \u0111ang ghi b\u1EB1ng t\u00EDnh n\u0103ng PRO</string>
-    <string name="pro_recording_body">Xem qu\u1EA3ng c\u00E1o \u0111\u1EC3 m\u1EDF kh\u00F3a t\u00EDnh n\u0103ng PRO trong 4 gi\u1EDD, ho\u1EB7c x\u00F3a qu\u1EA3ng c\u00E1o \u0111\u1EC3 truy c\u1EADp v\u0129nh vi\u1EC5n.</string>
-    <string name="pro_tools_body">Xem qu\u1EA3ng c\u00E1o \u0111\u1EC3 m\u1EDF kh\u00F3a t\u00EDnh n\u0103ng PRO trong 4 gi\u1EDD, ho\u1EB7c mua X\u00F3a qu\u1EA3ng c\u00E1o \u0111\u1EC3 truy c\u1EADp v\u0129nh vi\u1EC5n?</string>
+    <string name="pro_recording_body">Xem quảng cáo để mở Pro trong 1 giờ: 90/120 FPS, video trên 16 Mbps, camera, watermark và mic riêng — hoặc gỡ quảng cáo để dùng vĩnh viễn.</string>
+    <string name="pro_tools_body">Xem quảng cáo để mở Pro trong 1 giờ: 90/120 FPS, trên 16 Mbps, ghép và GIF — hoặc mua Gỡ quảng cáo để dùng vĩnh viễn.</string>
     <string name="pro_unlock_watch_ad">Xem qu\u1EA3ng c\u00E1o</string>
     <string name="pro_unlock_remove_ads">X\u00F3a qu\u1EA3ng c\u00E1o</string>
     <string name="pro_unlock_ad_unavailable">Hi\u1EC7n kh\u00F4ng c\u00F3 qu\u1EA3ng c\u00E1o. Vui l\u00F2ng th\u1EED l\u1EA1i sau.</string>
@@ -707,4 +705,30 @@
     <string name="notif_cc_home">Trang ch\u1EE7</string>
     <string name="notif_cc_close">\u0110\u00F3ng</string>
     <string name="notif_cc_stop">D\u1EEBng</string>
+    <string name="settings_show_touches_status_on">Bật</string>
+    <string name="settings_show_touches_status_off">Tắt — mở Tùy chọn nhà phát triển để bật Hiện chạm</string>
+    <string name="settings_show_touches_status_unknown">Không rõ — mở Tùy chọn nhà phát triển để bật Hiện chạm</string>
+    <string name="setting_recording_engine">Bộ máy ghi</string>
+    <string name="recording_engine_performance_label">Bộ máy hiệu năng</string>
+    <string name="recording_engine_compatibility_label">B\u1ED9 m\u00E1y th\u1EED nghi\u1EC7m</string>
+    <string name="recording_engine_performance_summary">Được khuyến nghị cho hầu hết người dùng. Dùng ít xử lý hơn, mát hơn và phù hợp nhất cho ghi hằng ngày. Ảnh chụp màn hình khi đang ghi bị tắt.</string>
+    <string name="recording_engine_compatibility_summary">Fallback thử nghiệm. Có thể dùng nhiều xử lý hơn, gây nóng hơn và hao pin nhanh hơn. Chỉ thử nếu động cơ Performance gây lỗi trên thiết bị của bạn.</string>
+    <string name="recording_engine_advanced_warning">B\u1ED9 m\u00E1y th\u1EED nghi\u1EC7m c\u00F3 th\u1EC3 l\u00E0m t\u0103ng nhi\u1EC7t ho\u1EB7c m\u1EE9c d\u00F9ng pin. Ch\u1EC9 d\u00F9ng n\u1EBFu b\u1ED9 m\u00E1y Performance m\u1EB7c \u0111\u1ECBnh kh\u00F4ng ho\u1EA1t \u0111\u1ED9ng t\u1ED1t tr\u00EAn thi\u1EBFt b\u1ECB c\u1EE7a b\u1EA1n.</string>
+    <string name="recording_engine_scope_note">Áp dụng cho ghi bình thường và Clipper.</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Ảnh chụp màn hình khi đang ghi không khả dụng trong bộ máy hiệu năng.</string>
+    <string name="internal_silent_dialog_title">Âm thanh nội bộ đang im lặng</string>
+    <string name="internal_silent_dialog_message">Trò chơi hoặc ứng dụng này có thể chặn capture âm thanh nội bộ.\n\nDùng mic fallback để thu âm thanh loa thay thế?</string>
+    <string name="internal_silent_use_mic_fallback">Dùng mic fallback</string>
+    <string name="internal_silent_keep_recording_silent">Tiếp tục ghi im lặng</string>
+    <string name="internal_silent_stop_recording">Dừng ghi</string>
+    <string name="internal_silent_auto_fallback_checkbox">T\u1EF1 \u0111\u1ED9ng d\u00F9ng mic khi \u1EE9ng d\u1EE5ng ch\u1EB7n ghi \u00E2m thanh n\u1ED9i b\u1ED9</string>
+    <string name="setting_auto_mic_fallback_title">Mic fallback</string>
+    <string name="setting_auto_mic_fallback_summary">D\u00F9ng mic khi \u1EE9ng d\u1EE5ng ch\u1EB7n ghi \u00E2m thanh n\u1ED9i b\u1ED9</string>
+    <string name="toast_internal_audio_using_mic_fallback">Âm thanh nội bộ không khả dụng. Đang dùng mic fallback.</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">Mic fallback cần quyền mic. Bản ghi sẽ tiếp tục im lặng.</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">Mic fallback không khả dụng khi ghi mic riêng đang bật. Tắt mic riêng trong Cài đặt, hoặc dừng và bắt đầu bản ghi mới.</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">Mic fallback cho video chính không khả dụng khi ghi mic riêng đang bật. Bạn vẫn có thể tiếp tục ghi hoặc dừng.</string>
+    <string name="toast_audio_permission_required_recording_not_started">Cần quyền mic cho chế độ âm thanh đã chọn. Bản ghi chưa được bắt đầu.</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">Chỉ dùng âm thanh nội bộ/ứng dụng — không thể khởi động mic. Kiểm tra quyền truy cập mic hoặc ứng dụng khác có đang dùng mic không.</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">Chỉ dùng mic — không thể bắt đầu capture âm thanh nội bộ/ứng dụng. Thử ứng dụng khác ở nền trước nếu bạn mong có âm thanh trò chơi.</string>
 </resources>

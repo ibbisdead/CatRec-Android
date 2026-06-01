@@ -24,8 +24,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 27
         targetSdk = 36
-        versionCode = 23
-        versionName = "1.1.3"
+        versionCode = 28
+        versionName = "1.2.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -160,9 +160,6 @@ dependencies {
 
     // Coil — image loading for ScreenshotsScreen
     implementation(libs.coil.compose)
-
-    // Views (Required for OverlayService XML)
-    implementation(libs.androidx.cardview)
 
     // CameraX
     implementation(libs.androidx.camera.core)

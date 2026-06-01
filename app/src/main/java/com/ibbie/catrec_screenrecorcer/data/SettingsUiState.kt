@@ -1,12 +1,14 @@
 package com.ibbie.catrec_screenrecorcer.data
 
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
+
 data class SettingsUiState(
     val fps: Float = 30f,
     val bitrate: Float = 10f,
     val resolution: String = "Native",
     val videoEncoder: String = "H.264",
     val recordingOrientation: String = "Auto",
-    val colorMode: String = ColorMode.STANDARD,
+    val colorMode: String = ColorMode.FULL,
     val forceRec709Compatibility: Boolean = false,
     val rec709CompatBrightnessCorrection: String = Rec709CompatBrightnessCorrection.OFF,
     val isGifCaptureMode: Boolean = false,
@@ -19,10 +21,10 @@ data class SettingsUiState(
     val audioChannels: String = "Mono",
     val audioEncoder: String = "AAC-LC",
     val separateMicRecording: Boolean = false,
+    val autoMicFallbackWhenInternalSilent: Boolean = false,
     val floatingControls: Boolean = false,
     val hideFloatingIconWhileRecording: Boolean = false,
     val postScreenshotOptions: Boolean = false,
-    val recordSingleAppEnabled: Boolean = false,
     val touchOverlay: Boolean = false,
     val countdown: Int = 0,
     val clipperDurationMinutes: Int = 1,
@@ -49,6 +51,7 @@ data class SettingsUiState(
     val appTheme: String = "System",
     val appLanguage: String = "system",
     val performanceMode: Boolean = false,
+    val recordingEngineMode: RecordingEngineMode = RecordingEngineMode.DEFAULT,
     val accentHex: String = "FF0033",
     val accentHex2: String = "FF8C00",
     val accentGradient: Boolean = false,
@@ -56,7 +59,7 @@ data class SettingsUiState(
     val filenamePattern: String = "yyyyMMdd_HHmmss",
     val autoDelete: Boolean = false,
     val keepScreenOn: Boolean = false,
-    val analyticsEnabled: Boolean = false,
+    val analyticsEnabled: Boolean = true,
     val personalizedAdsEnabled: Boolean = true,
     val adsDisabled: Boolean = false,
     val isRecording: Boolean = false,

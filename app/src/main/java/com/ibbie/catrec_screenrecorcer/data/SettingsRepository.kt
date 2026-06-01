@@ -1,15 +1,14 @@
 package com.ibbie.catrec_screenrecorcer.data
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
-import com.ibbie.catrec_screenrecorcer.utils.applyAnalyticsCollectionEnabled
-import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
-import com.ibbie.catrec_screenrecorcer.utils.applyPersonalizedAdsEnabled
-import com.ibbie.catrec_screenrecorcer.utils.syncFirebaseUserIdentity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -17,6 +16,9 @@ import java.io.File
 import java.util.UUID
 
 private const val SETTINGS_DATASTORE_NAME = "settings"
+
+/** Used by [SettingsRepository.seedAdaptivePerformanceDefaultForFreshInstallIfNeeded]. */
+private const val FRESH_INSTALL_TIME_DELTA_MS = 60_000L
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = SETTINGS_DATASTORE_NAME,
@@ -49,16 +51,17 @@ class SettingsRepository(
 
         /**
          * Color output mode for the video encoder.
-         * "Standard" → Rec.709 limited-range SDR (corrects washed-out / gray recordings).
-         * "Full"     → Full-range SDR (use only when the target player expects full range).
+         * "Full"     → Full-range (0–255) BT.709/SDR — default, screen-accurate.
+         * "Standard" → Limited-range (16–235) BT.709/SDR — compatibility mode for devices
+         *              where full-range metadata is ignored and playback looks washed-out.
          */
         val COLOR_MODE = stringPreferencesKey("color_mode")
 
         /**
-         * When true (and [COLOR_MODE] == "Standard"), the finalized MP4 is repaired with an
-         * FFmpeg stream-copy metadata pass so AVC/HEVC bitstream metadata explicitly advertises
-         * Rec.709 limited range. Pixel data is not modified.
-         * Defaults false; only needed on problem devices.
+         * When true (and [COLOR_MODE] == "Standard" / limited-range mode), the finalized MP4 is
+         * repaired with an FFmpeg stream-copy metadata pass so AVC/HEVC bitstream metadata
+         * explicitly advertises BT.709 limited range. Pixel data is not modified.
+         * Defaults false; only shown and relevant in limited-range / compatibility mode.
          */
         val FORCE_REC709_COMPATIBILITY = booleanPreferencesKey("force_rec709_compatibility")
 
@@ -78,6 +81,12 @@ class SettingsRepository(
         val AUDIO_ENCODER = stringPreferencesKey("audio_encoder")
         val SEPARATE_MIC_RECORDING = booleanPreferencesKey("separate_mic_recording")
 
+        /**
+         * When true, sustained silence on internal playback capture triggers microphone capture
+         * automatically (full recording only), without a prompt.
+         */
+        val AUTO_MIC_FALLBACK_WHEN_INTERNAL_SILENT = booleanPreferencesKey("auto_mic_fallback_when_internal_silent")
+
         // Controls
         val FLOATING_CONTROLS = booleanPreferencesKey("floating_controls")
         val TOUCH_OVERLAY = booleanPreferencesKey("touch_overlay")
@@ -95,12 +104,6 @@ class SettingsRepository(
 
         /** After saving a screenshot, show share/edit options. */
         val POST_SCREENSHOT_OPTIONS = booleanPreferencesKey("post_screenshot_options")
-
-        /**
-         * When true (Android 14+), screen capture intent allows choosing a single app window.
-         * When false on API 34+, capture is restricted to the full display.
-         */
-        val RECORD_SINGLE_APP_ENABLED = booleanPreferencesKey("record_single_app_enabled")
 
         /** [CaptureMode.RECORD], [CaptureMode.CLIPPER], or [CaptureMode.GIF]. */
         val CAPTURE_MODE = stringPreferencesKey("capture_mode")
@@ -147,18 +150,22 @@ class SettingsRepository(
 
         // UI Mode
         val PERFORMANCE_MODE = booleanPreferencesKey("performance_mode")
+        val RECORDING_ENGINE_MODE = stringPreferencesKey("recording_engine_mode")
 
-        /** Opt-in: reduce encoder load under backpressure while recording (not GIF). */
+        /** Opt-in: reduce recording load under stress; Advanced engine may also decimate relay frames. */
         val ADAPTIVE_RECORDING_PERFORMANCE = booleanPreferencesKey("adaptive_recording_performance")
+
+        /**
+         * One-time marker: after this exists, [seedAdaptivePerformanceDefaultForFreshInstallIfNeeded] does nothing.
+         * Used so fresh installs default adaptive ON without overwriting users who already have the key stored.
+         */
+        val ADAPTIVE_PERF_DEFAULT_SEED_COMPLETE = booleanPreferencesKey("adaptive_perf_default_seed_complete_v1")
 
         // Privacy
         val ANALYTICS_ENABLED = booleanPreferencesKey("analytics_enabled")
 
         /** AdMob: personalized ads (default on); independent of Firebase Analytics. */
         val PERSONALIZED_ADS_ENABLED = booleanPreferencesKey("personalized_ads_enabled")
-
-        /** One-time: user completed the first-launch analytics consent dialog. */
-        val ANALYTICS_CONSENT_PROMPT_COMPLETED = booleanPreferencesKey("analytics_consent_prompt_completed")
 
         /** Stable anonymous install ID for Firebase Crashlytics / Analytics (no PII). */
         val FIREBASE_ANONYMOUS_USER_ID = stringPreferencesKey("firebase_anonymous_user_id")
@@ -182,7 +189,7 @@ class SettingsRepository(
     val videoEncoder: Flow<String> = context.dataStore.data.map { it[VIDEO_ENCODER] ?: "H.264" }
     val resolution: Flow<String> = context.dataStore.data.map { RecordingResolutionSupport.normalizeSavedSetting(it[RESOLUTION]) }
     val recordingOrientation: Flow<String> = context.dataStore.data.map { it[RECORDING_ORIENTATION] ?: "Auto" }
-    val colorMode: Flow<String> = context.dataStore.data.map { it[COLOR_MODE] ?: ColorMode.STANDARD }
+    val colorMode: Flow<String> = context.dataStore.data.map { it[COLOR_MODE] ?: ColorMode.FULL }
     val forceRec709Compatibility: Flow<Boolean> = context.dataStore.data.map { it[FORCE_REC709_COMPATIBILITY] ?: false }
     val rec709CompatBrightnessCorrection: Flow<String> =
         context.dataStore.data.map {
@@ -197,6 +204,8 @@ class SettingsRepository(
     val audioChannels: Flow<String> = context.dataStore.data.map { it[AUDIO_CHANNELS] ?: "Mono" }
     val audioEncoder: Flow<String> = context.dataStore.data.map { it[AUDIO_ENCODER] ?: "AAC-LC" }
     val separateMicRecording: Flow<Boolean> = context.dataStore.data.map { it[SEPARATE_MIC_RECORDING] ?: false }
+    val autoMicFallbackWhenInternalSilent: Flow<Boolean> =
+        context.dataStore.data.map { it[AUTO_MIC_FALLBACK_WHEN_INTERNAL_SILENT] ?: false }
 
     // Controls
     val floatingControls: Flow<Boolean> = context.dataStore.data.map { it[FLOATING_CONTROLS] ?: false }
@@ -215,8 +224,6 @@ class SettingsRepository(
         context.dataStore.data.map { it[HIDE_FLOATING_ICON_WHILE_RECORDING] ?: false }
     val postScreenshotOptions: Flow<Boolean> =
         context.dataStore.data.map { it[POST_SCREENSHOT_OPTIONS] ?: false }
-    val recordSingleAppEnabled: Flow<Boolean> =
-        context.dataStore.data.map { it[RECORD_SINGLE_APP_ENABLED] ?: false }
     val captureMode: Flow<String> =
         context.dataStore.data.map { prefs ->
             val raw = prefs[CAPTURE_MODE] ?: CaptureMode.RECORD
@@ -268,16 +275,18 @@ class SettingsRepository(
 
     // UI Mode
     val performanceMode: Flow<Boolean> = context.dataStore.data.map { it[PERFORMANCE_MODE] ?: false }
+    val recordingEngineMode: Flow<RecordingEngineMode> =
+        context.dataStore.data.map { prefs ->
+            RecordingEngineMode.fromStorageValue(prefs[RECORDING_ENGINE_MODE])
+        }
 
-    /** When true, recording/buffer sessions may lower bitrate and decimate relay frames under stress. */
+    /** When true, recording/buffer sessions may lower bitrate and Advanced engine may decimate relay frames. */
     val adaptiveRecordingPerformance: Flow<Boolean> =
         context.dataStore.data.map { it[ADAPTIVE_RECORDING_PERFORMANCE] ?: false }
 
-    // Privacy — analytics default off; personalized ads default on (independent toggles)
-    val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: false }
+    // Privacy — analytics default on until the user changes Settings; personalized ads default on (independent toggles)
+    val analyticsEnabled: Flow<Boolean> = context.dataStore.data.map { it[ANALYTICS_ENABLED] ?: true }
     val personalizedAdsEnabled: Flow<Boolean> = context.dataStore.data.map { it[PERSONALIZED_ADS_ENABLED] ?: true }
-    val analyticsConsentPromptCompleted: Flow<Boolean> =
-        context.dataStore.data.map { it[ANALYTICS_CONSENT_PROMPT_COMPLETED] ?: false }
 
     /** True after remove-ads purchase (or while a pending remove-ads flow completes — Play is source of truth on next sync). */
     val adsDisabled: Flow<Boolean> = context.dataStore.data.map { it[ADS_DISABLED] ?: false }
@@ -298,7 +307,7 @@ class SettingsRepository(
                 resolution = RecordingResolutionSupport.normalizeSavedSetting(prefs[RESOLUTION]),
                 videoEncoder = prefs[VIDEO_ENCODER] ?: "H.264",
                 recordingOrientation = prefs[RECORDING_ORIENTATION] ?: "Auto",
-                colorMode = prefs[COLOR_MODE]?.takeIf(ColorMode::isValid) ?: ColorMode.STANDARD,
+                colorMode = prefs[COLOR_MODE]?.takeIf(ColorMode::isValid) ?: ColorMode.FULL,
                 forceRec709Compatibility = prefs[FORCE_REC709_COMPATIBILITY] ?: false,
                 rec709CompatBrightnessCorrection =
                     Rec709CompatBrightnessCorrection.resolve(prefs[REC709_COMPAT_BRIGHTNESS_CORRECTION]),
@@ -312,10 +321,10 @@ class SettingsRepository(
                 audioChannels = prefs[AUDIO_CHANNELS] ?: "Mono",
                 audioEncoder = prefs[AUDIO_ENCODER] ?: "AAC-LC",
                 separateMicRecording = prefs[SEPARATE_MIC_RECORDING] ?: false,
+                autoMicFallbackWhenInternalSilent = prefs[AUTO_MIC_FALLBACK_WHEN_INTERNAL_SILENT] ?: false,
                 floatingControls = prefs[FLOATING_CONTROLS] ?: false,
                 hideFloatingIconWhileRecording = prefs[HIDE_FLOATING_ICON_WHILE_RECORDING] ?: false,
                 postScreenshotOptions = prefs[POST_SCREENSHOT_OPTIONS] ?: false,
-                recordSingleAppEnabled = prefs[RECORD_SINGLE_APP_ENABLED] ?: false,
                 touchOverlay = prefs[TOUCH_OVERLAY] ?: false,
                 countdown = prefs[COUNTDOWN] ?: 0,
                 clipperDurationMinutes = (prefs[CLIPPER_DURATION_MINUTES] ?: 1).coerceIn(1, 5),
@@ -342,6 +351,7 @@ class SettingsRepository(
                 appTheme = prefs[APP_THEME] ?: "System",
                 appLanguage = prefs[APP_LANGUAGE] ?: "system",
                 performanceMode = prefs[PERFORMANCE_MODE] ?: false,
+                recordingEngineMode = RecordingEngineMode.fromStorageValue(prefs[RECORDING_ENGINE_MODE]),
                 accentHex = prefs[ACCENT_COLOR] ?: "FF0033",
                 accentHex2 = prefs[ACCENT_COLOR_2] ?: "FF8C00",
                 accentGradient = prefs[ACCENT_USE_GRADIENT] ?: false,
@@ -349,7 +359,7 @@ class SettingsRepository(
                 filenamePattern = prefs[FILENAME_PATTERN] ?: "yyyyMMdd_HHmmss",
                 autoDelete = prefs[AUTO_DELETE] ?: false,
                 keepScreenOn = prefs[KEEP_SCREEN_ON] ?: false,
-                analyticsEnabled = prefs[ANALYTICS_ENABLED] ?: false,
+                analyticsEnabled = prefs[ANALYTICS_ENABLED] ?: true,
                 personalizedAdsEnabled = prefs[PERSONALIZED_ADS_ENABLED] ?: true,
                 adsDisabled = prefs[ADS_DISABLED] ?: false,
             )
@@ -357,7 +367,7 @@ class SettingsRepository(
 
     // Setters — Video
     suspend fun setColorMode(value: String) {
-        val v = if (ColorMode.isValid(value)) value else ColorMode.STANDARD
+        val v = if (ColorMode.isValid(value)) value else ColorMode.FULL
         context.dataStore.edit { it[COLOR_MODE] = v }
     }
 
@@ -421,6 +431,10 @@ class SettingsRepository(
         context.dataStore.edit { it[SEPARATE_MIC_RECORDING] = value }
     }
 
+    suspend fun setAutoMicFallbackWhenInternalSilent(value: Boolean) {
+        context.dataStore.edit { it[AUTO_MIC_FALLBACK_WHEN_INTERNAL_SILENT] = value }
+    }
+
     // Setters — Controls
     suspend fun setFloatingControls(value: Boolean) {
         context.dataStore.edit { it[FLOATING_CONTROLS] = value }
@@ -452,10 +466,6 @@ class SettingsRepository(
 
     suspend fun setPostScreenshotOptions(value: Boolean) {
         context.dataStore.edit { it[POST_SCREENSHOT_OPTIONS] = value }
-    }
-
-    suspend fun setRecordSingleAppEnabled(value: Boolean) {
-        context.dataStore.edit { it[RECORD_SINGLE_APP_ENABLED] = value }
     }
 
     suspend fun setCaptureMode(value: String) {
@@ -589,9 +599,48 @@ class SettingsRepository(
         context.dataStore.edit { it[PERFORMANCE_MODE] = value }
     }
 
+    suspend fun setRecordingEngineMode(mode: RecordingEngineMode) {
+        context.dataStore.edit { it[RECORDING_ENGINE_MODE] = mode.storageValue }
+    }
+
     suspend fun setAdaptiveRecordingPerformance(value: Boolean) {
         context.dataStore.edit { it[ADAPTIVE_RECORDING_PERFORMANCE] = value }
     }
+
+    /**
+     * Enables adaptive performance by default on **fresh installs only**.
+     *
+     * - **Upgrade path:** If [ADAPTIVE_RECORDING_PERFORMANCE] was ever written (explicit user choice,
+     *   including `false`), we never touch it.
+     * - **Fresh install:** `lastUpdateTime - firstInstallTime` is within [FRESH_INSTALL_TIME_DELTA_MS],
+     *   so we set adaptive ON once if the key is still absent.
+     *
+     * Safe to call multiple times; first successful write of [ADAPTIVE_PERF_DEFAULT_SEED_COMPLETE] skips later work.
+     */
+    suspend fun seedAdaptivePerformanceDefaultForFreshInstallIfNeeded() {
+        context.dataStore.edit { prefs ->
+            if (prefs[ADAPTIVE_PERF_DEFAULT_SEED_COMPLETE] == true) return@edit
+            prefs[ADAPTIVE_PERF_DEFAULT_SEED_COMPLETE] = true
+            if (prefs.contains(ADAPTIVE_RECORDING_PERFORMANCE)) return@edit
+            val deltaMs = packageInstallDeltaMs(context)
+            if (deltaMs in 0..FRESH_INSTALL_TIME_DELTA_MS) {
+                prefs[ADAPTIVE_RECORDING_PERFORMANCE] = true
+            }
+        }
+    }
+
+    private fun packageInstallDeltaMs(appContext: Context): Long =
+        runCatching {
+            val pm = appContext.packageManager
+            val pkg =
+                if (Build.VERSION.SDK_INT >= 33) {
+                    pm.getPackageInfo(appContext.packageName, PackageManager.PackageInfoFlags.of(0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    pm.getPackageInfo(appContext.packageName, 0)
+                }
+            pkg.lastUpdateTime - pkg.firstInstallTime
+        }.getOrElse { Long.MAX_VALUE }
 
     // Setters — Privacy
     suspend fun setAnalyticsEnabled(value: Boolean) {
@@ -615,21 +664,6 @@ class SettingsRepository(
         return newId
     }
 
-    /** First launch / regulated flow: set analytics and mark the one-time prompt completed. */
-    suspend fun applyRegulatedConsentChoice(accepted: Boolean) {
-        context.dataStore.edit {
-            it[ANALYTICS_ENABLED] = accepted
-            it[ANALYTICS_CONSENT_PROMPT_COMPLETED] = true
-        }
-        context.applyAnalyticsCollectionEnabled(accepted)
-        applyCrashlyticsCollectionEnabled(accepted)
-        applyPersonalizedAdsEnabled(
-            personalizedAdsEnabled.first(),
-            adsSdkEnabled = !adsDisabled.first(),
-        )
-        context.syncFirebaseUserIdentity(accepted)
-    }
-
     suspend fun setAdsDisabled(value: Boolean) {
         context.dataStore.edit { it[ADS_DISABLED] = value }
     }
@@ -639,7 +673,7 @@ class SettingsRepository(
     }
 
     suspend fun grantTimedProAccess(nowMillis: Long = System.currentTimeMillis()): Long {
-        val until = nowMillis + 4 * 60 * 60 * 1000L
+        val until = nowMillis + 60 * 60 * 1000L
         setProFeaturesUnlockedUntilMillis(until)
         return until
     }

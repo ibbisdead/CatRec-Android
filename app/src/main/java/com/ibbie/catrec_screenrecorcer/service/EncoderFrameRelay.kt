@@ -49,6 +49,8 @@ internal class EncoderFrameRelay(
     private val height: Int,
     private val dpi: Int,
     private val virtualDisplayName: String,
+    /** Selected recording FPS — relay will not run the bitmap/encode path faster than this cadence (monotonic pacing). */
+    private val targetRecordingFps: Int,
 ) {
     private var imageReader: ImageReader? = null
     private var virtualDisplay: VirtualDisplay? = null
@@ -103,6 +105,30 @@ internal class EncoderFrameRelay(
      * many full encode passes; paired with [acquireLatestImage] for latest-frame-first behavior.
      */
     private val processLatestFrameRunnable = Runnable { processLatestFrame() }
+
+    /**
+     * Wakes [processLatestFrame] after [SystemClock.elapsedRealtimeNanos] pacing wait.
+     * Intentionally **not** removed by [scheduleProcessLatestFrame] so image-available spam does not
+     * cancel a scheduled pacing wake ([scheduleProcessLatestFrame] only resets [processLatestFrameRunnable]).
+     */
+    private val pacedResumeRunnable = Runnable { processLatestFrame() }
+
+    private val targetFrameIntervalNs: Long =
+        (1_000_000_000L / targetRecordingFps.coerceIn(1, 240)).coerceAtLeast(1L)
+
+    /** Next eligible wall time ([SystemClock.elapsedRealtimeNanos]) for a paced encode; 0 = no hold yet. */
+    private var nextProcessEligibleElapsedNs: Long = 0L
+
+    private var skippedByPacingTotal: Long = 0L
+    private var skippedByAdaptiveTotal: Long = 0L
+
+    /** Rolling window for measured FPS (relay thread only). */
+    private var fpsWindowStartElapsedMs: Long = 0L
+    private var framesProcessedInFpsWindow: Int = 0
+
+    /** Supplier for adaptive tier (session diagnostics); optional when adaptive is off. */
+    @Volatile
+    var adaptiveTierSupplier: (() -> Int)? = null
 
     /** Single encode pass in flight (defensive; relay looper is already single-threaded). */
     private val framePipelineBusy = AtomicBoolean(false)
@@ -160,8 +186,14 @@ internal class EncoderFrameRelay(
             relayThread = thread
             relayHandler = Handler(thread.looper)
             reader.setOnImageAvailableListener({ scheduleProcessLatestFrame() }, relayHandler)
+            nextProcessEligibleElapsedNs = 0L
+            skippedByPacingTotal = 0L
+            skippedByAdaptiveTotal = 0L
+            fpsWindowStartElapsedMs = SystemClock.elapsedRealtime()
+            framesProcessedInFpsWindow = 0
+            RecordingRelayDiagnostics.resetSessionClock()
             try {
-                virtualDisplay =
+                val display =
                     mediaProjection.createVirtualDisplay(
                         virtualDisplayName,
                         width,
@@ -172,10 +204,12 @@ internal class EncoderFrameRelay(
                         null,
                         null,
                     )
-            } catch (e: SecurityException) {
+                        ?: throw IllegalStateException("createVirtualDisplay returned null for $virtualDisplayName")
+                virtualDisplay = display
+            } catch (e: Exception) {
                 // Android 14+: only one VirtualDisplay per MediaProjection; e.g. screenshot VD still active.
-                Log.e(TAG, "createVirtualDisplay rejected for $virtualDisplayName", e)
-                crashlyticsLog("EncoderFrameRelay: SecurityException createVirtualDisplay ($virtualDisplayName)")
+                Log.e(TAG, "createVirtualDisplay failed for $virtualDisplayName", e)
+                crashlyticsLog("EncoderFrameRelay: createVirtualDisplay failed ($virtualDisplayName)")
                 try {
                     reader.setOnImageAvailableListener(null, null)
                 } catch (_: Exception) {
@@ -213,6 +247,7 @@ internal class EncoderFrameRelay(
                 relayThread
             }
         relayHandler?.removeCallbacks(processLatestFrameRunnable)
+        relayHandler?.removeCallbacks(pacedResumeRunnable)
         relayHandler?.removeCallbacks(resizeCaptureRunnable)
         pendingResizeW.set(-1)
         pendingResizeH.set(-1)
@@ -220,6 +255,7 @@ internal class EncoderFrameRelay(
         pendingWhileBusy.set(false)
         adaptiveSignalSink = null
         adaptiveSignalsEnabled = false
+        adaptiveTierSupplier = null
         adaptiveSkipModulo = 1
         adaptiveFrameOrdinal = 0
         lastSlowSignalWallMs = 0L
@@ -352,8 +388,15 @@ internal class EncoderFrameRelay(
             }
             return
         }
+        // Only coalesce immediate invokes — never remove [pacedResumeRunnable] (pacing wake).
         h.removeCallbacks(processLatestFrameRunnable)
         h.post(processLatestFrameRunnable)
+    }
+
+    private fun schedulePacedResume(delayMs: Long) {
+        val h = relayHandler ?: return
+        h.removeCallbacks(pacedResumeRunnable)
+        h.postDelayed(pacedResumeRunnable, delayMs.coerceIn(1L, 10_000L))
     }
 
     private fun processLatestFrame() {
@@ -364,17 +407,31 @@ internal class EncoderFrameRelay(
         // generation. A request armed after this point sees a larger start value and will be
         // satisfied only by a later pass — never by this in-flight frame.
         val currentGen = frameGeneration.incrementAndGet()
+        val screenshotBypass = pendingScreenshot.get() != null
         val adaptiveOn = adaptiveSignalsEnabled && adaptiveSignalSink != null
         val sink = adaptiveSignalSink
         val t0 = if (adaptiveOn) SystemClock.elapsedRealtime() else 0L
         try {
             val m = adaptiveSkipModulo
-            if (adaptiveOn && m > 1) {
+            if (adaptiveOn && !screenshotBypass && m > 1) {
                 val n = adaptiveFrameOrdinal++
                 if (n % m != 0) {
+                    skippedByAdaptiveTotal++
                     return
                 }
             }
+
+            if (!screenshotBypass) {
+                val nowNs = SystemClock.elapsedRealtimeNanos()
+                if (nextProcessEligibleElapsedNs != 0L && nowNs < nextProcessEligibleElapsedNs) {
+                    skippedByPacingTotal++
+                    val delayMs =
+                        ((nextProcessEligibleElapsedNs - nowNs + 999_999L) / 1_000_000L).coerceAtLeast(1L)
+                    schedulePacedResume(delayMs)
+                    return
+                }
+            }
+
             val bitmap: Bitmap? =
                 synchronized(frameLock) {
                     val reader = imageReader ?: return@synchronized null
@@ -402,6 +459,18 @@ internal class EncoderFrameRelay(
                 return
             }
             drawBitmapToEncoder(bitmap)
+            if (!screenshotBypass) {
+                nextProcessEligibleElapsedNs = SystemClock.elapsedRealtimeNanos() + targetFrameIntervalNs
+                framesProcessedInFpsWindow++
+                val nowMs = SystemClock.elapsedRealtime()
+                val winDur = nowMs - fpsWindowStartElapsedMs
+                if (winDur >= FPS_MEASURE_WINDOW_MS) {
+                    val measured = framesProcessedInFpsWindow * 1000f / winDur.coerceAtLeast(1L)
+                    publishDiagnosticsSnapshot(measured, winDur)
+                    framesProcessedInFpsWindow = 0
+                    fpsWindowStartElapsedMs = nowMs
+                }
+            }
             if (adaptiveOn && sink != null) {
                 val elapsed = SystemClock.elapsedRealtime() - t0
                 if (elapsed > SLOW_FRAME_MS) {
@@ -414,11 +483,50 @@ internal class EncoderFrameRelay(
             }
             deliverScreenshotIfNeeded(bitmap, currentGen)
         } finally {
+            maybePublishDiagnosticsNoWindowAdvance()
             framePipelineBusy.set(false)
             if (pendingWhileBusy.compareAndSet(true, false)) {
                 scheduleProcessLatestFrame()
             }
         }
+    }
+
+    private fun publishDiagnosticsSnapshot(
+        measuredFps: Float,
+        windowMs: Long,
+    ) {
+        RecordingRelayDiagnostics.flushIfDue(
+            targetFps = targetRecordingFps,
+            measuredFpsSnapshot = measuredFps,
+            adaptiveTier = adaptiveTierSupplier?.invoke() ?: 0,
+            adaptiveSkipModulo = adaptiveSkipModulo,
+            skippedByPacingTotal = skippedByPacingTotal,
+            skippedByAdaptiveTotal = skippedByAdaptiveTotal,
+            framesProcessedInWindow = framesProcessedInFpsWindow,
+            windowDurationMs = windowMs,
+        )
+    }
+
+    /** Time-based flush for tier/modulo/skip totals when the encode window has not ticked. */
+    private fun maybePublishDiagnosticsNoWindowAdvance() {
+        val nowMs = SystemClock.elapsedRealtime()
+        val winDur = nowMs - fpsWindowStartElapsedMs
+        val measured =
+            if (framesProcessedInFpsWindow > 0 && winDur >= 1L) {
+                framesProcessedInFpsWindow * 1000f / winDur
+            } else {
+                0f
+            }
+        RecordingRelayDiagnostics.flushIfDue(
+            targetFps = targetRecordingFps,
+            measuredFpsSnapshot = measured,
+            adaptiveTier = adaptiveTierSupplier?.invoke() ?: 0,
+            adaptiveSkipModulo = adaptiveSkipModulo,
+            skippedByPacingTotal = skippedByPacingTotal,
+            skippedByAdaptiveTotal = skippedByAdaptiveTotal,
+            framesProcessedInWindow = framesProcessedInFpsWindow,
+            windowDurationMs = winDur.coerceAtLeast(0L),
+        )
     }
 
     private fun shouldDropStaleImage(image: Image): Boolean {
@@ -600,6 +708,9 @@ internal class EncoderFrameRelay(
 
         private const val SLOW_FRAME_MS = 90L
         private const val SLOW_SIGNAL_MIN_INTERVAL_MS = 1000L
+
+        /** Minimum duration for rolling measured-FPS snapshot before publishing. */
+        private const val FPS_MEASURE_WINDOW_MS = 5_000L
     }
 }
 

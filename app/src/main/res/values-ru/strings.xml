@@ -2,7 +2,6 @@
 <resources>
     <!-- App -->
     <string name="app_name">CatRec</string>
-    <string name="screen_title_default">CatRec</string>
     <string name="screen_title_player">\u041F\u0440\u043E\u0438\u0433\u0440\u044B\u0432\u0430\u0442\u0435\u043B\u044C</string>
     <string name="screen_title_trim">\u041E\u0431\u0440\u0435\u0437\u043A\u0430 \u0432\u0438\u0434\u0435\u043E</string>
     <string name="screen_title_crop">\u041A\u0430\u0434\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435</string>
@@ -71,15 +70,11 @@
     <string name="action_share">\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F</string>
     <string name="action_open">\u041E\u0442\u043A\u0440\u044B\u0442\u044C</string>
     <string name="action_edit">\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u044C</string>
-    <string name="consent_analytics_title">\u0410\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u044F</string>
-    <string name="consent_analytics_message">\u041F\u043E\u043C\u043E\u0433\u0438\u0442\u0435 \u043D\u0430\u043C \u0443\u043B\u0443\u0447\u0448\u0438\u0442\u044C CatRec, \u0440\u0430\u0437\u0440\u0435\u0448\u0438\u0432 \u0434\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0435 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u0435 \u0438 \u0430\u043D\u0430\u043B\u0438\u0437 \u0441\u0431\u043E\u0435\u0432. \u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043B\u0430\u043C\u0430 \u043A\u043E\u043D\u0442\u0440\u043E\u043B\u0438\u0440\u0443\u0435\u0442\u0441\u044F \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E \u0432 \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445 (\u043F\u043E \u0443\u043C\u043E\u043B\u0447\u0430\u043D\u0438\u044E \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u0430). \u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C \u044D\u0442\u043E \u0432 \u043B\u044E\u0431\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0432 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u0445.</string>
     <string name="setting_usage_analytics">\u0410\u043D\u0430\u043B\u0438\u0442\u0438\u043A\u0430 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u044F</string>
     <string name="setting_usage_analytics_desc">\u0421\u0442\u0430\u0442\u0438\u0441\u0442\u0438\u043A\u0430 \u0441\u0431\u043E\u0435\u0432 \u0438 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D\u0438\u044F \u0434\u043B\u044F \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u044F \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F</string>
     <string name="setting_personalized_ads">\u041F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043B\u0430\u043C\u0430</string>
     <string name="setting_personalized_ads_on_desc">AdMob \u043C\u043E\u0436\u0435\u0442 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u0432\u0430\u0448 \u0440\u0435\u043A\u043B\u0430\u043C\u043D\u044B\u0439 ID \u0434\u043B\u044F \u0440\u0435\u043B\u0435\u0432\u0430\u043D\u0442\u043D\u044B\u0445 \u043E\u0431\u044A\u044F\u0432\u043B\u0435\u043D\u0438\u0439</string>
     <string name="setting_personalized_ads_off_desc">\u0422\u043E\u043B\u044C\u043A\u043E \u043D\u0435\u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0430\u044F \u0440\u0435\u043A\u043B\u0430\u043C\u0430</string>
-    <string name="consent_accept">\u041F\u043E\u0437\u0432\u043E\u043B\u044F\u0442\u044C</string>
-    <string name="consent_decline">\u041E\u0442\u043A\u043B\u043E\u043D\u0438\u0442\u044C</string>
     <string name="action_apply">\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C</string>
     <string name="action_pause">\u041F\u0430\u0443\u0437\u0430</string>
     <string name="action_resume">\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C</string>
@@ -99,11 +94,9 @@
     <string name="battery_opt_btn_oem_settings">\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 %s</string>
     <string name="battery_opt_btn_learn_more">\u0412\u0438\u0437\u0443\u0430\u043B\u044C\u043D\u043E\u0435 \u0440\u0443\u043A\u043E\u0432\u043E\u0434\u0441\u0442\u0432\u043E (dontkillmyapp.com)</string>
     <string name="battery_opt_btn_not_now">\u041D\u0435 \u0441\u0435\u0439\u0447\u0430\u0441</string>
-    <string name="battery_opt_banner_text">\u0423\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u043E \u043C\u043E\u0436\u0435\u0442 \u043E\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u0438 \u0432 \u0444\u043E\u043D\u0435.</string>
-    <string name="battery_opt_banner_fix">\u0418\u0441\u043F\u0440\u0430\u0432\u0438\u0442\u044C</string>
     <string name="settings_section_video">\u0412\u0438\u0434\u0435\u043E</string>
     <string name="settings_section_gif_recorder">GIF-\u0440\u0435\u043A\u043E\u0440\u0434\u0435\u0440</string>
-    <string name="settings_gif_recorder_desc">\u0420\u0435\u0436\u0438\u043C GIF \u0441\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442 \u0432\u0438\u0434\u0435\u043E, \u0430 \u0437\u0430\u0442\u0435\u043C \u043A\u043E\u043D\u0432\u0435\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u0435\u0433\u043E. \u041A\u0430\u0447\u0435\u0441\u0442\u0432\u043E \u0438 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C \u0441\u043E\u043E\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u044E\u0442 \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0430\u043C \u043D\u0438\u0436\u0435; \u0441\u043B\u0430\u0439\u0434\u0435\u0440\u044B \u0432\u0438\u0434\u0435\u043E \u0441\u043E\u0445\u0440\u0430\u043D\u044F\u044E\u0442\u0441\u044F \u0434\u043E \u0442\u0435\u0445 \u043F\u043E\u0440, \u043F\u043E\u043A\u0430 \u0432\u044B \u043D\u0435 \u043F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0438\u0442\u0435\u0441\u044C \u043E\u0431\u0440\u0430\u0442\u043D\u043E \u0432 \u0440\u0435\u0436\u0438\u043C \u0437\u0430\u043F\u0438\u0441\u0438.</string>
+    <string name="settings_gif_recorder_desc">\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442 \u0432\u0438\u0434\u0435\u043E, \u0437\u0430\u0442\u0435\u043C \u043A\u043E\u043D\u0432\u0435\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u0435\u0433\u043E \u0432 GIF.</string>
     <string name="setting_gif_preset">\u041F\u0440\u0435\u0434\u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u0430 GIF</string>
     <string name="video_locked_by_gif_preset">\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u0432\u0438\u0434\u0435\u043E \u043A\u043E\u043D\u0442\u0440\u043E\u043B\u0438\u0440\u0443\u044E\u0442\u0441\u044F \u043F\u0440\u0435\u0434\u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u043E\u0439 GIF, \u043A\u043E\u0433\u0434\u0430 \u0432\u044B\u0431\u0440\u0430\u043D \u0440\u0435\u0436\u0438\u043C GIF.</string>
     <string name="gif_preset_small">\u041C\u0430\u043B\u0435\u043D\u044C\u043A\u0438\u0439 (\u0431\u044B\u0441\u0442\u0440\u0435\u0435, \u0444\u0430\u0439\u043B \u043C\u0435\u043D\u044C\u0448\u0435\u0433\u043E \u0440\u0430\u0437\u043C\u0435\u0440\u0430)</string>
@@ -119,20 +112,19 @@
 
     <!-- Video Settings -->
     <string name="setting_resolution">\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435</string>
-    <string name="setting_resolution_native">\u041D\u0430\u0442\u0438\u0432\u043D\u043E\u0435</string>
+    <string name="setting_resolution_native">\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430</string>
     <string name="setting_resolution_custom">\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u043E\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435\u2026</string>
     <string name="setting_resolution_custom_hint">\u043D\u0430\u043F\u0440. 1920x1080</string>
     <string name="setting_fps">\u0427\u0430\u0441\u0442\u043E\u0442\u0430 \u043A\u0430\u0434\u0440\u043E\u0432 (FPS)</string>
     <string name="setting_bitrate">\u0411\u0438\u0442\u0440\u0435\u0439\u0442 \u0432\u0438\u0434\u0435\u043E</string>
     <string name="setting_video_encoder">\u0412\u0438\u0434\u0435\u043E\u043A\u043E\u0434\u0435\u043A</string>
     <string name="setting_color_mode">\u0426\u0432\u0435\u0442\u043E\u0432\u043E\u0439 \u0440\u0435\u0436\u0438\u043C</string>
-    <string name="setting_color_mode_standard">\u0421\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0439 (Rec.709)</string>
-    <string name="setting_color_mode_full">\u041F\u043E\u043B\u043D\u044B\u0439 \u0434\u0438\u0430\u043F\u0430\u0437\u043E\u043D</string>
-    <string name="dialog_color_mode">\u0426\u0432\u0435\u0442\u043E\u0432\u043E\u0439 \u0440\u0435\u0436\u0438\u043C</string>
-    <string name="setting_force_rec709_compat">Force Rec.709 compatibility</string>
-    <string name="setting_force_rec709_compat_summary">Fix washed-out colors on some devices. May slightly reduce performance.</string>
-    <string name="setting_rec709_brightness_correction">\u041A\u043E\u0440\u0440\u0435\u043A\u0446\u0438\u044F \u044F\u0440\u043A\u043E\u0441\u0442\u0438 Rec.709</string>
-    <string name="setting_rec709_brightness_correction_summary">\u041F\u0440\u0438\u043C\u0435\u043D\u044F\u0435\u0442 \u043D\u0435\u0431\u043E\u043B\u044C\u0448\u043E\u0435 \u043F\u043E\u0432\u044B\u0448\u0435\u043D\u0438\u0435 \u0433\u0430\u043C\u043C\u044B \u043F\u043E\u0441\u043B\u0435 \u0438\u0441\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u043C\u0435\u0442\u0430\u0434\u0430\u043D\u043D\u044B\u0445. \u041C\u043E\u0436\u0435\u0442 \u043D\u0435\u043C\u043D\u043E\u0433\u043E \u0441\u043D\u0438\u0437\u0438\u0442\u044C \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u044C \u044D\u043A\u0441\u043F\u043E\u0440\u0442\u0430.</string>
+    <string name="setting_color_mode_standard">Ограниченный диапазон / режим совместимости</string>
+    <string name="setting_color_mode_full">Полный диапазон / точно как на экране (рекомендуется)</string>
+    <string name="setting_force_rec709_compat">Исправить метаданные ограниченного диапазона</string>
+    <string name="setting_force_rec709_compat_summary">Повторно помечает битовый поток явными метаданными BT.709 ограниченного диапазона через FFmpeg. Нужно только на устройствах, где воспроизведение всё ещё выглядит выцветшим в режиме ограниченного диапазона.</string>
+    <string name="setting_rec709_brightness_correction">Коррекция яркости (необязательно)</string>
+    <string name="setting_rec709_brightness_correction_summary">Применяет лёгкое повышение гаммы после исправления метаданных. Необязательно; включайте только если видео всё ещё выглядит немного тёмным.</string>
     <string name="rec709_brightness_correction_off">\u0412\u044B\u043A\u043B.</string>
     <string name="rec709_brightness_correction_low">\u041D\u0438\u0437\u043A\u0430\u044F \u043A\u043E\u0440\u0440\u0435\u043A\u0446\u0438\u044F \u044F\u0440\u043A\u043E\u0441\u0442\u0438</string>
     <string name="rec709_brightness_correction_medium">\u0421\u0440\u0435\u0434\u043D\u044F\u044F \u043A\u043E\u0440\u0440\u0435\u043A\u0446\u0438\u044F \u044F\u0440\u043A\u043E\u0441\u0442\u0438</string>
@@ -156,11 +148,9 @@
     <!-- Overlay Settings -->
     <string name="setting_floating_controls">\u041F\u043B\u0430\u0432\u0430\u044E\u0449\u0435\u0435 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435</string>
     <string name="setting_hide_floating_while_recording">\u0421\u043A\u0440\u044B\u0442\u044C \u043F\u043B\u0430\u0432\u0430\u044E\u0449\u0438\u0439 \u0437\u043D\u0430\u0447\u043E\u043A \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438</string>
-    <string name="settings_hide_floating_while_recording_desc">\u0421\u043A\u0440\u044B\u0442\u044C \u043F\u043B\u0430\u0432\u0430\u044E\u0449\u0438\u0439 \u043F\u0443\u0437\u044B\u0440\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438.</string>
+    <string name="settings_hide_floating_while_recording_desc">\u0421\u043A\u0440\u044B\u0432\u0430\u0442\u044C \u043E\u0432\u0435\u0440\u043B\u0435\u0439 \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438</string>
     <string name="setting_post_screenshot_options">\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B \u043F\u043E\u0441\u0442-\u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442\u0430</string>
     <string name="settings_post_screenshot_options_desc">\u041F\u043E\u0441\u043B\u0435 \u0441\u043D\u0438\u043C\u043A\u0430 \u044D\u043A\u0440\u0430\u043D\u0430 \u043F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u0432\u0430\u0440\u0438\u0430\u043D\u0442\u044B \u043F\u0443\u0431\u043B\u0438\u043A\u0430\u0446\u0438\u0438 \u0438\u043B\u0438 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F.</string>
-    <string name="setting_record_single_app">\u0417\u0430\u043F\u0438\u0448\u0438\u0442\u0435 \u043E\u0434\u043D\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435</string>
-    <string name="settings_record_single_app_desc">\u041D\u0430 Android\u00A014 \u0438 \u0431\u043E\u043B\u0435\u0435 \u043F\u043E\u0437\u0434\u043D\u0438\u0445 \u0432\u0435\u0440\u0441\u0438\u044F\u0445 \u043F\u0440\u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0438 \u0437\u0430\u0445\u0432\u0430\u0442\u0430 \u044D\u043A\u0440\u0430\u043D\u0430 \u0432\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u043E\u0434\u043D\u043E \u043E\u043A\u043D\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u043F\u043E\u043B\u043D\u043E\u044D\u043A\u0440\u0430\u043D\u043D\u044B\u0439 \u0440\u0435\u0436\u0438\u043C.</string>
     <string name="screenshot_post_edit">\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C</string>
     <string name="screenshot_post_action_failed">\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u043E\u0431\u0449\u0438\u0439 \u0434\u043E\u0441\u0442\u0443\u043F</string>
     <string name="screenshot_post_tap_outside">\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0441\u043D\u0430\u0440\u0443\u0436\u0438, \u0447\u0442\u043E\u0431\u044B \u0437\u0430\u043A\u0440\u044B\u0442\u044C</string>
@@ -193,9 +183,6 @@
     <string name="setting_watermark_opacity">\u041F\u0440\u043E\u0437\u0440\u0430\u0447\u043D\u043E\u0441\u0442\u044C \u0432\u043E\u0434\u044F\u043D\u043E\u0433\u043E \u0437\u043D\u0430\u043A\u0430</string>
 
     <!-- Camera Settings Dialog -->
-    <string name="camera_settings_title">@string/setting_camera_settings</string>
-    <string name="camera_enable">\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u043A\u0430\u043C\u0435\u0440\u0443</string>
-    <string name="camera_enable_desc">\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u043E\u0432\u0435\u0440\u043B\u0435\u0439 \u043A\u0430\u043C\u0435\u0440\u044B \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438</string>
     <string name="camera_lock_position">\u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u0438\u0435</string>
     <string name="camera_facing">\u041A\u0430\u043C\u0435\u0440\u0430</string>
     <string name="camera_facing_front">\u0424\u0440\u043E\u043D\u0442\u0430\u043B\u044C\u043D\u0430\u044F</string>
@@ -305,9 +292,8 @@
     <string name="stop_behavior_pause_on_screen_off">\u041F\u0430\u0443\u0437\u0430 \u043F\u0440\u0438 \u0432\u044B\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0438 \u044D\u043A\u0440\u0430\u043D\u0430</string>
 
     <!-- Settings extras -->
-    <string name="settings_floating_controls_desc">\u041F\u043E\u0441\u0442\u043E\u044F\u043D\u043D\u043E \u0432\u0438\u0434\u0438\u043C\u044B\u0439 \u043F\u0443\u0437\u044B\u0440\u044C \u2014 \u0437\u0430\u043F\u0438\u0441\u044C \u0438 \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442\u044B \u0438\u0437 \u043B\u044E\u0431\u043E\u0433\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F</string>
+    <string name="settings_floating_controls_desc">\u0417\u0430\u043F\u0438\u0441\u044C, \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442\u044B \u0438 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0438\u0437 \u043B\u044E\u0431\u043E\u0433\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F</string>
     <string name="settings_show_touches">\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u043A\u0430\u0441\u0430\u043D\u0438\u044F</string>
-    <string name="settings_show_touches_desc">\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0432 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u0445 \u0440\u0430\u0437\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430</string>
     <string name="toast_enable_show_taps">\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u0435 \u00AB\u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0442\u044C \u043D\u0430\u0436\u0430\u0442\u0438\u044F\u00BB \u0432\u0440\u0443\u0447\u043D\u0443\u044E</string>
     <string name="toast_overlay_permission">\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u043D\u0430 \u043E\u0432\u0435\u0440\u043B\u0435\u0439</string>
     <string name="setting_countdown_off">\u0412\u044B\u043A\u043B.</string>
@@ -318,8 +304,6 @@
         <item quantity="other">"%1$d секунд"</item>
     </plurals>
     <string name="setting_internal_audio_note">\u0422\u043E\u043B\u044C\u043A\u043E Android 10+</string>
-    <string name="camera_status_enabled">\u0410\u043A\u0442\u0438\u0432\u043D\u0430 \u2014 %1$s \u2022 %2$s</string>
-    <string name="state_disabled">\u041E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E</string>
     <string name="watermark_preview_active">\u0416\u0438\u0432\u043E\u0439 \u043F\u0440\u0435\u0434\u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440 \u0430\u043A\u0442\u0438\u0432\u0435\u043D \u2014 \u043F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0432\u043E\u0434\u044F\u043D\u043E\u0439 \u0437\u043D\u0430\u043A \u0434\u043B\u044F \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u043F\u043E\u043B\u043E\u0436\u0435\u043D\u0438\u044F</string>
     <string name="watermark_preview_recording">\u041F\u0440\u0435\u0434\u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438</string>
     <string name="watermark_preview_need_overlay">\u041F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u044C\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u043D\u0430 \u043E\u0432\u0435\u0440\u043B\u0435\u0439 \u0434\u043B\u044F \u0436\u0438\u0432\u043E\u0433\u043E \u043F\u0440\u0435\u0434\u043F\u0440\u043E\u0441\u043C\u043E\u0442\u0440\u0430</string>
@@ -342,7 +326,7 @@
     <string name="perf_dynamic_glass">\u0414\u0438\u043D\u0430\u043C\u0438\u0447\u0435\u0441\u043A\u043E\u0435 \u0441\u0442\u0435\u043A\u043B\u044F\u043D\u043D\u043E\u0435 \u0440\u0430\u0437\u043C\u044B\u0442\u0438\u0435 \u0432\u043A\u043B\u044E\u0447\u0435\u043D\u043E</string>
     <string name="setting_performance_mode">\u0420\u0435\u0436\u0438\u043C \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u0438</string>
     <string name="setting_adaptive_recording_performance">\u0410\u0434\u0430\u043F\u0442\u0438\u0432\u043D\u0430\u044F \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u0438</string>
-    <string name="setting_adaptive_recording_performance_summary">\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0441\u043D\u0438\u0436\u0430\u0435\u0442 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0443, \u0435\u0441\u043B\u0438 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0443 \u0442\u044F\u0436\u0435\u043B\u043E \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438</string>
+    <string name="setting_adaptive_recording_performance_summary">\u0421\u043D\u0438\u0436\u0430\u0435\u0442 \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u043E \u0437\u0430\u043F\u0438\u0441\u0438 \u043F\u0440\u0438 \u0432\u044B\u0441\u043E\u043A\u043E\u0439 \u043D\u0430\u0433\u0440\u0443\u0437\u043A\u0435, \u0447\u0442\u043E\u0431\u044B \u0443\u043C\u0435\u043D\u044C\u0448\u0438\u0442\u044C \u0437\u0430\u0434\u0435\u0440\u0436\u043A\u0438.</string>
     <string name="performance_fallback_active">\u041F\u0435\u0440\u0435\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u043D\u0430 \u0431\u043E\u043B\u0435\u0435 \u043B\u0451\u0433\u043A\u0438\u0439 \u043F\u0440\u043E\u0444\u0438\u043B\u044C \u0437\u0430\u043F\u0438\u0441\u0438 \u0434\u043B\u044F \u0441\u0442\u0430\u0431\u0438\u043B\u044C\u043D\u043E\u0441\u0442\u0438</string>
     <string name="performance_warning_title">\u041F\u0440\u0435\u0434\u0443\u043F\u0440\u0435\u0436\u0434\u0435\u043D\u0438\u0435 \u043E \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u0438</string>
     <string name="performance_warning_body">\u0412\u0430\u0448\u0435 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u043E \u0438\u043C\u0435\u0435\u0442 \u043C\u0435\u043D\u0435\u0435 6 \u0413\u0411 \u041E\u0417\u0423 \u0438\u043B\u0438 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043F\u043E\u0434 Android 11 \u0438\u043B\u0438 \u043D\u0438\u0436\u0435. \u0412\u043A\u043B\u044E\u0447\u0435\u043D\u0438\u0435 \u044D\u0444\u0444\u0435\u043A\u0442\u043E\u0432 \u0440\u0430\u0437\u043C\u044B\u0442\u0438\u044F \u0432 \u0440\u0435\u0430\u043B\u044C\u043D\u043E\u043C \u0432\u0440\u0435\u043C\u0435\u043D\u0438 \u043C\u043E\u0436\u0435\u0442 \u0432\u044B\u0437\u0432\u0430\u0442\u044C \u0437\u0430\u0434\u0435\u0440\u0436\u043A\u0438 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430, \u043E\u0441\u043E\u0431\u0435\u043D\u043D\u043E \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438.\n\n\u0412\u0441\u0451 \u0440\u0430\u0432\u043D\u043E \u0432\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0440\u0435\u0436\u0438\u043C \u043A\u0430\u0447\u0435\u0441\u0442\u0432\u0430?</string>
@@ -363,7 +347,6 @@
     <string name="settings_section_privacy">\u041A\u043E\u043D\u0444\u0438\u0434\u0435\u043D\u0446\u0438\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u044C</string>
     <string name="dialog_custom_resolution_title">\u041F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u0435\u043B\u044C\u0441\u043A\u043E\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435</string>
     <string name="dialog_custom_resolution_hint">\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u043A\u0430\u043A \u0428\u0418\u0420\u0418\u041D\u0410\u00D7\u0412\u042B\u0421\u041E\u0422\u0410 (\u043D\u0430\u043F\u0440. 1920\u00D71080)</string>
-    <string name="error_resolution_format">\u0424\u043E\u0440\u043C\u0430\u0442 \u0434\u043E\u043B\u0436\u0435\u043D \u0431\u044B\u0442\u044C \u0428\u00D7\u0412 (\u043D\u0430\u043F\u0440. 1920\u00D71080)</string>
     <string name="error_resolution_min">\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 100\u00D7100</string>
     <string name="error_resolution_max">\u041C\u0430\u043A\u0441\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 7680 \u043F\u043E \u043B\u044E\u0431\u043E\u0439 \u0441\u0442\u043E\u0440\u043E\u043D\u0435</string>
     <string name="dialog_resolution_title">\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435</string>
@@ -415,7 +398,7 @@
     <string name="clipper_duration_3m">3 \u043C\u0438\u043D</string>
     <string name="clipper_duration_4m">4 \u043C\u0438\u043D</string>
     <string name="clipper_duration_5m">5 \u043C\u0438\u043D</string>
-    <string name="perm_rationale_intro">CatRec \u043D\u0435\u043E\u0431\u0445\u043E\u0434\u0438\u043C\u044B \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0437\u0430\u043F\u0438\u0441\u0438 \u0432\u0430\u0448\u0435\u0433\u043E \u044D\u043A\u0440\u0430\u043D\u0430:</string>
+    <string name="perm_rationale_intro">CatRec запросит следующее. Обязательные разрешения нужны для запуска записи; необязательные улучшают библиотеку и совместимость устройства.</string>
     <string name="perm_dialog_title">\u0422\u0440\u0435\u0431\u0443\u044E\u0442\u0441\u044F \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u044F</string>
     <!-- Recordings / screenshots / player -->
     <string name="delete_recording_title">\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u044C?</string>
@@ -462,8 +445,6 @@
     <string name="content_desc_options">\u041F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B</string>
 
     <!-- Tools / Editor -->
-    <string name="tools_video_editing">\u041C\u043E\u043D\u0442\u0430\u0436 \u0432\u0438\u0434\u0435\u043E</string>
-    <string name="tools_image_editing">\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0439</string>
     <string name="tool_video_trim">\u041E\u0431\u0440\u0435\u0437\u043A\u0430 \u0432\u0438\u0434\u0435\u043E</string>
     <string name="tool_compress">\u0421\u0436\u0430\u0442\u044C \u0432\u0438\u0434\u0435\u043E</string>
     <string name="tool_video_to_gif">\u0412\u0438\u0434\u0435\u043E \u0432 GIF</string>
@@ -534,8 +515,12 @@
     <string name="perm_rationale_camera">\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F \u0434\u043B\u044F \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u044F \u043D\u0430\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u00AB\u041A\u0430\u043C\u0435\u0440\u0430 \u0432 \u0438\u0437\u043E\u0431\u0440\u0430\u0436\u0435\u043D\u0438\u0438\u00BB \u043F\u043E\u0432\u0435\u0440\u0445 \u0437\u0430\u043F\u0438\u0441\u0438 \u044D\u043A\u0440\u0430\u043D\u0430.</string>
     <string name="perm_name_overlay">\u041E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u0442\u044C \u043F\u043E\u0432\u0435\u0440\u0445 \u0434\u0440\u0443\u0433\u0438\u0445 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0439</string>
     <string name="perm_rationale_overlay">\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044F, \u0447\u0442\u043E\u0431\u044B \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438 \u043E\u0442\u043E\u0431\u0440\u0430\u0436\u0430\u043B\u0441\u044F \u043F\u043B\u0430\u0432\u0430\u044E\u0449\u0438\u0439 \u043F\u0443\u0437\u044B\u0440\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u043E\u0432 \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0438 \u043D\u0430\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043A\u0430\u043C\u0435\u0440\u044B \u043F\u043E\u0432\u0435\u0440\u0445 \u0434\u0440\u0443\u0433\u0438\u0445 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0439.</string>
-    <string name="perm_name_media_library">Photos, videos &amp; music</string>
-    <string name="perm_rationale_media_library">Needed to show your recordings and screenshots in the app (including files saved before you reinstalled CatRec). If Android offers only partial access, choose allow all or include Movies/CatRec and Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_media_library">Фото и видео</string>
+    <string name="perm_rationale_media_library">Нужно, чтобы показывать ваши записи и скриншоты в приложении, включая файлы, сохранённые до переустановки CatRec. Если Android предлагает только частичный доступ, выберите разрешить всё или добавьте Movies/CatRec и Pictures/CatRec/Screenshots.</string>
+    <string name="perm_name_music_audio">Музыка и аудио</string>
+    <string name="perm_rationale_music_audio">Необязательно. Позволяет CatRec показывать и импортировать аудиофайлы в библиотеке, например отдельные дорожки микрофона. Записывать можно и без этого.</string>
+    <string name="perm_name_nearby_devices">Устройства поблизости</string>
+    <string name="perm_rationale_nearby_devices">Необязательно. Используется для доступа Bluetooth, который некоторым устройствам и библиотекам нужен до или во время записи. CatRec можно использовать и без этого.</string>
 
     <!-- Foreground services: manifest android:description (Android 14+ transparency / policy tooling). -->
     <string name="service_description_screen_record">\u0421\u043B\u0443\u0436\u0431\u0430 \u043F\u0435\u0440\u0435\u0434\u043D\u0435\u0433\u043E \u043F\u043B\u0430\u043D\u0430 \u0432\u043E \u0432\u0440\u0435\u043C\u044F \u0437\u0430\u043F\u0438\u0441\u0438: \u0437\u0430\u0445\u0432\u0430\u0442 \u044D\u043A\u0440\u0430\u043D\u0430 (MediaProjection) \u0441 \u043E\u043F\u0446\u0438\u043E\u043D\u0430\u043B\u044C\u043D\u044B\u043C \u0437\u0432\u0443\u043A\u043E\u043C \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D\u0430 \u0438 \u043F\u043E\u0441\u0442\u043E\u044F\u043D\u043D\u044B\u043C \u0443\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u0435\u043C.</string>
@@ -544,7 +529,7 @@
     <!-- Notifications (service) -->
     <string name="notif_channel_screen_recording">\u0417\u0430\u043F\u0438\u0441\u044C \u044D\u043A\u0440\u0430\u043D\u0430</string>
     <string name="notif_channel_recording_complete">\u0417\u0430\u043F\u0438\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430</string>
-    <string name="notif_channel_rolling_buffer">\u041F\u043E\u0434\u0432\u0438\u0436\u043D\u044B\u0439 \u0431\u0443\u0444\u0435\u0440</string>
+    <string name="notif_channel_rolling_buffer">Clipper</string>
     <string name="notif_ready_title">CatRec \u0433\u043E\u0442\u043E\u0432</string>
     <string name="notif_ready_text">\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0430\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u25CF, \u0447\u0442\u043E\u0431\u044B \u043D\u0430\u0447\u0430\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u044C.</string>
     <string name="notif_action_revoke">\u041E\u0442\u043E\u0437\u0432\u0430\u0442\u044C</string>
@@ -560,9 +545,9 @@
     <string name="notif_action_mute">\u041D\u0435\u043C\u043E\u0439</string>
     <string name="notif_action_unmute">\u0412\u043A\u043B\u044E\u0447\u0438\u0442\u044C \u0437\u0432\u0443\u043A</string>
     <string name="notif_action_show_controls">\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u044B \u0443\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0438\u044F</string>
-    <string name="notif_buffer_title">CatRec \u2014 \u041F\u0440\u043E\u043A\u0430\u0442\u043D\u044B\u0439 \u0431\u0443\u0444\u0435\u0440</string>
-    <string name="notif_buffer_starting">\u0421\u0442\u0430\u0440\u0442\u043E\u0432\u044B\u0439 \u0431\u0443\u0444\u0435\u0440\u2026</string>
-    <string name="notif_buffer_buffering">\u0411\u0443\u0444\u0435\u0440\u0438\u0437\u0430\u0446\u0438\u044F \u0437\u0430 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E %1$d\u00A0\u0441\u0435\u043A\u0443\u043D\u0434\u0443\u2026</string>
+    <string name="notif_buffer_title">CatRec — Clipper</string>
+    <string name="notif_buffer_starting">Запуск Clipper…</string>
+    <string name="notif_buffer_buffering">Clipper активен — последние %1$d с…</string>
     <string name="notif_buffer_save_clip">\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u043B\u0438\u043F</string>
     <string name="notif_post_title">\u0417\u0430\u043F\u0438\u0441\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u0430</string>
     <string name="notif_post_text">\u041D\u0430\u0436\u043C\u0438\u0442\u0435, \u0447\u0442\u043E\u0431\u044B \u043E\u0442\u043A\u0440\u044B\u0442\u044C \u0437\u0430\u043F\u0438\u0441\u044C</string>
@@ -576,10 +561,10 @@
     <string name="toast_gif_transcode_failed">\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C GIF \u2014 \u0432\u0430\u0448\u0430 \u0437\u0430\u043F\u0438\u0441\u044C \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 MP4 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u043B\u0430\u0441\u044C.</string>
     <string name="toast_gif_saved">GIF \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D \u0432 \u043F\u0430\u043F\u043A\u0435 Pictures/CatRec/GIF.</string>
     <string name="toast_separate_mic_failed">\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0437\u0434\u0430\u0442\u044C \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u044B\u0439 \u0430\u0443\u0434\u0438\u043E\u0444\u0430\u0439\u043B \u2014 \u0432\u043C\u0435\u0441\u0442\u043E \u043D\u0435\u0433\u043E \u0432 \u0432\u0438\u0434\u0435\u043E \u0431\u0443\u0434\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u0430\u043D \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D.</string>
-    <string name="toast_internal_audio_silent">Внутреннее аудио не обнаружено. Это приложение может блокировать захват звука или использовать неподдерживаемый аудиоканал.</string>
+    <string name="toast_internal_audio_silent">Внутренний звук не обнаружен. Это приложение может блокировать захват звука или использовать неподдерживаемый аудиопуть.</string>
     <string name="recording_has_separate_audio">\u0418\u043C\u0435\u0435\u0442 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u0443\u044E \u0437\u0432\u0443\u043A\u043E\u0432\u0443\u044E \u0434\u043E\u0440\u043E\u0436\u043A\u0443</string>
-    <string name="toast_buffer_start_failed">\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0431\u0443\u0444\u0435\u0440: %1$s</string>
-    <string name="toast_clip_empty">\u041A\u043B\u0438\u043F \u043F\u0443\u0441\u0442 \u2013 \u043F\u0440\u043E\u0434\u043E\u043B\u0436\u0430\u0439\u0442\u0435 \u0431\u0443\u0444\u0435\u0440\u0438\u0437\u0430\u0446\u0438\u044E \u0434\u043E\u043B\u044C\u0448\u0435</string>
+    <string name="toast_buffer_start_failed">Не удалось запустить Clipper: %1$s</string>
+    <string name="toast_clip_empty">Клип пуст — оставьте Clipper включённым дольше</string>
     <string name="toast_clip_saved">\u041A\u043B\u0438\u043F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D!</string>
     <string name="toast_clip_save_failed">\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043A\u043B\u0438\u043F: %1$s</string>
     <string name="notif_camera_overlay_text">\u041D\u0430\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u043A\u0430\u043C\u0435\u0440\u044B CatRec \u0430\u043A\u0442\u0438\u0432\u043D\u043E \u2014 \u043A\u043E\u0441\u043D\u0438\u0442\u0435\u0441\u044C, \u0447\u0442\u043E\u0431\u044B \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F \u0432 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435</string>
@@ -601,7 +586,6 @@
 
     <!-- Localization audit — user-visible strings (avoid hardcoded English in code) -->
     <string name="toast_screen_capture_denied">\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u043D\u0430 \u0437\u0430\u043F\u0438\u0441\u044C \u044D\u043A\u0440\u0430\u043D\u0430 \u043D\u0435 \u043F\u0440\u0435\u0434\u043E\u0441\u0442\u0430\u0432\u043B\u0435\u043D\u043E</string>
-    <string name="toast_no_email_app">\u041F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0434\u043B\u044F \u043F\u043E\u0447\u0442\u044B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E</string>
     <string name="share_screenshot_chooser_title">\u041F\u043E\u0434\u0435\u043B\u0438\u0442\u044C\u0441\u044F \u0441\u043A\u0440\u0438\u043D\u0448\u043E\u0442\u043E\u043C</string>
     <string name="recordings_header_format">\u0411\u0418\u0411\u041B\u0418\u041E\u0422\u0415\u041A\u0410 \u00B7 %1$d</string>
     <string name="screenshots_header_format">\u0421\u041A\u0420\u0418\u041D\u0428\u041E\u0422\u042B \u00B7 %1$d</string>
@@ -613,7 +597,21 @@
     <string name="content_desc_more_options">\u0414\u043E\u043F\u043E\u043B\u043D\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0435 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u044B</string>
     <string name="content_desc_rewind_10">\u041D\u0430\u0437\u0430\u0434 \u043D\u0430 10 \u0441\u0435\u043A\u0443\u043D\u0434</string>
     <string name="content_desc_forward_10">\u0412\u043F\u0435\u0440\u0451\u0434 \u043D\u0430 10 \u0441\u0435\u043A\u0443\u043D\u0434</string>
+    <string name="content_desc_trim">\u041E\u0431\u0440\u0435\u0437\u0430\u0442\u044C</string>
     <string name="list_bullet">\u2022</string>
+
+    <string-array name="changelog_v121_items">
+        <item>\u0418\u0441\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430 \u0437\u0430\u043F\u0438\u0441\u044C \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u0435\u0433\u043E \u0430\u0443\u0434\u0438\u043E \u043D\u0430 \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430\u0445, \u0433\u0434\u0435 \u0437\u0432\u0443\u043A \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F \u0438\u043B\u0438 \u0438\u0433\u0440\u044B \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u043B \u0438\u043B\u0438 \u0431\u044B\u043B \u0442\u0438\u0445\u0438\u043C \u043F\u0440\u0438 \u0437\u0430\u043F\u0438\u0441\u0438.</item>
+        <item>\u0411\u043E\u043B\u0435\u0435 \u043F\u043E\u043D\u044F\u0442\u043D\u044B\u0435 \u043F\u043E\u0434\u043F\u0438\u0441\u0438 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u044F \u0438 \u043D\u0430\u0441\u0442\u0440\u043E\u0435\u043A, \u0432\u043A\u043B\u044E\u0447\u0430\u044F \u0432\u043E\u0437\u0432\u0440\u0430\u0442 QHD (2K) \u0432 \u0441\u0435\u043B\u0435\u043A\u0442\u043E\u0440, \u0433\u0434\u0435 \u043E\u043D \u043E\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u043E\u0432\u0430\u043B.</item>
+    </string-array>
+
+    <string-array name="changelog_v120_items">
+        <item>Улучшена производительность записи с движком Performance: более плавный захват и меньше нагрев устройства.</item>
+        <item>Исправлен таймер оверлея Clipper: теперь он показывает правильную длительность Clipper.</item>
+        <item>Улучшена производительность интерфейса в записях, скриншотах и списках медиа.</item>
+        <item>Улучшена обработка состояний оверлея, уведомлений, подготовленных записей и сценариев Clipper.</item>
+        <item>Добавлены улучшения стабильности конвейера записи и более чистая обработка режима движка.</item>
+    </string-array>
 
     <string-array name="changelog_v113_items">
         <item>"Исправлено отображение edge-to-edge на Android 15+ для устранения ANR."</item>
@@ -656,7 +654,7 @@
 
     <string-array name="changelog_v100_items">
         <item>"Запись экрана с поддержкой кодеков H.264 и H.265 (HEVC)."</item>
-        <item>"Буфер Rolling Clipper (1–5 минут, настраивается) с бесшовным сшиванием сегментов и быстрыми настройками продолжительности"</item>
+        <item>Clipper (1–5 мин, настраивается) с бесшовным сшиванием сегментов и быстрыми пресетами длительности</item>
         <item>"Кнопка «Сохранить клип» во время работы Clipper"</item>
         <item>"Широкий выбор разрешения для всех соотношений сторон, а также пользовательский ввод"</item>
         <item>Auto orientation tracking during recording</item>
@@ -684,17 +682,17 @@
         <item>"Переключатель режимов RECORD/CLIPPER с четким индикатором состояния"</item>
         <item>"Плитки быстрых настроек: CatRec Record и CatRec Clipper"</item>
         <item>"Запись уведомлений с действиями; поддержка сеанса подготовленного захвата"</item>
-        <item>"Дополнительная аналитика для повышения стабильности"</item>
+        <item>Необязательная аналитика использования для повышения стабильности (переключатель в настройках)</item>
         <item>"Контроль конфиденциальности: переключатели аналитики и персонализации рекламы."</item>
         <item>"Экран поддержки: журнал изменений, юридические ссылки и дополнительная вознаграждаемая поддержка."</item>
     </string-array>
 
     <!-- Localized additions -->
     <string name="resolution_preset_4k">4K</string>
-    <string name="resolution_preset_2k">2K</string>
-    <string name="resolution_preset_1080">1080</string>
-    <string name="resolution_preset_720">720</string>
-    <string name="resolution_preset_480">480</string>
+    <string name="resolution_preset_2k">QHD (2K)</string>
+    <string name="resolution_preset_1080">FHD (1080P)</string>
+    <string name="resolution_preset_720">HD (720P)</string>
+    <string name="resolution_preset_480">SD (480P)</string>
     <string name="error_resolution_required">\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435.</string>
     <string name="error_resolution_positive">\u0428\u0438\u0440\u0438\u043D\u0430 \u0438 \u0432\u044B\u0441\u043E\u0442\u0430 \u0434\u043E\u043B\u0436\u043D\u044B \u0431\u044B\u0442\u044C \u043F\u043E\u043B\u043E\u0436\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u043C\u0438 \u0447\u0438\u0441\u043B\u0430\u043C\u0438.</string>
     <string name="error_resolution_even">\u0428\u0438\u0440\u0438\u043D\u0430 \u0438 \u0432\u044B\u0441\u043E\u0442\u0430 \u0434\u043E\u043B\u0436\u043D\u044B \u0431\u044B\u0442\u044C \u0447\u0435\u0442\u043D\u044B\u043C\u0438 \u0447\u0438\u0441\u043B\u0430\u043C\u0438.</string>
@@ -702,8 +700,8 @@
     <string name="error_resolution_too_large_for_profile">\u042D\u0442\u043E \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u0438\u0435 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u0432\u0435\u043B\u0438\u043A\u043E \u0434\u043B\u044F \u043F\u0440\u043E\u0444\u0438\u043B\u044F \u043F\u0440\u043E\u0438\u0437\u0432\u043E\u0434\u0438\u0442\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u0438 \u044D\u0442\u043E\u0433\u043E \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0430.</string>
     <string name="pro_feature">\u0424\u0443\u043D\u043A\u0446\u0438\u044F PRO</string>
     <string name="pro_recording_title">\u0412\u044B \u0437\u0430\u043F\u0438\u0441\u044B\u0432\u0430\u0435\u0442\u0435 \u0441 \u0444\u0443\u043D\u043A\u0446\u0438\u044F\u043C\u0438 PRO</string>
-    <string name="pro_recording_body">\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0438\u0442\u0435 \u0440\u0435\u043A\u043B\u0430\u043C\u0443, \u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0444\u0443\u043D\u043A\u0446\u0438\u0438 PRO \u043D\u0430 4 \u0447\u0430\u0441\u0430, \u0438\u043B\u0438 \u0443\u0431\u0435\u0440\u0438\u0442\u0435 \u0440\u0435\u043A\u043B\u0430\u043C\u0443 \u0434\u043B\u044F \u043F\u043E\u0441\u0442\u043E\u044F\u043D\u043D\u043E\u0433\u043E \u0434\u043E\u0441\u0442\u0443\u043F\u0430.</string>
-    <string name="pro_tools_body">\u041F\u043E\u0441\u043C\u043E\u0442\u0440\u0438\u0442\u0435 \u0440\u0435\u043A\u043B\u0430\u043C\u0443, \u0447\u0442\u043E\u0431\u044B \u0440\u0430\u0437\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0444\u0443\u043D\u043A\u0446\u0438\u0438 PRO \u043D\u0430 4 \u0447\u0430\u0441\u0430, \u0438\u043B\u0438 \u043A\u0443\u043F\u0438\u0442\u0435 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u0440\u0435\u043A\u043B\u0430\u043C\u044B \u0434\u043B\u044F \u043F\u043E\u0441\u0442\u043E\u044F\u043D\u043D\u043E\u0433\u043E \u0434\u043E\u0441\u0442\u0443\u043F\u0430?</string>
+    <string name="pro_recording_body">Посмотрите рекламу, чтобы открыть Pro на 1 час: 90/120 FPS, видео выше 16 Mbps, камера, водяной знак и отдельный микрофон — или удалите рекламу для постоянного доступа.</string>
+    <string name="pro_tools_body">Посмотрите рекламу, чтобы открыть Pro на 1 час: 90/120 FPS, выше 16 Mbps, объединение и GIF — или купите удаление рекламы для постоянного доступа.</string>
     <string name="pro_unlock_watch_ad">\u0421\u043C\u043E\u0442\u0440\u0435\u0442\u044C \u0440\u0435\u043A\u043B\u0430\u043C\u0443</string>
     <string name="pro_unlock_remove_ads">\u0423\u0431\u0440\u0430\u0442\u044C \u0440\u0435\u043A\u043B\u0430\u043C\u0443</string>
     <string name="pro_unlock_ad_unavailable">\u0420\u0435\u043A\u043B\u0430\u043C\u0430 \u0441\u0435\u0439\u0447\u0430\u0441 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u043F\u043E\u043F\u044B\u0442\u043A\u0443 \u043F\u043E\u0437\u0436\u0435.</string>
@@ -716,4 +714,30 @@
     <string name="notif_cc_home">\u0413\u043B\u0430\u0432\u043D\u0430\u044F</string>
     <string name="notif_cc_close">\u0417\u0430\u043A\u0440\u044B\u0442\u044C</string>
     <string name="notif_cc_stop">\u0421\u0442\u043E\u043F</string>
+    <string name="settings_show_touches_status_on">Вкл.</string>
+    <string name="settings_show_touches_status_off">Выкл. — откройте параметры разработчика, чтобы включить показ касаний</string>
+    <string name="settings_show_touches_status_unknown">Неизвестно — откройте параметры разработчика, чтобы включить показ касаний</string>
+    <string name="setting_recording_engine">Движок записи</string>
+    <string name="recording_engine_performance_label">Движок производительности</string>
+    <string name="recording_engine_compatibility_label">\u042D\u043A\u0441\u043F\u0435\u0440\u0438\u043C\u0435\u043D\u0442\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u0438\u0436\u043E\u043A</string>
+    <string name="recording_engine_performance_summary">Рекомендуется большинству пользователей. Использует меньше обработки, меньше нагревает устройство и лучше подходит для повседневной записи. Скриншоты во время записи отключены.</string>
+    <string name="recording_engine_compatibility_summary">Экспериментальный fallback. Может использовать больше обработки, сильнее нагревать устройство и быстрее расходовать батарею. Пробуйте только если движок Performance вызывает проблемы на вашем устройстве.</string>
+    <string name="recording_engine_advanced_warning">\u042D\u043A\u0441\u043F\u0435\u0440\u0438\u043C\u0435\u043D\u0442\u0430\u043B\u044C\u043D\u044B\u0439 \u0434\u0432\u0438\u0436\u043E\u043A \u043C\u043E\u0436\u0435\u0442 \u0443\u0432\u0435\u043B\u0438\u0447\u0438\u0442\u044C \u043D\u0430\u0433\u0440\u0435\u0432 \u0438\u043B\u0438 \u0440\u0430\u0441\u0445\u043E\u0434 \u0431\u0430\u0442\u0430\u0440\u0435\u0438. \u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \u0435\u0433\u043E \u0442\u043E\u043B\u044C\u043A\u043E \u0435\u0441\u043B\u0438 \u0441\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0439 \u0434\u0432\u0438\u0436\u043E\u043A Performance \u043F\u043B\u043E\u0445\u043E \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442 \u043D\u0430 \u0432\u0430\u0448\u0435\u043C \u0443\u0441\u0442\u0440\u043E\u0439\u0441\u0442\u0432\u0435.</string>
+    <string name="recording_engine_scope_note">Применяется к обычным записям и Clipper.</string>
+    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Скриншоты во время записи недоступны в движке производительности.</string>
+    <string name="internal_silent_dialog_title">Внутренний звук отсутствует</string>
+    <string name="internal_silent_dialog_message">Эта игра или приложение может блокировать захват внутреннего звука.\n\nИспользовать микрофон как fallback, чтобы записать звук динамика?</string>
+    <string name="internal_silent_use_mic_fallback">Использовать микрофон fallback</string>
+    <string name="internal_silent_keep_recording_silent">Продолжить запись без звука</string>
+    <string name="internal_silent_stop_recording">Остановить запись</string>
+    <string name="internal_silent_auto_fallback_checkbox">\u0410\u0432\u0442\u043E\u043C\u0430\u0442\u0438\u0447\u0435\u0441\u043A\u0438 \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D, \u0435\u0441\u043B\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u044C \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u0435\u0433\u043E \u0437\u0432\u0443\u043A\u0430</string>
+    <string name="setting_auto_mic_fallback_title">\u041C\u0438\u043A\u0440\u043E\u0444\u043E\u043D fallback</string>
+    <string name="setting_auto_mic_fallback_summary">\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u043C\u0438\u043A\u0440\u043E\u0444\u043E\u043D, \u0435\u0441\u043B\u0438 \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435 \u0431\u043B\u043E\u043A\u0438\u0440\u0443\u0435\u0442 \u0437\u0430\u043F\u0438\u0441\u044C \u0432\u043D\u0443\u0442\u0440\u0435\u043D\u043D\u0435\u0433\u043E \u0437\u0432\u0443\u043A\u0430</string>
+    <string name="toast_internal_audio_using_mic_fallback">Внутренний звук недоступен. Используется микрофон fallback.</string>
+    <string name="toast_mic_fallback_needs_permission_recording_silent">Для микрофона fallback нужно разрешение микрофона. Запись продолжится без звука.</string>
+    <string name="internal_silent_fallback_unsupported_separate_mic">Микрофон fallback недоступен, пока включена отдельная запись микрофона. Отключите отдельный микрофон в настройках или остановите и начните новую запись.</string>
+    <string name="internal_silent_dialog_no_mic_fallback_hint">Микрофон fallback для основного видео недоступен, пока включена отдельная запись микрофона. Вы можете продолжить запись или остановить её.</string>
+    <string name="toast_audio_permission_required_recording_not_started">Для выбранного аудиорежима нужно разрешение микрофона. Запись не была начата.</string>
+    <string name="toast_audio_downgraded_mic_unavailable_internal_only">Используется только внутренний звук/звук приложения — микрофон не удалось запустить. Проверьте доступ к микрофону или не использует ли его другое приложение.</string>
+    <string name="toast_audio_downgraded_internal_unavailable_mic_only">Используется только микрофон — захват внутреннего звука/звука приложения не удалось запустить. Если вы ожидали звук игры, попробуйте другое приложение на переднем плане.</string>
 </resources>

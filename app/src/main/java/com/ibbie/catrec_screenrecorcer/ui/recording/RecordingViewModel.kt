@@ -18,6 +18,7 @@ import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.SettingsUiState
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGate
@@ -72,6 +73,7 @@ class RecordingViewModel(
     val isPrepared: StateFlow<Boolean> = RecordingState.isPrepared
     val isSaving: StateFlow<Boolean> = RecordingState.isSaving
     val screenshotSavedCount: StateFlow<Int> = RecordingState.screenshotSavedCount
+    val recordingSavedCount: StateFlow<Int> = RecordingState.recordingSavedCount
 
     // Video
     val fps: StateFlow<Float> = settingsRepository.fps.stateIn(viewModelScope, SharingStarted.Lazily, 30f)
@@ -80,7 +82,7 @@ class RecordingViewModel(
     val resolution: StateFlow<String> = settingsRepository.resolution.stateIn(viewModelScope, SharingStarted.Lazily, "Native")
     val recordingOrientation: StateFlow<String> = settingsRepository.recordingOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
     val colorMode: StateFlow<String> = settingsRepository.colorMode.stateIn(
-        viewModelScope, SharingStarted.Lazily, ColorMode.STANDARD,
+        viewModelScope, SharingStarted.Lazily, ColorMode.FULL,
     )
     val forceRec709Compatibility: StateFlow<Boolean> =
         settingsRepository.forceRec709Compatibility.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -120,8 +122,6 @@ class RecordingViewModel(
         settingsRepository.hideFloatingIconWhileRecording.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val postScreenshotOptions: StateFlow<Boolean> =
         settingsRepository.postScreenshotOptions.stateIn(viewModelScope, SharingStarted.Lazily, false)
-    val recordSingleAppEnabled: StateFlow<Boolean> =
-        settingsRepository.recordSingleAppEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     val captureMode: StateFlow<String> =
         settingsRepository.captureMode.stateIn(viewModelScope, SharingStarted.Eagerly, CaptureMode.RECORD)
@@ -131,18 +131,17 @@ class RecordingViewModel(
         combine(
             combine(isRecording, isBuffering, ::Pair),
             combine(captureMode, recordAudio, ::Pair),
-            combine(internalAudio, recordSingleAppEnabled, ::Pair),
+            internalAudio,
             combine(isPrepared, RecordingState.isRecordingPaused, RecordingState.isSaving) { p, pa, sv ->
                 PreparedPausedSavingState(p, pa, sv)
             },
-        ) { recBuf, modeAudio, internalSingle, prepPausedSaving ->
+        ) { recBuf, modeAudio, internalEnabled, prepPausedSaving ->
             RecordingUiSnapshot(
                 isRecording = recBuf.first,
                 isBuffering = recBuf.second,
                 captureMode = modeAudio.first,
                 recordAudio = modeAudio.second,
-                internalAudio = internalSingle.first,
-                recordSingleAppEnabled = internalSingle.second,
+                internalAudio = internalEnabled,
                 isPrepared = prepPausedSaving.isPrepared,
                 isRecordingPaused = prepPausedSaving.isRecordingPaused,
                 isSaving = prepPausedSaving.isSaving,
@@ -223,6 +222,12 @@ class RecordingViewModel(
 
     // UI Mode
     val performanceMode: StateFlow<Boolean> = settingsRepository.performanceMode.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val recordingEngineMode: StateFlow<RecordingEngineMode> =
+        settingsRepository.recordingEngineMode.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            RecordingEngineMode.DEFAULT,
+        )
     val adaptivePerformanceEnabled: StateFlow<Boolean> =
         settingsRepository.adaptiveRecordingPerformance.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
@@ -240,7 +245,7 @@ class RecordingViewModel(
         )
 
     // Privacy
-    val analyticsEnabled: StateFlow<Boolean> = settingsRepository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    val analyticsEnabled: StateFlow<Boolean> = settingsRepository.analyticsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
     val personalizedAdsEnabled: StateFlow<Boolean> =
         settingsRepository.personalizedAdsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
 
@@ -291,6 +296,9 @@ class RecordingViewModel(
 
     fun setSeparateMicRecording(value: Boolean) = viewModelScope.launch { settingsRepository.setSeparateMicRecording(value) }
 
+    fun setAutoMicFallbackWhenInternalSilent(value: Boolean) =
+        viewModelScope.launch { settingsRepository.setAutoMicFallbackWhenInternalSilent(value) }
+
     // Setters — Controls
     fun setFloatingControls(value: Boolean) = viewModelScope.launch { settingsRepository.setFloatingControls(value) }
 
@@ -308,8 +316,6 @@ class RecordingViewModel(
         }
 
     fun setPostScreenshotOptions(value: Boolean) = viewModelScope.launch { settingsRepository.setPostScreenshotOptions(value) }
-
-    fun setRecordSingleAppEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setRecordSingleAppEnabled(value) }
 
     fun setCaptureMode(mode: String) = viewModelScope.launch { settingsRepository.setCaptureMode(mode) }
 
@@ -409,6 +415,9 @@ class RecordingViewModel(
 
     // Setters — UI Mode
     fun setPerformanceMode(value: Boolean) = viewModelScope.launch { settingsRepository.setPerformanceMode(value) }
+
+    fun setRecordingEngineMode(mode: RecordingEngineMode) =
+        viewModelScope.launch { settingsRepository.setRecordingEngineMode(mode) }
 
     fun setAdaptivePerformanceEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setAdaptiveRecordingPerformance(value) }
 

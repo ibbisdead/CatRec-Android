@@ -1,6 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.data
 
 import android.util.Log
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,7 +40,6 @@ class SettingsConfigCache(
         val recordingOrientation: String,
         val recordAudio: Boolean,
         val internalAudio: Boolean,
-        val recordSingleAppEnabled: Boolean,
         val resolution: String,
         val fps: Float,
         val bitrateMbps: Float,
@@ -78,6 +78,7 @@ class SettingsConfigCache(
         val colorMode: String,
         val forceRec709Compatibility: Boolean,
         val rec709CompatBrightnessCorrection: String,
+        val recordingEngineMode: RecordingEngineMode,
     ) {
         companion object {
             /** Matches [SettingsRepository] Flow defaults. Used when the cache has not warmed yet. */
@@ -87,7 +88,6 @@ class SettingsConfigCache(
                 recordingOrientation = "Auto",
                 recordAudio = false,
                 internalAudio = false,
-                recordSingleAppEnabled = false,
                 resolution = "Native",
                 fps = 30f,
                 bitrateMbps = 10f,
@@ -123,9 +123,10 @@ class SettingsConfigCache(
                 screenshotFormat = "JPEG",
                 screenshotQuality = 90,
                 clipperDurationMinutes = 1,
-                colorMode = ColorMode.STANDARD,
+                colorMode = ColorMode.FULL,
                 forceRec709Compatibility = false,
                 rec709CompatBrightnessCorrection = Rec709CompatBrightnessCorrection.OFF,
+                recordingEngineMode = RecordingEngineMode.DEFAULT,
             )
         }
     }
@@ -180,7 +181,6 @@ class SettingsConfigCache(
             recordingOrientation = recordingOrientation.first(),
             recordAudio = recordAudio.first(),
             internalAudio = internalAudio.first(),
-            recordSingleAppEnabled = recordSingleAppEnabled.first(),
             resolution = resolution.first(),
             fps = fps.first(),
             bitrateMbps = bitrate.first(),
@@ -219,6 +219,7 @@ class SettingsConfigCache(
             colorMode = colorMode.first(),
             forceRec709Compatibility = forceRec709Compatibility.first(),
             rec709CompatBrightnessCorrection = rec709CompatBrightnessCorrection.first(),
+            recordingEngineMode = recordingEngineMode.first(),
         )
     }
 
@@ -233,8 +234,8 @@ class SettingsConfigCache(
         val video = combine(captureMode, gifRecorderPresetId, recordingOrientation, resolution, fps) { a, b, c, d, e ->
             VideoPart(a, b, c, d, e)
         }
-        val audioFlags = combine(recordAudio, internalAudio, recordSingleAppEnabled, bitrate, audioBitrate) { a, b, c, d, e ->
-            AudioFlagsPart(a, b, c, d, e)
+        val audioFlags = combine(recordAudio, internalAudio, bitrate, audioBitrate) { a, b, c, d ->
+            AudioFlagsPart(a, b, c, d)
         }
         val audio2 = combine(audioSampleRate, audioChannels, audioEncoder, separateMicRecording, videoEncoder) { a, b, c, d, e ->
             Audio2Part(a, b, c, d, e)
@@ -257,12 +258,12 @@ class SettingsConfigCache(
         val tail =
             combine(
                 clipperDurationMinutes,
-                captureMode,
+                recordingEngineMode,
                 colorMode,
                 forceRec709Compatibility,
                 rec709CompatBrightnessCorrection,
-            ) { a, _, c, d, e ->
-                TailPart(a, c, d, e)
+            ) { a, b, c, d, e ->
+                TailPart(a, b, c, d, e)
             }
 
         val groupA = combine(video, audioFlags, audio2, camera, camera2) { v, af, a2, c, c2 ->
@@ -277,6 +278,7 @@ class SettingsConfigCache(
                 t.colorMode,
                 t.forceRec709Compatibility,
                 t.rec709CompatBrightnessCorrection,
+                t.recordingEngineMode,
             )
         }
         combine(groupA, groupB) { a, b ->
@@ -286,7 +288,6 @@ class SettingsConfigCache(
                 recordingOrientation = a.video.recordingOrientation,
                 recordAudio = a.audioFlags.recordAudio,
                 internalAudio = a.audioFlags.internalAudio,
-                recordSingleAppEnabled = a.audioFlags.recordSingleAppEnabled,
                 resolution = a.video.resolution,
                 fps = a.video.fps,
                 bitrateMbps = a.audioFlags.bitrateMbps,
@@ -325,6 +326,7 @@ class SettingsConfigCache(
                 colorMode = b.tailColorMode,
                 forceRec709Compatibility = b.tailForceRec709Compatibility,
                 rec709CompatBrightnessCorrection = b.tailRec709CompatBrightnessCorrection,
+                recordingEngineMode = b.tailRecordingEngineMode,
             )
         }
     }
@@ -339,7 +341,6 @@ class SettingsConfigCache(
     private data class AudioFlagsPart(
         val recordAudio: Boolean,
         val internalAudio: Boolean,
-        val recordSingleAppEnabled: Boolean,
         val bitrateMbps: Float,
         val audioBitrateKbps: Int,
     )
@@ -394,6 +395,7 @@ class SettingsConfigCache(
     )
     private data class TailPart(
         val clipperDurationMinutes: Int,
+        val recordingEngineMode: RecordingEngineMode,
         val colorMode: String,
         val forceRec709Compatibility: Boolean,
         val rec709CompatBrightnessCorrection: String,
@@ -406,6 +408,7 @@ class SettingsConfigCache(
         val tailColorMode: String,
         val tailForceRec709Compatibility: Boolean,
         val tailRec709CompatBrightnessCorrection: String,
+        val tailRecordingEngineMode: RecordingEngineMode,
     )
 
     companion object {

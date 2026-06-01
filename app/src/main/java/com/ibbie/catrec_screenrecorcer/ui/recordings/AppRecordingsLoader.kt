@@ -2,6 +2,7 @@ package com.ibbie.catrec_screenrecorcer.ui.recordings
 
 import android.content.ContentUris
 import android.content.Context
+import android.provider.DocumentsContract
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -11,8 +12,20 @@ import android.util.Log
 import androidx.documentfile.provider.DocumentFile
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import androidx.core.net.toUri
+
+private const val RECOVERY_INDEX_SCAN_INTERVAL_MS = 24L * 60L * 60L * 1000L
+private val lastRecoveryIndexScanMsByScope = ConcurrentHashMap<String, Long>()
+
+internal fun shouldRunCatRecMediaRecoveryIndex(scope: String): Boolean {
+    val now = System.currentTimeMillis()
+    val previous = lastRecoveryIndexScanMsByScope[scope] ?: 0L
+    if (now - previous < RECOVERY_INDEX_SCAN_INTERVAL_MS) return false
+    lastRecoveryIndexScanMsByScope[scope] = now
+    return true
+}
 
 /** Public video collections to query (primary + SD / other volumes where supported). */
 private fun mediaStoreVideoCollections(context: Context): List<Uri> =
@@ -225,9 +238,22 @@ private fun queryVideosInto(
 fun loadAppRecordings(
     context: Context,
     saveLocationUri: String?,
+    refreshIndex: Boolean = false,
 ): List<RecordingEntry> {
+    if (refreshIndex) {
+        ensureCatRecMediaIndexed(context)
+    }
+    val first = queryAppRecordings(context, saveLocationUri)
+    if (first.isNotEmpty() || refreshIndex) return first
+    if (!shouldRunCatRecMediaRecoveryIndex("recordings")) return first
     ensureCatRecMediaIndexed(context)
+    return queryAppRecordings(context, saveLocationUri)
+}
 
+private fun queryAppRecordings(
+    context: Context,
+    saveLocationUri: String?,
+): List<RecordingEntry> {
     val byUri = LinkedHashMap<String, RecordingEntry>()
     val micTimestamps = loadMicFileTimestamps(context)
 
@@ -261,20 +287,33 @@ fun loadAppRecordings(
 
     if (!saveLocationUri.isNullOrEmpty()) {
         try {
-            val existingNames = results.map { it.displayName }.toSet()
-            val safDir = DocumentFile.fromTreeUri(context, saveLocationUri.toUri())
+            val existingUris = results.map { it.uri.toString() }.toMutableSet()
+            val defaultCatRecTree = isDefaultCatRecMoviesTree(saveLocationUri)
+            val mediaStoreNames = if (defaultCatRecTree) results.map { it.displayName }.toSet() else emptySet()
+            val saveTreeUri = saveLocationUri.toUri()
+            val safDir = DocumentFile.fromTreeUri(context, saveTreeUri)
+            val safChildren = safDir?.listFiles().orEmpty()
             val safMicNames =
-                safDir
-                    ?.listFiles()
-                    ?.mapNotNull { it.name }
-                    ?.filter { it.startsWith("Mic_") && it.endsWith(".m4a") }
-                    ?.toSet() ?: emptySet()
-            safDir
-                ?.listFiles()
-                ?.filter { it.name?.endsWith(".mp4") == true && it.name !in existingNames }
-                ?.sortedByDescending { it.lastModified() }
-                ?.forEach { doc ->
+                safChildren
+                    .asSequence()
+                    .filter { it.isSafAudioFile() }
+                    .mapNotNull { it.name }
+                    .filter { it.startsWith("Mic_") && it.endsWith(".m4a", ignoreCase = true) }
+                    .toSet()
+            val existingNameSize =
+                results
+                    .mapNotNull { it.nameSizeDuplicateKey() }
+                    .toMutableSet()
+            safChildren
+                .asSequence()
+                .filter { it.isSafVideoFile(saveTreeUri) }
+                .sortedByDescending { it.lastModified() }
+                .forEach { doc ->
                     val name = doc.name ?: "Unknown"
+                    if (defaultCatRecTree && name in mediaStoreNames) return@forEach
+                    if (!existingUris.add(doc.uri.toString())) return@forEach
+                    val duplicateKey = nameSizeDuplicateKey(name, doc.length())
+                    if (duplicateKey != null && !existingNameSize.add(duplicateKey)) return@forEach
                     val ts = extractTimestampFromVideoName(name)
                     val expectedMic = if (ts != null) "Mic_$ts.m4a" else null
                     results.add(
@@ -294,6 +333,44 @@ fun loadAppRecordings(
     }
 
     return results.sortedByDescending { it.dateMs }
+}
+
+private fun DocumentFile.isSafVideoFile(parentTreeUri: Uri): Boolean {
+    val documentUri = this.uri
+    if (documentUri == parentTreeUri) return false
+    if (isDirectory) return false
+    if (!isFile) return false
+    val name = name ?: return false
+    val mimeType = type?.lowercase()
+    return mimeType?.startsWith("video/") == true || name.endsWith(".mp4", ignoreCase = true)
+}
+
+private fun DocumentFile.isSafAudioFile(): Boolean {
+    if (isDirectory) return false
+    if (!isFile) return false
+    val name = name ?: return false
+    val mimeType = type?.lowercase()
+    return mimeType?.startsWith("audio/") == true || name.endsWith(".m4a", ignoreCase = true)
+}
+
+private fun RecordingEntry.nameSizeDuplicateKey(): String? = nameSizeDuplicateKey(displayName, sizeBytes)
+
+private fun nameSizeDuplicateKey(
+    name: String,
+    sizeBytes: Long,
+): String? {
+    if (name.isBlank() || sizeBytes <= 0L) return null
+    return "${name.lowercase()}|$sizeBytes"
+}
+
+private fun isDefaultCatRecMoviesTree(saveLocationUri: String): Boolean {
+    val treeId =
+        runCatching {
+            DocumentsContract.getTreeDocumentId(saveLocationUri.toUri())
+        }.getOrNull() ?: return false
+    val path = treeId.substringAfter(':', treeId).replace('\\', '/').trim('/')
+    val base = "${Environment.DIRECTORY_MOVIES}/CatRec"
+    return path == base || path.startsWith("$base/")
 }
 
 internal fun extractTimestampFromVideoName(name: String): String? {

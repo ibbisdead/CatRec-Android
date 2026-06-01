@@ -127,14 +127,14 @@ object FaqData {
                         ),
                         FaqItem(
                             id = "clipper_buffer",
-                            question = "How does Clipper (rolling buffer) work?",
+                            question = "How does Clipper work?",
                             answer =
                                 """
-                                **Clipper** keeps a rolling buffer of the last few minutes (length is set in Settings). It uses the screen capture permission continuously while buffering.
+                                **Clipper** keeps the last few minutes ready to save (length is set in Settings). It uses the screen capture permission continuously while active.
 
-                                • Tap **Save clip** to write the buffered segment to a file.
-                                • **Stop** buffering when you’re done to free resources.
-                                • Buffering uses **CPU and storage** similar to recording — if the device struggles, shorten the **Clipper duration** in Settings or use normal Recording mode instead.
+                                • Tap **Save clip** to write the current clip window to a file.
+                                • **Stop Clipper** when you’re done to free resources.
+                                • Clipper uses **CPU and storage** similar to recording — if the device struggles, shorten the **Clipper duration** in Settings or use normal Recording mode instead.
                                 """.trimIndent(),
                         ),
                         FaqItem(

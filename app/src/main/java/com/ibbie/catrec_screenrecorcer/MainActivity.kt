@@ -12,33 +12,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.stringResource
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -119,6 +104,40 @@ class MainActivity : ComponentActivity() {
     @Volatile
     private var pendingImageEditorUri: String? = null
 
+    private val appOpenDecisionLock = Any()
+    private val appOpenDecisionListeners = mutableSetOf<() -> Unit>()
+
+    @Volatile
+    private var appOpenDecisionGeneration: Int = 0
+
+    fun currentAppOpenDecisionGeneration(): Int = appOpenDecisionGeneration
+
+    fun addAppOpenDecisionCompleteListener(listener: () -> Unit): () -> Unit {
+        synchronized(appOpenDecisionLock) {
+            appOpenDecisionListeners.add(listener)
+        }
+        return {
+            synchronized(appOpenDecisionLock) {
+                appOpenDecisionListeners.remove(listener)
+            }
+        }
+    }
+
+    fun notifyAppOpenAdDecisionComplete() {
+        val listeners =
+            synchronized(appOpenDecisionLock) {
+                appOpenDecisionGeneration += 1
+                appOpenDecisionListeners.toList()
+            }
+        listeners.forEach { listener ->
+            try {
+                listener()
+            } catch (e: Exception) {
+                Log.w(TAG, "app-open decision listener failed", e)
+            }
+        }
+    }
+
     /**
      * Returns the pending image-editor URI without clearing it. The NavGraph drain must call
      * this, attempt navigation, and only on success invoke [clearQueuedImageEditorUri] with
@@ -146,17 +165,6 @@ class MainActivity : ComponentActivity() {
         synchronized(pendingImageEditorLock) {
             pendingImageEditorUri = uriStr
         }
-    }
-
-    private enum class ConsentUiState {
-        /** Resolving consent requirement */
-        Checking,
-
-        /** EEA/UK/CH/BR etc.: user must choose before using the app */
-        AwaitingChoice,
-
-        /** Prompt done or not required */
-        Ready,
     }
 
     /**
@@ -223,12 +231,6 @@ class MainActivity : ComponentActivity() {
         consumeRoutedRecordingSuppressionIntent(intent, "onCreate")
         consumeOpenImageEditorIntent(intent)
 
-        val oldHandler = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-            Log.e("CatRecCrash", "Uncaught exception on thread ${t.name}", e)
-            oldHandler?.uncaughtException(t, e)
-        }
-
         try {
             applyStoredLanguage()
 
@@ -243,7 +245,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_LAUNCH)
             }
-            AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isSetupComplete()
+            AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isStartupPermissionFlowComplete()
             if (AppOpenAdManager.firstRunPermissionsComplete) {
                 AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
             } else {
@@ -261,16 +263,8 @@ class MainActivity : ComponentActivity() {
                     personalizedAdsEnabled,
                     adsDisabled,
                 )
-                val consentDone = settingsRepository.analyticsConsentPromptCompleted.first()
-                // Re-apply Crashlytics state from stored consent on every cold start
-                // (only once the user has made an explicit choice — before that,
-                // CatRecApplication.onCreate already armed Crashlytics).
-                if (consentDone) {
-                    applyCrashlyticsCollectionEnabled(analyticsEnabled)
-                }
-                // Anonymous user ID for Crashlytics: before consent, match CatRecApplication (reporting on).
-                val reportingEnabled = if (consentDone) analyticsEnabled else true
-                applicationContext.syncFirebaseUserIdentity(reportingEnabled)
+                applyCrashlyticsCollectionEnabled(analyticsEnabled)
+                applicationContext.syncFirebaseUserIdentity(analyticsEnabled)
                 crashlyticsLog("App cold start")
                 val appLang = settingsRepository.appLanguage.first()
                 val floatingOn = settingsRepository.floatingControls.first()
@@ -284,18 +278,6 @@ class MainActivity : ComponentActivity() {
 
             setContent {
                 val repo = remember { SettingsRepository(applicationContext) }
-                var consentState by remember { mutableStateOf(ConsentUiState.Checking) }
-                val scope = rememberCoroutineScope()
-
-                LaunchedEffect(Unit) {
-                    if (repo.analyticsConsentPromptCompleted.first()) {
-                        consentState = ConsentUiState.Ready
-                        return@LaunchedEffect
-                    }
-                    // First launch for everyone: prompt before using the app.
-                    consentState = ConsentUiState.AwaitingChoice
-                }
-
                 val themeSetting by repo.appTheme.collectAsState(initial = "System")
                 val isDark =
                     when (themeSetting) {
@@ -306,61 +288,18 @@ class MainActivity : ComponentActivity() {
 
                 CatRecScreenRecorderTheme(darkTheme = isDark) {
                     Surface(color = MaterialTheme.colorScheme.background) {
-                        when (consentState) {
-                            ConsentUiState.Checking -> {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxSize()
-                                            .safeDrawingPadding(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CircularProgressIndicator()
-                                }
-                            }
-                            ConsentUiState.AwaitingChoice -> {
-                                AlertDialog(
-                                    onDismissRequest = { },
-                                    title = { Text(stringResource(R.string.consent_analytics_title)) },
-                                    text = { Text(stringResource(R.string.consent_analytics_message)) },
-                                    confirmButton = {
-                                        TextButton(
-                                            onClick = {
-                                                scope.launch {
-                                                    repo.applyRegulatedConsentChoice(true)
-                                                    consentState = ConsentUiState.Ready
-                                                }
-                                            },
-                                        ) { Text(stringResource(R.string.consent_accept)) }
-                                    },
-                                    dismissButton = {
-                                        TextButton(
-                                            onClick = {
-                                                scope.launch {
-                                                    repo.applyRegulatedConsentChoice(false)
-                                                    consentState = ConsentUiState.Ready
-                                                }
-                                            },
-                                        ) { Text(stringResource(R.string.consent_decline)) }
-                                    },
-                                )
-                            }
-                            ConsentUiState.Ready -> {
-                                AppOpenAdOnStartEffect(activity = this@MainActivity)
-                                val configuration = LocalConfiguration.current
-                                val windowContainerSize = LocalWindowInfo.current.containerSize
-                                key(
-                                    windowContainerSize.width,
-                                    windowContainerSize.height,
-                                    configuration.orientation,
-                                    configuration.screenLayout,
-                                    configuration.uiMode,
-                                ) {
-                                    val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
-                                    CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
-                                        CatRecNavGraph()
-                                    }
-                                }
+                        AppOpenAdOnStartEffect(activity = this@MainActivity)
+                        val configuration = LocalConfiguration.current
+                        key(
+                            configuration.screenWidthDp,
+                            configuration.screenHeightDp,
+                            configuration.orientation,
+                            configuration.screenLayout,
+                            configuration.uiMode,
+                        ) {
+                            val windowSizeClass = calculateWindowSizeClass(this@MainActivity)
+                            CompositionLocalProvider(LocalWindowSizeClass provides windowSizeClass) {
+                                CatRecNavGraph()
                             }
                         }
                     }
@@ -369,15 +308,6 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "Error in onCreate", e)
             FirebaseCrashlytics.getInstance().recordException(e)
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        try {
-            unregisterReceiver(finishReceiver)
-        } catch (_: Exception) {
-            // Ignored
         }
     }
 
@@ -413,6 +343,15 @@ class MainActivity : ComponentActivity() {
                 Log.w("MainActivity", "Idle overlay start skipped", e)
                 recordCrashlyticsNonFatal(e, "MainActivity.onResume: idle overlay start failed")
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(finishReceiver)
+        } catch (_: Exception) {
+            // Ignored
         }
     }
 
@@ -465,7 +404,9 @@ private fun AppOpenAdOnStartEffect(activity: ComponentActivity) {
     DisposableEffect(lifecycleOwner, unitId) {
         val runShow = { foregroundEventId: Long ->
             Handler(Looper.getMainLooper()).post {
-                AppOpenAdManager.showIfAvailable(activity, unitId, foregroundEventId)
+                AppOpenAdManager.showIfAvailable(activity, unitId, foregroundEventId) {
+                    (activity as? MainActivity)?.notifyAppOpenAdDecisionComplete()
+                }
             }
         }
         val observer =

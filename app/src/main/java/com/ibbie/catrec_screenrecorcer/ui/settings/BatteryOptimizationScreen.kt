@@ -26,11 +26,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -205,63 +203,6 @@ fun BatteryOptimizationRationaleDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-            }
-        }
-    }
-}
-
-/**
- * Compact inline banner shown in the main recording flow.
- * Appears only when the device is an aggressive-killer OEM and battery is not yet exempted.
- * Tapping "Fix" opens the rationale dialog; "✕" dismisses the banner for the session.
- */
-@Composable
-fun BatteryOptimizationBanner(
-    onFixClick: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val accent = LocalAccentColor.current
-    Surface(
-        color = accent.copy(alpha = 0.13f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Default.BatteryAlert,
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(10.dp))
-            Text(
-                text = stringResource(R.string.battery_opt_banner_text),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(8.dp))
-            TextButton(
-                onClick = onFixClick,
-                colors = ButtonDefaults.textButtonColors(contentColor = accent),
-            ) {
-                Text(
-                    text = stringResource(R.string.battery_opt_banner_fix),
-                    fontWeight = FontWeight.SemiBold,
-                    style = MaterialTheme.typography.labelMedium,
-                )
-            }
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
-            ) {
-                Text("✕", style = MaterialTheme.typography.labelSmall)
             }
         }
     }

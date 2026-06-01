@@ -12,22 +12,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -39,12 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -56,18 +37,17 @@ import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.recording.ProRecordingFeature
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGateResult
-import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
 import com.ibbie.catrec_screenrecorcer.service.AppControlNotification
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
-import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
 import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
-import com.ibbie.catrec_screenrecorcer.utils.PermissionInfo
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
+import com.ibbie.catrec_screenrecorcer.utils.StartupPermission
 import com.ibbie.catrec_screenrecorcer.utils.BatteryOptimizationHelper
 import com.ibbie.catrec_screenrecorcer.ui.settings.BatteryOptimizationRationaleDialog
 import androidx.core.net.toUri
@@ -79,14 +59,35 @@ private enum class RecordingFlowPermissionStep {
     IDLE,
     NOTIFICATIONS,
     MEDIA_LIBRARY,
+    /** READ_MEDIA_AUDIO when API 33+; skipped otherwise (legacy storage step already covers audio on older APIs). */
+    MEDIA_AUDIO,
+    /** BLUETOOTH_CONNECT when API 31+; skipped on older APIs. */
+    NEARBY_DEVICES,
     COMPLETE,
 }
+
+private fun StartupPermission.toRecordingFlowStep(): RecordingFlowPermissionStep =
+    when (this) {
+        StartupPermission.NOTIFICATIONS -> RecordingFlowPermissionStep.NOTIFICATIONS
+        StartupPermission.MEDIA_LIBRARY -> RecordingFlowPermissionStep.MEDIA_LIBRARY
+        StartupPermission.MEDIA_AUDIO -> RecordingFlowPermissionStep.MEDIA_AUDIO
+        StartupPermission.NEARBY_DEVICES -> RecordingFlowPermissionStep.NEARBY_DEVICES
+    }
 
 private enum class PendingProRecordingStart {
     RECORDING,
     BUFFER,
     ROUTED_RECORDING,
     ROUTED_BUFFER,
+}
+
+/** Next step after the runtime RECORD_AUDIO dialog finishes (grant or deny) for host-driven starts. */
+private sealed class PendingAfterRecordAudio {
+    data object FullRecording : PendingAfterRecordAudio()
+
+    data object RollingBuffer : PendingAfterRecordAudio()
+
+    data class PreparedOverlay(val asBuffer: Boolean) : PendingAfterRecordAudio()
 }
 
 /**
@@ -109,11 +110,15 @@ fun FabRecordingBridge(
     val coroutineScope = rememberCoroutineScope()
     val billing = remember(context) { (context.applicationContext as CatRecApplication).billingManager }
     val permissionManager = remember { PermissionManager(context) }
+    val mainActivity = context as? MainActivity
 
     var allPermissionsGranted by remember { mutableStateOf(permissionManager.areAllGranted()) }
-    var missingPermissions by remember { mutableStateOf(permissionManager.getMissingPermissions()) }
-    var showPermissionDialog by remember { mutableStateOf(false) }
     var setupStep by remember { mutableStateOf(RecordingFlowPermissionStep.IDLE) }
+    var startupPermissionFlowActive by remember { mutableStateOf(false) }
+    var pendingStartupPermissionHealthCheck by remember { mutableStateOf(false) }
+    var appOpenAdDecisionGeneration by remember(mainActivity) {
+        mutableStateOf(mainActivity?.currentAppOpenDecisionGeneration() ?: 0)
+    }
 
     var pendingAutoStart by remember { mutableStateOf(false) }
     var pendingAutoBufferStart by remember { mutableStateOf(false) }
@@ -124,6 +129,7 @@ fun FabRecordingBridge(
     var pendingProStart by remember { mutableStateOf<PendingProRecordingStart?>(null) }
     var routedRecordingActionActive by remember { mutableStateOf(false) }
     var routedMediaProjectionPending by remember { mutableStateOf(false) }
+    var pendingAfterRecordAudio by remember { mutableStateOf<PendingAfterRecordAudio?>(null) }
     val adsDisabledForResume by viewModel.adsDisabled.collectAsState(initial = viewModel.adsDisabled.value)
 
     fun clearRoutedRecordingSuppression(trigger: String) {
@@ -197,8 +203,93 @@ fun FabRecordingBridge(
 
     fun refreshPermissions() {
         allPermissionsGranted = permissionManager.areAllGranted()
-        missingPermissions = permissionManager.getMissingPermissions()
         viewModel.updatePermissionsState(allPermissionsGranted)
+    }
+
+    fun canAskAgain(permission: StartupPermission): Boolean {
+        val activity = context as? Activity ?: return true
+        val runtimePermissions = permissionManager.runtimePermissionsForStartupPermission(permission)
+        if (runtimePermissions.isEmpty()) return false
+        return runtimePermissions.any {
+            ActivityCompat.shouldShowRequestPermissionRationale(activity, it)
+        }
+    }
+
+    fun recordStartupPermissionResult(permission: StartupPermission) {
+        permissionManager.recordStartupPermissionDialogResult(
+            permission = permission,
+            granted = permissionManager.isStartupPermissionGranted(permission),
+            canAskAgain = canAskAgain(permission),
+        )
+    }
+
+    fun requestableMissingStartupPermissions(): List<StartupPermission> {
+        permissionManager.clearRequestBlocksForGrantedStartupPermissions()
+        return permissionManager
+            .getMissingStartupPermissions()
+            .filterNot { permissionManager.isStartupPermissionRequestBlocked(it) }
+    }
+
+    fun settleStartupPermissionFlowWithoutDialog() {
+        MobileAdsInitializer.initializeIfReady(context)
+        permissionManager.markStartupPermissionFlowComplete()
+        AppOpenAdManager.firstRunPermissionsComplete = true
+        AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
+        startupPermissionFlowActive = false
+        refreshPermissions()
+    }
+
+    fun runPendingStartupPermissionHealthCheck(trigger: String) {
+        if (!pendingStartupPermissionHealthCheck) return
+        if (!lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
+        if (startupPermissionFlowActive || setupStep != RecordingFlowPermissionStep.IDLE) return
+
+        val flowComplete = permissionManager.isStartupPermissionFlowComplete()
+        val requestableMissing = requestableMissingStartupPermissions()
+        if (flowComplete && requestableMissing.isEmpty()) {
+            pendingStartupPermissionHealthCheck = false
+            AppOpenAdManager.firstRunPermissionsComplete = true
+            AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
+            MobileAdsInitializer.initializeIfReady(context)
+            refreshPermissions()
+            return
+        }
+
+        if (requestableMissing.isEmpty()) {
+            pendingStartupPermissionHealthCheck = false
+            settleStartupPermissionFlowWithoutDialog()
+            return
+        }
+
+        pendingStartupPermissionHealthCheck = false
+        startupPermissionFlowActive = true
+        Log.d(
+            RECORDING_FLOW_HOST_LOG,
+            "startup permission health check launching trigger=$trigger missing=${requestableMissing.joinToString(",")}",
+        )
+        AppOpenAdManager.firstRunPermissionsComplete = false
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
+        refreshPermissions()
+        setupStep = requestableMissing.first().toRecordingFlowStep()
+    }
+
+    fun queueStartupPermissionHealthCheck(trigger: String) {
+        pendingStartupPermissionHealthCheck = true
+        runPendingStartupPermissionHealthCheck(trigger)
+    }
+
+    DisposableEffect(mainActivity) {
+        val removeListener =
+            mainActivity?.addAppOpenDecisionCompleteListener {
+                appOpenAdDecisionGeneration = mainActivity.currentAppOpenDecisionGeneration()
+            }
+        onDispose { removeListener?.invoke() }
+    }
+
+    LaunchedEffect(appOpenAdDecisionGeneration) {
+        if (appOpenAdDecisionGeneration > 0) {
+            queueStartupPermissionHealthCheck("app_open_decision")
+        }
     }
 
     val overlayPermissionLauncher =
@@ -213,6 +304,27 @@ fun FabRecordingBridge(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions(),
         ) {
+            recordStartupPermissionResult(StartupPermission.MEDIA_LIBRARY)
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            MobileAdsInitializer.initializeIfReady(context)
+            setupStep = RecordingFlowPermissionStep.MEDIA_AUDIO
+        }
+
+    val mediaAudioReadPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) {
+            recordStartupPermissionResult(StartupPermission.MEDIA_AUDIO)
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            MobileAdsInitializer.initializeIfReady(context)
+            setupStep = RecordingFlowPermissionStep.NEARBY_DEVICES
+        }
+
+    val nearbyDevicesPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) {
+            recordStartupPermissionResult(StartupPermission.NEARBY_DEVICES)
             AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
             MobileAdsInitializer.initializeIfReady(context)
             setupStep = RecordingFlowPermissionStep.COMPLETE
@@ -226,20 +338,13 @@ fun FabRecordingBridge(
             permissionManager.saveCameraGranted(granted)
         }
 
-    val audioPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { granted ->
-            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-            permissionManager.saveAudioGranted(granted)
-        }
-
     val notificationPermissionLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission(),
         ) { granted ->
-            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
             permissionManager.saveNotificationGranted(granted)
+            recordStartupPermissionResult(StartupPermission.NOTIFICATIONS)
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
             setupStep = RecordingFlowPermissionStep.MEDIA_LIBRARY
         }
 
@@ -247,7 +352,8 @@ fun FabRecordingBridge(
         when (setupStep) {
             RecordingFlowPermissionStep.NOTIFICATIONS -> {
                 if (Build.VERSION.SDK_INT >= 33 &&
-                    !permissionManager.isNotificationGranted()
+                    !permissionManager.isNotificationGranted() &&
+                    !permissionManager.isStartupPermissionRequestBlocked(StartupPermission.NOTIFICATIONS)
                 ) {
                     AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -258,26 +364,53 @@ fun FabRecordingBridge(
 
             RecordingFlowPermissionStep.MEDIA_LIBRARY -> {
                 val mediaPerms = permissionManager.mediaLibraryReadPermissions()
-                // it is optional (denial is silently accepted — no core feature depends on it).
+                // Optional (denial is accepted — recordings tab may be limited).
                 val needsMedia = !permissionManager.isMediaLibraryReadGranted()
-                if (!needsMedia) {
-                    MobileAdsInitializer.initializeIfReady(context)
-                    setupStep = RecordingFlowPermissionStep.COMPLETE
+                if (!needsMedia ||
+                    permissionManager.isStartupPermissionRequestBlocked(StartupPermission.MEDIA_LIBRARY)
+                ) {
+                    setupStep = RecordingFlowPermissionStep.MEDIA_AUDIO
                 } else {
                     AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
                     mediaLibraryPermissionLauncher.launch(mediaPerms)
                 }
             }
 
+            RecordingFlowPermissionStep.MEDIA_AUDIO -> {
+                if (Build.VERSION.SDK_INT >= 33 &&
+                    !permissionManager.isMediaAudioReadGranted() &&
+                    !permissionManager.isStartupPermissionRequestBlocked(StartupPermission.MEDIA_AUDIO)
+                ) {
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                    mediaAudioReadPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
+                } else {
+                    setupStep = RecordingFlowPermissionStep.NEARBY_DEVICES
+                }
+            }
+
+            RecordingFlowPermissionStep.NEARBY_DEVICES -> {
+                if (Build.VERSION.SDK_INT >= 31 &&
+                    !permissionManager.isBluetoothConnectGranted() &&
+                    !permissionManager.isStartupPermissionRequestBlocked(StartupPermission.NEARBY_DEVICES)
+                ) {
+                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                    nearbyDevicesPermissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT)
+                } else {
+                    setupStep = RecordingFlowPermissionStep.COMPLETE
+                }
+            }
+
             RecordingFlowPermissionStep.COMPLETE -> {
                 MobileAdsInitializer.initializeIfReady(context)
-                permissionManager.markSetupComplete()
+                permissionManager.markStartupPermissionFlowComplete()
                 AppOpenAdManager.firstRunPermissionsComplete = true
                 AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
                 refreshPermissions()
                 if (routedRecordingActionActive && !pendingAutoStart && !pendingAutoBufferStart && pendingProStart == null) {
                     clearRoutedRecordingSuppression("permission_setup_complete_no_pending_start")
                 }
+                pendingStartupPermissionHealthCheck = false
+                startupPermissionFlowActive = false
                 setupStep = RecordingFlowPermissionStep.IDLE
             }
 
@@ -286,15 +419,13 @@ fun FabRecordingBridge(
     }
 
     LaunchedEffect(Unit) {
-        if (!permissionManager.isSetupComplete() || !permissionManager.areAllGranted()) {
-            AppOpenAdManager.firstRunPermissionsComplete = false
-            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
-            setupStep = RecordingFlowPermissionStep.NOTIFICATIONS
-        } else {
-            AppOpenAdManager.firstRunPermissionsComplete = true
+        refreshPermissions()
+        AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isStartupPermissionFlowComplete()
+        if (AppOpenAdManager.firstRunPermissionsComplete) {
             AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
             MobileAdsInitializer.initializeIfReady(context)
-            refreshPermissions()
+        } else {
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
         }
     }
 
@@ -321,15 +452,18 @@ fun FabRecordingBridge(
             LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
                     allPermissionsGranted = permissionManager.areAllGranted()
-                    missingPermissions = permissionManager.getMissingPermissions()
                     viewModel.updatePermissionsState(allPermissionsGranted)
-                    AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isSetupComplete()
+                    AppOpenAdManager.firstRunPermissionsComplete =
+                        permissionManager.isStartupPermissionFlowComplete() &&
+                        !startupPermissionFlowActive &&
+                        setupStep == RecordingFlowPermissionStep.IDLE
                     // Retry after returning from Settings (e.g. user enabled app notifications).
                     AppControlNotification.refresh(context.applicationContext)
 
                     val activity = context as? Activity
                     consumeRoutedRecordingStart(activity)
                     consumeScreenshotExtra(activity)
+                    runPendingStartupPermissionHealthCheck("on_resume")
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -403,23 +537,9 @@ fun FabRecordingBridge(
             }
         }
 
-    /** Runs after the user dismisses the API 31+ BLUETOOTH_CONNECT sheet (grant or deny). */
-    var pendingBluetoothContinuation by remember { mutableStateOf<(() -> Unit)?>(null) }
-
-    val bluetoothConnectLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) {
-            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-            MobileAdsInitializer.initializeIfReady(context)
-            pendingBluetoothContinuation?.invoke()
-            pendingBluetoothContinuation = null
-        }
-
     /**
-     * API 31+: [BLUETOOTH_CONNECT] is runtime; GMS/AdMob may touch the stack before capture.
-     * If already granted (or API 30 or below), runs [action] immediately; otherwise shows the system
-     * picker once, then continues (recording is not blocked if the user taps Deny).
+     * Bluetooth is requested once in [RecordingFlowPermissionStep.NEARBY_DEVICES] during initial setup.
+     * Prompting again here would duplicate dialogs; recording does not depend on Bluetooth.
      */
     fun gateBluetoothAndRun(action: () -> Unit) {
         action()
@@ -433,7 +553,6 @@ fun FabRecordingBridge(
             startMediaProjection(
                 context,
                 mediaProjectionLauncher,
-                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
             )
         }
 
@@ -450,40 +569,12 @@ fun FabRecordingBridge(
                 startMediaProjection(
                     context,
                     mediaProjectionLauncher,
-                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
                 )
             }
         } else {
             startMediaProjection(
                 context,
                 mediaProjectionLauncher,
-                viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-            )
-        }
-    }
-
-    fun checkAudioAndProceed() {
-        val audioSnap = viewModel.recordingUiSnapshot.value
-        if ((audioSnap.recordAudio || audioSnap.internalAudio) && !permissionManager.isAudioGranted()) {
-            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        } else {
-            checkStorageAndProceed()
-        }
-    }
-
-    fun continueRecordingAfterProGate() {
-        gateBluetoothAndRun { checkAudioAndProceed() }
-    }
-
-    fun continueBufferAfterProGate() {
-        gateBluetoothAndRun {
-            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
-            bufferProjectionLauncher.launch(
-                MediaProjectionIntents.createScreenCaptureIntent(
-                    context,
-                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
-                ),
             )
         }
     }
@@ -506,21 +597,104 @@ fun FabRecordingBridge(
         clearRoutedRecordingSuppression("prepared_service_start_requested")
     }
 
+    fun launchBufferProjectionForFlow() {
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
+        bufferProjectionLauncher.launch(
+            MediaProjectionIntents.createScreenCaptureIntent(context),
+        )
+    }
+
+    fun resumeAfterRecordAudioPermission(granted: Boolean) {
+        val pending = pendingAfterRecordAudio ?: return
+        pendingAfterRecordAudio = null
+        if (!granted) {
+            Toast
+                .makeText(
+                    context,
+                    context.getString(R.string.toast_audio_permission_required_recording_not_started),
+                    Toast.LENGTH_LONG,
+                ).show()
+            clearRoutedRecordingSuppression("record_audio_denied")
+            return
+        }
+        when (pending) {
+            PendingAfterRecordAudio.FullRecording -> checkStorageAndProceed()
+            PendingAfterRecordAudio.RollingBuffer -> launchBufferProjectionForFlow()
+            is PendingAfterRecordAudio.PreparedOverlay ->
+                startPreparedServiceFromRoutedGate(pending.asBuffer)
+        }
+    }
+
+    val audioPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            permissionManager.saveAudioGranted(granted)
+            resumeAfterRecordAudioPermission(granted)
+        }
+
+    fun checkAudioAndProceed() {
+        val audioSnap = viewModel.recordingUiSnapshot.value
+        if ((audioSnap.recordAudio || audioSnap.internalAudio) && !permissionManager.isAudioGranted()) {
+            pendingAfterRecordAudio = PendingAfterRecordAudio.FullRecording
+            AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+            audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        } else {
+            pendingAfterRecordAudio = null
+            checkStorageAndProceed()
+        }
+    }
+
+    fun continueRecordingAfterProGate() {
+        gateBluetoothAndRun { checkAudioAndProceed() }
+    }
+
+    fun continueBufferAfterProGate() {
+        gateBluetoothAndRun {
+            val audioSnap = viewModel.recordingUiSnapshot.value
+            if ((audioSnap.recordAudio || audioSnap.internalAudio) && !permissionManager.isAudioGranted()) {
+                pendingAfterRecordAudio = PendingAfterRecordAudio.RollingBuffer
+                AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            } else {
+                pendingAfterRecordAudio = null
+                launchBufferProjectionForFlow()
+            }
+        }
+    }
+
     fun continueStartAfterProGate(pendingStart: PendingProRecordingStart) {
         when (pendingStart) {
             PendingProRecordingStart.RECORDING -> continueRecordingAfterProGate()
             PendingProRecordingStart.BUFFER -> continueBufferAfterProGate()
             PendingProRecordingStart.ROUTED_RECORDING -> {
-                if (viewModel.recordingUiSnapshot.value.isPrepared) {
-                    startPreparedServiceFromRoutedGate(asBuffer = false)
+                val snap = viewModel.recordingUiSnapshot.value
+                if (snap.isPrepared) {
+                    if ((snap.recordAudio || snap.internalAudio) && !permissionManager.isAudioGranted()) {
+                        pendingAfterRecordAudio = PendingAfterRecordAudio.PreparedOverlay(asBuffer = false)
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        pendingAfterRecordAudio = null
+                        startPreparedServiceFromRoutedGate(asBuffer = false)
+                    }
                 } else {
                     routedMediaProjectionPending = true
                     continueRecordingAfterProGate()
                 }
             }
             PendingProRecordingStart.ROUTED_BUFFER -> {
-                if (viewModel.recordingUiSnapshot.value.isPrepared) {
-                    startPreparedServiceFromRoutedGate(asBuffer = true)
+                val snap = viewModel.recordingUiSnapshot.value
+                if (snap.isPrepared) {
+                    if ((snap.recordAudio || snap.internalAudio) && !permissionManager.isAudioGranted()) {
+                        pendingAfterRecordAudio = PendingAfterRecordAudio.PreparedOverlay(asBuffer = true)
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        pendingAfterRecordAudio = null
+                        startPreparedServiceFromRoutedGate(asBuffer = true)
+                    }
                 } else {
                     routedMediaProjectionPending = true
                     continueBufferAfterProGate()
@@ -554,7 +728,7 @@ fun FabRecordingBridge(
             }
         Log.d(RECORDING_FLOW_HOST_LOG, "recording start requested source=$source")
         if (!allPermissionsGranted) {
-            showPermissionDialog = true
+            queueStartupPermissionHealthCheck("recording_start_missing_startup_permission")
         } else {
             coroutineScope.launch {
                 when (val gate = viewModel.checkRecordingProGate(source)) {
@@ -579,7 +753,7 @@ fun FabRecordingBridge(
             }
         Log.d(RECORDING_FLOW_HOST_LOG, "recording start requested source=$source")
         if (!allPermissionsGranted) {
-            showPermissionDialog = true
+            queueStartupPermissionHealthCheck("buffer_start_missing_startup_permission")
         } else {
             coroutineScope.launch {
                 when (val gate = viewModel.checkBufferProGate(source)) {
@@ -629,23 +803,9 @@ fun FabRecordingBridge(
                 startMediaProjection(
                     context,
                     screenshotProjectionLauncher,
-                    viewModel.recordingUiSnapshot.value.recordSingleAppEnabled,
                 )
             }
         }
-    }
-
-    if (showPermissionDialog && missingPermissions.isNotEmpty()) {
-        PermissionRationaleDialog(
-            missingPermissions = missingPermissions,
-            onGrantNow = {
-                setupStep = RecordingFlowPermissionStep.NOTIFICATIONS
-            },
-            onDismiss = {
-                showPermissionDialog = false
-                clearRoutedRecordingSuppression("permission_dialog_dismissed")
-            },
-        )
     }
 
     if (showBatteryRationaleDialog) {
@@ -709,74 +869,16 @@ fun FabRecordingBridge(
 private fun startMediaProjection(
     context: Context,
     launcher: androidx.activity.result.ActivityResultLauncher<Intent>,
-    recordSingleAppEnabled: Boolean,
 ) {
     AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.MEDIA_PROJECTION)
-    launcher.launch(MediaProjectionIntents.createScreenCaptureIntent(context, recordSingleAppEnabled))
+    launcher.launch(MediaProjectionIntents.createScreenCaptureIntent(context))
 }
 
 private fun ProRecordingFeature.toUiProFeature(): ProFeature =
     when (this) {
-        ProRecordingFeature.RECORDING_120_FPS -> ProFeature.RECORDING_120_FPS
+        ProRecordingFeature.RECORDING_HIGH_FPS -> ProFeature.RECORDING_HIGH_FPS
+        ProRecordingFeature.HIGH_BITRATE -> ProFeature.HIGH_BITRATE
         ProRecordingFeature.SEPARATE_AUDIO_TRACKS -> ProFeature.SEPARATE_AUDIO_TRACKS
         ProRecordingFeature.CAMERA_OVERLAY -> ProFeature.CAMERA_OVERLAY
         ProRecordingFeature.WATERMARK -> ProFeature.WATERMARK
     }
-
-@Composable
-private fun PermissionRationaleDialog(
-    missingPermissions: List<PermissionInfo>,
-    onGrantNow: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val accent = LocalAccentColor.current
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Default.Lock, contentDescription = null, tint = accent) },
-        title = { Text(stringResource(R.string.perm_dialog_title)) },
-        text = {
-            Column {
-                Text(
-                    text = stringResource(R.string.perm_rationale_intro),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                missingPermissions.forEach { perm ->
-                    Row(
-                        modifier = Modifier.padding(bottom = 12.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = accent,
-                            modifier =
-                                Modifier
-                                    .size(18.dp)
-                                    .padding(top = 1.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = perm.name,
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = perm.rationale,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onGrantNow) { Text(stringResource(R.string.action_grant_now)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_not_now)) }
-        },
-    )
-}

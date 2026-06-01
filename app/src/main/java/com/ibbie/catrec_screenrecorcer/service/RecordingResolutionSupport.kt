@@ -1,11 +1,16 @@
 package com.ibbie.catrec_screenrecorcer.service
 
 import android.content.Context
+import android.hardware.display.DisplayManager
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Log
+import android.view.Display
+import android.view.Surface
 import android.view.WindowManager
+import com.ibbie.catrec_screenrecorcer.BuildConfig
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -28,9 +33,21 @@ internal enum class RecordingResolutionPresetKind {
     TIER_480,
 }
 
+/** Why the native preset's recording size differs from the panel-native label. */
+internal enum class NativeRecordingSizeNoteKind {
+    DISPLAY_SCALING,
+    STABILITY,
+    DISPLAY_SCALING_AND_STABILITY,
+}
+
 internal data class RecordingResolutionPreset(
     val kind: RecordingResolutionPresetKind,
+    /** Label size: panel-native for [RecordingResolutionPresetKind.NATIVE]; tier target otherwise. */
     val size: RecordingResolutionSize,
+    /** Final encoder-safe capture size when it differs from [size] (typically native only). */
+    val encoderCaptureSize: RecordingResolutionSize? = null,
+    /** Explains [encoderCaptureSize] vs panel label for [RecordingResolutionPresetKind.NATIVE]. */
+    val nativeRecordingNoteKind: NativeRecordingSizeNoteKind? = null,
 ) {
     val setting: String
         get() =
@@ -39,6 +56,26 @@ internal data class RecordingResolutionPreset(
             } else {
                 size.setting
             }
+
+    /** Size shown in preset lists for non-native tiers (encoder output). */
+    val displayCaptureSize: RecordingResolutionSize
+        get() = encoderCaptureSize ?: size
+}
+
+/** Full sizing pipeline snapshot for debug logging at recording start. */
+internal data class CaptureSizingTrace(
+    val panelNative: RecordingResolutionSize,
+    val logicalDisplay: RecordingResolutionSize,
+    val requested: RecordingResolutionSize,
+    val afterVirtualDisplayClamp: RecordingResolutionSize,
+    val finalEncoder: RecordingResolutionSize,
+    val recordingOrientation: String,
+    val displayRotation: Int,
+) {
+    fun toLogLine(): String =
+        "CaptureSizing panel=${panelNative.setting} logical=${logicalDisplay.setting} " +
+            "requested=${requested.setting} vdClamp=${afterVirtualDisplayClamp.setting} " +
+            "final=${finalEncoder.setting} orientation=$recordingOrientation rotation=$displayRotation"
 }
 
 internal sealed class RecordingResolutionValidation {
@@ -57,6 +94,8 @@ internal enum class RecordingResolutionInvalidReason {
 }
 
 internal object RecordingResolutionSupport {
+    private const val LOG_TAG = "RecordingResolution"
+
     const val NATIVE_SETTING = "Native"
     const val CUSTOM_OPTION = "__custom_resolution__"
 
@@ -95,10 +134,129 @@ internal object RecordingResolutionSupport {
     }
 
     /**
-     * Downscales [width]×[height] (preserving aspect) when they exceed [MAX_VIRTUAL_DISPLAY_LONG_EDGE]
-     * or [MAX_VIRTUAL_DISPLAY_PIXELS]. No-op when already within bounds.
+     * Panel / current physical display-mode resolution for the Settings **Native** label only.
+     * Uses [Display.Mode] physical dimensions (API 23+) oriented by [Display.getRotation].
+     * Not VirtualDisplay-clamped and not encoder-aligned.
      */
-    fun clampCaptureForVirtualDisplay(
+    fun getPanelNativeResolution(
+        context: Context,
+        recordingOrientation: String,
+    ): RecordingResolutionSize {
+        val display = defaultDisplay(context)
+        val physical = readPhysicalModeSizePx(display)
+        val rotationOriented =
+            physical?.let { (w, h) ->
+                orientPhysicalByRotation(w, h, displayRotation(display))
+            } ?: readLogicalMetricsSizePx(display)
+        return applyRecordingOrientationPreference(rotationOriented, recordingOrientation)
+    }
+
+    /**
+     * Current logical display size (rotation-aware [Display.getRealMetrics]).
+     * Basis for native **capture** requests and capture-resize listeners.
+     */
+    fun getCurrentLogicalDisplayResolution(
+        context: Context,
+        recordingOrientation: String,
+    ): RecordingResolutionSize {
+        val display = defaultDisplay(context)
+        val logical = readLogicalMetricsSizePx(display)
+        return applyRecordingOrientationPreference(logical, recordingOrientation)
+    }
+
+    /**
+     * Requested capture size from a saved preset string — no VirtualDisplay clamp or encoder alignment.
+     */
+    fun resolveRequestedCaptureSize(
+        context: Context,
+        resolution: String,
+        recordingOrientation: String,
+    ): RecordingResolutionSize {
+        val logicalBase = getCurrentLogicalDisplayResolution(context, recordingOrientation)
+        val aspectRatio = logicalBase.width.toFloat() / logicalBase.height.toFloat()
+        val explicitSize = parseSize(resolution)
+        return when {
+            resolution == NATIVE_SETTING -> logicalBase
+            explicitSize != null -> explicitSize
+            else -> {
+                val targetHeight =
+                    when {
+                        resolution.contains("2160") || resolution.contains("4K") -> 2160
+                        resolution.contains("1440") || resolution.contains("2K") -> 1440
+                        resolution.contains("1080") -> 1080
+                        resolution.contains("720") -> 720
+                        resolution.contains("480") -> 480
+                        resolution.contains("360") -> 360
+                        else -> logicalBase.height
+                    }
+                val targetWidth = (targetHeight * aspectRatio).roundToInt()
+                RecordingResolutionSize(targetWidth, targetHeight)
+            }
+        }
+    }
+
+    /**
+     * Single source of truth for final VirtualDisplay / [MediaCodec] capture dimensions.
+     * Applies VirtualDisplay safety clamp then encoder floor alignment.
+     */
+    fun getEncoderCaptureResolution(
+        requestedSize: RecordingResolutionSize,
+        videoEncoder: String,
+        fps: Int,
+    ): RecordingResolutionSize {
+        val clamped = clampForVirtualDisplaySafety(requestedSize.width, requestedSize.height)
+        val caps = encoderVideoCapabilities(videoEncoder, clamped.width, clamped.height, fps)
+        val widthAlignment = caps?.widthAlignment?.coerceAtLeast(2) ?: DEFAULT_ALIGNMENT
+        val heightAlignment = caps?.heightAlignment?.coerceAtLeast(2) ?: DEFAULT_ALIGNMENT
+        return alignSize(clamped.width, clamped.height, widthAlignment, heightAlignment)
+    }
+
+    fun getEncoderCaptureResolutionFromSetting(
+        context: Context,
+        resolutionSetting: String,
+        recordingOrientation: String,
+        videoEncoder: String,
+        fps: Int,
+    ): RecordingResolutionSize {
+        val requested =
+            resolveRequestedCaptureSize(
+                context = context,
+                resolution = resolutionSetting,
+                recordingOrientation = recordingOrientation,
+            )
+        return getEncoderCaptureResolution(requested, videoEncoder, fps)
+    }
+
+    fun buildCaptureSizingTrace(
+        context: Context,
+        resolutionSetting: String,
+        recordingOrientation: String,
+        videoEncoder: String,
+        fps: Int,
+    ): CaptureSizingTrace {
+        val display = defaultDisplay(context)
+        val panelNative = getPanelNativeResolution(context, recordingOrientation)
+        val logicalDisplay = getCurrentLogicalDisplayResolution(context, recordingOrientation)
+        val requested =
+            resolveRequestedCaptureSize(context, resolutionSetting, recordingOrientation)
+        val afterClamp = clampForVirtualDisplaySafety(requested.width, requested.height)
+        val finalEncoder = getEncoderCaptureResolution(requested, videoEncoder, fps)
+        return CaptureSizingTrace(
+            panelNative = panelNative,
+            logicalDisplay = logicalDisplay,
+            requested = requested,
+            afterVirtualDisplayClamp = afterClamp,
+            finalEncoder = finalEncoder,
+            recordingOrientation = recordingOrientation,
+            displayRotation = displayRotation(display),
+        )
+    }
+
+    /**
+     * Downscales [width]×[height] (preserving aspect) when they exceed VirtualDisplay safety caps.
+     * Does **not** apply encoder alignment — use [getEncoderCaptureResolution] for the full pipeline.
+     */
+    fun clampForVirtualDisplaySafety(
         width: Int,
         height: Int,
     ): RecordingResolutionSize {
@@ -116,34 +274,11 @@ internal object RecordingResolutionSupport {
             scale = min(scale, sqrt(pixelCap / pixels))
         }
         if (scale >= 1.0) {
-            return RecordingResolutionSize(
-                alignFloor(wIn, DEFAULT_ALIGNMENT),
-                alignFloor(hIn, DEFAULT_ALIGNMENT),
-            )
+            return RecordingResolutionSize(wIn, hIn)
         }
         val wOut = (wIn * scale).roundToInt().coerceAtLeast(MIN_DIMENSION)
         val hOut = (hIn * scale).roundToInt().coerceAtLeast(MIN_DIMENSION)
-        return RecordingResolutionSize(
-            alignFloor(wOut, DEFAULT_ALIGNMENT),
-            alignFloor(hOut, DEFAULT_ALIGNMENT),
-        )
-    }
-
-    fun displaySizeForRecording(
-        context: Context,
-        recordingOrientation: String,
-    ): RecordingResolutionSize {
-        val (rawWidth, rawHeight) = currentDisplaySizePx(context)
-        val (width, height) =
-            when (recordingOrientation) {
-                "Portrait" -> minOf(rawWidth, rawHeight) to maxOf(rawWidth, rawHeight)
-                "Landscape" -> maxOf(rawWidth, rawHeight) to minOf(rawWidth, rawHeight)
-                else -> rawWidth to rawHeight
-            }
-        return RecordingResolutionSize(
-            alignFloor(width, DEFAULT_ALIGNMENT),
-            alignFloor(height, DEFAULT_ALIGNMENT),
-        )
+        return RecordingResolutionSize(wOut, hOut)
     }
 
     fun generatePresets(
@@ -153,14 +288,38 @@ internal object RecordingResolutionSupport {
         fps: Int,
         lowEndDeviceProfile: Boolean,
     ): List<RecordingResolutionPreset> {
-        val base = displaySizeForRecording(context, recordingOrientation)
-        val caps = encoderVideoCapabilities(videoEncoder, base.width, base.height, fps)
+        val panelNative = getPanelNativeResolution(context, recordingOrientation)
+        val logical = getCurrentLogicalDisplayResolution(context, recordingOrientation)
+        val afterVdClamp = clampForVirtualDisplaySafety(logical.width, logical.height)
+        val nativeEncoder =
+            getEncoderCaptureResolutionFromSetting(
+                context = context,
+                resolutionSetting = NATIVE_SETTING,
+                recordingOrientation = recordingOrientation,
+                videoEncoder = videoEncoder,
+                fps = fps,
+            )
+        val nativeNote =
+            classifyNativeRecordingNote(
+                panelNative = panelNative,
+                logical = logical,
+                afterVdClamp = afterVdClamp,
+                finalEncoder = nativeEncoder,
+            )
+        val presets =
+            mutableListOf(
+                RecordingResolutionPreset(
+                    kind = RecordingResolutionPresetKind.NATIVE,
+                    size = panelNative,
+                    encoderCaptureSize = nativeNote?.let { nativeEncoder },
+                    nativeRecordingNoteKind = nativeNote,
+                ),
+            )
+
+        val caps = encoderVideoCapabilities(videoEncoder, logical.width, logical.height, fps)
         val widthAlignment = caps?.widthAlignment?.coerceAtLeast(2) ?: DEFAULT_ALIGNMENT
         val heightAlignment = caps?.heightAlignment?.coerceAtLeast(2) ?: DEFAULT_ALIGNMENT
-        val native = alignSize(base.width, base.height, widthAlignment, heightAlignment)
-        val presets = mutableListOf(RecordingResolutionPreset(RecordingResolutionPresetKind.NATIVE, native))
-
-        val aspect = native.width.toFloat() / native.height.toFloat()
+        val aspect = logical.width.toFloat() / logical.height.toFloat()
         val tiers =
             listOf(
                 QualityTier(RecordingResolutionPresetKind.UHD_4K, longEdge = 3840, shortEdge = 2160),
@@ -171,14 +330,21 @@ internal object RecordingResolutionSupport {
             )
 
         for (tier in tiers) {
-            val generated = sizeForTier(tier, aspect, native.width >= native.height)
-            val aligned = alignSize(generated.width, generated.height, widthAlignment, heightAlignment)
-            if (isWithinAppSafeMaximum(aligned) &&
-                !isTooLargeForProfile(aligned, lowEndDeviceProfile) &&
-                supportsEncoderSize(aligned, caps, fps) &&
-                presets.none { existing -> tooClose(existing.size, aligned) }
+            val requested = sizeForTier(tier, aspect, logical.width >= logical.height)
+            val finalCapture = getEncoderCaptureResolution(requested, videoEncoder, fps)
+            val alignedLabel = alignSize(requested.width, requested.height, widthAlignment, heightAlignment)
+            if (isWithinAppSafeMaximum(finalCapture) &&
+                !isTooLargeForProfile(finalCapture, lowEndDeviceProfile) &&
+                supportsEncoderSize(finalCapture, caps, fps) &&
+                presets.none { existing -> tooClose(existing.size, alignedLabel) }
             ) {
-                presets += RecordingResolutionPreset(tier.kind, aligned)
+                presets +=
+                    RecordingResolutionPreset(
+                        kind = tier.kind,
+                        size = alignedLabel,
+                        encoderCaptureSize =
+                            if (finalCapture.setting != alignedLabel.setting) finalCapture else null,
+                    )
             }
         }
 
@@ -216,26 +382,105 @@ internal object RecordingResolutionSupport {
         return RecordingResolutionValidation.Valid(size)
     }
 
+    fun logCaptureSizingIfDebug(
+        trace: CaptureSizingTrace,
+        deviceModel: String,
+        apiLevel: Int,
+    ) {
+        if (!BuildConfig.DEBUG) return
+        Log.d(
+            LOG_TAG,
+            "${trace.toLogLine()} api=$apiLevel model=$deviceModel",
+        )
+    }
+
+    // ── Pure helpers (unit-testable) ───────────────────────────────────────────
+
+    internal fun orientPhysicalByRotation(
+        physicalWidth: Int,
+        physicalHeight: Int,
+        rotation: Int,
+    ): RecordingResolutionSize {
+        val rotated =
+            rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270
+        return if (rotated) {
+            RecordingResolutionSize(physicalHeight, physicalWidth)
+        } else {
+            RecordingResolutionSize(physicalWidth, physicalHeight)
+        }
+    }
+
+    internal fun applyRecordingOrientationPreference(
+        size: RecordingResolutionSize,
+        recordingOrientation: String,
+    ): RecordingResolutionSize {
+        val (width, height) =
+            when (recordingOrientation) {
+                "Portrait" -> minOf(size.width, size.height) to maxOf(size.width, size.height)
+                "Landscape" -> maxOf(size.width, size.height) to minOf(size.width, size.height)
+                else -> size.width to size.height
+            }
+        return RecordingResolutionSize(width, height)
+    }
+
+    internal fun classifyNativeRecordingNote(
+        panelNative: RecordingResolutionSize,
+        logical: RecordingResolutionSize,
+        afterVdClamp: RecordingResolutionSize,
+        finalEncoder: RecordingResolutionSize,
+    ): NativeRecordingSizeNoteKind? {
+        if (finalEncoder.setting == panelNative.setting) return null
+        val scaling = panelNative.setting != logical.setting
+        val vdClamp = afterVdClamp.setting != logical.setting
+        return when {
+            scaling && vdClamp -> NativeRecordingSizeNoteKind.DISPLAY_SCALING_AND_STABILITY
+            scaling -> NativeRecordingSizeNoteKind.DISPLAY_SCALING
+            else -> NativeRecordingSizeNoteKind.STABILITY
+        }
+    }
+
+    // ── Display reads ────────────────────────────────────────────────────────
+
+    private fun defaultDisplay(context: Context): Display =
+        (context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)
+            ?.getDisplay(Display.DEFAULT_DISPLAY)
+            ?: run {
+                val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                @Suppress("DEPRECATION")
+                wm.defaultDisplay
+            }
+
+    private fun displayRotation(display: Display): Int {
+        @Suppress("DEPRECATION")
+        return display.rotation
+    }
+
+    /**
+     * Current active mode physical pixel size (natural orientation, not rotation-adjusted).
+     * [Display.getSupportedModes] is intentionally not scanned: the active [Display.mode] reflects
+     * the panel mode the user is in; picking a higher mode could mis-label refresh-rate variants.
+     */
+    private fun readPhysicalModeSizePx(display: Display): Pair<Int, Int>? {
+        if (Build.VERSION.SDK_INT < 23) return null
+        val mode = display.mode ?: return null
+        val w = mode.physicalWidth
+        val h = mode.physicalHeight
+        if (w <= 0 || h <= 0) return null
+        return w to h
+    }
+
+    private fun readLogicalMetricsSizePx(display: Display): RecordingResolutionSize {
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        display.getRealMetrics(metrics)
+        return RecordingResolutionSize(metrics.widthPixels, metrics.heightPixels)
+    }
+
     private data class QualityTier(
         val kind: RecordingResolutionPresetKind,
         val longEdge: Int,
         val shortEdge: Int,
     )
-
-    private fun currentDisplaySizePx(context: Context): Pair<Int, Int> {
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        return if (Build.VERSION.SDK_INT >= 30) {
-            val bounds = wm.currentWindowMetrics.bounds
-            bounds.width() to bounds.height()
-        } else {
-            @Suppress("DEPRECATION")
-            val display = wm.defaultDisplay
-            val metrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            display.getRealMetrics(metrics)
-            metrics.widthPixels to metrics.heightPixels
-        }
-    }
 
     private fun parseStrictSize(value: String?): RecordingResolutionSize? {
         val match = strictResolutionRegex.find(value.orEmpty()) ?: return null

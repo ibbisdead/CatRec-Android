@@ -80,6 +80,5 @@ object AppOpenAdSuppressor {
         }
     }
 
-    private fun Collection<AppOpenAdSuppressionReason>.logNames(): String =
-        joinToString(prefix = "[", postfix = "]") { it.logName }
+    private fun Collection<AppOpenAdSuppressionReason>.logNames(): String = joinToString(prefix = "[", postfix = "]") { it.logName }
 }

@@ -50,15 +50,11 @@ fun trySilentDeleteMediaDetailed(
 ): CatRecMediaDeleteResult {
     val cr = context.contentResolver
     return when {
-        DocumentsContract.isTreeUri(uri) -> {
-            Log.d(TAG, "path=TREE_URI uri=$uri")
-            if (tryContentResolverDelete(cr, uri, "tree")) {
-                CatRecMediaDeleteResult.DELETED
-            } else {
-                CatRecMediaDeleteResult.FAILED
-            }
-        }
         DocumentsContract.isDocumentUri(context, uri) -> deleteSafDocumentUri(context, cr, uri)
+        DocumentsContract.isTreeUri(uri) -> {
+            Log.d(TAG, "path=TREE_URI skip directory uri=$uri")
+            CatRecMediaDeleteResult.FAILED
+        }
         isMediaStoreStyleContentUri(uri) -> deleteMediaStoreStyleUri(cr, uri)
         ContentResolver.SCHEME_CONTENT.equals(uri.scheme, ignoreCase = true) -> {
             Log.d(TAG, "path=GENERIC_CONTENT uri=$uri")

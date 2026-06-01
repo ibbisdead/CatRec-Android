@@ -248,8 +248,8 @@ internal object VideoEncoderConfigurator {
      * Keys are available from API 24 onwards; on older devices the calls are no-ops because the
      * encoder will simply ignore unknown integer keys rather than throwing.
      *
-     * [colorMode] "Standard" → Rec.709 limited range (corrects the gray/washed look; default).
-     * [colorMode] "Full"     → Rec.709 full range  (use when target player expects full-range).
+     * [colorMode] "Full"     → Rec.709 full range  (default; screen-accurate).
+     * [colorMode] "Standard" → Rec.709 limited range (compatibility mode for problem devices).
      */
     private fun applyColorMetadata(format: MediaFormat, colorMode: String) {
         if (Build.VERSION.SDK_INT < 24) return
@@ -475,9 +475,9 @@ internal object VideoEncoderConfigurator {
      * @param avcOnly   when true, skips HEVC entirely (e.g. after [MediaCodec.start] failed on HEVC).
      * @param safeStartFallback when true, uses a conservative AVC config for a single retry after
      *                  an encoder accepted configure() but rejected start().
-     * @param colorMode [ColorMode.STANDARD] (Rec.709 limited-range, default) or [ColorMode.FULL]
-     *                  (full-range). Controls [MediaFormat] colour-metadata keys applied before
-     *                  [MediaCodec.configure] so the bitstream carries correct SDR tagging.
+     * @param colorMode [ColorMode.FULL] (full-range, default — screen-accurate) or [ColorMode.STANDARD]
+     *                  (limited-range — compatibility mode). Controls [MediaFormat] colour-metadata
+     *                  keys applied before [MediaCodec.configure] so the bitstream carries correct SDR tagging.
      */
     fun configureScreenCaptureVideoEncoder(
         logTag: String,
@@ -487,7 +487,7 @@ internal object VideoEncoderConfigurator {
         fps: Int,
         bitrate: Int,
         avcOnly: Boolean,
-        colorMode: String = ColorMode.STANDARD,
+        colorMode: String = ColorMode.FULL,
         safeStartFallback: Boolean = false,
     ): ConfiguredVideoEncoder {
         val wantHevcFirst =

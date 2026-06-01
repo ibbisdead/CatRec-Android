@@ -52,6 +52,14 @@ class CatRecBillingManager(
     private val repository = SettingsRepository(application.applicationContext)
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val billingFlowTimeoutRunnable =
+        Runnable {
+            if (billingFlowInFlight) {
+                billingFlowInFlight = false
+                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
+                AppLogger.w(TAG, "Billing flow timeout; allowing a fresh purchase launch")
+            }
+        }
 
     private val _uiEvents =
         MutableSharedFlow<BillingUiEvent>(
@@ -88,9 +96,12 @@ class CatRecBillingManager(
     @Volatile
     private var serviceUnavailableBackoffUntilMs = 0L
 
+    @Volatile
+    private var billingFlowInFlight = false
+
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
-            AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
+            finishBillingFlow("purchase_update_${billingResult.responseCode}")
             Log.d(
                 TAG,
                 "onPurchasesUpdated code=${billingResult.responseCode} " +
@@ -195,6 +206,7 @@ class CatRecBillingManager(
      */
     fun refreshPurchasesIfConnected(): Boolean {
         val now = System.currentTimeMillis()
+        val c = billingClient
         if (now < serviceUnavailableBackoffUntilMs) {
             Log.d(
                 TAG,
@@ -202,7 +214,6 @@ class CatRecBillingManager(
             )
             return false
         }
-        val c = billingClient
         if (c == null) {
             Log.w(TAG, "refreshPurchases requested: billingClient null")
             return false
@@ -232,29 +243,38 @@ class CatRecBillingManager(
             AppLogger.w(TAG, "launchRemoveAdsPurchase blocked ready=${client?.isReady} details=$details")
             return false
         }
+        if (!beginBillingFlow(activity, BillingProductIds.REMOVE_ADS)) return false
         val params =
             BillingFlowParams.ProductDetailsParams
                 .newBuilder()
                 .setProductDetails(details)
                 .build()
-        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.BILLING)
         val result =
-            client.launchBillingFlow(
-                activity,
-                BillingFlowParams
-                    .newBuilder()
-                    .setProductDetailsParamsList(listOf(params))
-                    .build(),
-            )
+            try {
+                client.launchBillingFlow(
+                    activity,
+                    BillingFlowParams
+                        .newBuilder()
+                        .setProductDetailsParamsList(listOf(params))
+                        .build(),
+                )
+            } catch (e: RuntimeException) {
+                finishBillingFlow("launch_remove_ads_throw")
+                AppLogger.w(TAG, "launchBillingFlow remove_ads threw: ${e.message}")
+                return false
+            }
         return when (result.responseCode) {
-            BillingClient.BillingResponseCode.OK -> true
+            BillingClient.BillingResponseCode.OK -> {
+                scheduleBillingFlowTimeout()
+                true
+            }
             BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
+                finishBillingFlow("launch_remove_ads_item_already_owned")
                 syncInAppPurchases("launch_remove_ads_item_already_owned")
                 true
             }
             else -> {
-                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
+                finishBillingFlow("launch_remove_ads_${result.responseCode}")
                 AppLogger.w(TAG, "launchBillingFlow remove_ads: ${result.debugMessage}")
                 false
             }
@@ -268,28 +288,69 @@ class CatRecBillingManager(
             AppLogger.w(TAG, "launchSupportMePurchase blocked ready=${client?.isReady} details=$details")
             return false
         }
+        if (!beginBillingFlow(activity, BillingProductIds.SUPPORT_ME)) return false
         val params =
             BillingFlowParams.ProductDetailsParams
                 .newBuilder()
                 .setProductDetails(details)
                 .build()
-        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.BILLING)
         val result =
-            client.launchBillingFlow(
-                activity,
-                BillingFlowParams
-                    .newBuilder()
-                    .setProductDetailsParamsList(listOf(params))
-                    .build(),
-            )
+            try {
+                client.launchBillingFlow(
+                    activity,
+                    BillingFlowParams
+                        .newBuilder()
+                        .setProductDetailsParamsList(listOf(params))
+                        .build(),
+                )
+            } catch (e: RuntimeException) {
+                finishBillingFlow("launch_support_me_throw")
+                AppLogger.w(TAG, "launchBillingFlow support_me threw: ${e.message}")
+                return false
+            }
         return when (result.responseCode) {
-            BillingClient.BillingResponseCode.OK -> true
+            BillingClient.BillingResponseCode.OK -> {
+                scheduleBillingFlowTimeout()
+                true
+            }
             else -> {
-                AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
+                finishBillingFlow("launch_support_me_${result.responseCode}")
                 AppLogger.w(TAG, "launchBillingFlow support_me: ${result.debugMessage}")
                 false
             }
         }
+    }
+
+    private fun beginBillingFlow(
+        activity: Activity,
+        productId: String,
+    ): Boolean {
+        if (activity.isFinishing || activity.isDestroyed) {
+            AppLogger.w(TAG, "launchBillingFlow $productId blocked: activity finishing=${activity.isFinishing} destroyed=${activity.isDestroyed}")
+            return false
+        }
+        if (billingFlowInFlight) {
+            AppLogger.w(TAG, "launchBillingFlow $productId blocked: another billing flow is already in flight")
+            return false
+        }
+        billingFlowInFlight = true
+        mainHandler.removeCallbacks(billingFlowTimeoutRunnable)
+        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.BILLING)
+        return true
+    }
+
+    private fun scheduleBillingFlowTimeout() {
+        mainHandler.removeCallbacks(billingFlowTimeoutRunnable)
+        mainHandler.postDelayed(billingFlowTimeoutRunnable, BILLING_FLOW_TIMEOUT_MS)
+    }
+
+    private fun finishBillingFlow(reason: String) {
+        mainHandler.removeCallbacks(billingFlowTimeoutRunnable)
+        if (billingFlowInFlight) {
+            Log.d(TAG, "finishBillingFlow reason=$reason")
+        }
+        billingFlowInFlight = false
+        AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
     }
 
     private fun scheduleReconnect(
@@ -512,5 +573,6 @@ class CatRecBillingManager(
         private const val RECONNECT_BASE_DELAY_MS = 30_000L
         private const val RECONNECT_MAX_DELAY_MS = 15 * 60 * 1000L
         private const val SERVICE_UNAVAILABLE_RECONNECT_DELAY_MS = 5 * 60 * 1000L
+        private const val BILLING_FLOW_TIMEOUT_MS = 2 * 60 * 1000L
     }
 }

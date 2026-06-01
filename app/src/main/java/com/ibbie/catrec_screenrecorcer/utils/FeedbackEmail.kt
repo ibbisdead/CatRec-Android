@@ -10,7 +10,7 @@ import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.R
 
 object FeedbackEmail {
-    const val ADDRESS = "ibbisdead666@gmail.com"
+    const val ADDRESS = "ibbisdead@proton.me"
 
     fun buildBody(userDescription: String): String =
         buildString {

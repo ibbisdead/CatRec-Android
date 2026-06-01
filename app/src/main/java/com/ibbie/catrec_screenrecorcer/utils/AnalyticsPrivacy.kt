@@ -15,7 +15,7 @@ fun Context.applyAnalyticsCollectionEnabled(enabled: Boolean) {
 
 /**
  * Firebase Crashlytics data collection.
- * Must be kept in sync with the analytics consent so the Firebase Sessions SDK
+ * Must be kept in sync with the analytics toggle so the Firebase Sessions SDK
  * (shared by both products) is not left in a conflicting state.
  */
 fun applyCrashlyticsCollectionEnabled(enabled: Boolean) {

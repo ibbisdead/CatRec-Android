@@ -1,6 +1,5 @@
 package com.ibbie.catrec_screenrecorcer.ui.tools
 
-import android.net.Uri
 import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
@@ -20,13 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.service.EditorVideoTransform
+import com.ibbie.catrec_screenrecorcer.utils.navigationUriArgToUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.core.net.toUri
 
 private data class HeightPreset(
     val height: Int,
@@ -42,7 +41,7 @@ fun CompressVideoScreen(
     val context = LocalContext.current
     val toastEditorSavedOk = stringResource(R.string.editor_saved_ok)
     val toastEditorFailed = stringResource(R.string.editor_failed)
-    val uri = remember(encodedUri) { Uri.decode(encodedUri).toUri() }
+    val uri = remember(encodedUri) { navigationUriArgToUri(encodedUri) }
     val scope = rememberCoroutineScope()
 
     var srcW by remember { mutableIntStateOf(1280) }
