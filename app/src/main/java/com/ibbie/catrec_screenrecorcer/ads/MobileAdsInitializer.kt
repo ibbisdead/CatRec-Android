@@ -9,7 +9,7 @@ import com.ibbie.catrec_screenrecorcer.R
 import java.util.concurrent.Executors
 
 /**
- * Initializes AdMob without requesting optional nearby-device/Bluetooth permissions on startup.
+ * Initializes AdMob only after the UI is foregrounded.
  *
  * Remove-ads purchasers: [adsDisabled] is true — [MobileAds.initialize] is never called so the SDK
  * does not start threads/WebView or contact ad servers.
@@ -28,6 +28,15 @@ object MobileAdsInitializer {
      */
     @Volatile
     private var adsDisabledBacking = false
+
+    /**
+     * Guards against process-start initialization from background services/receivers. The Ads SDK can
+     * load WebView/Chromium during initialization; doing that while CatRec is backgrounded has produced
+     * Crashlytics ANRs blamed to the MobileAds initialization thread.
+     */
+    @Volatile
+    private var foregroundEligible = false
+
     var adsDisabled: Boolean
         get() = adsDisabledBacking
         set(value) {
@@ -39,6 +48,13 @@ object MobileAdsInitializer {
                 mainHandler.removeCallbacks(timeoutRunnable)
             }
         }
+
+    fun setForegroundEligible(eligible: Boolean) {
+        foregroundEligible = eligible
+        if (!eligible) return
+        val app = timeoutApp ?: return
+        initializeIfReady(app)
+    }
 
     /**
      * [MobileAds.initialize] loads the WebView/Chromium stack on some devices; doing that on the
@@ -53,6 +69,7 @@ object MobileAdsInitializer {
 
     private val lock = Any()
     private var initRequested = false
+
     /** True once pending callbacks are drained and post-init work has run (SDK callback or timeout). */
     private var initComplete = false
     private var timedOut = false
@@ -82,6 +99,11 @@ object MobileAdsInitializer {
     fun initializeIfReady(context: Context) {
         val app = context.applicationContext
         if (adsDisabled) return
+        if (!foregroundEligible) {
+            timeoutApp = app
+            Log.d(TAG, "Skipping MobileAds.initialize until app UI is foregrounded.")
+            return
+        }
         synchronized(lock) {
             if (initRequested) return
             initRequested = true

@@ -62,8 +62,7 @@ internal object VideoEncoderConfigurator {
         videoCaps: MediaCodecInfo.VideoCapabilities,
         width: Int,
         height: Int,
-    ): Pair<Int, Int> =
-        alignFloor(width, videoCaps.widthAlignment) to alignFloor(height, videoCaps.heightAlignment)
+    ): Pair<Int, Int> = alignFloor(width, videoCaps.widthAlignment) to alignFloor(height, videoCaps.heightAlignment)
 
     private fun normalizeFrameRate(
         videoCaps: MediaCodecInfo.VideoCapabilities,
@@ -73,6 +72,7 @@ internal object VideoEncoderConfigurator {
         safeStartFallback: Boolean,
     ): Int {
         val target = requestedFps.coerceAtLeast(1).let { if (safeStartFallback) minOf(it, 30) else it }
+
         fun supports(candidate: Int): Boolean =
             try {
                 videoCaps.areSizeAndRateSupported(width, height, candidate.toDouble())
@@ -119,7 +119,7 @@ internal object VideoEncoderConfigurator {
                 (pixelsPerSecond * 16L / 100L).coerceIn(4_000_000L, 80_000_000L).toInt()
             } else {
                 Int.MAX_VALUE
-        }
+            }
         val target = minOf(requested, conservativeCap)
         val range = videoCaps.bitrateRange
         return target.coerceIn(range.lower, range.upper)
@@ -131,6 +131,7 @@ internal object VideoEncoderConfigurator {
         height: Int,
     ): Pair<Int, Int> {
         fun alignWidth(value: Int) = alignFloor(value, videoCaps.widthAlignment)
+
         fun alignHeight(value: Int) = alignFloor(value, videoCaps.heightAlignment)
 
         val primary = alignForCodec(videoCaps, width, height)
@@ -154,6 +155,7 @@ internal object VideoEncoderConfigurator {
             )
 
         val candidates = ArrayList<Pair<Int, Int>>(24)
+
         fun addCandidate(
             w: Int,
             h: Int,
@@ -251,7 +253,10 @@ internal object VideoEncoderConfigurator {
      * [colorMode] "Full"     → Rec.709 full range  (default; screen-accurate).
      * [colorMode] "Standard" → Rec.709 limited range (compatibility mode for problem devices).
      */
-    private fun applyColorMetadata(format: MediaFormat, colorMode: String) {
+    private fun applyColorMetadata(
+        format: MediaFormat,
+        colorMode: String,
+    ) {
         if (Build.VERSION.SDK_INT < 24) return
         try {
             // BT.709 primaries — standard for SDR screen content on every modern display.
@@ -261,11 +266,12 @@ internal object VideoEncoderConfigurator {
             format.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
 
             // Range: limited (16–235) corrects the washed-out look; full (0–255) for edge cases.
-            val range = if (colorMode == ColorMode.FULL) {
-                MediaFormat.COLOR_RANGE_FULL
-            } else {
-                MediaFormat.COLOR_RANGE_LIMITED
-            }
+            val range =
+                if (colorMode == ColorMode.FULL) {
+                    MediaFormat.COLOR_RANGE_FULL
+                } else {
+                    MediaFormat.COLOR_RANGE_LIMITED
+                }
             format.setInteger(MediaFormat.KEY_COLOR_RANGE, range)
         } catch (e: Exception) {
             // Some encoders reject unknown keys at configure time; log and continue gracefully.
@@ -375,7 +381,7 @@ internal object VideoEncoderConfigurator {
                 "iFrame=$I_FRAME_INTERVAL_SECONDS profile=${profileSelection?.profile} " +
                 "level=${profileSelection?.level} bitrateMode=$bitrateMode " +
                 "device=${Build.MANUFACTURER}/${Build.BRAND}/${Build.MODEL} " +
-                "api=${Build.VERSION.SDK_INT}${codecDiagnostic} " +
+                "api=${Build.VERSION.SDK_INT}$codecDiagnostic " +
                 "error=${error.javaClass.simpleName}: ${error.message}",
             error,
         )
@@ -419,8 +425,7 @@ internal object VideoEncoderConfigurator {
         )
     }
 
-    fun isCodecException(error: Exception): Boolean =
-        Build.VERSION.SDK_INT >= 21 && error is MediaCodec.CodecException
+    fun isCodecException(error: Exception): Boolean = Build.VERSION.SDK_INT >= 21 && error is MediaCodec.CodecException
 
     private fun openEncoderInstance(
         mimeType: String,
@@ -492,7 +497,7 @@ internal object VideoEncoderConfigurator {
     ): ConfiguredVideoEncoder {
         val wantHevcFirst =
             !safeStartFallback &&
-            !avcOnly &&
+                !avcOnly &&
                 userEncoderType == "H.265 (HEVC)" &&
                 !isEmulator()
 
@@ -566,7 +571,7 @@ internal object VideoEncoderConfigurator {
                         Log.w(
                             TAG,
                             "[$logTag] Encoder config normalized for hardware support " +
-                                "request=${width}x${height}@${fps}fps/${bitrate}bps -> " +
+                                "request=${width}x$height@${fps}fps/${bitrate}bps -> " +
                                 "${config.width}x${config.height}@${config.fps}fps/${config.bitrate}bps " +
                                 "mime=$mimeType codec=${codec.name} safeStartFallback=$safeStartFallback",
                         )

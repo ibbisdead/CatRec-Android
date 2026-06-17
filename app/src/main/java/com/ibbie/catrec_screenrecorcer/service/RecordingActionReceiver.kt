@@ -5,8 +5,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMedia
 import androidx.core.net.toUri
+import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMedia
 
 class RecordingActionReceiver : BroadcastReceiver() {
     companion object {

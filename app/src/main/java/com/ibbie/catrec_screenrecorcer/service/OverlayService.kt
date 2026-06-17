@@ -20,15 +20,15 @@ import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.PointF
 import android.graphics.PixelFormat
+import android.graphics.PointF
 import android.graphics.PorterDuff
-import android.hardware.display.DisplayManager
 import android.graphics.PorterDuffXfermode
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -61,6 +61,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -83,7 +84,6 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import androidx.core.net.toUri
 
 class OverlayService : LifecycleService() {
     companion object {
@@ -196,20 +196,31 @@ class OverlayService : LifecycleService() {
 
     // ── OverlayUiState ──────────────────────────────────────────────────────────
     private enum class OverlayUiState {
-        COLLAPSED_IDLE, EXPANDED_IDLE, COLLAPSED_RECORDING, EXPANDED_RECORDING
+        COLLAPSED_IDLE,
+        EXPANDED_IDLE,
+        COLLAPSED_RECORDING,
+        EXPANDED_RECORDING,
     }
 
     private val overlayUiState: OverlayUiState
-        get() = when {
-            (controlsIsRecording || controlsIsBuffering) && controlsCardExpanded -> OverlayUiState.EXPANDED_RECORDING
-            controlsIsRecording || controlsIsBuffering -> OverlayUiState.COLLAPSED_RECORDING
-            controlsCardExpanded -> OverlayUiState.EXPANDED_IDLE
-            else -> OverlayUiState.COLLAPSED_IDLE
-        }
+        get() =
+            when {
+                (controlsIsRecording || controlsIsBuffering) && controlsCardExpanded -> OverlayUiState.EXPANDED_RECORDING
+                controlsIsRecording || controlsIsBuffering -> OverlayUiState.COLLAPSED_RECORDING
+                controlsCardExpanded -> OverlayUiState.EXPANDED_IDLE
+                else -> OverlayUiState.COLLAPSED_IDLE
+            }
 
     // ── OverlayAction — single source of truth for radial button visibility ────
     private enum class OverlayAction {
-        RECORD, HOME, SCREENSHOT, CAMERA, BRUSH, PAUSE_RESUME, CLIP, STOP
+        RECORD,
+        HOME,
+        SCREENSHOT,
+        CAMERA,
+        BRUSH,
+        PAUSE_RESUME,
+        CLIP,
+        STOP,
     }
 
     /** Button descriptor used by [buildRadialMenu]. Defined here so [actionToBtnSpec] can reference it. */
@@ -246,65 +257,88 @@ class OverlayService : LifecycleService() {
     /** Maps an [OverlayAction] to its [BtnSpec] with the correct icon and click handler. */
     private fun actionToBtnSpec(action: OverlayAction): BtnSpec =
         when (action) {
-            OverlayAction.RECORD -> BtnSpec(idleRecordIconRes(), 0xFFFF8C00.toInt()) {
-                cancelAutoCollapse()
-                // Collapse the full-screen card the instant the user taps record so the OS
-                // regains touch focus immediately — the subsequent recording-state broadcast
-                // will keep it collapsed too.
-                hideControlsCard()
-                requestRecordingStartFromOverlay(asBuffer = currentMode == CaptureMode.CLIPPER)
-            }
-            OverlayAction.HOME -> BtnSpec(R.drawable.ic_home) {
-                cancelAutoCollapse()
-                try {
-                    startActivity(
-                        Intent(this, MainActivity::class.java).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            OverlayAction.RECORD ->
+                BtnSpec(idleRecordIconRes(), 0xFFFF8C00.toInt()) {
+                    cancelAutoCollapse()
+                    // Collapse the full-screen card the instant the user taps record so the OS
+                    // regains touch focus immediately — the subsequent recording-state broadcast
+                    // will keep it collapsed too.
+                    hideControlsCard()
+                    requestRecordingStartFromOverlay(asBuffer = currentMode == CaptureMode.CLIPPER)
+                }
+            OverlayAction.HOME ->
+                BtnSpec(R.drawable.ic_home) {
+                    cancelAutoCollapse()
+                    try {
+                        startActivity(
+                            Intent(this, MainActivity::class.java).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                            },
+                        )
+                    } catch (_: Exception) {
+                    }
+                }
+            OverlayAction.SCREENSHOT ->
+                BtnSpec(R.drawable.ic_screenshot) {
+                    cancelAutoCollapse()
+                    scheduleScreenshotFromOverlay(hideBrushToolbarOnly = false)
+                }
+            OverlayAction.CAMERA ->
+                BtnSpec(R.drawable.ic_webcam) {
+                    cancelAutoCollapse()
+                    if (cameraView != null) {
+                        hideCameraOverlay()
+                    } else {
+                        @Suppress("NewApi")
+                        showCameraOverlay(
+                            lastCamSizeDp,
+                            lastCamXFraction,
+                            lastCamYFraction,
+                            cameraIsLocked,
+                            cameraAspectRatioSetting,
+                            cameraOpacityValue,
+                        )
+                    }
+                }
+            OverlayAction.BRUSH ->
+                BtnSpec(R.drawable.ic_brush) {
+                    cancelAutoCollapse()
+                    showBrushOverlay()
+                }
+            OverlayAction.PAUSE_RESUME ->
+                BtnSpec(if (controlsIsPaused) R.drawable.ic_play else R.drawable.ic_pause) {
+                    cancelAutoCollapse()
+                    startService(
+                        Intent(this, ScreenRecordService::class.java).apply {
+                            this.action = if (controlsIsPaused) ScreenRecordService.ACTION_RESUME else ScreenRecordService.ACTION_PAUSE
                         },
                     )
-                } catch (_: Exception) {}
-            }
-            OverlayAction.SCREENSHOT -> BtnSpec(R.drawable.ic_screenshot) {
-                cancelAutoCollapse()
-                scheduleScreenshotFromOverlay(hideBrushToolbarOnly = false)
-            }
-            OverlayAction.CAMERA -> BtnSpec(R.drawable.ic_webcam) {
-                cancelAutoCollapse()
-                if (cameraView != null) {
-                    hideCameraOverlay()
-                } else {
-                    @Suppress("NewApi")
-                    showCameraOverlay(lastCamSizeDp, lastCamXFraction, lastCamYFraction, cameraIsLocked, cameraAspectRatioSetting, cameraOpacityValue)
                 }
-            }
-            OverlayAction.BRUSH -> BtnSpec(R.drawable.ic_brush) {
-                cancelAutoCollapse()
-                showBrushOverlay()
-            }
-            OverlayAction.PAUSE_RESUME -> BtnSpec(if (controlsIsPaused) R.drawable.ic_play else R.drawable.ic_pause) {
-                cancelAutoCollapse()
-                startService(
-                    Intent(this, ScreenRecordService::class.java).apply {
-                        this.action = if (controlsIsPaused) ScreenRecordService.ACTION_RESUME else ScreenRecordService.ACTION_PAUSE
-                    },
-                )
-            }
-            OverlayAction.CLIP -> BtnSpec(R.drawable.ic_record_clipper, 0xFFFF8C00.toInt()) {
-                cancelAutoCollapse()
-                // Collapse the card immediately so the clip-save action doesn't leave the
-                // full-screen menu stealing gestures.
-                hideControlsCard()
-                startService(Intent(this, ScreenRecordService::class.java).apply { this.action = ScreenRecordService.ACTION_SAVE_CLIP })
-            }
-            OverlayAction.STOP -> BtnSpec(R.drawable.ic_stop_rec, 0xFFFF8C00.toInt()) {
-                cancelAutoCollapse()
-                hideControlsCard()
-                startService(
-                    Intent(this, ScreenRecordService::class.java).apply {
-                        this.action = if (currentMode == CaptureMode.CLIPPER) ScreenRecordService.ACTION_STOP_BUFFER else ScreenRecordService.ACTION_STOP
-                    },
-                )
-            }
+            OverlayAction.CLIP ->
+                BtnSpec(R.drawable.ic_record_clipper, 0xFFFF8C00.toInt()) {
+                    cancelAutoCollapse()
+                    // Collapse the card immediately so the clip-save action doesn't leave the
+                    // full-screen menu stealing gestures.
+                    hideControlsCard()
+                    startService(Intent(this, ScreenRecordService::class.java).apply { this.action = ScreenRecordService.ACTION_SAVE_CLIP })
+                }
+            OverlayAction.STOP ->
+                BtnSpec(R.drawable.ic_stop_rec, 0xFFFF8C00.toInt()) {
+                    cancelAutoCollapse()
+                    hideControlsCard()
+                    startService(
+                        Intent(this, ScreenRecordService::class.java).apply {
+                            this.action =
+                                if (currentMode ==
+                                    CaptureMode.CLIPPER
+                                ) {
+                                    ScreenRecordService.ACTION_STOP_BUFFER
+                                } else {
+                                    ScreenRecordService.ACTION_STOP
+                                }
+                        },
+                    )
+                }
         }
 
     /** Snapshot of actions currently rendered in the radial menu; used to skip unnecessary rebuilds. */
@@ -324,10 +358,11 @@ class OverlayService : LifecycleService() {
     private fun refreshControlsCardIfNeeded() {
         if (!controlsCardExpanded) return
         val newActions = getVisibleActions()
-        val pauseIconChanged = newActions.contains(OverlayAction.PAUSE_RESUME) &&
-            controlsIsPaused != currentIsPausedForCard
+        val pauseIconChanged =
+            newActions.contains(OverlayAction.PAUSE_RESUME) &&
+                controlsIsPaused != currentIsPausedForCard
         if (newActions == currentVisibleActions && !pauseIconChanged) return
-        hideControlsCard()
+        hideControlsCard(redockBubble = false)
         // hideControlsCard() sets controlsCardExpanded = false; restore before showControlsCard()
         // so that overlayUiState returns the correct expanded state when building the menu.
         controlsCardExpanded = true
@@ -340,6 +375,7 @@ class OverlayService : LifecycleService() {
     private var controlsCardView: FrameLayout? = null
     private var controlsCardParams: WindowManager.LayoutParams? = null
     private var controlsRadialPauseButton: ImageView? = null
+
     // kept for API compatibility — always null in radial design
     private var controlsPauseButton: ImageView? = null
     private var controlsMuteButton: ImageView? = null
@@ -358,14 +394,16 @@ class OverlayService : LifecycleService() {
     private var bubbleIconView: ImageView? = null
     private var bubbleTimerView: LinearLayout? = null
     private var bubbleTimerTextView: android.widget.TextView? = null
+    private var bubbleBackgroundDrawable: GradientDrawable? = null
 
     // Auto-collapse after 4 s of inactivity (only when NOT recording)
     private val autoCollapseHandler = Handler(Looper.getMainLooper())
-    private val autoCollapseRunnable = Runnable {
-        if (!controlsIsRecording && !controlsIsBuffering && controlsCardExpanded) {
-            hideControlsCard()
+    private val autoCollapseRunnable =
+        Runnable {
+            if (!controlsIsRecording && !controlsIsBuffering && controlsCardExpanded) {
+                hideControlsCard()
+            }
         }
-    }
 
     // Stored camera params for toggle button (updated on ACTION_SHOW_OVERLAYS)
     private var lastCamSizeDp: Int = 120
@@ -388,66 +426,64 @@ class OverlayService : LifecycleService() {
                 if (gate is RecordingStartProGateResult.BlockedNeedsPro) {
                     Log.d(
                         "OverlayService",
-                        "overlay start routed to MainActivity for Pro unlock source=$source features=${gate.features.joinToString(",") { it.logName }}",
+                        "overlay start routed to MainActivity for Pro unlock source=$source features=${gate.features.joinToString(
+                            ",",
+                        ) { it.logName }}",
                     )
                     MainActivity.markRoutedRecordingAppOpenSuppressed(source)
                     startActivity(
-                        MainActivity.addRoutedRecordingSuppressionExtras(
-                            Intent(this@OverlayService, MainActivity::class.java),
-                        ).apply {
-                            action =
-                                if (asBuffer) {
-                                    MainActivity.ACTION_START_BUFFER_FROM_OVERLAY
-                                } else {
-                                    MainActivity.ACTION_START_RECORDING_FROM_OVERLAY
-                                }
-                            addFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK or
-                                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
-                            )
-                        },
+                        MainActivity
+                            .addRoutedRecordingSuppressionExtras(
+                                Intent(this@OverlayService, MainActivity::class.java),
+                            ).apply {
+                                action =
+                                    if (asBuffer) {
+                                        MainActivity.ACTION_START_BUFFER_FROM_OVERLAY
+                                    } else {
+                                        MainActivity.ACTION_START_RECORDING_FROM_OVERLAY
+                                    }
+                                addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                                        Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                                )
+                            },
                     )
                     return@withContext
                 }
 
-                if (RecordingState.isPrepared.value) {
-                    val overlayAction =
-                        if (asBuffer) {
-                            ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                        } else {
-                            ScreenRecordService.ACTION_START_FROM_OVERLAY
-                        }
-                    startService(
-                        Intent(this@OverlayService, ScreenRecordService::class.java).apply {
-                            action = overlayAction
+                try {
+                    startActivity(
+                        Intent(this@OverlayService, OverlayRecordProjectionActivity::class.java).apply {
+                            putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         },
                     )
-                } else {
-                    try {
-                        startActivity(
-                            Intent(this@OverlayService, OverlayRecordProjectionActivity::class.java).apply {
-                                putExtra(OverlayRecordProjectionActivity.EXTRA_START_AS_BUFFER, asBuffer)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            },
-                        )
-                    } catch (_: Exception) {
-                    }
+                } catch (_: Exception) {
                 }
             }
         }
     }
 
     // ── Radial menu constants ────────────────────────────────────────────────
+    private val IDLE_BUBBLE_SIZE_DP: Int = 40
+    private val RECORDING_TIMER_MIN_WIDTH_DP: Int = 60
+    private val RECORDING_TIMER_HEIGHT_DP: Int = 32
+    private val RECORDING_TIMER_HORIZONTAL_PADDING_DP: Int = 10
+    private val RECORDING_TIMER_EDGE_DOCK_MAX_DP: Int = 24
+
     // Sub-menu button diameter, shrunk 20% from the original 48dp so icons
     // feel more like satellites orbiting the 56dp bubble than separate tiles.
     private val RADIAL_BTN_SIZE_DP: Int = (48f * 0.8f).toInt() // 38dp
+
     // Inner padding around the glyph inside each round button, scaled to match.
     private val RADIAL_BTN_ICON_PAD_DP: Int = (10f * 0.8f).toInt() // 8dp
+
     // Designed maximum number of items on the arc (idle: 5, recording: 4).
     // The step angle stays constant so the arc is always a clean sub-arc of
     // the 5-item semicircle regardless of how many buttons are visible.
     private val RADIAL_TOTAL_ITEMS: Int = 5
+
     // 180° semicircle / (5 - 1) = 45° between adjacent buttons.
     private val RADIAL_STEP_DEG: Double = 180.0 / (RADIAL_TOTAL_ITEMS - 1)
 
@@ -480,12 +516,14 @@ class OverlayService : LifecycleService() {
     private var settingsCameraLocked: Boolean = false
     private var settingsCameraFacingFront: Boolean = true
     private var settingsCameraAspectRatio: String = "Circle"
+
     /**
      * Registry of every root [View] actually added to [WindowManager] for the settings preview
      * session. [hideCameraPreview] iterates and removes ALL entries so that a stale/orphaned
      * reference (field ref lost while WM view still exists) never leaks a stuck overlay.
      */
     private val settingsPreviewViews: MutableList<View> = mutableListOf()
+
     /**
      * Monotonic counter incremented on every [showCameraPreview] and [hideCameraPreview] call.
      * The [ProcessCameraProvider.getInstance] future callback captures the generation value at
@@ -502,6 +540,7 @@ class OverlayService : LifecycleService() {
     private var displayRotationListenerRegistered = false
     private var lastRecordingPreviewBoundRotation = Int.MIN_VALUE
     private var lastSettingsPreviewBoundRotation = Int.MIN_VALUE
+
     /**
      * Rotation seen at the last accepted [DisplayManager.DisplayListener.onDisplayChanged] event.
      * Seeded when the listener is registered; reset to [Int.MIN_VALUE] when unregistered.
@@ -583,6 +622,13 @@ class OverlayService : LifecycleService() {
                                 minutes,
                                 seconds,
                             )
+                        if (controlsIsRecording || controlsIsBuffering) {
+                            updateControlsBubbleLayoutForState(
+                                recordingActive = true,
+                                dockAfterResize = true,
+                                animateDock = false,
+                            )
+                        }
                     }
                 }
             }
@@ -609,19 +655,7 @@ class OverlayService : LifecycleService() {
             }
         }
 
-        clamp(controlsBubbleParams, controlsBubbleView)
-        // After clamping, snap the bubble to whichever horizontal edge it is closest to
-        // so it doesn't get stranded in the interior after a rotation.
-        controlsBubbleParams?.let { params ->
-            val view = controlsBubbleView ?: return@let
-            val bubbleSizePx = params.width
-            val bubbleCenterX = params.x + bubbleSizePx / 2
-            val targetX = if (bubbleCenterX < screenW / 2) 0 else (screenW - bubbleSizePx).coerceAtLeast(0)
-            if (params.x != targetX) {
-                params.x = targetX
-                try { wm.updateViewLayout(view, params) } catch (_: Exception) { }
-            }
-        }
+        snapControlsBubbleToNearestEdge(animated = false)
         if (brushOverlayView != null) hideBrushOverlay()
         if (controlsCardExpanded) {
             hideControlsCard()
@@ -854,7 +888,10 @@ class OverlayService : LifecycleService() {
                 val locked = intent.getBooleanExtra(EXTRA_CAMERA_LOCK_POSITION, false)
                 val facing = intent.getStringExtra(EXTRA_CAMERA_FACING) ?: "Front"
                 val aspectRatio = intent.getStringExtra(EXTRA_CAMERA_ASPECT_RATIO) ?: "Circle"
-                Log.d("OverlayService", "onStartCommand: ACTION_SHOW_CAMERA_PREVIEW sizeDp=$sizeDp opacity=$opacity locked=$locked facing=$facing aspect=$aspectRatio")
+                Log.d(
+                    "OverlayService",
+                    "onStartCommand: ACTION_SHOW_CAMERA_PREVIEW sizeDp=$sizeDp opacity=$opacity locked=$locked facing=$facing aspect=$aspectRatio",
+                )
                 hideControlsOverlay(userDismissed = false)
                 showCameraPreview(sizeDp, xFraction, yFraction, opacity, locked, facing, aspectRatio)
             }
@@ -878,7 +915,11 @@ class OverlayService : LifecycleService() {
 
             ACTION_HIDE_WATERMARK_PREVIEW -> {
                 hideWatermarkPreview()
-                if (cameraView == null && watermarkView == null && controlsBubbleView == null && cameraPreviewOverlayView == null) stopSelf()
+                if (cameraView == null && watermarkView == null && controlsBubbleView == null &&
+                    cameraPreviewOverlayView == null
+                ) {
+                    stopSelf()
+                }
             }
 
             ACTION_UPDATE_WATERMARK_PREVIEW -> {
@@ -1178,7 +1219,8 @@ class OverlayService : LifecycleService() {
         // Context.display / getDisplay() throws UnsupportedOperationException from a Service
         // (non-visual) context on API 30+.  DisplayManager does not require a visual context.
         (getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager)
-            ?.getDisplay(Display.DEFAULT_DISPLAY)?.displayId
+            ?.getDisplay(Display.DEFAULT_DISPLAY)
+            ?.displayId
             ?: Display.DEFAULT_DISPLAY
 
     /**
@@ -1255,7 +1297,8 @@ class OverlayService : LifecycleService() {
         val selector = if (useFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
         val rotation = previewSurfaceRotation(previewView)
         val preview =
-            Preview.Builder()
+            Preview
+                .Builder()
                 .setTargetRotation(rotation)
                 .build()
                 .also { it.surfaceProvider = previewView.surfaceProvider }
@@ -1274,7 +1317,8 @@ class OverlayService : LifecycleService() {
         val rotation = previewSurfaceRotation(previewView)
         Log.d("OverlayService", "bindSettingsCameraPreview: rotation=$rotation")
         val preview =
-            Preview.Builder()
+            Preview
+                .Builder()
                 .setTargetRotation(rotation)
                 .build()
                 .also { it.surfaceProvider = previewView.surfaceProvider }
@@ -1283,7 +1327,10 @@ class OverlayService : LifecycleService() {
             provider.unbindAll()
             provider.bindToLifecycle(this, selector, preview)
             lastSettingsPreviewBoundRotation = rotation
-            Log.d("OverlayService", "bindSettingsCameraPreview: bound successfully facing=${if (settingsCameraFacingFront) "Front" else "Rear"}")
+            Log.d(
+                "OverlayService",
+                "bindSettingsCameraPreview: bound successfully facing=${if (settingsCameraFacingFront) "Front" else "Rear"}",
+            )
         } catch (e: Exception) {
             Log.e("OverlayService", "Settings camera preview bind failed", e)
             recordCrashlyticsNonFatal(e, "Overlay: settings camera preview bind failed")
@@ -1380,14 +1427,15 @@ class OverlayService : LifecycleService() {
         if (controlsBubbleView != null) return
         controlsDismissedByUser = false
 
-        val bubbleSizePx = dpToPx(46)
+        val bubbleSizePx = idleBubbleSizePx()
         val (screenW, screenH) = currentScreenSizePx()
         val safeTop = safeAreaTop()
         val safeBottom = safeAreaBottom()
 
         var bubbleFlags =
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         if (keepScreenOnForControls) {
             bubbleFlags = bubbleFlags or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
         }
@@ -1409,7 +1457,7 @@ class OverlayService : LifecycleService() {
 
         val bubble = buildControlsBubble()
         controlsBubbleView = bubble
-        bubble.setOnTouchListener(makeControlsDragListener(params, bubble, bubbleSizePx))
+        bubble.setOnTouchListener(makeControlsDragListener(params, bubble))
 
         try {
             windowManager?.addView(bubble, params)
@@ -1429,6 +1477,7 @@ class OverlayService : LifecycleService() {
             bubbleIconView = null
             bubbleTimerView = null
             bubbleTimerTextView = null
+            bubbleBackgroundDrawable = null
             idleControlsBubbleVisible = false
         }
     }
@@ -1437,9 +1486,10 @@ class OverlayService : LifecycleService() {
         FrameLayout(this).apply {
             background =
                 GradientDrawable().apply {
-                    shape = GradientDrawable.OVAL
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = idleBubbleSizePx() / 2f
                     setColor(0xFF1A1A1A.toInt())
-                }
+                }.also { bubbleBackgroundDrawable = it }
             clipToOutline = true
             outlineProvider =
                 object : ViewOutlineProvider() {
@@ -1447,7 +1497,7 @@ class OverlayService : LifecycleService() {
                         view: View,
                         outline: Outline,
                     ) {
-                        outline.setOval(0, 0, view.width, view.height)
+                        outline.setRoundRect(0, 0, view.width, view.height, view.height / 2f)
                     }
                 }
             // Mode icon (visible when idle). Two-tone vector XMLs (orange + light blue)
@@ -1468,35 +1518,22 @@ class OverlayService : LifecycleService() {
             bubbleIconView = icon
             addView(icon)
 
-            // Timer badge (visible when recording) — orange accent instead of red.
-            val pulseDot =
-                View(this@OverlayService).apply {
-                    background =
-                        GradientDrawable().apply {
-                            shape = GradientDrawable.OVAL
-                            setColor(0xFFFF8C00.toInt())
-                        }
-                    val dotSizePx = dpToPx(8)
-                    layoutParams =
-                        LinearLayout.LayoutParams(dotSizePx, dotSizePx).apply {
-                            gravity = Gravity.CENTER_VERTICAL
-                            rightMargin = dpToPx(4)
-                        }
-                }
-
             val timerText =
                 android.widget.TextView(this@OverlayService).apply {
                     text = getString(R.string.overlay_recording_timer_format, 0, 0)
                     contentDescription =
                         getString(R.string.overlay_recording_timer_content_description, 0, 0)
-                    setTextColor(0xFFFFFFFF.toInt())
-                    textSize = 11f
+                    setTextColor(0xF2FFFFFF.toInt())
+                    textSize = 12f
                     typeface = android.graphics.Typeface.DEFAULT_BOLD
-                    gravity = Gravity.CENTER_VERTICAL
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                    )
+                    gravity = Gravity.CENTER
+                    includeFontPadding = false
+                    maxLines = 1
+                    layoutParams =
+                        LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                        )
                 }
             bubbleTimerTextView = timerText
 
@@ -1505,13 +1542,19 @@ class OverlayService : LifecycleService() {
                     orientation = LinearLayout.HORIZONTAL
                     gravity = Gravity.CENTER
                     alpha = 0f
-                    addView(pulseDot)
+                    setPadding(
+                        dpToPx(RECORDING_TIMER_HORIZONTAL_PADDING_DP),
+                        0,
+                        dpToPx(RECORDING_TIMER_HORIZONTAL_PADDING_DP),
+                        0,
+                    )
                     addView(timerText)
                     layoutParams =
-                        FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                        ).apply { gravity = Gravity.CENTER }
+                        FrameLayout
+                            .LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                            ).apply { gravity = Gravity.CENTER }
                 }
             bubbleTimerView = timerRow
             addView(timerRow)
@@ -1521,7 +1564,6 @@ class OverlayService : LifecycleService() {
     private fun makeControlsDragListener(
         params: WindowManager.LayoutParams,
         bubble: FrameLayout,
-        bubbleSizePx: Int,
     ): View.OnTouchListener {
         var initialX = 0
         var initialY = 0
@@ -1551,18 +1593,25 @@ class OverlayService : LifecycleService() {
                     val dy = (event.rawY - touchY).toInt()
                     if (!hasDragged && (abs(dx) > 8 || abs(dy) > 8)) {
                         hasDragged = true
-                        if (controlsCardExpanded) hideControlsCard()
+                        if (controlsCardExpanded) hideControlsCard(redockBubble = false)
                         // Show X dismiss target immediately when drag begins
                         showOrUpdateDismissIndicator(screenW, screenH, inZone = false)
                     }
                     if (hasDragged) {
-                        params.x = (initialX + dx).coerceIn(0, screenW - bubbleSizePx)
-                        params.y = (initialY + dy).coerceIn(0, screenH - bubbleSizePx)
+                        val bubbleWidthPx = controlsBubbleWidthPx(params, bubble)
+                        val bubbleHeightPx = controlsBubbleHeightPx(params, bubble)
+                        val maxX = (screenW - bubbleWidthPx).coerceAtLeast(0)
+                        val minY = safeAreaTop()
+                        val maxY =
+                            (screenH - safeAreaBottom() - bubbleHeightPx)
+                                .coerceAtLeast(minY)
+                        params.x = (initialX + dx).coerceIn(0, maxX)
+                        params.y = (initialY + dy).coerceIn(minY, maxY)
                         try {
                             windowManager?.updateViewLayout(bubble, params)
                         } catch (_: Exception) {
                         }
-                        val bubbleCenterX = params.x + bubbleSizePx / 2
+                        val bubbleCenterX = params.x + bubbleWidthPx / 2
                         val nowInDismiss = params.y >= dismissZoneTop && abs(bubbleCenterX - dismissZoneCenterX) <= dismissZoneHalfWidth
                         if (nowInDismiss != inDismissZone) {
                             inDismissZone = nowInDismiss
@@ -1604,12 +1653,11 @@ class OverlayService : LifecycleService() {
                         val dismissZoneTop = (screenH * 0.80f).toInt()
                         val dismissZoneCenterX = screenW / 2
                         val dismissZoneHalfWidth = (screenW * 0.18f).toInt()
-                        val bubbleCenterX = params.x + bubbleSizePx / 2
+                        val bubbleCenterX = params.x + controlsBubbleWidthPx(params, bubble) / 2
                         if (params.y >= dismissZoneTop && abs(bubbleCenterX - dismissZoneCenterX) <= dismissZoneHalfWidth) {
-                            animateDismissBubble(params, bubble, bubbleSizePx)
+                            animateDismissBubble(params, bubble)
                         } else {
-                            val targetX = if (bubbleCenterX < screenW / 2) 0 else (screenW - bubbleSizePx).coerceAtLeast(0)
-                            animateSnapBubble(params, bubble, targetX)
+                            animateSnapBubble(params, bubble)
                         }
                     }
                     inDismissZone = false
@@ -1720,9 +1768,10 @@ class OverlayService : LifecycleService() {
         // calls hideControlsCard() on ACTION_MOVE, so the next tap re-runs this function fresh —
         // that's what makes the menu direction update immediately after a drag.
         val (screenW, screenH) = currentScreenSizePx()
-        val bubbleSizePx = bubbleParams.width
-        var bubbleCenterX = bubbleParams.x + bubbleSizePx / 2
-        var bubbleCenterY = bubbleParams.y + bubbleSizePx / 2
+        val bubbleWidthPx = bubbleParams.width
+        val bubbleHeightPx = bubbleParams.height
+        var bubbleCenterX = bubbleParams.x + bubbleWidthPx / 2
+        var bubbleCenterY = bubbleParams.y + bubbleHeightPx / 2
 
         // ── Deterministic 5-item / 180° semicircle geometry ─────────────────────
         // Step angle is constant so the arc is always a clean sub-arc of the
@@ -1782,22 +1831,30 @@ class OverlayService : LifecycleService() {
             val rightLimit = screenW - margin
             var deltaY = 0
             var deltaX = 0
-            if (minY < topLimit) deltaY = topLimit - minY
-            else if (maxY > bottomLimit) deltaY = bottomLimit - maxY
-            if (minX < leftLimit) deltaX = leftLimit - minX
-            else if (maxX > rightLimit) deltaX = rightLimit - maxX
+            if (minY < topLimit) {
+                deltaY = topLimit - minY
+            } else if (maxY > bottomLimit) {
+                deltaY = bottomLimit - maxY
+            }
+            if (minX < leftLimit) {
+                deltaX = leftLimit - minX
+            } else if (maxX > rightLimit) {
+                deltaX = rightLimit - maxX
+            }
 
             if (deltaX != 0 || deltaY != 0) {
-                bubbleParams.x = (bubbleParams.x + deltaX)
-                    .coerceIn(0, (screenW - bubbleSizePx).coerceAtLeast(0))
-                bubbleParams.y = (bubbleParams.y + deltaY)
-                    .coerceIn(0, (screenH - bubbleSizePx).coerceAtLeast(0))
+                bubbleParams.x =
+                    (bubbleParams.x + deltaX)
+                        .coerceIn(0, (screenW - bubbleWidthPx).coerceAtLeast(0))
+                bubbleParams.y =
+                    (bubbleParams.y + deltaY)
+                        .coerceIn(topSafe, (screenH - bottomSafe - bubbleHeightPx).coerceAtLeast(topSafe))
                 try {
                     controlsBubbleView?.let { wm.updateViewLayout(it, bubbleParams) }
                 } catch (_: Exception) {
                 }
-                bubbleCenterX = bubbleParams.x + bubbleSizePx / 2
-                bubbleCenterY = bubbleParams.y + bubbleSizePx / 2
+                bubbleCenterX = bubbleParams.x + bubbleWidthPx / 2
+                bubbleCenterY = bubbleParams.y + bubbleHeightPx / 2
                 arcCenterDeg = computeArcCenterDeg(bubbleCenterX, bubbleCenterY, screenW, screenH)
             }
         }
@@ -1876,15 +1933,15 @@ class OverlayService : LifecycleService() {
         val onTop = bubbleCy <= screenH * cornerFrac
         val onBottom = bubbleCy >= screenH * (1f - cornerFrac)
         return when {
-            onTop && onLeft -> 45.0      // top-left corner     → opens down-right
-            onTop && onRight -> 135.0    // top-right corner    → opens down-left
-            onBottom && onLeft -> 315.0  // bottom-left corner  → opens up-right
+            onTop && onLeft -> 45.0 // top-left corner     → opens down-right
+            onTop && onRight -> 135.0 // top-right corner    → opens down-left
+            onBottom && onLeft -> 315.0 // bottom-left corner  → opens up-right
             onBottom && onRight -> 225.0 // bottom-right corner → opens up-left
-            onLeft -> 0.0                // left edge           → opens right
-            onRight -> 180.0             // right edge          → opens left
-            onTop -> 90.0                // top edge            → opens down
-            onBottom -> 270.0            // bottom edge         → opens up
-            else -> 90.0                 // not near any edge   → opens down
+            onLeft -> 0.0 // left edge           → opens right
+            onRight -> 180.0 // right edge          → opens left
+            onTop -> 90.0 // top edge            → opens down
+            onBottom -> 270.0 // bottom edge         → opens up
+            else -> 90.0 // not near any edge   → opens down
         }
     }
 
@@ -1906,7 +1963,7 @@ class OverlayService : LifecycleService() {
         arcSpanDeg: Double,
     ): PointF {
         val startDeg = if (totalItems == 1) arcCenterDeg else arcCenterDeg - arcSpanDeg / 2.0
-        val stepDeg  = if (totalItems  > 1) arcSpanDeg / (totalItems - 1) else 0.0
+        val stepDeg = if (totalItems > 1) arcSpanDeg / (totalItems - 1) else 0.0
         val angleRad = Math.toRadians(startDeg + index * stepDeg)
         return PointF(
             (radiusPx * cos(angleRad)).toFloat(),
@@ -1970,10 +2027,12 @@ class OverlayService : LifecycleService() {
             // Loose safety net only — the teleport step in showControlsCard() already
             // guarantees buttons land inside the safe area, so we no longer clamp to
             // topSafe/bottomSafe here (that would deform the "perfect circle").
-            lp.leftMargin = (centreX - btnSizePx / 2)
-                .coerceIn(0, (cardW - btnSizePx).coerceAtLeast(0))
-            lp.topMargin = (centreY - btnSizePx / 2)
-                .coerceIn(0, (cardH - btnSizePx).coerceAtLeast(0))
+            lp.leftMargin =
+                (centreX - btnSizePx / 2)
+                    .coerceIn(0, (cardW - btnSizePx).coerceAtLeast(0))
+            lp.topMargin =
+                (centreY - btnSizePx / 2)
+                    .coerceIn(0, (cardH - btnSizePx).coerceAtLeast(0))
             btn.layoutParams = lp
 
             // Start at the bubble-centre (origin) so the fan-out translate begins there.
@@ -1987,7 +2046,8 @@ class OverlayService : LifecycleService() {
 
             // Staggered fan-out: translate from bubble centre to final arc position while
             // scaling in with an overshoot spring effect.
-            btn.animate()
+            btn
+                .animate()
                 .translationX(0f)
                 .translationY(0f)
                 .scaleX(1f)
@@ -2088,7 +2148,7 @@ class OverlayService : LifecycleService() {
         }
     }
 
-    private fun hideControlsCard() {
+    private fun hideControlsCard(redockBubble: Boolean = true) {
         val card = controlsCardView ?: return
         // Clear state immediately so callers can re-show without waiting for animation.
         controlsCardView = null
@@ -2104,7 +2164,8 @@ class OverlayService : LifecycleService() {
         val animDuration = 150L
         for (i in 0 until childCount) {
             val btn = card.getChildAt(i)
-            btn.animate()
+            btn
+                .animate()
                 .scaleX(0f)
                 .scaleY(0f)
                 .alpha(0f)
@@ -2118,6 +2179,9 @@ class OverlayService : LifecycleService() {
             try {
                 windowManager?.removeView(card)
             } catch (_: Exception) {
+            }
+            if (redockBubble) {
+                snapControlsBubbleToNearestEdge(animated = true)
             }
         }, totalDelay)
     }
@@ -2142,7 +2206,7 @@ class OverlayService : LifecycleService() {
         val sessionActive = controlsIsRecording || controlsIsBuffering
         val hideChrome = sessionActive && hideFloatingIconWhileRecordingPref
         if (hideChrome) {
-            if (controlsCardExpanded || controlsCardView != null) hideControlsCard()
+            if (controlsCardExpanded || controlsCardView != null) hideControlsCard(redockBubble = false)
             bubble.visibility = View.GONE
         } else {
             bubble.visibility = View.VISIBLE
@@ -2157,7 +2221,7 @@ class OverlayService : LifecycleService() {
         if (floatingChromeHiddenForBrushSession) return
         floatingChromeHiddenForBrushSession = true
         hideDismissIndicator()
-        if (controlsCardExpanded) hideControlsCard()
+        if (controlsCardExpanded) hideControlsCard(redockBubble = false)
         controlsBubbleView?.visibility = View.GONE
     }
 
@@ -2172,7 +2236,7 @@ class OverlayService : LifecycleService() {
         if (floatingChromeHiddenForScreenshot) return
         floatingChromeHiddenForScreenshot = true
         hideDismissIndicator()
-        hideControlsCard()
+        hideControlsCard(redockBubble = false)
         controlsBubbleView?.visibility = View.GONE
     }
 
@@ -2263,7 +2327,7 @@ class OverlayService : LifecycleService() {
         floatingChromeHiddenForBrushSession = false
         brushOverlayView?.setToolbarVisible(true)
         hideDismissIndicator()
-        hideControlsCard()
+        hideControlsCard(redockBubble = false)
         hideBrushOverlay()
         controlsBubbleView?.let {
             try {
@@ -2276,6 +2340,7 @@ class OverlayService : LifecycleService() {
         bubbleIconView = null
         bubbleTimerView = null
         bubbleTimerTextView = null
+        bubbleBackgroundDrawable = null
         idleControlsBubbleVisible = false
         controlsDismissedByUser = userDismissed
         if (userDismissed) {
@@ -2301,25 +2366,118 @@ class OverlayService : LifecycleService() {
         controlsMuteButton?.setImageResource(if (controlsIsMuted) R.drawable.ic_mic_off else R.drawable.ic_mic_on)
     }
 
+    /** Height in px to stay below the status bar. */
+    private fun safeAreaTop(): Int = dpToPx(28)
+
+    /** Height in px to stay above the navigation bar. */
+    private fun safeAreaBottom(): Int = dpToPx(48)
+
+    private fun idleBubbleSizePx(): Int = dpToPx(IDLE_BUBBLE_SIZE_DP)
+
+    private fun recordingTimerHeightPx(): Int = dpToPx(RECORDING_TIMER_HEIGHT_DP)
+
+    private fun recordingTimerTextWidthPx(): Int {
+        val timerText = bubbleTimerTextView ?: return dpToPx(32)
+        val text = timerText.text?.toString().orEmpty().ifBlank {
+            getString(R.string.overlay_recording_timer_format, 0, 0)
+        }
+        return timerText.paint.measureText(text).roundToInt().coerceAtLeast(dpToPx(32))
+    }
+
+    private fun recordingTimerVisibleContentWidthPx(): Int = recordingTimerTextWidthPx() + dpToPx(2)
+
+    private fun recordingTimerWidthPx(): Int =
+        maxOf(
+            dpToPx(RECORDING_TIMER_MIN_WIDTH_DP),
+            recordingTimerTextWidthPx() + dpToPx(RECORDING_TIMER_HORIZONTAL_PADDING_DP * 2),
+        )
+
+    private fun recordingDockOffsetPx(bubbleWidthPx: Int): Int =
+        minOf(
+            dpToPx(RECORDING_TIMER_EDGE_DOCK_MAX_DP),
+            (bubbleWidthPx * 0.28f).roundToInt(),
+        ).coerceAtLeast(0)
+
+    private fun controlsBubbleWidthPx(
+        params: WindowManager.LayoutParams,
+        bubble: FrameLayout,
+    ): Int =
+        when {
+            params.width > 0 -> params.width
+            bubble.width > 0 -> bubble.width
+            else -> idleBubbleSizePx()
+        }
+
+    private fun controlsBubbleHeightPx(
+        params: WindowManager.LayoutParams,
+        bubble: FrameLayout,
+    ): Int =
+        when {
+            params.height > 0 -> params.height
+            bubble.height > 0 -> bubble.height
+            else -> idleBubbleSizePx()
+        }
+
+    private fun activeControlsDockPosition(
+        params: WindowManager.LayoutParams,
+        bubble: FrameLayout,
+    ): OverlayDockPosition {
+        val (screenW, screenH) = currentScreenSizePx()
+        val bubbleWidthPx = controlsBubbleWidthPx(params, bubble)
+        val bubbleHeightPx = controlsBubbleHeightPx(params, bubble)
+        val sessionActive = controlsIsRecording || controlsIsBuffering
+        return OverlayDocking.snapToNearestHorizontalEdge(
+            currentX = params.x,
+            currentY = params.y,
+            overlayWidth = bubbleWidthPx,
+            overlayHeight = bubbleHeightPx,
+            screenWidth = screenW,
+            screenHeight = screenH,
+            safeTop = safeAreaTop(),
+            safeBottom = safeAreaBottom(),
+            requestedDockOffset = if (sessionActive) recordingDockOffsetPx(bubbleWidthPx) else 0,
+            fullyVisibleContentWidth = if (sessionActive) recordingTimerVisibleContentWidthPx() else bubbleWidthPx,
+        )
+    }
+
+    private fun snapControlsBubbleToNearestEdge(animated: Boolean) {
+        val params = controlsBubbleParams ?: return
+        val bubble = controlsBubbleView ?: return
+        if (animated) {
+            animateSnapBubble(params, bubble)
+            return
+        }
+        val dockPosition = activeControlsDockPosition(params, bubble)
+        params.x = dockPosition.x
+        params.y = dockPosition.y
+        try {
+            windowManager?.updateViewLayout(bubble, params)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun snapControlsBubbleToNearestEdgeAfterLayout(animated: Boolean) {
+        controlsBubbleView?.post {
+            snapControlsBubbleToNearestEdge(animated)
+        }
+    }
+
     private fun animateSnapBubble(
         params: WindowManager.LayoutParams,
         bubble: FrameLayout,
-        targetX: Int,
     ) {
         bubbleAnimator?.cancel()
-        // Clamp Y to safe area (status bar / nav bar) on every snap.
-        val (_, screenH) = currentScreenSizePx()
-        val bubbleSizePx = params.width
-        val safeTop = safeAreaTop()
-        val safeBottom = safeAreaBottom()
-        params.y = params.y.coerceIn(safeTop, (screenH - safeBottom - bubbleSizePx).coerceAtLeast(safeTop))
+        val dockPosition = activeControlsDockPosition(params, bubble)
         val startX = params.x
+        val startY = params.y
         bubbleAnimator =
-            ValueAnimator.ofInt(startX, targetX).apply {
+            ValueAnimator.ofFloat(0f, 1f).apply {
                 duration = 240
                 interpolator = DecelerateInterpolator()
                 addUpdateListener { anim ->
-                    params.x = anim.animatedValue as Int
+                    val fraction = anim.animatedFraction
+                    params.x = (startX + (dockPosition.x - startX) * fraction).toInt()
+                    params.y = (startY + (dockPosition.y - startY) * fraction).toInt()
                     try {
                         windowManager?.updateViewLayout(bubble, params)
                     } catch (_: Exception) {
@@ -2329,21 +2487,16 @@ class OverlayService : LifecycleService() {
             }
     }
 
-    /** Height in px to stay below the status bar. */
-    private fun safeAreaTop(): Int = dpToPx(28)
-
-    /** Height in px to stay above the navigation bar. */
-    private fun safeAreaBottom(): Int = dpToPx(48)
-
     private fun animateDismissBubble(
         params: WindowManager.LayoutParams,
         bubble: FrameLayout,
-        bubbleSizePx: Int,
     ) {
         bubbleAnimator?.cancel()
         val (screenW, screenH) = currentScreenSizePx()
-        val targetX = screenW / 2 - bubbleSizePx / 2
-        val targetY = screenH - dpToPx(90) - bubbleSizePx / 2
+        val bubbleWidthPx = controlsBubbleWidthPx(params, bubble)
+        val bubbleHeightPx = controlsBubbleHeightPx(params, bubble)
+        val targetX = screenW / 2 - bubbleWidthPx / 2
+        val targetY = screenH - dpToPx(90) - bubbleHeightPx / 2
         val startX = params.x
         val startY = params.y
         bubbleAnimator =
@@ -2373,6 +2526,42 @@ class OverlayService : LifecycleService() {
 
     // ── Radial menu helpers ─────────────────────────────────────────────────────
 
+    private fun updateControlsBubbleLayoutForState(
+        recordingActive: Boolean,
+        dockAfterResize: Boolean,
+        animateDock: Boolean,
+        dockEvenIfSizeUnchanged: Boolean = false,
+    ) {
+        val params = controlsBubbleParams ?: return
+        val bubble = controlsBubbleView ?: return
+        val targetWidth = if (recordingActive) recordingTimerWidthPx() else idleBubbleSizePx()
+        val targetHeight = if (recordingActive) recordingTimerHeightPx() else idleBubbleSizePx()
+        val sizeChanged = params.width != targetWidth || params.height != targetHeight
+
+        bubbleBackgroundDrawable?.apply {
+            cornerRadius = targetHeight / 2f
+            setColor(if (recordingActive) 0x66000000 else 0xFF1A1A1A.toInt())
+        }
+        bubble.invalidateOutline()
+
+        if (sizeChanged) {
+            params.width = targetWidth
+            params.height = targetHeight
+            try {
+                windowManager?.updateViewLayout(bubble, params)
+            } catch (_: Exception) {
+            }
+        }
+
+        if (dockAfterResize && (sizeChanged || dockEvenIfSizeUnchanged)) {
+            if (sizeChanged) {
+                snapControlsBubbleToNearestEdgeAfterLayout(animated = animateDock)
+            } else {
+                snapControlsBubbleToNearestEdge(animated = animateDock)
+            }
+        }
+    }
+
     /** Returns the record icon resource matching the current capture mode. */
     private fun idleRecordIconRes(): Int =
         when (currentMode) {
@@ -2388,15 +2577,43 @@ class OverlayService : LifecycleService() {
 
     /** Cross-fades the bubble from the mode icon to the recording timer badge. */
     private fun transitionBubbleToRecording() {
-        bubbleIconView?.animate()?.alpha(0f)?.setDuration(180)?.start()
-        bubbleTimerView?.animate()?.alpha(1f)?.setDuration(180)?.start()
+        updateControlsBubbleLayoutForState(
+            recordingActive = true,
+            dockAfterResize = true,
+            animateDock = true,
+            dockEvenIfSizeUnchanged = true,
+        )
+        bubbleIconView
+            ?.animate()
+            ?.alpha(0f)
+            ?.setDuration(180)
+            ?.start()
+        bubbleTimerView
+            ?.animate()
+            ?.alpha(1f)
+            ?.setDuration(180)
+            ?.start()
     }
 
     /** Cross-fades the bubble from the timer badge back to the mode icon. */
     private fun transitionBubbleToIdle() {
         refreshBubbleIcon()
-        bubbleTimerView?.animate()?.alpha(0f)?.setDuration(180)?.start()
-        bubbleIconView?.animate()?.alpha(1f)?.setDuration(180)?.start()
+        updateControlsBubbleLayoutForState(
+            recordingActive = false,
+            dockAfterResize = true,
+            animateDock = false,
+            dockEvenIfSizeUnchanged = true,
+        )
+        bubbleTimerView
+            ?.animate()
+            ?.alpha(0f)
+            ?.setDuration(180)
+            ?.start()
+        bubbleIconView
+            ?.animate()
+            ?.alpha(1f)
+            ?.setDuration(180)
+            ?.start()
     }
 
     // ── Auto-collapse ───────────────────────────────────────────────────────────
@@ -2512,7 +2729,10 @@ class OverlayService : LifecycleService() {
         }
     }
 
-    private fun buildCameraPreviewContainer(generation: Int, aspectRatio: String = "Circle"): FrameLayout {
+    private fun buildCameraPreviewContainer(
+        generation: Int,
+        aspectRatio: String = "Circle",
+    ): FrameLayout {
         val container =
             FrameLayout(this).apply {
                 clipToOutline = true
@@ -2547,13 +2767,16 @@ class OverlayService : LifecycleService() {
                     provider.unbindAll()
                     return@addListener
                 }
-                val previewView = settingsCameraPreviewView ?: run {
-                    provider.unbindAll()
-                    return@addListener
-                }
+                val previewView =
+                    settingsCameraPreviewView ?: run {
+                        provider.unbindAll()
+                        return@addListener
+                    }
                 Log.d(
                     "OverlayService",
-                    "buildCameraPreviewContainer: provider ready gen=$generation; binding to PreviewView hash=${System.identityHashCode(previewView)}",
+                    "buildCameraPreviewContainer: provider ready gen=$generation; binding to PreviewView hash=${System.identityHashCode(
+                        previewView,
+                    )}",
                 )
                 settingsCameraProvider = provider
                 bindSettingsCameraPreview(previewView)
@@ -2708,7 +2931,10 @@ class OverlayService : LifecycleService() {
         if (localBg != null && !registered.contains(localBg)) {
             try {
                 windowManager?.removeView(localBg)
-                Log.w("OverlayService", "hideCameraPreview: fallback bg removed hash=${System.identityHashCode(localBg)} (not in registry!)")
+                Log.w(
+                    "OverlayService",
+                    "hideCameraPreview: fallback bg removed hash=${System.identityHashCode(localBg)} (not in registry!)",
+                )
             } catch (e: Exception) {
                 Log.w("OverlayService", "hideCameraPreview: fallback bg removeView failed hash=${System.identityHashCode(localBg)}", e)
             }
@@ -2716,9 +2942,16 @@ class OverlayService : LifecycleService() {
         if (localOverlay != null && !registered.contains(localOverlay)) {
             try {
                 windowManager?.removeView(localOverlay)
-                Log.w("OverlayService", "hideCameraPreview: fallback overlay removed hash=${System.identityHashCode(localOverlay)} (not in registry!)")
+                Log.w(
+                    "OverlayService",
+                    "hideCameraPreview: fallback overlay removed hash=${System.identityHashCode(localOverlay)} (not in registry!)",
+                )
             } catch (e: Exception) {
-                Log.w("OverlayService", "hideCameraPreview: fallback overlay removeView failed hash=${System.identityHashCode(localOverlay)}", e)
+                Log.w(
+                    "OverlayService",
+                    "hideCameraPreview: fallback overlay removeView failed hash=${System.identityHashCode(localOverlay)}",
+                    e,
+                )
             }
         }
 
@@ -2746,7 +2979,8 @@ class OverlayService : LifecycleService() {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 overlayType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT,
             )
         val bg = FrameLayout(this).apply { setBackgroundColor(0x44000000) }
@@ -2843,7 +3077,9 @@ class OverlayService : LifecycleService() {
 
     // ── Shared Helpers ─────────────────────────────────────────────────────────
 
-    private class WatermarkImageView(context: Context) : ImageView(context) {
+    private class WatermarkImageView(
+        context: Context,
+    ) : ImageView(context) {
         var clipCircle: Boolean = false
             set(value) {
                 field = value

@@ -694,8 +694,8 @@
     <string name="error_resolution_too_large_for_profile">\u092F\u0939 \u0930\u093F\u091C\u093C\u0949\u0932\u094D\u092F\u0942\u0936\u0928 \u0907\u0938 \u0921\u093F\u0935\u093E\u0907\u0938 \u0915\u0947 \u092A\u094D\u0930\u0926\u0930\u094D\u0936\u0928 \u092A\u094D\u0930\u094B\u092B\u093C\u093E\u0907\u0932 \u0915\u0947 \u0932\u093F\u090F \u092C\u0939\u0941\u0924 \u092C\u0921\u093C\u093E \u0939\u0948.</string>
     <string name="pro_feature">PRO \u0938\u0941\u0935\u093F\u0927\u093E</string>
     <string name="pro_recording_title">\u0906\u092A PRO \u0938\u0941\u0935\u093F\u0927\u093E\u0913\u0902 \u0915\u0947 \u0938\u093E\u0925 \u0930\u093F\u0915\u0949\u0930\u094D\u0921 \u0915\u0930 \u0930\u0939\u0947 \u0939\u0948\u0902</string>
-    <string name="pro_recording_body">Pro को 1 घंटे के लिए अनलॉक करने के लिए विज्ञापन देखें: 90/120 FPS, 16 Mbps से ऊपर वीडियो, कैमरा, watermark और अलग mic — या स्थायी access के लिए ads हटाएं।</string>
-    <string name="pro_tools_body">Pro को 1 घंटे के लिए अनलॉक करने के लिए विज्ञापन देखें: 90/120 FPS, 16 Mbps से ऊपर, merge और GIF — या स्थायी access के लिए Remove Ads खरीदें।</string>
+    <string name="pro_recording_body">Pro को 3 घंटे के लिए अनलॉक करने के लिए विज्ञापन देखें: 90/120 FPS, 16 Mbps से ऊपर वीडियो, कैमरा, watermark और अलग mic — या स्थायी access के लिए ads हटाएं।</string>
+    <string name="pro_tools_body">Pro को 3 घंटे के लिए अनलॉक करने के लिए विज्ञापन देखें: 90/120 FPS, 16 Mbps से ऊपर, merge और GIF — या स्थायी access के लिए Remove Ads खरीदें।</string>
     <string name="pro_unlock_watch_ad">\u0935\u093F\u091C\u094D\u091E\u093E\u092A\u0928 \u0926\u0947\u0916\u0947\u0902</string>
     <string name="pro_unlock_remove_ads">\u0935\u093F\u091C\u094D\u091E\u093E\u092A\u0928 \u0939\u091F\u093E\u090F\u0901</string>
     <string name="pro_unlock_ad_unavailable">\u0905\u092D\u0940 \u0935\u093F\u091C\u094D\u091E\u093E\u092A\u0928 \u0909\u092A\u0932\u092C\u094D\u0927 \u0928\u0939\u0940\u0902 \u0939\u0948. \u0915\u0943\u092A\u092F\u093E \u0925\u094B\u0921\u093C\u0940 \u0926\u0947\u0930 \u092C\u093E\u0926 \u092B\u093F\u0930 \u0915\u094B\u0936\u093F\u0936 \u0915\u0930\u0947\u0902.</string>
@@ -711,14 +711,6 @@
     <string name="settings_show_touches_status_on">चालू</string>
     <string name="settings_show_touches_status_off">बंद — Show touches चालू करने के लिए Developer Options खोलें</string>
     <string name="settings_show_touches_status_unknown">अज्ञात — Show touches चालू करने के लिए Developer Options खोलें</string>
-    <string name="setting_recording_engine">रिकॉर्डिंग इंजन</string>
-    <string name="recording_engine_performance_label">प्रदर्शन इंजन</string>
-    <string name="recording_engine_compatibility_label">Experimental engine</string>
-    <string name="recording_engine_performance_summary">अधिकांश उपयोगकर्ताओं के लिए अनुशंसित. यह कम प्रोसेसिंग उपयोग करता है, डिवाइस को ठंडा रखता है, और रोज़मर्रा की रिकॉर्डिंग के लिए सबसे अच्छा है. रिकॉर्डिंग के दौरान स्क्रीनशॉट बंद रहते हैं.</string>
-    <string name="recording_engine_compatibility_summary">प्रयोगात्मक fallback. यह अधिक प्रोसेसिंग उपयोग कर सकता है, अधिक गर्मी पैदा कर सकता है, और बैटरी जल्दी खत्म कर सकता है. इसे केवल तब आज़माएं जब Performance इंजन आपके डिवाइस पर समस्या करे.</string>
-    <string name="recording_engine_advanced_warning">Experimental engine heat \u092F\u093E battery use \u092C\u0922\u093C\u093E \u0938\u0915\u0924\u093E \u0939\u0948\u0964 \u0915\u0947\u0935\u0932 \u0924\u092D\u0940 \u0909\u092A\u092F\u094B\u0917 \u0915\u0930\u0947\u0902 \u091C\u092C default Performance engine \u0906\u092A\u0915\u0947 device \u092A\u0930 \u0920\u0940\u0915 \u0938\u0947 \u0915\u093E\u092E \u0928 \u0915\u0930 \u0930\u0939\u093E \u0939\u094B\u0964</string>
-    <string name="recording_engine_scope_note">सामान्य रिकॉर्डिंग और Clipper पर लागू होता है।</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">प्रदर्शन इंजन में रिकॉर्डिंग के दौरान स्क्रीनशॉट उपलब्ध नहीं हैं।</string>
     <string name="internal_silent_dialog_title">Internal audio silent है</string>
     <string name="internal_silent_dialog_message">यह game या app internal audio capture रोक सकता है।\n\nइसके बजाय speaker audio capture करने के लिए microphone fallback इस्तेमाल करें?</string>
     <string name="internal_silent_use_mic_fallback">Microphone fallback इस्तेमाल करें</string>

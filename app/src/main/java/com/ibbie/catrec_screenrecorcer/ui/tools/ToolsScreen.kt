@@ -59,12 +59,18 @@ fun ToolsScreen(navController: NavController) {
         }
     }
 
+    fun closeVideoSourcePicker(clearPendingTool: Boolean = true) {
+        showSourceDialog = false
+        showCatRecSheet = false
+        if (clearPendingTool) pendingTool = null
+    }
+
     val storageLauncher =
         rememberLauncherForActivityResult(
             PickVisualMedia(),
         ) { uri ->
             val tool = pendingTool
-            pendingTool = null
+            closeVideoSourcePicker()
             if (uri != null && tool != null) navigateForTool(tool, uri)
         }
 
@@ -95,14 +101,17 @@ fun ToolsScreen(navController: NavController) {
             ToolItem(trimTitle, Icons.Default.ContentCut) {
                 pendingTool = PendingVideoTool.Trim
                 showSourceDialog = true
+                showCatRecSheet = false
             },
             ToolItem(compressTitle, Icons.Default.Compress) {
                 pendingTool = PendingVideoTool.Compress
                 showSourceDialog = true
+                showCatRecSheet = false
             },
             ToolItem(gifTitle, Icons.Default.Gif, isPro = true) {
                 pendingTool = PendingVideoTool.Gif
                 showSourceDialog = true
+                showCatRecSheet = false
             },
             ToolItem(mergeTitle, Icons.AutoMirrored.Filled.CallMerge, isPro = true) {
                 navController.navigate(Screen.MergeVideos.route)
@@ -112,13 +121,13 @@ fun ToolsScreen(navController: NavController) {
     if (showSourceDialog && pendingTool != null) {
         AlertDialog(
             onDismissRequest = {
-                pendingTool = null
+                closeVideoSourcePicker()
             },
             title = { Text(stringResource(R.string.editor_pick_video_title)) },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        pendingTool = null
+                        closeVideoSourcePicker()
                     },
                 ) {
                     Text(stringResource(R.string.action_cancel))
@@ -128,6 +137,7 @@ fun ToolsScreen(navController: NavController) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(
                         onClick = {
+                            showSourceDialog = false
                             showCatRecSheet = true
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -136,6 +146,7 @@ fun ToolsScreen(navController: NavController) {
                     }
                     TextButton(
                         onClick = {
+                            closeVideoSourcePicker(clearPendingTool = false)
                             storageLauncher.launch(PickVisualMediaRequest(PickVisualMedia.VideoOnly))
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -147,10 +158,10 @@ fun ToolsScreen(navController: NavController) {
         )
     }
 
-    if (showCatRecSheet) {
+    if (showCatRecSheet && pendingTool != null) {
         val tool = pendingTool
         ModalBottomSheet(onDismissRequest = {
-            pendingTool = null
+            closeVideoSourcePicker()
         }) {
             var entries by remember { mutableStateOf<List<RecordingEntry>>(emptyList()) }
             LaunchedEffect(Unit) {
@@ -171,7 +182,7 @@ fun ToolsScreen(navController: NavController) {
                                 .clickable {
                                     if (tool != null) {
                                         navigateForTool(tool, entry.uri)
-                                        pendingTool = null
+                                        closeVideoSourcePicker()
                                     }
                                 },
                         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),

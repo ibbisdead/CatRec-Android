@@ -6,8 +6,9 @@ import com.ibbie.catrec_screenrecorcer.utils.BatteryOptimizationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class BatteryOptimizationViewModel(app: Application) : AndroidViewModel(app) {
-
+class BatteryOptimizationViewModel(
+    app: Application,
+) : AndroidViewModel(app) {
     data class UiState(
         val isExempted: Boolean,
         val oemInfo: BatteryOptimizationHelper.OemKillerInfo?,

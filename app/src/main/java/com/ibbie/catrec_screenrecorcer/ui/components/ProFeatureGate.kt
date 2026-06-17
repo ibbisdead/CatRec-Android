@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,21 +30,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.rewarded.RewardedAd
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.ibbie.catrec_screenrecorcer.R
-import com.ibbie.catrec_screenrecorcer.ads.AdMobAdRequestFactory
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
+import com.ibbie.catrec_screenrecorcer.ads.ProRewardedAdManager
 import com.ibbie.catrec_screenrecorcer.ads.resetWindowFocusAfterFullscreenOverlay
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import kotlinx.coroutines.launch
 
 private const val PRO_GATE_TAG = "ProGate"
-private const val PRO_REWARDED_AD_UNIT_ID = "ca-app-pub-7741372232895726/8137302121"
 
-enum class ProFeature(val logName: String) {
+enum class ProFeature(
+    val logName: String,
+) {
     RECORDING_HIGH_FPS("pro_high_fps"),
     HIGH_BITRATE("pro_high_bitrate"),
     SEPARATE_AUDIO_TRACKS("pro_separate_audio_tracks"),
@@ -88,38 +87,14 @@ fun ProUnlockDialog(
     val repository = remember { SettingsRepository(context) }
     val scope = rememberCoroutineScope()
     val toastAdUnavailable = stringResource(R.string.pro_unlock_ad_unavailable)
+    val rewardedAdAvailability by ProRewardedAdManager.availability.collectAsState()
 
-    var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
-    var loading by remember { mutableStateOf(false) }
     var showing by remember { mutableStateOf(false) }
     var rewardEarned by remember { mutableStateOf(false) }
     val featureLog = triggeredFeatures.joinToString(",") { it.logName }
 
-    fun loadRewardedAd() {
-        if (loading || rewardedAd != null) return
-        loading = true
-        RewardedAd.load(
-            context.applicationContext,
-            PRO_REWARDED_AD_UNIT_ID,
-            AdMobAdRequestFactory.build(),
-            object : RewardedAdLoadCallback() {
-                override fun onAdLoaded(ad: RewardedAd) {
-                    Log.d(PRO_GATE_TAG, "rewarded ad loaded purpose=pro_unlock features=$featureLog")
-                    rewardedAd = ad
-                    loading = false
-                }
-
-                override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.w(PRO_GATE_TAG, "rewarded ad failed to load purpose=pro_unlock code=${error.code} msg=${error.message}")
-                    rewardedAd = null
-                    loading = false
-                }
-            },
-        )
-    }
-
-    LaunchedEffect(Unit) {
-        loadRewardedAd()
+    LaunchedEffect(featureLog) {
+        ProRewardedAdManager.preloadOnDemand(context, "dialog_open:$featureLog")
     }
 
     AlertDialog(
@@ -131,13 +106,18 @@ fun ProUnlockDialog(
         text = { Text(body) },
         confirmButton = {
             TextButton(
-                enabled = !showing && !loading,
+                enabled = !showing && !rewardedAdAvailability.loading,
                 onClick = {
-                    val ad = rewardedAd
-                    if (activity == null || ad == null) {
+                    if (activity == null) {
+                        Log.w(PRO_GATE_TAG, "pro unlock blocked: activity unavailable features=$featureLog")
+                        Toast.makeText(context, toastAdUnavailable, Toast.LENGTH_SHORT).show()
+                        ProRewardedAdManager.preloadOnDemand(context, "missing_activity:$featureLog")
+                        return@TextButton
+                    }
+                    val ad = ProRewardedAdManager.claimAd(context, featureLog)
+                    if (ad == null) {
                         Log.w(PRO_GATE_TAG, "pro unlock blocked: rewarded ad unavailable features=$featureLog")
                         Toast.makeText(context, toastAdUnavailable, Toast.LENGTH_SHORT).show()
-                        loadRewardedAd()
                         return@TextButton
                     }
                     showing = true
@@ -149,7 +129,7 @@ fun ProUnlockDialog(
                                 activity.resetWindowFocusAfterFullscreenOverlay()
                                 AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.REWARDED_AD)
                                 showing = false
-                                rewardedAd = null
+                                ProRewardedAdManager.preloadInBackground(context, "dismissed:$featureLog")
                                 if (rewardEarned) {
                                     scope.launch {
                                         val until = repository.grantTimedProAccess()
@@ -169,9 +149,8 @@ fun ProUnlockDialog(
                                 AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.REWARDED_AD)
                                 showing = false
                                 rewardEarned = false
-                                rewardedAd = null
                                 Toast.makeText(context, toastAdUnavailable, Toast.LENGTH_SHORT).show()
-                                loadRewardedAd()
+                                ProRewardedAdManager.preloadInBackground(context, "failed_to_show:$featureLog")
                             }
                         }
                     ad.show(activity) {
@@ -180,7 +159,7 @@ fun ProUnlockDialog(
                     }
                 },
             ) {
-                if (loading) {
+                if (rewardedAdAvailability.loading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,

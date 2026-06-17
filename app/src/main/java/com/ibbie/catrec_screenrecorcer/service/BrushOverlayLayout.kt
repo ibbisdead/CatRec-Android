@@ -22,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.createBitmap
 import androidx.core.view.setPadding
 import com.ibbie.catrec_screenrecorcer.R
 import kotlin.math.atan2
@@ -29,7 +30,6 @@ import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
-import androidx.core.graphics.createBitmap
 
 private sealed class BrushCommittedAction {
     data class Stroke(
@@ -412,7 +412,10 @@ internal class BrushOverlayLayout(
     private val bottomChrome =
         LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(8), dp(6), dp(8), dp(6))
             background = AppCompatResources.getDrawable(context, R.drawable.bg_brush_toolbar)
+            elevation = dp(8).toFloat()
         }
 
     private val surface =
@@ -427,15 +430,16 @@ internal class BrushOverlayLayout(
 
     private val mainTools =
         LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
         }
 
     private val colorPanel =
         LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             visibility = GONE
-            setPadding(dp(16), dp(12), dp(16), dp(14))
+            minimumWidth = dp(260)
+            setPadding(dp(12), dp(10), dp(12), dp(12))
         }
 
     private var pendingColor = Color.RED
@@ -468,17 +472,18 @@ internal class BrushOverlayLayout(
                 addView(mainTools, LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
             }
         val barParams =
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
-                gravity = Gravity.BOTTOM
+            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
+                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                setMargins(dp(8), 0, dp(8), dp(14))
             }
 
         val widthSeek =
             SeekBar(context).apply {
-                max = 78
-                progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 78)
+                max = 38
+                progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 38)
                 layoutParams =
                     LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
-                        setMargins(0, dp(6), 0, dp(4))
+                        setMargins(0, dp(4), 0, dp(2))
                     }
                 setOnSeekBarChangeListener(
                     object : SeekBar.OnSeekBarChangeListener {
@@ -502,6 +507,27 @@ internal class BrushOverlayLayout(
             highlightTool(tool)
         }
 
+        fun newToolRow(): LinearLayout =
+            LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+            }
+
+        var activeToolRow = newToolRow().also { mainTools.addView(it) }
+
+        fun toolButtonLayout(): LinearLayout.LayoutParams =
+            LinearLayout.LayoutParams(dp(34), dp(34)).apply {
+                setMargins(dp(2), dp(1), dp(2), dp(1))
+            }
+
+        fun addChromeButton(view: View) {
+            if (activeToolRow.childCount >= 5) {
+                activeToolRow = newToolRow().also { mainTools.addView(it) }
+            }
+            activeToolRow.addView(view)
+        }
+
         fun addToolIcon(
             drawableRes: Int,
             tool: DrawTool,
@@ -509,19 +535,16 @@ internal class BrushOverlayLayout(
         ) {
             val iv =
                 ImageView(context).apply {
-                    layoutParams =
-                        LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                            setMargins(dp(4), dp(10), dp(4), dp(10))
-                        }
+                    layoutParams = toolButtonLayout()
                     setImageResource(drawableRes)
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
-                    setPadding(dp(11))
+                    setPadding(dp(7))
                     background = AppCompatResources.getDrawable(context, R.drawable.bg_btn_overlay_normal)
                     tag = tool
                     this.contentDescription = contentDesc
                     setOnClickListener { selectTool(tool) }
                 }
-            mainTools.addView(iv)
+            addChromeButton(iv)
         }
 
         addToolIcon(R.drawable.ic_brush_tool_pen, DrawTool.PEN, context.getString(R.string.brush_tool_pen))
@@ -529,18 +552,15 @@ internal class BrushOverlayLayout(
 
         val undo =
             ImageView(context).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                        setMargins(dp(4), dp(10), dp(4), dp(10))
-                    }
+                layoutParams = toolButtonLayout()
                 setImageResource(R.drawable.ic_brush_undo)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
-                setPadding(dp(11))
+                setPadding(dp(7))
                 background = AppCompatResources.getDrawable(context, R.drawable.bg_btn_overlay_normal)
                 contentDescription = context.getString(R.string.brush_tool_undo)
                 setOnClickListener { surface.rewind() }
             }
-        mainTools.addView(undo)
+        addChromeButton(undo)
 
         addToolIcon(R.drawable.ic_brush_shape_square, DrawTool.SQUARE, context.getString(R.string.brush_tool_square))
         addToolIcon(R.drawable.ic_brush_shape_circle, DrawTool.CIRCLE, context.getString(R.string.brush_tool_circle))
@@ -549,19 +569,16 @@ internal class BrushOverlayLayout(
 
         val colorBtn =
             ImageView(context).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                        setMargins(dp(4), dp(10), dp(4), dp(10))
-                    }
+                layoutParams = toolButtonLayout()
                 setImageResource(R.drawable.ic_brush_palette)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
-                setPadding(dp(11))
+                setPadding(dp(7))
                 background = AppCompatResources.getDrawable(context, R.drawable.bg_btn_overlay_normal)
                 contentDescription = context.getString(R.string.brush_tool_colors)
                 setOnClickListener {
                     pendingColor = surface.getStrokeColor()
                     pendingWidthPx = surface.getStrokeWidthPx()
-                    widthSeek.progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 78)
+                    widthSeek.progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 38)
                     colorPanelSnapshotColor = pendingColor
                     colorPanelSnapshotWidth = pendingWidthPx
                     refreshColorChipSelection()
@@ -569,38 +586,32 @@ internal class BrushOverlayLayout(
                     scroll.visibility = GONE
                 }
             }
-        mainTools.addView(colorBtn)
+        addChromeButton(colorBtn)
 
         val shot =
             ImageView(context).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                        setMargins(dp(4), dp(10), dp(4), dp(10))
-                    }
+                layoutParams = toolButtonLayout()
                 setImageResource(R.drawable.ic_screenshot)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
-                setPadding(dp(10))
+                setPadding(dp(7))
                 background = AppCompatResources.getDrawable(context, R.drawable.bg_btn_overlay_normal)
                 contentDescription = context.getString(R.string.notif_action_screenshot)
                 setOnClickListener { onScreenshot() }
             }
-        mainTools.addView(shot)
+        addChromeButton(shot)
 
         val closeBtn =
             ImageView(context).apply {
-                layoutParams =
-                    LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                        setMargins(dp(6), dp(10), dp(10), dp(10))
-                    }
+                layoutParams = toolButtonLayout()
                 setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
                 imageTintList = ColorStateList.valueOf(Color.WHITE)
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
-                setPadding(dp(12))
+                setPadding(dp(8))
                 background = AppCompatResources.getDrawable(context, R.drawable.bg_btn_overlay_stop)
                 contentDescription = context.getString(R.string.action_close)
                 setOnClickListener { onClose() }
             }
-        mainTools.addView(closeBtn)
+        addChromeButton(closeBtn)
 
         val panelHeader =
             LinearLayout(context).apply {
@@ -612,7 +623,7 @@ internal class BrushOverlayLayout(
             TextView(context).apply {
                 text = context.getString(R.string.brush_panel_title)
                 setTextColor(Color.WHITE)
-                textSize = 15f
+                textSize = 13f
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
                 layoutParams = LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f)
             }
@@ -620,12 +631,12 @@ internal class BrushOverlayLayout(
             TextView(context).apply {
                 text = context.getString(R.string.brush_color_back)
                 setTextColor(0xFFB0B0B0.toInt())
-                textSize = 14f
-                setPadding(dp(8), dp(4), dp(8), dp(4))
+                textSize = 12f
+                setPadding(dp(6), dp(3), dp(6), dp(3))
                 setOnClickListener {
                     pendingColor = colorPanelSnapshotColor
                     pendingWidthPx = colorPanelSnapshotWidth
-                    widthSeek.progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 78)
+                    widthSeek.progress = (pendingWidthPx - 2f).toInt().coerceIn(0, 38)
                     refreshColorChipSelection()
                     colorPanel.visibility = GONE
                     scroll.visibility = VISIBLE
@@ -639,7 +650,7 @@ internal class BrushOverlayLayout(
             TextView(context).apply {
                 text = context.getString(R.string.brush_line_width)
                 setTextColor(0xFFAAAAAA.toInt())
-                textSize = 12f
+                textSize = 11f
                 layoutParams =
                     LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
                         setMargins(0, dp(4), 0, 0)
@@ -653,7 +664,7 @@ internal class BrushOverlayLayout(
                 isHorizontalScrollBarEnabled = false
                 layoutParams =
                     LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT).apply {
-                        setMargins(0, dp(10), 0, 0)
+                        setMargins(0, dp(6), 0, 0)
                     }
             }
         val chipRow =
@@ -665,8 +676,8 @@ internal class BrushOverlayLayout(
             val chip =
                 View(context).apply {
                     layoutParams =
-                        LinearLayout.LayoutParams(dp(44), dp(44)).apply {
-                            setMargins(dp(6), dp(4), dp(6), dp(4))
+                        LinearLayout.LayoutParams(dp(30), dp(30)).apply {
+                            setMargins(dp(4), dp(3), dp(4), dp(3))
                         }
                     setOnClickListener {
                         pendingColor = c
@@ -683,10 +694,10 @@ internal class BrushOverlayLayout(
             TextView(context).apply {
                 text = context.getString(R.string.brush_color_picker_hint)
                 setTextColor(0xFF888888.toInt())
-                textSize = 12f
+                textSize = 11f
                 layoutParams =
                     LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
-                        setMargins(0, dp(8), 0, dp(10))
+                        setMargins(0, dp(6), 0, dp(8))
                     }
             }
         colorPanel.addView(hint)
@@ -695,9 +706,9 @@ internal class BrushOverlayLayout(
             LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(44))
+                layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(36))
                 background = AppCompatResources.getDrawable(context, R.drawable.bg_brush_apply)
-                setPadding(dp(16), 0, dp(16), 0)
+                setPadding(dp(12), 0, dp(12), 0)
                 setOnClickListener {
                     surface.setStrokeColor(pendingColor)
                     surface.setStrokeWidthPx(pendingWidthPx)
@@ -708,8 +719,8 @@ internal class BrushOverlayLayout(
         applyBtn.addView(
             ImageView(context).apply {
                 layoutParams =
-                    LinearLayout.LayoutParams(dp(22), dp(22)).apply {
-                        setMargins(0, 0, dp(8), 0)
+                    LinearLayout.LayoutParams(dp(18), dp(18)).apply {
+                        setMargins(0, 0, dp(6), 0)
                     }
                 setImageResource(R.drawable.ic_brush_check_small)
                 scaleType = ImageView.ScaleType.FIT_CENTER
@@ -719,7 +730,7 @@ internal class BrushOverlayLayout(
             TextView(context).apply {
                 text = context.getString(R.string.brush_apply)
                 setTextColor(Color.WHITE)
-                textSize = 15f
+                textSize = 13f
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
             },
         )
@@ -752,15 +763,22 @@ internal class BrushOverlayLayout(
     }
 
     private fun highlightTool(active: DrawTool) {
-        for (i in 0 until mainTools.childCount) {
-            val v = mainTools.getChildAt(i)
-            val t = v.tag as? DrawTool ?: continue
-            v.background =
-                AppCompatResources.getDrawable(
-                    context,
-                    if (t == active) R.drawable.bg_brush_tool_selected else R.drawable.bg_btn_overlay_normal,
-                )
+        fun applyToTools(group: LinearLayout) {
+            for (i in 0 until group.childCount) {
+                val v = group.getChildAt(i)
+                if (v is LinearLayout) {
+                    applyToTools(v)
+                    continue
+                }
+                val t = v.tag as? DrawTool ?: continue
+                v.background =
+                    AppCompatResources.getDrawable(
+                        context,
+                        if (t == active) R.drawable.bg_brush_tool_selected else R.drawable.bg_btn_overlay_normal,
+                    )
+            }
         }
+        applyToTools(mainTools)
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density + 0.5f).toInt()

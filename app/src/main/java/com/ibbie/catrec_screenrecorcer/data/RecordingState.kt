@@ -17,13 +17,6 @@ object RecordingState {
     val isBuffering: StateFlow<Boolean> = _isBuffering.asStateFlow()
 
     /**
-     * True when ScreenRecordService holds a live MediaProjection token and is ready
-     * for the overlay to start a recording without showing a permission dialog.
-     */
-    private val _isPrepared = MutableStateFlow(false)
-    val isPrepared: StateFlow<Boolean> = _isPrepared.asStateFlow()
-
-    /**
      * Capture mode: [CaptureMode.RECORD], [CaptureMode.CLIPPER], or [CaptureMode.GIF].
      * The overlay treats GIF like RECORD (start recording), not rolling buffer.
      * While the rolling buffer is active, this is driven to CLIPPER regardless of pill selection.
@@ -64,10 +57,6 @@ object RecordingState {
 
     fun setBuffering(buffering: Boolean) {
         _isBuffering.value = buffering
-    }
-
-    fun setPrepared(prepared: Boolean) {
-        _isPrepared.value = prepared
     }
 
     fun setMode(mode: String) {

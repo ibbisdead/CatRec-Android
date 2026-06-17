@@ -29,7 +29,6 @@ import com.ibbie.catrec_screenrecorcer.BuildConfig
  * References: Android “Playback capture” guide — capturing app constraints and publisher usage.
  */
 object PlaybackCaptureConfig {
-
     /** Stable log / analytics representation of usages passed to [Builder.addMatchingUsage]. */
     const val MATCHED_USAGES_LOG: String = "USAGE_MEDIA, USAGE_GAME, USAGE_UNKNOWN"
 
@@ -134,7 +133,7 @@ object PlaybackCaptureConfig {
             logTag,
             "$sessionDiagMarker INTERNAL_PLAYBACK_RECORD_READY usages=[$MATCHED_USAGES_LOG] " +
                 "sampleRate=${record.sampleRate} requestedSampleRate=$sampleRateFromBuilder " +
-                "channelMask=${describeChannelMaskForLog(configuredChannelMask)}(${configuredChannelMask}) " +
+                "channelMask=${describeChannelMaskForLog(configuredChannelMask)}($configuredChannelMask) " +
                 "channelCount=${record.channelCount} bufferSizeBytes=$buf " +
                 "audioRecordState=${record.state} recordingState=${record.recordingState}",
         )

@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Privacy: sanitized exception messages (truncated), no PCM, filenames, URIs, or user text beyond mode flags.
  */
 object AudioRecordingCrashlyticsReporter {
-
     enum class RecordingKind { FULL, BUFFER }
 
     private val lock = Any()
@@ -160,8 +159,13 @@ object AudioRecordingCrashlyticsReporter {
         crash.setCustomKey(Keys.MIC_INIT, micRecordPresent.toString())
         crash.setCustomKey(Keys.INT_INIT, internalRecordPresent.toString())
         crash.setCustomKey(Keys.MIC_ST_OK, if (needsMicRecording(capturedModeName, mainMuxModeName)) micRecordPresent.toString() else "n/a")
-        crash.setCustomKey(Keys.INT_ST_OK, if (needsInternalRecording(capturedModeName, mainMuxModeName)) internalRecordPresent.toString() else "n/a")
-        crash.log("[CatRecArc] full_capture_ready cap=$capturedModeName mux=$mainMuxModeName mic=$micRecordPresent int=$internalRecordPresent")
+        crash.setCustomKey(
+            Keys.INT_ST_OK,
+            if (needsInternalRecording(capturedModeName, mainMuxModeName)) internalRecordPresent.toString() else "n/a",
+        )
+        crash.log(
+            "[CatRecArc] full_capture_ready cap=$capturedModeName mux=$mainMuxModeName mic=$micRecordPresent int=$internalRecordPresent",
+        )
     }
 
     fun onBufferCaptureReady(
@@ -209,7 +213,10 @@ object AudioRecordingCrashlyticsReporter {
     ) {
         if (!sessionActive) return
         setLastWarning("$which creation_failed")
-        FirebaseCrashlytics.getInstance().setCustomKey("arc_aud_fail_recent", sanitize("$which:" + throwableToSafeExcerpt(throwable, extraContext)))
+        FirebaseCrashlytics.getInstance().setCustomKey(
+            "arc_aud_fail_recent",
+            sanitize("$which:" + throwableToSafeExcerpt(throwable, extraContext)),
+        )
         if (!oncePerLeg.compareAndSet(false, true)) return
         val crash = FirebaseCrashlytics.getInstance()
         crash.setCustomKey("arc_mic_init", if (which == "mic") "FAILED" else "see_arc_mic_ini")
@@ -267,7 +274,10 @@ object AudioRecordingCrashlyticsReporter {
             applyInternalHealthKeys(crash, health)
             crash.setCustomKey(Keys.LAST_AUD_WRN, lastAudioWarningReason)
             crash.setCustomKey(Keys.INT_SILENT, true.toString())
-            crash.log("[CatRecArc] internal_audio_persistent_silence ${health.compactSummary()}")
+            reportNonFatal(
+                InternalAudioPersistentSilence("InternalAudioPersistentSilence ${health.compactSummary()}"),
+                "[CatRecArc] nf_internal_audio_persistent_silence",
+            )
         }
     }
 
@@ -405,8 +415,22 @@ object AudioRecordingCrashlyticsReporter {
                     beginUserRequestedAnyAudio &&
                     separateMicTrackActive &&
                     finalCaptureModeName != "NONE"
+            val suppressZeroMainMuxAsStartupCleanup =
+                shouldSuppressZeroMainMuxAudioAsStartupCleanup(
+                    needMainWritten = needMainWritten,
+                    mainMuxSamplesWritten = mainMuxSamplesWritten,
+                    audioInputEosQueued = audioInputEosQueued,
+                    audioOutputEosObserved = audioOutputEosObserved,
+                    internalAudioHealth = internalAudioHealth,
+                )
 
-            if (needMainWritten && !mainMuxSamplesWritten) {
+            if (suppressZeroMainMuxAsStartupCleanup) {
+                rememberLastWarning("zero_main_mux_startup_cleanup_suppressed")
+                crash.log(
+                    "[CatRecArc] suppress_zero_main_mux_audio startup_cleanup " +
+                        internalAudioHealth?.compactSummary().orEmpty(),
+                )
+            } else if (needMainWritten && !mainMuxSamplesWritten) {
                 if (nfZeroMuxAudioReported.compareAndSet(false, true)) {
                     setLastWarning("zero_main_mux_samples")
                     reportNonFatal(
@@ -442,14 +466,35 @@ object AudioRecordingCrashlyticsReporter {
                     internalPlaybackPcmSilentBuffers != null &&
                     internalPlaybackPcmEverNonZero != null
                 ) {
-                    " intPCM_r=${internalPlaybackPcmReadsPositive} nzBuf=${internalPlaybackPcmNonZeroBuffers} silentBuf=${internalPlaybackPcmSilentBuffers} everNz=${internalPlaybackPcmEverNonZero}"
+                    " intPCM_r=$internalPlaybackPcmReadsPositive nzBuf=$internalPlaybackPcmNonZeroBuffers silentBuf=$internalPlaybackPcmSilentBuffers everNz=$internalPlaybackPcmEverNonZero"
                 } else {
                     ""
-            }
+                }
             FirebaseCrashlytics.getInstance().log(
                 "[CatRecArc] full_finalize capture=$finalCaptureModeName mux=$mainMuxModeName mainW=$mainMuxSamplesWritten sepW=$separateMicSamplesWritten fallback=$micFallbackUsed silence=$internalSilenceObservedThisSession recovered=$internalRecoveredAfterInitialSilence eosIn=$audioInputEosQueued eosOut=$audioOutputEosObserved readErr=$readNegCount$intPcmFmt",
             )
         }
+    }
+
+    internal fun shouldSuppressZeroMainMuxAudioAsStartupCleanup(
+        needMainWritten: Boolean,
+        mainMuxSamplesWritten: Boolean,
+        audioInputEosQueued: Boolean,
+        audioOutputEosObserved: Boolean,
+        internalAudioHealth: InternalAudioHealthTracker.Snapshot?,
+    ): Boolean {
+        val h = internalAudioHealth ?: return false
+        return needMainWritten &&
+            !mainMuxSamplesWritten &&
+            h.internalRequested &&
+            h.internalAudioRecordCreated &&
+            !h.internalAudioRecordStarted &&
+            h.totalBytesRead == 0L &&
+            h.positiveReadCount == 0L &&
+            h.zeroReadCount == 0L &&
+            h.negativeReadCount == 0L &&
+            !audioInputEosQueued &&
+            !audioOutputEosObserved
     }
 
     fun finalizeBufferSession(
@@ -516,10 +561,10 @@ object AudioRecordingCrashlyticsReporter {
                     internalPlaybackPcmSilentBuffers != null &&
                     internalPlaybackPcmEverNonZero != null
                 ) {
-                    " intPCM_r=${internalPlaybackPcmReadsPositive} nzBuf=${internalPlaybackPcmNonZeroBuffers} silentBuf=${internalPlaybackPcmSilentBuffers} everNz=${internalPlaybackPcmEverNonZero}"
+                    " intPCM_r=$internalPlaybackPcmReadsPositive nzBuf=$internalPlaybackPcmNonZeroBuffers silentBuf=$internalPlaybackPcmSilentBuffers everNz=$internalPlaybackPcmEverNonZero"
                 } else {
                     ""
-            }
+                }
             FirebaseCrashlytics.getInstance().log(
                 "[CatRecArc] buffer_finalize cap=$finalCaptureModeName pcmQ=$pcmSamplesQueued pcmDrop=$pcmDropCount readErr=$readNegCount silence=$internalSilenceObservedThisSession recovered=$internalRecoveredAfterInitialSilence$intBufPcmFmt",
             )
@@ -641,7 +686,11 @@ object AudioRecordingCrashlyticsReporter {
         sb.append(t.javaClass.simpleName).append(':').append(sanitizeThrowableMessage(t.message))
         val c = t.cause
         if (c != null) {
-            sb.append("|cause=").append(c.javaClass.simpleName).append(':').append(sanitizeThrowableMessage(c.message))
+            sb
+                .append("|cause=")
+                .append(c.javaClass.simpleName)
+                .append(':')
+                .append(sanitizeThrowableMessage(c.message))
         }
         return sb.toString().take(220)
     }
@@ -669,7 +718,13 @@ object AudioRecordingCrashlyticsReporter {
         Handler(Looper.getMainLooper()).post(block)
     }
 
-    private class InternalAudioRecordStartFailed(message: String) : IllegalStateException(message)
+    private class InternalAudioPersistentSilence(
+        message: String,
+    ) : IllegalStateException(message)
+
+    private class InternalAudioRecordStartFailed(
+        message: String,
+    ) : IllegalStateException(message)
 
     private object Keys {
         const val APP_VER = "arc_app_ver"

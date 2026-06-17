@@ -1,31 +1,46 @@
 package com.ibbie.catrec_screenrecorcer.ui.recordings
 
 import android.content.ContentValues
+import android.content.Intent
+import android.graphics.Bitmap
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
+import android.util.Size
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -39,6 +54,7 @@ import com.ibbie.catrec_screenrecorcer.service.ClipMerger
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback
 import com.ibbie.catrec_screenrecorcer.utils.formatDurationMs
 import com.ibbie.catrec_screenrecorcer.utils.navigationUriArgToUri
+import com.ibbie.catrec_screenrecorcer.utils.trySilentDeleteMedia
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -125,8 +141,10 @@ fun TrimScreen(
         true -> {
             val toastPlayerUnavailable = stringResource(R.string.player_video_unavailable)
             val toastTrimTooShort = stringResource(R.string.trim_too_short)
-            val toastTrimSavedSuccess = stringResource(R.string.trim_saved_success)
+            val toastTrimDeleted = stringResource(R.string.trim_result_deleted)
+            val toastTrimDeleteFailed = stringResource(R.string.trim_result_delete_failed)
             val toastTrimFailedRetry = stringResource(R.string.trim_failed_retry)
+            val shareTrimChooserTitle = stringResource(R.string.trim_result_share_title)
 
             val exoPlayer =
                 remember(videoUri) {
@@ -152,6 +170,41 @@ fun TrimScreen(
             var currentPositionMs by remember { mutableLongStateOf(0L) }
             var isTrimming by remember { mutableStateOf(false) }
             var trimProgress by remember { mutableFloatStateOf(0f) }
+            var trimResult by remember { mutableStateOf<TrimResult?>(null) }
+
+            trimResult?.let { result ->
+                TrimResultDialog(
+                    result = result,
+                    onDismiss = { trimResult = null },
+                    onPlay = {
+                        trimResult = null
+                        navController.navigate("player?videoUri=${Uri.encode(result.uri.toString())}")
+                    },
+                    onDelete = {
+                        scope.launch {
+                            val deleted =
+                                withContext(Dispatchers.IO) {
+                                    trySilentDeleteMedia(context, result.uri)
+                                }
+                            if (deleted) {
+                                trimResult = null
+                                Toast.makeText(context, toastTrimDeleted, Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, toastTrimDeleteFailed, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    onShare = {
+                        val intent =
+                            Intent(Intent.ACTION_SEND).apply {
+                                type = "video/mp4"
+                                putExtra(Intent.EXTRA_STREAM, result.uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                        context.startActivity(Intent.createChooser(intent, shareTrimChooserTitle))
+                    },
+                )
+            }
 
             // Wait for duration to be known
             DisposableEffect(exoPlayer) {
@@ -327,11 +380,11 @@ fun TrimScreen(
                                     val result =
                                         trimVideo(context, videoUri, startMs, endMs) { progress ->
                                             trimProgress = progress
-                                        }
+                                    }
                                     isTrimming = false
                                     if (result != null) {
-                                        Toast.makeText(context, toastTrimSavedSuccess, Toast.LENGTH_SHORT).show()
-                                        navController.popBackStack()
+                                        exoPlayer.pause()
+                                        trimResult = result
                                     } else {
                                         Toast.makeText(context, toastTrimFailedRetry, Toast.LENGTH_LONG).show()
                                     }
@@ -361,13 +414,151 @@ fun TrimScreen(
     }
 }
 
+private data class TrimResult(
+    val uri: Uri,
+    val fileName: String,
+)
+
+@Composable
+private fun TrimResultDialog(
+    result: TrimResult,
+    onDismiss: () -> Unit,
+    onPlay: () -> Unit,
+    onDelete: () -> Unit,
+    onShare: () -> Unit,
+) {
+    val context = LocalContext.current
+    val thumbnail by produceState<Bitmap?>(initialValue = null, key1 = result.uri) {
+        value = loadTrimResultThumbnail(context, result.uri)
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.widthIn(max = 432.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 8.dp,
+            shadowElevation = 8.dp,
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(width = 80.dp, height = 58.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable(onClick = onPlay),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        thumbnail?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
+                        Surface(
+                            shape = CircleShape,
+                            color = Color.Black.copy(alpha = 0.56f),
+                            contentColor = Color.White,
+                        ) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = stringResource(R.string.trim_result_play),
+                                modifier =
+                                    Modifier
+                                        .size(38.dp)
+                                        .padding(7.dp),
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = stringResource(R.string.trim_result_open_file, result.fileName),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = onDelete,
+                        modifier = Modifier.weight(1f),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                            ),
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_delete))
+                    }
+                    Button(
+                        onClick = onShare,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.action_share))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private suspend fun loadTrimResultThumbnail(
+    context: android.content.Context,
+    uri: Uri,
+): Bitmap? =
+    withContext(Dispatchers.IO) {
+        if (Build.VERSION.SDK_INT >= 29) {
+            runCatching {
+                context.contentResolver.loadThumbnail(uri, Size(320, 180), null)
+            }.getOrNull()?.let { return@withContext it }
+        }
+
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, uri)
+            if (Build.VERSION.SDK_INT >= 27) {
+                retriever.getScaledFrameAtTime(
+                    500_000,
+                    MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                    320,
+                    180,
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                retriever.getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            }
+        } catch (_: Exception) {
+            null
+        } finally {
+            retriever.release()
+        }
+    }
+
 private suspend fun trimVideo(
     context: android.content.Context,
     inputUri: Uri,
     startMs: Long,
     endMs: Long,
     onProgress: (Float) -> Unit,
-): Uri? =
+): TrimResult? =
     withContext(Dispatchers.IO) {
         val extractor = MediaExtractor()
         var insertedUri: Uri? = null
@@ -485,7 +676,7 @@ private suspend fun trimVideo(
             }
 
             withContext(Dispatchers.Main) { onProgress(1f) }
-            outUri
+            TrimResult(outUri, outputFileName)
         } catch (e: Exception) {
             android.util.Log.e("TrimScreen", "Trim failed", e)
             insertedUri?.let { u -> runCatching { cr.delete(u, null, null) } }

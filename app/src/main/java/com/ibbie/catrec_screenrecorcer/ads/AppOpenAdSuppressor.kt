@@ -2,7 +2,9 @@ package com.ibbie.catrec_screenrecorcer.ads
 
 import android.util.Log
 
-enum class AppOpenAdSuppressionReason(val logName: String) {
+enum class AppOpenAdSuppressionReason(
+    val logName: String,
+) {
     FIRST_LAUNCH("first_launch"),
     FIRST_RUN_PERMISSIONS("first_run_permissions"),
     RUNTIME_PERMISSION_REQUEST("runtime_permission_request"),
@@ -45,7 +47,7 @@ object AppOpenAdSuppressor {
             if (removed) {
                 Log.d(
                     TAG,
-                    "exit ${reason.logName}; grace=${applyGrace} " +
+                    "exit ${reason.logName}; grace=$applyGrace " +
                         "graceRemainingMs=${(graceUntilMs - now).coerceAtLeast(0L)} active=${activeReasons.logNames()}",
                 )
             }

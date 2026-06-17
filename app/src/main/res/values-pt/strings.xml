@@ -697,8 +697,8 @@
     <string name="error_resolution_too_large_for_profile">Esta resolu\u00E7\u00E3o \u00E9 grande demais para o perfil de desempenho deste dispositivo.</string>
     <string name="pro_feature">Recurso PRO</string>
     <string name="pro_recording_title">Voc\u00EA est\u00E1 gravando com recursos PRO</string>
-    <string name="pro_recording_body">Assista a um anúncio para desbloquear o Pro por 1 hora: 90/120 FPS, vídeo acima de 16 Mbps, câmera, marca d’água e microfone separado — ou remova anúncios para acesso permanente.</string>
-    <string name="pro_tools_body">Assista a um anúncio para desbloquear o Pro por 1 hora: 90/120 FPS, acima de 16 Mbps, mesclar e GIF — ou compre Remover anúncios para acesso permanente.</string>
+    <string name="pro_recording_body">Assista a um anúncio para desbloquear o Pro por 3 horas: 90/120 FPS, vídeo acima de 16 Mbps, câmera, marca d’água e microfone separado — ou remova anúncios para acesso permanente.</string>
+    <string name="pro_tools_body">Assista a um anúncio para desbloquear o Pro por 3 horas: 90/120 FPS, acima de 16 Mbps, mesclar e GIF — ou compre Remover anúncios para acesso permanente.</string>
     <string name="pro_unlock_watch_ad">Assistir an\u00FAncio</string>
     <string name="pro_unlock_remove_ads">Remover an\u00FAncios</string>
     <string name="pro_unlock_ad_unavailable">O an\u00FAncio n\u00E3o est\u00E1 dispon\u00EDvel agora. Tente novamente em breve.</string>
@@ -714,14 +714,6 @@
     <string name="settings_show_touches_status_on">Ativado</string>
     <string name="settings_show_touches_status_off">Desativado — abra Opções do desenvolvedor para ativar Mostrar toques</string>
     <string name="settings_show_touches_status_unknown">Desconhecido — abra Opções do desenvolvedor para ativar Mostrar toques</string>
-    <string name="setting_recording_engine">Mecanismo de gravação</string>
-    <string name="recording_engine_performance_label">Mecanismo de desempenho</string>
-    <string name="recording_engine_compatibility_label">Mecanismo experimental</string>
-    <string name="recording_engine_performance_summary">Recomendado para a maioria dos usuários. Usa menos processamento, esquenta menos e é melhor para gravações do dia a dia. Capturas de tela durante a gravação ficam desativadas.</string>
-    <string name="recording_engine_compatibility_summary">Fallback experimental. Pode usar mais processamento, causar mais aquecimento e descarregar a bateria mais rápido. Tente apenas se o mecanismo Performance causar problemas no seu dispositivo.</string>
-    <string name="recording_engine_advanced_warning">O mecanismo experimental pode aumentar o aquecimento ou o uso de bateria. Use apenas se o mecanismo Performance padr\u00E3o n\u00E3o estiver funcionando bem no seu dispositivo.</string>
-    <string name="recording_engine_scope_note">Aplica-se a gravações normais e ao Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Capturas de tela durante a gravação não estão disponíveis no mecanismo de desempenho.</string>
     <string name="internal_silent_dialog_title">O áudio interno está silencioso</string>
     <string name="internal_silent_dialog_message">Este jogo ou app pode bloquear a captura de áudio interno.\n\nUsar o microfone como fallback para capturar o áudio do alto-falante?</string>
     <string name="internal_silent_use_mic_fallback">Usar microfone fallback</string>

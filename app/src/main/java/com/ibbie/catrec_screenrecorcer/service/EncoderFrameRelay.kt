@@ -25,6 +25,7 @@ import android.os.HandlerThread
 import android.os.SystemClock
 import android.util.Log
 import android.view.Surface
+import androidx.core.graphics.createBitmap
 import com.ibbie.catrec_screenrecorcer.utils.crashlyticsLog
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -33,7 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import androidx.core.graphics.createBitmap
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -164,11 +164,12 @@ internal class EncoderFrameRelay(
     private val pendingResizeW = AtomicInteger(-1)
     private val pendingResizeH = AtomicInteger(-1)
 
-    private val resizeCaptureRunnable = Runnable {
-        val w = pendingResizeW.getAndSet(-1)
-        val h = pendingResizeH.getAndSet(-1)
-        if (w > 0 && h > 0) doResizeCaptureSource(w, h)
-    }
+    private val resizeCaptureRunnable =
+        Runnable {
+            val w = pendingResizeW.getAndSet(-1)
+            val h = pendingResizeH.getAndSet(-1)
+            if (w > 0 && h > 0) doResizeCaptureSource(w, h)
+        }
 
     /**
      * Guards [ImageReader] / [VirtualDisplay] lifecycle and CPU bitmap buffers only.
@@ -305,7 +306,10 @@ internal class EncoderFrameRelay(
      * Safe to call from any thread.  Work is posted and debounced on the relay thread so
      * rapid successive calls (e.g. foldable fold + rotation) coalesce into one rebuild.
      */
-    fun resizeCaptureSource(newW: Int, newH: Int) {
+    fun resizeCaptureSource(
+        newW: Int,
+        newH: Int,
+    ) {
         val w = newW.coerceIn(16, 4096)
         val h = newH.coerceIn(16, 4096)
         pendingResizeW.set(w)
@@ -326,24 +330,27 @@ internal class EncoderFrameRelay(
      * By resizing the [VirtualDisplay] and recreating the [ImageReader] to match the actual
      * content dimensions, we ensure SurfaceFlinger fills the entire surface on every frame.
      */
-    private fun doResizeCaptureSource(newW: Int, newH: Int) {
+    private fun doResizeCaptureSource(
+        newW: Int,
+        newH: Int,
+    ) {
         synchronized(frameLock) {
             val vd = virtualDisplay ?: return
             val oldReader = imageReader ?: return
             if (newW == oldReader.width && newH == oldReader.height) {
-                Log.d(TAG, "doResizeCaptureSource: dims unchanged ${newW}x${newH}, skipping")
+                Log.d(TAG, "doResizeCaptureSource: dims unchanged ${newW}x$newH, skipping")
                 return
             }
             Log.i(
                 TAG,
-                "doResizeCaptureSource: ${oldReader.width}x${oldReader.height} → ${newW}x${newH} " +
-                    "encoderFixed=${width}x${height}",
+                "doResizeCaptureSource: ${oldReader.width}x${oldReader.height} → ${newW}x$newH " +
+                    "encoderFixed=${width}x$height",
             )
             val newReader =
                 try {
                     ImageReader.newInstance(newW, newH, PixelFormat.RGBA_8888, FRAME_READER_MAX_IMAGES)
                 } catch (e: Exception) {
-                    Log.e(TAG, "doResizeCaptureSource: ImageReader.newInstance(${newW}x${newH}) failed", e)
+                    Log.e(TAG, "doResizeCaptureSource: ImageReader.newInstance(${newW}x$newH) failed", e)
                     return
                 }
             try {
@@ -632,8 +639,8 @@ internal class EncoderFrameRelay(
         if (bw == lastRelayCaptureW && bh == lastRelayCaptureH) return
         Log.i(
             TAG,
-            "relay_capture_resize old=${lastRelayCaptureW}x${lastRelayCaptureH} new=${bw}x${bh} " +
-                "encoder=${width}x${height} scale=${box.scale} dest=${box.dx},${box.dy} ${box.dw}x${box.dh} " +
+            "relay_capture_resize old=${lastRelayCaptureW}x$lastRelayCaptureH new=${bw}x$bh " +
+                "encoder=${width}x$height scale=${box.scale} dest=${box.dx},${box.dy} ${box.dw}x${box.dh} " +
                 "fullFrameClearedBeforeDraw=true",
         )
         lastRelayCaptureW = bw

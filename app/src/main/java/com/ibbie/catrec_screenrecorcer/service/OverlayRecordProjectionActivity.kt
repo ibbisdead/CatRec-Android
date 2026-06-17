@@ -57,7 +57,15 @@ class OverlayRecordProjectionActivity : ComponentActivity() {
                             putExtra(ScreenRecordService.EXTRA_DATA, result.data)
                             putExtra(ScreenRecordService.EXTRA_OVERLAY_SESSION_AS_BUFFER, asBuffer)
                         }
-                    startForegroundService(svc)
+                    val started = ForegroundServiceLaunch.start(this, svc, "overlay_projection")
+                    if (!started) {
+                        Toast
+                            .makeText(
+                                this,
+                                R.string.toast_recording_start_failed_background,
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    }
                     // Tear down this host immediately so a transparent activity cannot sit above
                     // games/apps and steal touch focus (especially rolling-buffer / Clipper).
                     if (asBuffer && isTaskRoot) {

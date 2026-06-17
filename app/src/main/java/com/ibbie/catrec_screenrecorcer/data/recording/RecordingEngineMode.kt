@@ -18,10 +18,12 @@ enum class RecordingEngineMode(
 
         fun fromStorageValue(value: String?): RecordingEngineMode {
             if (value.isNullOrBlank()) return DEFAULT
-            return entries.firstOrNull { mode ->
-                mode.storageValue.equals(value, ignoreCase = true) ||
-                    mode.name.equals(value, ignoreCase = true)
-            } ?: DEFAULT
+            val parsed =
+                entries.firstOrNull { mode ->
+                    mode.storageValue.equals(value, ignoreCase = true) ||
+                        mode.name.equals(value, ignoreCase = true)
+                } ?: DEFAULT
+            return if (parsed == COMPATIBILITY) PERFORMANCE else parsed
         }
     }
 }

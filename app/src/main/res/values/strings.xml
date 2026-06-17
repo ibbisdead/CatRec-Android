@@ -337,14 +337,7 @@
     <string name="perf_static_glass">Static glass — blur disabled</string>
     <string name="perf_dynamic_glass">Dynamic glass blur enabled</string>
     <string name="setting_performance_mode">Performance Mode</string>
-    <string name="setting_recording_engine">Recording engine</string>
-    <string name="recording_engine_performance_label">Performance engine</string>
-    <string name="recording_engine_compatibility_label">Experimental engine</string>
-    <string name="recording_engine_performance_summary">Recommended for most users. Uses less processing, runs cooler, and is best for everyday recording. Screenshots while recording are disabled.</string>
-    <string name="recording_engine_compatibility_summary">Experimental fallback. May use more processing, cause more heat, and drain battery faster. Try this only if the Performance engine causes problems on your device.</string>
-    <string name="recording_engine_advanced_warning">Experimental engine may increase heat or battery use. Use it only if the default Performance engine is not working well for your device.</string>
-    <string name="recording_engine_scope_note">Applies to normal recordings and Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Screenshots while recording are not available in Performance engine.</string>
+    <string name="recording_screenshot_while_recording_unavailable">Screenshots while recording are not available.</string>
     <string name="setting_adaptive_recording_performance">Adaptive recording performance</string>
     <string name="setting_adaptive_recording_performance_summary">Reduces recording quality under heavy load to reduce lag.</string>
     <string name="performance_fallback_active">Switched to a lighter recording profile for stability</string>
@@ -406,8 +399,8 @@
     <string name="dialog_camera_orientation">Camera orientation</string>
     <string name="pro_feature">Pro feature</string>
     <string name="pro_recording_title">You\'re recording with Pro features</string>
-    <string name="pro_recording_body">Watch an ad to unlock Pro for 1 hour: 90/120 FPS, video over 16 Mbps, camera, watermark, and separate mic — or remove ads for permanent access.</string>
-    <string name="pro_tools_body">Watch an ad to unlock Pro for 1 hour: 90/120 FPS, over 16 Mbps, merge and GIF — or buy Remove Ads for permanent access?</string>
+    <string name="pro_recording_body">Watch an ad to unlock Pro recording options for 3 hours. This includes 90/120 FPS, video above 16 Mbps, camera overlay, watermark, and separate mic tracks. Remove Ads unlocks Pro permanently and turns ads off.</string>
+    <string name="pro_tools_body">Watch an ad to unlock Pro tools for 3 hours. This includes 90/120 FPS, video above 16 Mbps, merge, and GIF export. Remove Ads unlocks Pro permanently and turns ads off.</string>
     <string name="pro_unlock_watch_ad">Watch Ad</string>
     <string name="pro_unlock_remove_ads">Remove Ads</string>
     <string name="pro_unlock_ad_unavailable">Ad is not available right now. Please try again soon.</string>
@@ -471,6 +464,11 @@
     <string name="trim_too_short">Trim range too short (min 0.5s)</string>
     <string name="trim_saved_success">Trim saved successfully</string>
     <string name="trim_failed_retry">Trim failed. Please try again.</string>
+    <string name="trim_result_open_file">Click to open %1$s</string>
+    <string name="trim_result_play">Play trimmed video</string>
+    <string name="trim_result_share_title">Share trimmed video</string>
+    <string name="trim_result_deleted">Trimmed video deleted</string>
+    <string name="trim_result_delete_failed">Could not delete the trimmed video.</string>
     <string name="trim_progress">Trimming… %1$d%%</string>
     <string name="trim_save">Trim &amp; save</string>
     <string name="content_desc_back">Back</string>
@@ -593,6 +591,7 @@
     <string name="toast_video_encoder_failed">Could not start the video encoder. Try a lower resolution or a different encoder in Settings.</string>
     <string name="toast_recording_muxer_failed" translatable="false">Could not save recording (file write error). Try starting again.</string>
     <string name="toast_recording_save_incomplete" translatable="false">Recording could not be published to the gallery. Storage may be full or access was denied.</string>
+    <string name="toast_recording_start_failed_background" translatable="false">Recording could not start because Android moved CatRec to the background. Open CatRec and try again.</string>
     <string name="toast_recording_stopped_projection">Recording stopped: the captured app was closed or moved to the background</string>
     <string name="toast_recording_failed_no_video">Recording failed: no video was captured</string>
     <string name="toast_gif_transcode_failed">Could not create GIF — your MP4 recording was kept.</string>
@@ -649,6 +648,7 @@
     <string name="screenshots_header_format">SCREENSHOTS · %1$d</string>
     <string name="countdown_subtitle">Recording starting\u2026</string>
     <string name="toast_recorder_start_failed">Failed to start recorder: %1$s</string>
+    <string name="safe_recorder_fallback_active">Safe recording fallback is active for this session.</string>
     <string name="format_jpeg">JPEG</string>
     <string name="format_png">PNG</string>
     <string name="format_webp">WebP</string>
@@ -657,6 +657,13 @@
     <string name="content_desc_forward_10">Forward 10 seconds</string>
     <string name="content_desc_trim">Trim</string>
     <string name="list_bullet">•</string>
+
+    <string-array name="changelog_v130_items">
+        <item>Redesigned the floating overlay with a cleaner pill shape, softer transparency, and easier recording controls.</item>
+        <item>Improved internal audio recording reliability, including better handling when app or game audio starts silent.</item>
+        <item>Added a safe recorder fallback so normal recordings can still start if the main encoder pipeline fails on a device.</item>
+        <item>Removed the experimental Compatibility engine from Settings; Performance is now the default recording path.</item>
+    </string-array>
 
     <string-array name="changelog_v121_items">
         <item>Fixed internal audio recording on devices where app or game audio was missing or silent during capture.</item>

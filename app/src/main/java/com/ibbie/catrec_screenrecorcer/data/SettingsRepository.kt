@@ -22,9 +22,10 @@ private const val FRESH_INSTALL_TIME_DELTA_MS = 60_000L
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = SETTINGS_DATASTORE_NAME,
-    corruptionHandler = ReplaceFileCorruptionHandler(
-        produceNewData = { emptyPreferences() },
-    ),
+    corruptionHandler =
+        ReplaceFileCorruptionHandler(
+            produceNewData = { emptyPreferences() },
+        ),
 )
 
 class SettingsRepository(
@@ -600,7 +601,8 @@ class SettingsRepository(
     }
 
     suspend fun setRecordingEngineMode(mode: RecordingEngineMode) {
-        context.dataStore.edit { it[RECORDING_ENGINE_MODE] = mode.storageValue }
+        val storedMode = if (mode == RecordingEngineMode.PERFORMANCE) mode else RecordingEngineMode.PERFORMANCE
+        context.dataStore.edit { it[RECORDING_ENGINE_MODE] = storedMode.storageValue }
     }
 
     suspend fun setAdaptiveRecordingPerformance(value: Boolean) {
@@ -673,13 +675,12 @@ class SettingsRepository(
     }
 
     suspend fun grantTimedProAccess(nowMillis: Long = System.currentTimeMillis()): Long {
-        val until = nowMillis + 60 * 60 * 1000L
+        val until = nowMillis + 3 * 60 * 60 * 1000L
         setProFeaturesUnlockedUntilMillis(until)
         return until
     }
 
-    suspend fun hasProAccessNow(nowMillis: Long = System.currentTimeMillis()): Boolean =
-        adsDisabled.first() || proFeaturesUnlockedUntilMillis.first() > nowMillis
+    suspend fun hasProAccessNow(nowMillis: Long = System.currentTimeMillis()): Boolean = adsDisabled.first() || proFeaturesUnlockedUntilMillis.first() > nowMillis
 
     // Setters — Accent Color
     suspend fun setAccentColor(value: String) {

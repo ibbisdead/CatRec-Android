@@ -8,12 +8,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -306,8 +306,7 @@ fun ScreenshotsScreen(
                                     WindowInsets.safeDrawing.only(
                                         WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                                     ),
-                                )
-                                .padding(8.dp),
+                                ).padding(8.dp),
                     ) {
                         Icon(
                             Icons.Default.Close,
@@ -672,80 +671,80 @@ private fun ScreenshotCard(
                 )
             }
 
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                            .background(Color(0xCC000000))
-                            .padding(horizontal = 8.dp, vertical = 5.dp),
-                ) {
-                    Text(
-                        item.screenshotDateLabel(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFFAAAAAA),
-                        modifier = Modifier.align(Alignment.CenterStart),
-                    )
-                    Text(
-                        "${item.screenshotSizeKb()} KB",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = accent.copy(alpha = 0.8f),
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                    )
-                }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .background(Color(0xCC000000))
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+            ) {
+                Text(
+                    item.screenshotDateLabel(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFFAAAAAA),
+                    modifier = Modifier.align(Alignment.CenterStart),
+                )
+                Text(
+                    "${item.screenshotSizeKb()} KB",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = accent.copy(alpha = 0.8f),
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                )
+            }
 
-                // Options menu button (hidden in selection mode)
-                if (!isSelectionMode) {
-                    Box(modifier = Modifier.align(Alignment.TopEnd)) {
-                        IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.content_desc_options),
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                            containerColor = Color(0xFF1E1E1E),
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_open), color = Color.White) },
-                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = accent) },
-                                onClick = {
-                                    showMenu = false
-                                    onOpenExternal()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_edit), color = Color.White) },
-                                leadingIcon = { Icon(Icons.Default.Edit, null, tint = accent) },
-                                onClick = {
-                                    showMenu = false
-                                    onEdit()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_share), color = Color.White) },
-                                leadingIcon = { Icon(Icons.Default.Share, null, tint = accent) },
-                                onClick = {
-                                    showMenu = false
-                                    onShare()
-                                },
-                            )
-                            HorizontalDivider(color = Color(0xFF333333))
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.action_delete), color = accent) },
-                                leadingIcon = { Icon(Icons.Default.Delete, null, tint = accent) },
-                                onClick = {
-                                    showMenu = false
-                                    onDelete()
-                                },
-                            )
-                        }
+            // Options menu button (hidden in selection mode)
+            if (!isSelectionMode) {
+                Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                    IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.content_desc_options),
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                        containerColor = Color(0xFF1E1E1E),
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_open), color = Color.White) },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, null, tint = accent) },
+                            onClick = {
+                                showMenu = false
+                                onOpenExternal()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_edit), color = Color.White) },
+                            leadingIcon = { Icon(Icons.Default.Edit, null, tint = accent) },
+                            onClick = {
+                                showMenu = false
+                                onEdit()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_share), color = Color.White) },
+                            leadingIcon = { Icon(Icons.Default.Share, null, tint = accent) },
+                            onClick = {
+                                showMenu = false
+                                onShare()
+                            },
+                        )
+                        HorizontalDivider(color = Color(0xFF333333))
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.action_delete), color = accent) },
+                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = accent) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            },
+                        )
                     }
                 }
+            }
 
             // Selection overlay
             if (isSelectionMode) {

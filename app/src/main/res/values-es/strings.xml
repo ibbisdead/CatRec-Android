@@ -697,8 +697,8 @@
     <string name="error_resolution_too_large_for_profile">Esta resoluci\u00F3n es demasiado grande para el perfil de rendimiento de este dispositivo.</string>
     <string name="pro_feature">Funci\u00F3n PRO</string>
     <string name="pro_recording_title">Est\u00E1s grabando con funciones PRO</string>
-    <string name="pro_recording_body">Mira un anuncio para desbloquear Pro durante 1 hora: 90/120 FPS, video de más de 16 Mbps, cámara, marca de agua y micrófono separado — o elimina los anuncios para acceso permanente.</string>
-    <string name="pro_tools_body">Mira un anuncio para desbloquear Pro durante 1 hora: 90/120 FPS, más de 16 Mbps, unir y GIF — o compra Eliminar anuncios para acceso permanente.</string>
+    <string name="pro_recording_body">Mira un anuncio para desbloquear Pro durante 3 horas: 90/120 FPS, video de más de 16 Mbps, cámara, marca de agua y micrófono separado — o elimina los anuncios para acceso permanente.</string>
+    <string name="pro_tools_body">Mira un anuncio para desbloquear Pro durante 3 horas: 90/120 FPS, más de 16 Mbps, unir y GIF — o compra Eliminar anuncios para acceso permanente.</string>
     <string name="pro_unlock_watch_ad">Ver anuncio</string>
     <string name="pro_unlock_remove_ads">Eliminar anuncios</string>
     <string name="pro_unlock_ad_unavailable">El anuncio no est\u00E1 disponible ahora. Vuelve a intentarlo pronto.</string>
@@ -714,14 +714,6 @@
     <string name="settings_show_touches_status_on">Activado</string>
     <string name="settings_show_touches_status_off">Desactivado — abre Opciones de desarrollador para activar Mostrar toques</string>
     <string name="settings_show_touches_status_unknown">Desconocido — abre Opciones de desarrollador para activar Mostrar toques</string>
-    <string name="setting_recording_engine">Motor de grabación</string>
-    <string name="recording_engine_performance_label">Motor de rendimiento</string>
-    <string name="recording_engine_compatibility_label">Motor experimental</string>
-    <string name="recording_engine_performance_summary">Recomendado para la mayoría de usuarios. Usa menos procesamiento, funciona con menos calor y es mejor para grabar a diario. Las capturas de pantalla durante la grabación están desactivadas.</string>
-    <string name="recording_engine_compatibility_summary">Respaldo experimental. Puede usar más procesamiento, causar más calor y agotar la batería más rápido. Pruébalo solo si el motor de rendimiento causa problemas en tu dispositivo.</string>
-    <string name="recording_engine_advanced_warning">El motor experimental puede aumentar el calor o el uso de bater\u00EDa. \u00DAsalo solo si el motor de rendimiento predeterminado no funciona bien en tu dispositivo.</string>
-    <string name="recording_engine_scope_note">Se aplica a grabaciones normales y Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Las capturas de pantalla durante la grabación no están disponibles en el motor de rendimiento.</string>
     <string name="internal_silent_dialog_title">El audio interno está en silencio</string>
     <string name="internal_silent_dialog_message">Este juego o app puede bloquear la captura de audio interno.\n\n¿Usar el micrófono como respaldo para capturar el audio del altavoz?</string>
     <string name="internal_silent_use_mic_fallback">Usar micrófono de respaldo</string>

@@ -27,3 +27,7 @@ app/release/
 
 tmp_count.txt
 **/__pycache__/
+
+# Local Codex/Tailtest runtime state
+.tailtest/session.json
+.tailtest/reports/

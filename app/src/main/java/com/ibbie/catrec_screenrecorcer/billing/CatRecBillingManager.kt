@@ -326,7 +326,10 @@ class CatRecBillingManager(
         productId: String,
     ): Boolean {
         if (activity.isFinishing || activity.isDestroyed) {
-            AppLogger.w(TAG, "launchBillingFlow $productId blocked: activity finishing=${activity.isFinishing} destroyed=${activity.isDestroyed}")
+            AppLogger.w(
+                TAG,
+                "launchBillingFlow $productId blocked: activity finishing=${activity.isFinishing} destroyed=${activity.isDestroyed}",
+            )
             return false
         }
         if (billingFlowInFlight) {
@@ -440,10 +443,11 @@ class CatRecBillingManager(
     }
 
     private fun syncInAppPurchases(trigger: String) {
-        val client = billingClient ?: run {
-            Log.w(TAG, "syncInAppPurchases skipped trigger=$trigger: no client")
-            return
-        }
+        val client =
+            billingClient ?: run {
+                Log.w(TAG, "syncInAppPurchases skipped trigger=$trigger: no client")
+                return
+            }
         if (!billingSetupFinishedOk || !client.isReady) {
             Log.d(
                 TAG,

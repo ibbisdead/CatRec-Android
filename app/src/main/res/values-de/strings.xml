@@ -694,8 +694,8 @@
     <string name="error_resolution_too_large_for_profile">Diese Aufl\u00F6sung ist f\u00FCr das Leistungsprofil dieses Ger\u00E4ts zu gro\u00DF.</string>
     <string name="pro_feature">PRO-Funktion</string>
     <string name="pro_recording_title">Du nimmst mit PRO-Funktionen auf</string>
-    <string name="pro_recording_body">Sieh dir eine Anzeige an, um Pro für 1 Stunde freizuschalten: 90/120 FPS, Video über 16 Mbps, Kamera, Wasserzeichen und separates Mikrofon — oder entferne Werbung dauerhaft.</string>
-    <string name="pro_tools_body">Sieh dir eine Anzeige an, um Pro für 1 Stunde freizuschalten: 90/120 FPS, über 16 Mbps, Zusammenführen und GIF — oder entferne Werbung dauerhaft?</string>
+    <string name="pro_recording_body">Sieh dir eine Anzeige an, um Pro für 3 Stunden freizuschalten: 90/120 FPS, Video über 16 Mbps, Kamera, Wasserzeichen und separates Mikrofon — oder entferne Werbung dauerhaft.</string>
+    <string name="pro_tools_body">Sieh dir eine Anzeige an, um Pro für 3 Stunden freizuschalten: 90/120 FPS, über 16 Mbps, Zusammenführen und GIF — oder entferne Werbung dauerhaft?</string>
     <string name="pro_unlock_watch_ad">Anzeige ansehen</string>
     <string name="pro_unlock_remove_ads">Werbung entfernen</string>
     <string name="pro_unlock_ad_unavailable">Derzeit ist keine Anzeige verf\u00FCgbar. Bitte versuche es bald erneut.</string>
@@ -711,14 +711,6 @@
     <string name="settings_show_touches_status_on">Ein</string>
     <string name="settings_show_touches_status_off">Aus — Entwickleroptionen öffnen, um Berührungen anzeigen zu aktivieren</string>
     <string name="settings_show_touches_status_unknown">Unbekannt — Entwickleroptionen öffnen, um Berührungen anzeigen zu aktivieren</string>
-    <string name="setting_recording_engine">Aufnahme-Engine</string>
-    <string name="recording_engine_performance_label">Performance-Engine</string>
-    <string name="recording_engine_compatibility_label">Experimentelle Engine</string>
-    <string name="recording_engine_performance_summary">Für die meisten Nutzer empfohlen. Benötigt weniger Verarbeitung, läuft kühler und ist am besten für alltägliche Aufnahmen. Screenshots während der Aufnahme sind deaktiviert.</string>
-    <string name="recording_engine_compatibility_summary">Experimenteller Fallback. Kann mehr Verarbeitung benötigen, mehr Wärme erzeugen und den Akku schneller entladen. Nur ausprobieren, wenn die Performance-Engine auf deinem Gerät Probleme verursacht.</string>
-    <string name="recording_engine_advanced_warning">Die experimentelle Engine kann W\u00E4rme oder Akkuverbrauch erh\u00F6hen. Verwende sie nur, wenn die standardm\u00E4\u00DFige Performance-Engine auf deinem Ger\u00E4t nicht gut funktioniert.</string>
-    <string name="recording_engine_scope_note">Gilt für normale Aufnahmen und Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Screenshots während der Aufnahme sind in der Performance-Engine nicht verfügbar.</string>
     <string name="internal_silent_dialog_title">Internes Audio ist stumm</string>
     <string name="internal_silent_dialog_message">Dieses Spiel oder diese App blockiert möglicherweise die interne Audioaufnahme.\n\nMikrofon-Fallback verwenden, um stattdessen Lautsprecher-Audio aufzunehmen?</string>
     <string name="internal_silent_use_mic_fallback">Mikrofon-Fallback verwenden</string>

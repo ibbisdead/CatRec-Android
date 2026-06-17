@@ -697,8 +697,8 @@
     <string name="error_resolution_too_large_for_profile">Cette r\u00E9solution est trop \u00E9lev\u00E9e pour le profil de performances de cet appareil.</string>
     <string name="pro_feature">Fonction PRO</string>
     <string name="pro_recording_title">Vous enregistrez avec des fonctions PRO</string>
-    <string name="pro_recording_body">Regardez une annonce pour débloquer Pro pendant 1 heure : 90/120 FPS, vidéo au-delà de 16 Mbps, caméra, filigrane et micro séparé — ou supprimez les annonces pour un accès permanent.</string>
-    <string name="pro_tools_body">Regardez une annonce pour débloquer Pro pendant 1 heure : 90/120 FPS, plus de 16 Mbps, fusion et GIF — ou achetez la suppression des annonces pour un accès permanent.</string>
+    <string name="pro_recording_body">Regardez une annonce pour débloquer Pro pendant 3 heures : 90/120 FPS, vidéo au-delà de 16 Mbps, caméra, filigrane et micro séparé — ou supprimez les annonces pour un accès permanent.</string>
+    <string name="pro_tools_body">Regardez une annonce pour débloquer Pro pendant 3 heures : 90/120 FPS, plus de 16 Mbps, fusion et GIF — ou achetez la suppression des annonces pour un accès permanent.</string>
     <string name="pro_unlock_watch_ad">Regarder la pub</string>
     <string name="pro_unlock_remove_ads">Supprimer les pubs</string>
     <string name="pro_unlock_ad_unavailable">Aucune publicit\u00E9 n\u2019est disponible pour le moment. R\u00E9essayez bient\u00F4t.</string>
@@ -714,14 +714,6 @@
     <string name="settings_show_touches_status_on">Activé</string>
     <string name="settings_show_touches_status_off">Désactivé — ouvrez les options développeur pour activer Afficher les appuis</string>
     <string name="settings_show_touches_status_unknown">Inconnu — ouvrez les options développeur pour activer Afficher les appuis</string>
-    <string name="setting_recording_engine">Moteur d’enregistrement</string>
-    <string name="recording_engine_performance_label">Moteur Performance</string>
-    <string name="recording_engine_compatibility_label">Moteur exp\u00E9rimental</string>
-    <string name="recording_engine_performance_summary">Recommandé pour la plupart des utilisateurs. Utilise moins de traitement, chauffe moins et convient le mieux à l’enregistrement quotidien. Les captures d’écran pendant l’enregistrement sont désactivées.</string>
-    <string name="recording_engine_compatibility_summary">Solution de secours expérimentale. Peut utiliser plus de traitement, chauffer davantage et vider la batterie plus vite. Essayez-la seulement si le moteur Performance pose problème sur votre appareil.</string>
-    <string name="recording_engine_advanced_warning">Le moteur exp\u00E9rimental peut augmenter la chauffe ou l\u2019utilisation de la batterie. Utilisez-le seulement si le moteur Performance par d\u00E9faut ne fonctionne pas bien sur votre appareil.</string>
-    <string name="recording_engine_scope_note">S’applique aux enregistrements normaux et à Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Les captures d’écran pendant l’enregistrement ne sont pas disponibles avec le moteur Performance.</string>
     <string name="internal_silent_dialog_title">Le son interne est silencieux</string>
     <string name="internal_silent_dialog_message">Ce jeu ou cette app peut bloquer la capture du son interne.\n\nUtiliser le micro de secours pour capturer le son du haut-parleur à la place ?</string>
     <string name="internal_silent_use_mic_fallback">Utiliser le micro de secours</string>

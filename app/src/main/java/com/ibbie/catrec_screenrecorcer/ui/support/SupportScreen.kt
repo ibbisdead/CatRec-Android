@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -45,7 +46,6 @@ import com.ibbie.catrec_screenrecorcer.billing.BillingUiEvent
 import com.ibbie.catrec_screenrecorcer.navigation.Screen
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.theme.isLightTheme
-import androidx.core.net.toUri
 
 private const val PRIVACY_POLICY_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md"
 private const val TERMS_OF_SERVICE_URL = "https://github.com/ibbisdead/CatRec-Android/blob/main/terms-of-service.md"
@@ -104,6 +104,7 @@ fun SupportScreen(
 
     var rewardedAd by remember { mutableStateOf<RewardedAd?>(null) }
     var isAdLoading by remember { mutableStateOf(false) }
+
     /** Set when reward callback fires; thanks toast runs after focus reset on dismiss. */
     var supportRewardEarned by remember { mutableStateOf(false) }
 
@@ -462,6 +463,7 @@ fun SupportScreen(
     }
 
     if (showChangelogDialog) {
+        val changelog130Items = stringArrayResource(R.array.changelog_v130_items).toList()
         val changelog121Items = stringArrayResource(R.array.changelog_v121_items).toList()
         val changelog120Items = stringArrayResource(R.array.changelog_v120_items).toList()
         val changelog113Items = stringArrayResource(R.array.changelog_v113_items).toList()
@@ -480,8 +482,14 @@ fun SupportScreen(
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     ChangelogEntry(
-                        version = stringResource(R.string.changelog_version_template, "1.2.1"),
+                        version = stringResource(R.string.changelog_version_template, "1.3.0"),
                         label = stringResource(R.string.changelog_label_latest),
+                        changes = changelog130Items,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    ChangelogEntry(
+                        version = stringResource(R.string.changelog_version_template, "1.2.1"),
+                        label = null,
                         changes = changelog121Items,
                     )
                     Spacer(Modifier.height(24.dp))

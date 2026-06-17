@@ -20,12 +20,12 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.res.ResourcesCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.content.res.ResourcesCompat
 import com.ibbie.catrec_screenrecorcer.MainActivity
 import com.ibbie.catrec_screenrecorcer.R
-import androidx.core.net.toUri
 
 /**
  * After a screenshot: compact preview at the top-end with share and edit actions
@@ -176,11 +176,13 @@ class ScreenshotPostActionActivity : AppCompatActivity() {
                         scaleType = ImageView.ScaleType.FIT_CENTER
                         val d = loadPillIconDrawable(iconRes)
                         setImageDrawable(d)
-                        imageTintList = if (skipIconTint) {
-                            null
-                        } else {
-                            android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
-                        }
+                        imageTintList =
+                            if (skipIconTint) {
+                                null
+                            } else {
+                                android.content.res.ColorStateList
+                                    .valueOf(0xFFFFFFFF.toInt())
+                            }
                     }
                 val label =
                     TextView(this@ScreenshotPostActionActivity).apply {

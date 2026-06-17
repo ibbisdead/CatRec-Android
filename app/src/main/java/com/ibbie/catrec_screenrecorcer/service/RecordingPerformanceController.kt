@@ -48,7 +48,7 @@ internal class RecordingPerformanceController(
     private val tierIndex = AtomicInteger(0)
     private val lastAdjustmentWallMs = AtomicLong(0L)
     private val cumulativeBitrateFailures = AtomicInteger(0)
-    private val relayAdaptiveEnabled = engineMode == RecordingEngineMode.COMPATIBILITY
+    private val relayAdaptiveEnabled = false
 
     @Volatile
     private var adaptiveBitrateBps: Int = sessionBaselineBitrateBps

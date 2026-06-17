@@ -2,11 +2,16 @@ package com.ibbie.catrec_screenrecorcer.data.recording
 
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
+import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
+import com.ibbie.catrec_screenrecorcer.service.ForegroundServiceLaunch
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionSupport
 import com.ibbie.catrec_screenrecorcer.service.ScreenRecordService
 import com.ibbie.catrec_screenrecorcer.util.MediaProjectionIntents
@@ -33,15 +38,13 @@ class DefaultRecordingSessionRepository(
     init {
         scope.launch {
             combine(
-                RecordingState.isPrepared,
                 RecordingState.isRecording,
                 RecordingState.isBuffering,
                 RecordingState.isRecordingPaused,
-            ) { prepared, recording, buffering, paused ->
+            ) { recording, buffering, paused ->
                 when {
                     recording && paused -> RecordingLifecycleState.Paused
                     recording || buffering -> RecordingLifecycleState.Recording
-                    prepared -> RecordingLifecycleState.Preparing
                     else -> RecordingLifecycleState.Idle
                 }
             }.distinctUntilChanged()
@@ -152,7 +155,7 @@ class DefaultRecordingSessionRepository(
         context: Context,
         config: SessionConfig,
         mediaProjectionGrantIntent: Intent,
-    ) {
+    ): Boolean {
         // Synchronous by design — see [createSessionConfigForFullRecording] docs.
         val intent =
             buildFullRecordingStartIntent(
@@ -160,44 +163,52 @@ class DefaultRecordingSessionRepository(
                 config,
                 mediaProjectionGrantIntent,
             )
-        context.applicationContext.startForegroundService(intent)
+        return startForegroundServiceOrReport(context, intent, "recording")
     }
 
     override fun startBufferSession(
         context: Context,
         config: SessionConfig,
         mediaProjectionGrantIntent: Intent,
-    ) {
+    ): Boolean {
         val intent =
             buildBufferStartIntent(
                 context.applicationContext,
                 config,
                 mediaProjectionGrantIntent,
             )
-        context.applicationContext.startForegroundService(intent)
+        return startForegroundServiceOrReport(context, intent, "buffer")
     }
 
-    override fun prepareOverlaySession(
+    private fun startForegroundServiceOrReport(
         context: Context,
-        resultCode: Int,
-        projectionIntent: Intent,
-    ) {
+        intent: Intent,
+        source: String,
+    ): Boolean {
         val ctx = context.applicationContext
-        ctx.startForegroundService(
-            Intent(ctx, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_PREPARE
-                putExtra(ScreenRecordService.EXTRA_RESULT_CODE, resultCode)
-                putExtra(ScreenRecordService.EXTRA_DATA, cloneProjectionIntent(projectionIntent))
-            },
+        if (ForegroundServiceLaunch.start(ctx, intent, "repository_$source")) return true
+        RecordingEngineEventBus.tryEmit(
+            RecordingError.PermissionDenied("foreground_service_start_not_allowed_$source"),
         )
+        showStartBlockedToast(ctx)
+        return false
     }
 
-    override fun revokePrepare(context: Context) {
-        context.applicationContext.startService(
-            Intent(context.applicationContext, ScreenRecordService::class.java).apply {
-                action = ScreenRecordService.ACTION_REVOKE_PREPARE
-            },
-        )
+    private fun showStartBlockedToast(context: Context) {
+        val show = {
+            val toast =
+                Toast.makeText(
+                    context,
+                    R.string.toast_recording_start_failed_background,
+                    Toast.LENGTH_LONG,
+                )
+            toast.show()
+        }
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            show()
+        } else {
+            Handler(Looper.getMainLooper()).post(show)
+        }
     }
 
     override fun stop(context: Context) {

@@ -697,8 +697,8 @@
     <string name="error_resolution_too_large_for_profile">Questa risoluzione \u00E8 troppo grande per il profilo prestazioni di questo dispositivo.</string>
     <string name="pro_feature">Funzione PRO</string>
     <string name="pro_recording_title">Stai registrando con funzioni PRO</string>
-    <string name="pro_recording_body">Guarda un annuncio per sbloccare Pro per 1 ora: 90/120 FPS, video oltre 16 Mbps, fotocamera, filigrana e microfono separato — oppure rimuovi gli annunci per accesso permanente.</string>
-    <string name="pro_tools_body">Guarda un annuncio per sbloccare Pro per 1 ora: 90/120 FPS, oltre 16 Mbps, unione e GIF — oppure acquista Rimuovi annunci per accesso permanente.</string>
+    <string name="pro_recording_body">Guarda un annuncio per sbloccare Pro per 3 ore: 90/120 FPS, video oltre 16 Mbps, fotocamera, filigrana e microfono separato — oppure rimuovi gli annunci per accesso permanente.</string>
+    <string name="pro_tools_body">Guarda un annuncio per sbloccare Pro per 3 ore: 90/120 FPS, oltre 16 Mbps, unione e GIF — oppure acquista Rimuovi annunci per accesso permanente.</string>
     <string name="pro_unlock_watch_ad">Guarda annuncio</string>
     <string name="pro_unlock_remove_ads">Rimuovi annunci</string>
     <string name="pro_unlock_ad_unavailable">L\u2019annuncio non \u00E8 disponibile ora. Riprova tra poco.</string>
@@ -714,14 +714,6 @@
     <string name="settings_show_touches_status_on">Attivo</string>
     <string name="settings_show_touches_status_off">Disattivo — apri Opzioni sviluppatore per abilitare Mostra tocchi</string>
     <string name="settings_show_touches_status_unknown">Sconosciuto — apri Opzioni sviluppatore per abilitare Mostra tocchi</string>
-    <string name="setting_recording_engine">Motore di registrazione</string>
-    <string name="recording_engine_performance_label">Motore prestazioni</string>
-    <string name="recording_engine_compatibility_label">Motore sperimentale</string>
-    <string name="recording_engine_performance_summary">Consigliato per la maggior parte degli utenti. Usa meno elaborazione, scalda meno ed è ideale per le registrazioni quotidiane. Gli screenshot durante la registrazione sono disattivati.</string>
-    <string name="recording_engine_compatibility_summary">Fallback sperimentale. Può usare più elaborazione, causare più calore e scaricare la batteria più rapidamente. Provalo solo se il motore Performance causa problemi sul dispositivo.</string>
-    <string name="recording_engine_advanced_warning">Il motore sperimentale pu\u00F2 aumentare il calore o il consumo della batteria. Usalo solo se il motore Performance predefinito non funziona bene sul dispositivo.</string>
-    <string name="recording_engine_scope_note">Si applica alle registrazioni normali e a Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Gli screenshot durante la registrazione non sono disponibili nel motore prestazioni.</string>
     <string name="internal_silent_dialog_title">L’audio interno è silenzioso</string>
     <string name="internal_silent_dialog_message">Questo gioco o questa app potrebbe bloccare l’acquisizione dell’audio interno.\n\nUsare il microfono di fallback per acquisire invece l’audio dell’altoparlante?</string>
     <string name="internal_silent_use_mic_fallback">Usa microfono di fallback</string>

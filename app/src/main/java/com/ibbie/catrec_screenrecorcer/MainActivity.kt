@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -35,12 +36,12 @@ import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
+import com.ibbie.catrec_screenrecorcer.ads.ProRewardedAdManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.navigation.CatRecNavGraph
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.ui.adaptive.LocalWindowSizeClass
 import com.ibbie.catrec_screenrecorcer.ui.theme.CatRecScreenRecorderTheme
-import com.ibbie.catrec_screenrecorcer.utils.ExitUiCoordinator
 import com.ibbie.catrec_screenrecorcer.utils.LocaleHelper
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 import com.ibbie.catrec_screenrecorcer.utils.applyCrashlyticsCollectionEnabled
@@ -59,6 +60,9 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
     companion object {
         private const val TAG = "MainActivity"
+        private const val EXIT_UI_PREFS_NAME = "catrec_exit_ui"
+        private const val KEY_PENDING_FINISH_AFFINITY = "pending_finish_affinity"
+
         /** Opens the screen-capture dialog, then prepares projection and takes one screenshot. */
         const val EXTRA_REQUEST_SCREENSHOT_PROJECTION =
             "com.ibbie.catrec_screenrecorcer.REQUEST_SCREENSHOT_PROJECTION"
@@ -97,6 +101,21 @@ class MainActivity : ComponentActivity() {
                         intent.getStringExtra(EXTRA_ROUTE_REASON) == ROUTE_REASON_ROUTED_RECORDING_ACTION
                 )
         }
+    }
+
+    private fun markPendingFinishAffinity() {
+        applicationContext
+            .getSharedPreferences(EXIT_UI_PREFS_NAME, Context.MODE_PRIVATE)
+            .edit {
+                putBoolean(KEY_PENDING_FINISH_AFFINITY, true)
+            }
+    }
+
+    private fun consumePendingFinishAffinity(): Boolean {
+        val prefs = applicationContext.getSharedPreferences(EXIT_UI_PREFS_NAME, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_PENDING_FINISH_AFFINITY, false)) return false
+        prefs.edit { putBoolean(KEY_PENDING_FINISH_AFFINITY, false) }
+        return true
     }
 
     private val pendingImageEditorLock = Any()
@@ -144,8 +163,7 @@ class MainActivity : ComponentActivity() {
      * the same value — so a skipped drain (e.g. because the NavHost has not yet attached its
      * graph on cold start) retries on the next `ON_RESUME` instead of dropping the request.
      */
-    fun peekQueuedImageEditorUri(): String? =
-        synchronized(pendingImageEditorLock) { pendingImageEditorUri }
+    fun peekQueuedImageEditorUri(): String? = synchronized(pendingImageEditorLock) { pendingImageEditorUri }
 
     /**
      * Clears the pending URI iff it still matches [expected]. Matching prevents dropping a
@@ -207,7 +225,7 @@ class MainActivity : ComponentActivity() {
             overridePendingTransition(0, 0)
             finishAffinity()
         } else {
-            ExitUiCoordinator.markPendingFinishAffinity(this)
+            markPendingFinishAffinity()
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(
                     TAG,
@@ -245,6 +263,7 @@ class MainActivity : ComponentActivity() {
             } else {
                 AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_LAUNCH)
             }
+            ProRewardedAdManager.setBackgroundPreloadAllowed(!firstLaunch)
             AppOpenAdManager.firstRunPermissionsComplete = permissionManager.isStartupPermissionFlowComplete()
             if (AppOpenAdManager.firstRunPermissionsComplete) {
                 AppOpenAdSuppressor.clear(AppOpenAdSuppressionReason.FIRST_RUN_PERMISSIONS)
@@ -270,7 +289,7 @@ class MainActivity : ComponentActivity() {
                 val floatingOn = settingsRepository.floatingControls.first()
                 refreshCrashlyticsSessionKeys(appLang, floatingOn)
             }
-            // AdMob init: [CatRecApplication] calls [MobileAdsInitializer]; app-open display is gated separately.
+            // AdMob init is gated by foreground UI lifecycle; app-open display is gated separately.
 
             if (BuildConfig.DEBUG && analyticsEnabled) {
                 FirebaseAnalytics.getInstance(this).logEvent("debug_analytics_verification", null)
@@ -313,10 +332,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        MobileAdsInitializer.setForegroundEligible(true)
         AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
         AppOpenAdSuppressor.exit(AppOpenAdSuppressionReason.BILLING)
         MobileAdsInitializer.initializeIfReady(this)
-        if (ExitUiCoordinator.consumePendingFinishAffinity(this)) {
+        ProRewardedAdManager.preloadInBackground(this, "main_resume")
+        if (consumePendingFinishAffinity()) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "notification exit: applying deferred finishAffinity from onResume")
             }
@@ -344,6 +365,11 @@ class MainActivity : ComponentActivity() {
                 recordCrashlyticsNonFatal(e, "MainActivity.onResume: idle overlay start failed")
             }
         }
+    }
+
+    override fun onStop() {
+        MobileAdsInitializer.setForegroundEligible(false)
+        super.onStop()
     }
 
     override fun onDestroy() {

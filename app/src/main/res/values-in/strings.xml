@@ -691,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">Resolusi ini terlalu besar untuk profil performa perangkat ini.</string>
     <string name="pro_feature">Fitur PRO</string>
     <string name="pro_recording_title">Anda merekam dengan fitur PRO</string>
-    <string name="pro_recording_body">Tonton iklan untuk membuka Pro selama 1 jam: 90/120 FPS, video di atas 16 Mbps, kamera, watermark, dan mic terpisah — atau hapus iklan untuk akses permanen.</string>
-    <string name="pro_tools_body">Tonton iklan untuk membuka Pro selama 1 jam: 90/120 FPS, di atas 16 Mbps, gabungkan dan GIF — atau beli Hapus Iklan untuk akses permanen.</string>
+    <string name="pro_recording_body">Tonton iklan untuk membuka Pro selama 3 jam: 90/120 FPS, video di atas 16 Mbps, kamera, watermark, dan mic terpisah — atau hapus iklan untuk akses permanen.</string>
+    <string name="pro_tools_body">Tonton iklan untuk membuka Pro selama 3 jam: 90/120 FPS, di atas 16 Mbps, gabungkan dan GIF — atau beli Hapus Iklan untuk akses permanen.</string>
     <string name="pro_unlock_watch_ad">Tonton Iklan</string>
     <string name="pro_unlock_remove_ads">Hapus Iklan</string>
     <string name="pro_unlock_ad_unavailable">Iklan belum tersedia saat ini. Coba lagi nanti.</string>
@@ -708,14 +708,6 @@
     <string name="settings_show_touches_status_on">Aktif</string>
     <string name="settings_show_touches_status_off">Nonaktif — buka Opsi Developer untuk mengaktifkan Tampilkan sentuhan</string>
     <string name="settings_show_touches_status_unknown">Tidak diketahui — buka Opsi Developer untuk mengaktifkan Tampilkan sentuhan</string>
-    <string name="setting_recording_engine">Mesin perekaman</string>
-    <string name="recording_engine_performance_label">Mesin performa</string>
-    <string name="recording_engine_compatibility_label">Mesin eksperimental</string>
-    <string name="recording_engine_performance_summary">Direkomendasikan untuk sebagian besar pengguna. Memakai pemrosesan lebih sedikit, lebih dingin, dan paling cocok untuk perekaman harian. Screenshot saat merekam dinonaktifkan.</string>
-    <string name="recording_engine_compatibility_summary">Fallback eksperimental. Dapat memakai lebih banyak pemrosesan, menyebabkan panas lebih tinggi, dan menguras baterai lebih cepat. Coba hanya jika mesin Performance bermasalah di perangkat Anda.</string>
-    <string name="recording_engine_advanced_warning">Mesin eksperimental dapat meningkatkan panas atau penggunaan baterai. Gunakan hanya jika mesin Performance default tidak bekerja dengan baik di perangkat Anda.</string>
-    <string name="recording_engine_scope_note">Berlaku untuk perekaman normal dan Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Screenshot saat merekam tidak tersedia di mesin performa.</string>
     <string name="internal_silent_dialog_title">Audio internal hening</string>
     <string name="internal_silent_dialog_message">Game atau aplikasi ini mungkin memblokir capture audio internal.\n\nGunakan mikrofon fallback untuk menangkap audio speaker?</string>
     <string name="internal_silent_use_mic_fallback">Gunakan mikrofon fallback</string>

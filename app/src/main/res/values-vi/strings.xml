@@ -691,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\u0110\u1ED9 ph\u00E2n gi\u1EA3i n\u00E0y qu\u00E1 l\u1EDBn \u0111\u1ED1i v\u1EDBi h\u1ED3 s\u01A1 hi\u1EC7u n\u0103ng c\u1EE7a thi\u1EBFt b\u1ECB n\u00E0y.</string>
     <string name="pro_feature">T\u00EDnh n\u0103ng PRO</string>
     <string name="pro_recording_title">B\u1EA1n \u0111ang ghi b\u1EB1ng t\u00EDnh n\u0103ng PRO</string>
-    <string name="pro_recording_body">Xem quảng cáo để mở Pro trong 1 giờ: 90/120 FPS, video trên 16 Mbps, camera, watermark và mic riêng — hoặc gỡ quảng cáo để dùng vĩnh viễn.</string>
-    <string name="pro_tools_body">Xem quảng cáo để mở Pro trong 1 giờ: 90/120 FPS, trên 16 Mbps, ghép và GIF — hoặc mua Gỡ quảng cáo để dùng vĩnh viễn.</string>
+    <string name="pro_recording_body">Xem quảng cáo để mở Pro trong 3 giờ: 90/120 FPS, video trên 16 Mbps, camera, watermark và mic riêng — hoặc gỡ quảng cáo để dùng vĩnh viễn.</string>
+    <string name="pro_tools_body">Xem quảng cáo để mở Pro trong 3 giờ: 90/120 FPS, trên 16 Mbps, ghép và GIF — hoặc mua Gỡ quảng cáo để dùng vĩnh viễn.</string>
     <string name="pro_unlock_watch_ad">Xem qu\u1EA3ng c\u00E1o</string>
     <string name="pro_unlock_remove_ads">X\u00F3a qu\u1EA3ng c\u00E1o</string>
     <string name="pro_unlock_ad_unavailable">Hi\u1EC7n kh\u00F4ng c\u00F3 qu\u1EA3ng c\u00E1o. Vui l\u00F2ng th\u1EED l\u1EA1i sau.</string>
@@ -708,14 +708,6 @@
     <string name="settings_show_touches_status_on">Bật</string>
     <string name="settings_show_touches_status_off">Tắt — mở Tùy chọn nhà phát triển để bật Hiện chạm</string>
     <string name="settings_show_touches_status_unknown">Không rõ — mở Tùy chọn nhà phát triển để bật Hiện chạm</string>
-    <string name="setting_recording_engine">Bộ máy ghi</string>
-    <string name="recording_engine_performance_label">Bộ máy hiệu năng</string>
-    <string name="recording_engine_compatibility_label">B\u1ED9 m\u00E1y th\u1EED nghi\u1EC7m</string>
-    <string name="recording_engine_performance_summary">Được khuyến nghị cho hầu hết người dùng. Dùng ít xử lý hơn, mát hơn và phù hợp nhất cho ghi hằng ngày. Ảnh chụp màn hình khi đang ghi bị tắt.</string>
-    <string name="recording_engine_compatibility_summary">Fallback thử nghiệm. Có thể dùng nhiều xử lý hơn, gây nóng hơn và hao pin nhanh hơn. Chỉ thử nếu động cơ Performance gây lỗi trên thiết bị của bạn.</string>
-    <string name="recording_engine_advanced_warning">B\u1ED9 m\u00E1y th\u1EED nghi\u1EC7m c\u00F3 th\u1EC3 l\u00E0m t\u0103ng nhi\u1EC7t ho\u1EB7c m\u1EE9c d\u00F9ng pin. Ch\u1EC9 d\u00F9ng n\u1EBFu b\u1ED9 m\u00E1y Performance m\u1EB7c \u0111\u1ECBnh kh\u00F4ng ho\u1EA1t \u0111\u1ED9ng t\u1ED1t tr\u00EAn thi\u1EBFt b\u1ECB c\u1EE7a b\u1EA1n.</string>
-    <string name="recording_engine_scope_note">Áp dụng cho ghi bình thường và Clipper.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Ảnh chụp màn hình khi đang ghi không khả dụng trong bộ máy hiệu năng.</string>
     <string name="internal_silent_dialog_title">Âm thanh nội bộ đang im lặng</string>
     <string name="internal_silent_dialog_message">Trò chơi hoặc ứng dụng này có thể chặn capture âm thanh nội bộ.\n\nDùng mic fallback để thu âm thanh loa thay thế?</string>
     <string name="internal_silent_use_mic_fallback">Dùng mic fallback</string>

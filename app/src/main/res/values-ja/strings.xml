@@ -691,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\u3053\u306E\u89E3\u50CF\u5EA6\u306F\u3053\u306E\u7AEF\u672B\u306E\u30D1\u30D5\u30A9\u30FC\u30DE\u30F3\u30B9\u30D7\u30ED\u30D5\u30A1\u30A4\u30EB\u306B\u306F\u5927\u304D\u3059\u304E\u307E\u3059\u3002</string>
     <string name="pro_feature">PRO\u6A5F\u80FD</string>
     <string name="pro_recording_title">PRO\u6A5F\u80FD\u3067\u9332\u753B\u3057\u3066\u3044\u307E\u3059</string>
-    <string name="pro_recording_body">広告を見るとProを1時間解除できます: 90/120 FPS、16 Mbps超の動画、カメラ、ウォーターマーク、別録りマイク。広告を削除すると永続的に利用できます。</string>
-    <string name="pro_tools_body">広告を見るとProを1時間解除できます: 90/120 FPS、16 Mbps超、結合、GIF。広告削除を購入すると永続的に利用できます。</string>
+    <string name="pro_recording_body">広告を見るとProを3時間解除できます: 90/120 FPS、16 Mbps超の動画、カメラ、ウォーターマーク、別録りマイク。広告を削除すると永続的に利用できます。</string>
+    <string name="pro_tools_body">広告を見るとProを3時間解除できます: 90/120 FPS、16 Mbps超、結合、GIF。広告削除を購入すると永続的に利用できます。</string>
     <string name="pro_unlock_watch_ad">\u5E83\u544A\u3092\u898B\u308B</string>
     <string name="pro_unlock_remove_ads">\u5E83\u544A\u3092\u524A\u9664</string>
     <string name="pro_unlock_ad_unavailable">\u73FE\u5728\u5E83\u544A\u3092\u5229\u7528\u3067\u304D\u307E\u305B\u3093\u3002\u3057\u3070\u3089\u304F\u3057\u3066\u304B\u3089\u3082\u3046\u4E00\u5EA6\u304A\u8A66\u3057\u304F\u3060\u3055\u3044\u3002</string>
@@ -708,14 +708,6 @@
     <string name="settings_show_touches_status_on">オン</string>
     <string name="settings_show_touches_status_off">オフ — 開発者向けオプションでタップを表示を有効にしてください</string>
     <string name="settings_show_touches_status_unknown">不明 — 開発者向けオプションでタップを表示を有効にしてください</string>
-    <string name="setting_recording_engine">録画エンジン</string>
-    <string name="recording_engine_performance_label">パフォーマンスエンジン</string>
-    <string name="recording_engine_compatibility_label">\u5B9F\u9A13\u7684\u30A8\u30F3\u30B8\u30F3</string>
-    <string name="recording_engine_performance_summary">ほとんどのユーザーに推奨です。処理負荷が少なく、発熱を抑え、日常的な録画に最適です。録画中のスクリーンショットは無効です。</string>
-    <string name="recording_engine_compatibility_summary">実験的なフォールバックです。処理負荷、発熱、バッテリー消費が増える場合があります。Performance エンジンで問題が起きる場合のみ試してください。</string>
-    <string name="recording_engine_advanced_warning">\u5B9F\u9A13\u7684\u30A8\u30F3\u30B8\u30F3\u306F\u767A\u71B1\u3084\u30D0\u30C3\u30C6\u30EA\u30FC\u6D88\u8CBB\u304C\u5897\u3048\u308B\u5834\u5408\u304C\u3042\u308A\u307E\u3059\u3002\u65E2\u5B9A\u306E Performance \u30A8\u30F3\u30B8\u30F3\u304C\u7AEF\u672B\u3067\u3046\u307E\u304F\u52D5\u4F5C\u3057\u306A\u3044\u5834\u5408\u306E\u307F\u4F7F\u7528\u3057\u3066\u304F\u3060\u3055\u3044\u3002</string>
-    <string name="recording_engine_scope_note">通常の録画とClipperに適用されます。</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">パフォーマンスエンジンでは録画中のスクリーンショットは利用できません。</string>
     <string name="internal_silent_dialog_title">内部音声が無音です</string>
     <string name="internal_silent_dialog_message">このゲームまたはアプリは内部音声のキャプチャをブロックしている可能性があります。\n\n代わりにスピーカー音声を録るため、マイクフォールバックを使用しますか？</string>
     <string name="internal_silent_use_mic_fallback">マイクフォールバックを使用</string>

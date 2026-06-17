@@ -59,30 +59,33 @@ fun SessionAudioSource.toMicAndInternalFlags(): Pair<Boolean, Boolean> =
  *
  * @see SessionConfig.fromBundle
  */
-fun SessionConfig.toBundle(): Bundle = Bundle(7).apply {
-    putInt("widthPx", widthPx)
-    putInt("heightPx", heightPx)
-    putInt("bitrateBitsPerSecond", bitrateBitsPerSecond)
-    putInt("frameRate", frameRate)
-    putString("audioSource", audioSource.name)
-    putInt("mediaProjectionResultCode", mediaProjectionResultCode)
-    putBoolean("recordSingleApp", recordSingleApp)
-}
+fun SessionConfig.toBundle(): Bundle =
+    Bundle(7).apply {
+        putInt("widthPx", widthPx)
+        putInt("heightPx", heightPx)
+        putInt("bitrateBitsPerSecond", bitrateBitsPerSecond)
+        putInt("frameRate", frameRate)
+        putString("audioSource", audioSource.name)
+        putInt("mediaProjectionResultCode", mediaProjectionResultCode)
+        putBoolean("recordSingleApp", recordSingleApp)
+    }
 
 /** Reconstruct a [SessionConfig] from a bundle written by [toBundle]. */
-fun Bundle.toSessionConfig(): SessionConfig = SessionConfig(
-    widthPx = getInt("widthPx"),
-    heightPx = getInt("heightPx"),
-    bitrateBitsPerSecond = getInt("bitrateBitsPerSecond"),
-    frameRate = getInt("frameRate"),
-    audioSource = try {
-        SessionAudioSource.valueOf(getString("audioSource") ?: "")
-    } catch (_: IllegalArgumentException) {
-        SessionAudioSource.NONE
-    },
-    mediaProjectionResultCode = getInt("mediaProjectionResultCode"),
-    recordSingleApp = getBoolean("recordSingleApp"),
-)
+fun Bundle.toSessionConfig(): SessionConfig =
+    SessionConfig(
+        widthPx = getInt("widthPx"),
+        heightPx = getInt("heightPx"),
+        bitrateBitsPerSecond = getInt("bitrateBitsPerSecond"),
+        frameRate = getInt("frameRate"),
+        audioSource =
+            try {
+                SessionAudioSource.valueOf(getString("audioSource") ?: "")
+            } catch (_: IllegalArgumentException) {
+                SessionAudioSource.NONE
+            },
+        mediaProjectionResultCode = getInt("mediaProjectionResultCode"),
+        recordSingleApp = getBoolean("recordSingleApp"),
+    )
 
 /** Defensive copy for projection token hand-off (Android 15-safe: avoid mutating the activity result). */
 fun cloneProjectionIntent(source: Intent): Intent = Intent(source)

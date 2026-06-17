@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
  * permission result returns.
  */
 class InternalSilenceFallbackActivity : AppCompatActivity() {
-
     private val settingsRepository by lazy { SettingsRepository(applicationContext) }
 
     private val recordAudioPermission =
@@ -135,8 +134,7 @@ class InternalSilenceFallbackActivity : AppCompatActivity() {
                     },
                 )
                 finish()
-            }
-            .show()
+            }.show()
     }
 
     private fun deliverMicFallbackAndFinish(enableAutoSetting: Boolean) {

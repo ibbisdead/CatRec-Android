@@ -40,7 +40,7 @@ class OverlayScreenshotProjectionActivity : ComponentActivity() {
                             putExtra(ScreenRecordService.EXTRA_DATA, result.data)
                             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_FORMAT, ssFmt)
                             putExtra(ScreenRecordService.EXTRA_SCREENSHOT_QUALITY, ssQ)
-                    }
+                        }
                     startForegroundService(oneShot)
                     finish()
                 }

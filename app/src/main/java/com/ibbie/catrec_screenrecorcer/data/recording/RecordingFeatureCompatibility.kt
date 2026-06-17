@@ -19,8 +19,8 @@ enum class RecordingFeature {
 enum class RecordingFeatureUnavailableReason(
     @get:StringRes val messageResId: Int,
 ) {
-    REQUIRES_COMPATIBILITY_ENGINE(
-        R.string.recording_engine_reason_screenshot_recording_requires_compatibility,
+    SCREENSHOT_WHILE_RECORDING_UNAVAILABLE(
+        R.string.recording_screenshot_while_recording_unavailable,
     ),
 }
 
@@ -34,17 +34,14 @@ data class RecordingFeatureCompatibilityResult(
 }
 
 object RecordingFeatureCompatibility {
+    @Suppress("UNUSED_PARAMETER")
     fun evaluate(
         mode: RecordingEngineMode,
         feature: RecordingFeature,
     ): RecordingFeatureCompatibilityResult =
         when (feature) {
             RecordingFeature.SCREENSHOT_WHILE_RECORDING ->
-                if (mode == RecordingEngineMode.COMPATIBILITY) {
-                    available()
-                } else {
-                    unavailable(RecordingFeatureUnavailableReason.REQUIRES_COMPATIBILITY_ENGINE)
-                }
+                unavailable(RecordingFeatureUnavailableReason.SCREENSHOT_WHILE_RECORDING_UNAVAILABLE)
 
             RecordingFeature.ROLLING_BUFFER -> {
                 // Model-level availability only. Direct-path rolling buffer still needs Stage 2
@@ -70,6 +67,5 @@ object RecordingFeatureCompatibility {
 
     private fun available(): RecordingFeatureCompatibilityResult = RecordingFeatureCompatibilityResult(available = true)
 
-    private fun unavailable(reason: RecordingFeatureUnavailableReason): RecordingFeatureCompatibilityResult =
-        RecordingFeatureCompatibilityResult(available = false, reason = reason)
+    private fun unavailable(reason: RecordingFeatureUnavailableReason): RecordingFeatureCompatibilityResult = RecordingFeatureCompatibilityResult(available = false, reason = reason)
 }

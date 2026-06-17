@@ -24,8 +24,8 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 27
         targetSdk = 36
-        versionCode = 28
-        versionName = "1.2.3"
+        versionCode = 29
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -92,11 +92,12 @@ android {
         // Keep API/version checks visible in CI and IDE; NewApi flags calls not valid on minSdk without guards.
         checkReleaseBuilds = true
         checkDependencies = true
-        enable += setOf(
-            "NewApi",
-            "InlinedApi",
-            "ObsoleteSdkInt",
-        )
+        enable +=
+            setOf(
+                "NewApi",
+                "InlinedApi",
+                "ObsoleteSdkInt",
+            )
     }
 }
 
@@ -118,6 +119,8 @@ ktlint {
 }
 
 dependencies {
+    ktlintRuleset(libs.compose.rules.ktlint)
+
     // Firebase (BoM manages all Firebase library versions)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)

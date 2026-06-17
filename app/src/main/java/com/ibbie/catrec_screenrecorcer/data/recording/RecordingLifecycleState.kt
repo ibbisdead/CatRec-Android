@@ -7,9 +7,6 @@ package com.ibbie.catrec_screenrecorcer.data.recording
 sealed class RecordingLifecycleState {
     data object Idle : RecordingLifecycleState()
 
-    /** MediaProjection token held; overlay may start capture without re-prompting. */
-    data object Preparing : RecordingLifecycleState()
-
     /** Active screen capture (file or rolling buffer). */
     data object Recording : RecordingLifecycleState()
 

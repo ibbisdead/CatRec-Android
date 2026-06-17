@@ -14,12 +14,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -439,9 +439,10 @@ fun RecordingCard(
     val context = LocalContext.current
     val accent = LocalAccentColor.current
     var showDeleteDialog by remember { mutableStateOf(false) }
-    val thumbnailKey = remember(item.uri, item.dateModifiedMs, item.sizeBytes) {
-        RecordingThumbnailCache.key(item)
-    }
+    val thumbnailKey =
+        remember(item.uri, item.dateModifiedMs, item.sizeBytes) {
+            RecordingThumbnailCache.key(item)
+        }
     var thumbnail by remember(thumbnailKey) {
         mutableStateOf(RecordingThumbnailCache.get(thumbnailKey))
     }
@@ -508,126 +509,126 @@ fun RecordingCard(
                     .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-                // ── Thumbnail ────────────────────────────────────────────────
-                Box(
-                    modifier =
-                        Modifier
-                            .size(width = 84.dp, height = 58.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(
-                                if (MaterialTheme.colorScheme.isLightTheme()) {
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                } else {
-                                    Color(0xFF160007)
-                                },
-                            ).border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (thumbnail != null) {
-                        Image(
-                            painter = BitmapPainter(thumbnail!!.asImageBitmap()),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop,
-                        )
-                    } else {
+            // ── Thumbnail ────────────────────────────────────────────────
+            Box(
+                modifier =
+                    Modifier
+                        .size(width = 84.dp, height = 58.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (MaterialTheme.colorScheme.isLightTheme()) {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            } else {
+                                Color(0xFF160007)
+                            },
+                        ).border(1.dp, accent.copy(alpha = 0.4f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (thumbnail != null) {
+                    Image(
+                        painter = BitmapPainter(thumbnail!!.asImageBitmap()),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.PlayCircle,
+                        contentDescription = null,
+                        tint = accent.copy(alpha = 0.45f),
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+                // Separate audio track badge
+                if (item.hasSeparateAudio && !isSelectionMode) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(3.dp)
+                                .size(18.dp)
+                                .background(Color(0xCC000000), RoundedCornerShape(4.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Icon(
-                            Icons.Default.PlayCircle,
-                            contentDescription = null,
-                            tint = accent.copy(alpha = 0.45f),
-                            modifier = Modifier.size(30.dp),
+                            Icons.Default.Mic,
+                            contentDescription = stringResource(R.string.recording_has_separate_audio),
+                            tint = accent,
+                            modifier = Modifier.size(12.dp),
                         )
                     }
-                    // Separate audio track badge
-                    if (item.hasSeparateAudio && !isSelectionMode) {
+                }
+                // Selection overlay
+                if (isSelectionMode) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(
+                                    if (isSelected) accent.copy(alpha = 0.35f) else Color(0x55000000),
+                                ),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         Box(
                             modifier =
                                 Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(3.dp)
-                                    .size(18.dp)
-                                    .background(Color(0xCC000000), RoundedCornerShape(4.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Default.Mic,
-                                contentDescription = stringResource(R.string.recording_has_separate_audio),
-                                tint = accent,
-                                modifier = Modifier.size(12.dp),
-                            )
-                        }
-                    }
-                    // Selection overlay
-                    if (isSelectionMode) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
+                                    .size(22.dp)
                                     .background(
-                                        if (isSelected) accent.copy(alpha = 0.35f) else Color(0x55000000),
+                                        if (isSelected) accent else Color.Transparent,
+                                        CircleShape,
+                                    ).border(
+                                        2.dp,
+                                        if (isSelected) accent else Color.White.copy(alpha = 0.8f),
+                                        CircleShape,
                                     ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(22.dp)
-                                        .background(
-                                            if (isSelected) accent else Color.Transparent,
-                                            CircleShape,
-                                        ).border(
-                                            2.dp,
-                                            if (isSelected) accent else Color.White.copy(alpha = 0.8f),
-                                            CircleShape,
-                                        ),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                if (isSelected) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(13.dp),
-                                    )
-                                }
+                            if (isSelected) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp),
+                                )
                             }
                         }
                     }
                 }
+            }
 
-                Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
 
-                // ── File info ─────────────────────────────────────────────────
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.name ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(Modifier.height(3.dp))
-                    Text(
-                        text =
-                            buildString {
-                                append(Formatter.formatShortFileSize(context, item.sizeBytes ?: 0L))
+            // ── File info ─────────────────────────────────────────────────
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.name ?: "",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text =
+                        buildString {
+                            append(Formatter.formatShortFileSize(context, item.sizeBytes ?: 0L))
+                            append("  ·  ")
+                            append(item.screenshotDateLabel())
+                            val dur = item.duration ?: 0L
+                            if (dur > 0) {
                                 append("  ·  ")
-                                append(item.screenshotDateLabel())
-                                val dur = item.duration ?: 0L
-                                if (dur > 0) {
-                                    append("  ·  ")
-                                    append(formatDurationMs(dur))
-                                }
-                            },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                                append(formatDurationMs(dur))
+                            }
+                        },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
-                // ── Action icons (hidden in selection mode) ───────────────────
+            // ── Action icons (hidden in selection mode) ───────────────────
             if (!isSelectionMode) {
                 IconButton(onClick = onTrim) {
                     Icon(
@@ -723,7 +724,8 @@ private object RecordingThumbnailCache {
                 )
             } else {
                 @Suppress("DEPRECATION")
-                retriever.getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                retriever
+                    .getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
                     ?.scaleDownToThumbnail()
             }
         } catch (_: Exception) {

@@ -18,7 +18,6 @@ import android.view.View
  * delayed fallback exists only for devices where focus may not be delivered reliably.
  */
 class ScreenshotAfterShadeActivity : Activity() {
-
     private val mainHandler = Handler(Looper.getMainLooper())
     private val safetyFallback =
         Runnable {

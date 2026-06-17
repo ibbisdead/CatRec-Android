@@ -24,21 +24,13 @@ interface RecordingSessionRepository {
         context: Context,
         config: SessionConfig,
         mediaProjectionGrantIntent: Intent,
-    )
+    ): Boolean
 
     fun startBufferSession(
         context: Context,
         config: SessionConfig,
         mediaProjectionGrantIntent: Intent,
-    )
-
-    fun prepareOverlaySession(
-        context: Context,
-        resultCode: Int,
-        projectionIntent: Intent,
-    )
-
-    fun revokePrepare(context: Context)
+    ): Boolean
 
     /** Stops active recording, or rolling buffer if that is active. */
     fun stop(context: Context)

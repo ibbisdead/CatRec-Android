@@ -324,7 +324,7 @@ object FaqData {
                                 """
                                 Android shows a **one-time** (or per-session) **MediaProjection** consent dialog for privacy.
 
-                                If you use **Authorize / Prepare** from the Recording tab with **floating controls**, CatRec can keep a **prepared** session so the **overlay** can start without the dialog again until you **revoke** it or the system clears it.
+                                CatRec does not keep a screen-capture permission token while idle. Overlay recording and standalone overlay screenshots request a fresh **MediaProjection** grant when they need one.
 
                                 Fully killing the app or rebooting usually requires **granting again**.
                                 """.trimIndent(),

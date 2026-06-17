@@ -694,8 +694,8 @@
     <string name="error_resolution_too_large_for_profile">Bu \u00E7\u00F6z\u00FCn\u00FCrl\u00FCk, bu cihaz\u0131n performans profili i\u00E7in \u00E7ok b\u00FCy\u00FCk.</string>
     <string name="pro_feature">PRO \u00F6zellik</string>
     <string name="pro_recording_title">PRO \u00F6zelliklerle kay\u0131t yap\u0131yorsunuz</string>
-    <string name="pro_recording_body">Pro’yu 1 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri video, kamera, filigran ve ayrı mikrofon — veya kalıcı erişim için reklamları kaldırın.</string>
-    <string name="pro_tools_body">Pro’yu 1 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri, birleştirme ve GIF — veya kalıcı erişim için Reklamları Kaldır satın alın.</string>
+    <string name="pro_recording_body">Pro’yu 3 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri video, kamera, filigran ve ayrı mikrofon — veya kalıcı erişim için reklamları kaldırın.</string>
+    <string name="pro_tools_body">Pro’yu 3 saat açmak için reklam izleyin: 90/120 FPS, 16 Mbps üzeri, birleştirme ve GIF — veya kalıcı erişim için Reklamları Kaldır satın alın.</string>
     <string name="pro_unlock_watch_ad">Reklam \u0130zle</string>
     <string name="pro_unlock_remove_ads">Reklamlar\u0131 Kald\u0131r</string>
     <string name="pro_unlock_ad_unavailable">Reklam \u015Fu anda kullan\u0131lam\u0131yor. L\u00FCtfen biraz sonra tekrar deneyin.</string>
@@ -711,14 +711,6 @@
     <string name="settings_show_touches_status_on">Açık</string>
     <string name="settings_show_touches_status_off">Kapalı — Dokunuşları göster seçeneğini açmak için Geliştirici seçeneklerini açın</string>
     <string name="settings_show_touches_status_unknown">Bilinmiyor — Dokunuşları göster seçeneğini açmak için Geliştirici seçeneklerini açın</string>
-    <string name="setting_recording_engine">Kayıt motoru</string>
-    <string name="recording_engine_performance_label">Performans motoru</string>
-    <string name="recording_engine_compatibility_label">Deneysel motor</string>
-    <string name="recording_engine_performance_summary">Çoğu kullanıcı için önerilir. Daha az işlem kullanır, daha serin çalışır ve günlük kayıt için en iyisidir. Kayıt sırasında ekran görüntüleri devre dışıdır.</string>
-    <string name="recording_engine_compatibility_summary">Deneysel fallback. Daha fazla işlem kullanabilir, daha fazla ısıya neden olabilir ve pili daha hızlı tüketebilir. Bunu yalnızca Performance motoru cihazınızda sorun çıkarırsa deneyin.</string>
-    <string name="recording_engine_advanced_warning">Deneysel motor \u0131s\u0131y\u0131 veya pil kullan\u0131m\u0131n\u0131 art\u0131rabilir. Yaln\u0131zca varsay\u0131lan Performance motoru cihaz\u0131n\u0131zda iyi \u00E7al\u0131\u015Fm\u0131yorsa kullan\u0131n.</string>
-    <string name="recording_engine_scope_note">Normal kayıtlar ve Clipper için geçerlidir.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">Performans motorunda kayıt sırasında ekran görüntüleri kullanılamaz.</string>
     <string name="internal_silent_dialog_title">Dahili ses sessiz</string>
     <string name="internal_silent_dialog_message">Bu oyun veya uygulama dahili ses yakalamayı engelleyebilir.\n\nBunun yerine hoparlör sesini yakalamak için mikrofon fallback kullanılsın mı?</string>
     <string name="internal_silent_use_mic_fallback">Mikrofon fallback kullan</string>

@@ -2,7 +2,7 @@
 //
 // Android Studio’s Upgrade Assistant reads this literal; the app module applies the same id without a version.
 plugins {
-    id("com.android.application") version "9.1.1" apply false
+    id("com.android.application") version "9.2.1" apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.parcelize) apply false
     alias(libs.plugins.google.services) apply false

@@ -23,6 +23,7 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
 import androidx.media3.transformer.VideoEncoderSettings
+import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -31,7 +32,6 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
-import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics
 
 object EditorVideoTransform {
     private const val TAG = "EditorVideoTransform"

@@ -691,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\u6B64\u5206\u8FA8\u7387\u5BF9\u4E8E\u6B64\u8BBE\u5907\u7684\u6027\u80FD\u914D\u7F6E\u8FC7\u9AD8\u3002</string>
     <string name="pro_feature">PRO \u529F\u80FD</string>
     <string name="pro_recording_title">\u4F60\u6B63\u5728\u4F7F\u7528 PRO \u529F\u80FD\u5F55\u5236</string>
-    <string name="pro_recording_body">观看广告可解锁 Pro 1 小时：90/120 FPS、超过 16 Mbps 的视频、摄像头、水印和独立麦克风；或移除广告获得永久访问。</string>
-    <string name="pro_tools_body">观看广告可解锁 Pro 1 小时：90/120 FPS、超过 16 Mbps、合并和 GIF；或购买移除广告获得永久访问。</string>
+    <string name="pro_recording_body">观看广告可解锁 Pro 3 小时：90/120 FPS、超过 16 Mbps 的视频、摄像头、水印和独立麦克风；或移除广告获得永久访问。</string>
+    <string name="pro_tools_body">观看广告可解锁 Pro 3 小时：90/120 FPS、超过 16 Mbps、合并和 GIF；或购买移除广告获得永久访问。</string>
     <string name="pro_unlock_watch_ad">\u89C2\u770B\u5E7F\u544A</string>
     <string name="pro_unlock_remove_ads">\u79FB\u9664\u5E7F\u544A</string>
     <string name="pro_unlock_ad_unavailable">\u5E7F\u544A\u6682\u4E0D\u53EF\u7528\u3002\u8BF7\u7A0D\u540E\u518D\u8BD5\u3002</string>
@@ -708,14 +708,6 @@
     <string name="settings_show_touches_status_on">开启</string>
     <string name="settings_show_touches_status_off">关闭 — 打开开发者选项以启用显示触摸操作</string>
     <string name="settings_show_touches_status_unknown">未知 — 打开开发者选项以启用显示触摸操作</string>
-    <string name="setting_recording_engine">录制引擎</string>
-    <string name="recording_engine_performance_label">性能引擎</string>
-    <string name="recording_engine_compatibility_label">\u5B9E\u9A8C\u5F15\u64CE</string>
-    <string name="recording_engine_performance_summary">推荐大多数用户使用。处理开销更低、运行更凉，更适合日常录制。录制时截图已禁用。</string>
-    <string name="recording_engine_compatibility_summary">实验性备用方案。可能使用更多处理资源、增加发热并更快消耗电量。仅在 Performance 引擎在你的设备上出现问题时尝试。</string>
-    <string name="recording_engine_advanced_warning">\u5B9E\u9A8C\u5F15\u64CE\u53EF\u80FD\u589E\u52A0\u53D1\u70ED\u6216\u7535\u6C60\u6D88\u8017\u3002\u4EC5\u5728\u9ED8\u8BA4 Performance \u5F15\u64CE\u65E0\u6CD5\u5728\u4F60\u7684\u8BBE\u5907\u4E0A\u826F\u597D\u5DE5\u4F5C\u65F6\u4F7F\u7528\u3002</string>
-    <string name="recording_engine_scope_note">适用于普通录制和 Clipper。</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">性能引擎中无法在录制时截图。</string>
     <string name="internal_silent_dialog_title">内部音频无声</string>
     <string name="internal_silent_dialog_message">此游戏或应用可能会阻止内部音频捕获。\n\n是否改用麦克风 fallback 来捕获扬声器音频？</string>
     <string name="internal_silent_use_mic_fallback">使用麦克风 fallback</string>

@@ -93,8 +93,7 @@ fun PlayerScreen(
                                 WindowInsets.safeDrawing.only(
                                     WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                                 ),
-                            )
-                            .padding(8.dp),
+                            ).padding(8.dp),
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.content_desc_back), tint = Color.White)
                 }
@@ -376,8 +375,7 @@ fun PlayerScreen(
                                         WindowInsets.safeDrawing.only(
                                             WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                                         ),
-                                    )
-                                    .padding(8.dp),
+                                    ).padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -533,8 +531,7 @@ fun PlayerScreen(
                                         WindowInsets.safeDrawing.only(
                                             WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
                                         ),
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    ).padding(horizontal = 12.dp, vertical = 8.dp),
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

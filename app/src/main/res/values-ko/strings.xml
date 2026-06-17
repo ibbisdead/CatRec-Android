@@ -691,8 +691,8 @@
     <string name="error_resolution_too_large_for_profile">\uC774 \uD574\uC0C1\uB3C4\uB294 \uC774 \uAE30\uAE30\uC758 \uC131\uB2A5 \uD504\uB85C\uD544\uC5D0 \uB108\uBB34 \uD07D\uB2C8\uB2E4.</string>
     <string name="pro_feature">PRO \uAE30\uB2A5</string>
     <string name="pro_recording_title">PRO \uAE30\uB2A5\uC73C\uB85C \uB179\uD654 \uC911\uC785\uB2C8\uB2E4</string>
-    <string name="pro_recording_body">광고를 보면 1시간 동안 Pro가 열립니다: 90/120 FPS, 16 Mbps 초과 영상, 카메라, 워터마크, 별도 마이크 — 또는 광고 제거로 영구 이용하세요.</string>
-    <string name="pro_tools_body">광고를 보면 1시간 동안 Pro가 열립니다: 90/120 FPS, 16 Mbps 초과, 병합 및 GIF — 또는 광고 제거를 구매해 영구 이용하세요.</string>
+    <string name="pro_recording_body">광고를 보면 3시간 동안 Pro가 열립니다: 90/120 FPS, 16 Mbps 초과 영상, 카메라, 워터마크, 별도 마이크 — 또는 광고 제거로 영구 이용하세요.</string>
+    <string name="pro_tools_body">광고를 보면 3시간 동안 Pro가 열립니다: 90/120 FPS, 16 Mbps 초과, 병합 및 GIF — 또는 광고 제거를 구매해 영구 이용하세요.</string>
     <string name="pro_unlock_watch_ad">\uAD11\uACE0 \uBCF4\uAE30</string>
     <string name="pro_unlock_remove_ads">\uAD11\uACE0 \uC81C\uAC70</string>
     <string name="pro_unlock_ad_unavailable">\uC9C0\uAE08\uC740 \uAD11\uACE0\uB97C \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.</string>
@@ -708,14 +708,6 @@
     <string name="settings_show_touches_status_on">켜짐</string>
     <string name="settings_show_touches_status_off">꺼짐 — 개발자 옵션에서 터치 표시를 켜세요</string>
     <string name="settings_show_touches_status_unknown">알 수 없음 — 개발자 옵션에서 터치 표시를 켜세요</string>
-    <string name="setting_recording_engine">녹화 엔진</string>
-    <string name="recording_engine_performance_label">성능 엔진</string>
-    <string name="recording_engine_compatibility_label">\uC2E4\uD5D8\uC801 \uC5D4\uC9C4</string>
-    <string name="recording_engine_performance_summary">대부분의 사용자에게 권장됩니다. 처리량을 덜 사용하고, 더 시원하게 동작하며, 일상적인 녹화에 가장 적합합니다. 녹화 중 스크린샷은 비활성화됩니다.</string>
-    <string name="recording_engine_compatibility_summary">실험적 fallback입니다. 처리량을 더 쓰고 발열이 늘며 배터리가 더 빨리 소모될 수 있습니다. Performance 엔진이 기기에서 문제를 일으킬 때만 시도하세요.</string>
-    <string name="recording_engine_advanced_warning">\uC2E4\uD5D8\uC801 \uC5D4\uC9C4\uC740 \uBC1C\uC5F4 \uB610\uB294 \uBC30\uD130\uB9AC \uC0AC\uC6A9\uB7C9\uC744 \uB298\uB9B4 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uAE30\uBCF8 Performance \uC5D4\uC9C4\uC774 \uAE30\uAE30\uC5D0\uC11C \uC798 \uC791\uB3D9\uD558\uC9C0 \uC54A\uC744 \uB54C\uB9CC \uC0AC\uC6A9\uD558\uC138\uC694.</string>
-    <string name="recording_engine_scope_note">일반 녹화와 Clipper에 적용됩니다.</string>
-    <string name="recording_engine_reason_screenshot_recording_requires_compatibility">성능 엔진에서는 녹화 중 스크린샷을 사용할 수 없습니다.</string>
     <string name="internal_silent_dialog_title">내부 오디오가 무음입니다</string>
     <string name="internal_silent_dialog_message">이 게임 또는 앱이 내부 오디오 캡처를 차단할 수 있습니다.\n\n대신 스피커 소리를 캡처하도록 마이크 fallback을 사용하시겠습니까?</string>
     <string name="internal_silent_use_mic_fallback">마이크 fallback 사용</string>

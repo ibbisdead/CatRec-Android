@@ -3,10 +3,10 @@ package com.ibbie.catrec_screenrecorcer.utils
 import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.Locale
-import androidx.core.content.edit
 
 /**
  * Handles locale persistence and context wrapping so that:

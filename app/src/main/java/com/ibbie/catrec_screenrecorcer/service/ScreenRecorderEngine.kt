@@ -1,7 +1,6 @@
 package com.ibbie.catrec_screenrecorcer.service
 
 import android.annotation.SuppressLint
-import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -27,14 +26,18 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
 import com.ibbie.catrec_screenrecorcer.utils.AudioRecordingCrashlyticsReporter
-import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import java.io.FileDescriptor
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 class RecorderSetupStoppedException : IllegalStateException("stop() called during encoder setup — aborting muxer creation")
 
@@ -50,7 +53,7 @@ class ScreenRecorderEngine(
     private val outputFileDescriptor: FileDescriptor,
     private val encoderType: String,
     private val colorMode: String = ColorMode.FULL,
-    private val engineMode: RecordingEngineMode = RecordingEngineMode.DEFAULT,
+    engineMode: RecordingEngineMode = RecordingEngineMode.DEFAULT,
     private val audioBitrate: Int = 128_000,
     private val audioSampleRate: Int = 44_100,
     private val audioChannelCount: Int = 1,
@@ -72,16 +75,26 @@ class ScreenRecorderEngine(
     private val onFatalVideoEncodeError: ((String) -> Unit)? = null,
     /** When true with user HEVC, first [prepareVideoEncoder] uses AVC only (adaptive tier 4 hint). */
     private val adaptivePreferAvcForPrepare: Boolean = false,
-) {
+) : ActiveRecordingEngine {
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
+
+    data class PcmSignalStats(
+        val byteCount: Int,
+        val peakAbs: Int,
+        val rms: Int,
+        val audible: Boolean,
+    )
+
+    private val engineMode: RecordingEngineMode =
+        if (engineMode == RecordingEngineMode.PERFORMANCE) engineMode else RecordingEngineMode.PERFORMANCE
 
     companion object {
         private const val TAG = "RecorderEngine"
 
-        /** First near-silence checkpoint: rebuild once but keep waiting for late game audio routes. */
+        /** First near-silence checkpoint: telemetry only; keep waiting for late game audio routes. */
         private const val INTERNAL_SILENCE_STAGE1_MS = InternalAudioHealthTracker.INTERNAL_AUDIO_STAGE1_SILENCE_MS
 
-        /** Second near-silence checkpoint: rebuild again and emit compact telemetry. */
+        /** Second near-silence checkpoint: telemetry only. */
         private const val INTERNAL_SILENCE_STAGE2_MS = InternalAudioHealthTracker.INTERNAL_AUDIO_STAGE2_SILENCE_MS
 
         /** Persistent near-silence checkpoint: existing user-facing notice/fallback behavior begins. */
@@ -93,13 +106,11 @@ class ScreenRecorderEngine(
             InternalAudioHealthTracker.INTERNAL_AUDIO_LATE_MONITOR_MS
 
         /**
-         * Bounded recreation of the internal playback [AudioRecord] at staged silence checkpoints.
-         * Helps with timing races on some games / OEMs
-         * (e.g. RedMagic / nubia) where the foreground app's audio path is not yet wired up to the
-         * playback-capture mix when our AudioRecord is opened. Strictly bounded — never recreate
-         * more than once per session, so the silence path remains fast and deterministic.
+         * Keep internal playback capture to one [AudioRecord] per session. Re-opening playback
+         * capture mid-session can leave OEM AudioFlinger implementations wedged after repeated
+         * recordings, so staged silence handling now reports/falls back instead of rebuilding.
          */
-        private const val INTERNAL_SILENCE_RECREATE_ATTEMPTS = 2
+        private const val INTERNAL_SILENCE_RECREATE_ATTEMPTS = 0
 
         /** Video drain pacing — lower than audio to pull encoded frames sooner (less encoder backpressure). */
         private const val VIDEO_DRAIN_SLEEP_MS = 2L
@@ -117,7 +128,7 @@ class ScreenRecorderEngine(
         private const val AUDIO_EOS_DRAIN_TIMEOUT_MS = 10_000L
 
         private const val AUDIO_DRAIN_JOIN_TIMEOUT_MS = 15_000L
-        private const val AUDIO_CAPTURE_JOIN_TIMEOUT_MS = 5_000L
+        private const val AUDIO_CAPTURE_JOIN_TIMEOUT_MS = 15_000L
 
         internal const val AUDIO_DIAG_MARKER = "[CatRecAudioSession]"
 
@@ -221,9 +232,18 @@ class ScreenRecorderEngine(
     private val isPaused = AtomicBoolean(false)
     private val isMuted = AtomicBoolean(false)
     private val performanceScreenshotBlockedLogged = AtomicBoolean(false)
-    private val performanceResizeIgnoredLogged = AtomicBoolean(false)
     private val totalPausedTimeUs = AtomicLong(0)
     private var pauseStartTimeUs = 0L
+
+    private data class PerformanceResizeSampleLog(
+        val requested: RecordingResolutionSize,
+        val aligned: RecordingResolutionSize,
+        val oldW: Int,
+        val oldH: Int,
+        val resizeElapsedMs: Long,
+    )
+
+    private val pendingPerformanceResizeSampleLog = AtomicReference<PerformanceResizeSampleLog?>(null)
 
     /** Ensures [onFatalVideoEncodeError] runs at most once for this engine instance. */
     private val videoEncodeFatalSignaled = AtomicBoolean(false)
@@ -250,6 +270,8 @@ class ScreenRecorderEngine(
 
     /** True after a successful [performMicFallbackSwitch] or idempotent second request. */
     private val micFallbackHotSwapApplied = AtomicBoolean(false)
+
+    private var earlySeparateMicMainMuxSwitchAttempted = false
 
     /**
      * Whole-session PCM counters for the internal playback [AudioRecord]. Once
@@ -301,13 +323,22 @@ class ScreenRecorderEngine(
             requestedSampleRate = audioSampleRate,
         )
 
+    /**
+     * Strategy hook used by tests to verify the Performance-engine resize request without
+     * starting a real MediaProjection session.
+     */
+    internal var performanceVirtualDisplayResizeStrategy: PerformanceVirtualDisplayResizeStrategy =
+        PerformanceVirtualDisplayResizeStrategy { virtualDisplay, newWidth, newHeight, densityDpi ->
+            virtualDisplay.resize(newWidth, newHeight, densityDpi)
+        }
+
     /** Original user-selected mode before prepare-time degradation (fallback internal→mic). */
     private val captureRequestedAudioMode: AudioMode = audioMode
 
     private val captureRequestedSeparateMicRoute: Boolean
         get() = separateMicFileDescriptor != null
 
-    fun start() {
+    override fun start() {
         mAudioMode = audioMode
         internalPlaybackPcmReadsPositive.set(0L)
         internalPlaybackPcmNonZeroBuffers.set(0L)
@@ -321,6 +352,7 @@ class ScreenRecorderEngine(
         internalPlaybackSilenceDiagFired.set(false)
         internalPlaybackRecoveredAfterSilenceLogged.set(false)
         micLegEverAudibleThisSession = false
+        earlySeparateMicMainMuxSwitchAttempted = false
         pendingMicFallback.set(false)
         micFallbackHotSwapApplied.set(false)
         audioCaptureStopping.set(false)
@@ -345,7 +377,7 @@ class ScreenRecorderEngine(
             // running, stop() may have already executed and the fd is now closed. Bail
             // before passing a closed FileDescriptor to MediaMuxer, which would throw
             // IllegalArgumentException: Invalid file descriptor.
-            if (stopInvoked.get()) throw RecorderSetupStoppedException()
+            throwIfStopRequestedDuringSetup()
             prepareMuxer()
 
             // Start encoders before any frame hits the input Surface. Feeding the encoder surface
@@ -407,6 +439,7 @@ class ScreenRecorderEngine(
 
             // Start the selected video producer after the encoder accepts input.
             startVideoProducer()
+            throwIfStopRequestedDuringSetup()
 
             isRecording.set(true)
 
@@ -417,6 +450,7 @@ class ScreenRecorderEngine(
             // Some OEM playback-capture routes bind to the active captured content at
             // AudioRecord.startRecording(); starting it before the VirtualDisplay can leave
             // internal audio permanently zero-filled for that session.
+            throwIfStopRequestedDuringSetup()
             validateAudioRecorderCapturesOrAdjustSessionOrThrow()
             logAudioSessionConfiguration("capture_ready")
             AudioRecordingCrashlyticsReporter.onFullCaptureReady(
@@ -502,6 +536,55 @@ class ScreenRecorderEngine(
         directVirtualDisplay = null
     }
 
+    private fun throwIfStopRequestedDuringSetup() {
+        if (stopInvoked.get()) throw RecorderSetupStoppedException()
+    }
+
+    internal var audioDowngradeNoticeDispatcher: (Int) -> Unit = { messageRes ->
+        Handler(android.os.Looper.getMainLooper()).post {
+            runCatching {
+                val txt = context.getString(messageRes)
+                onAudioCaptureDowngraded?.invoke(txt)
+                    ?: Toast.makeText(context.applicationContext, txt, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun releaseMainAudioEncoderAfterStartupFallback(reason: String) {
+        val encoder = audioEncoder ?: return
+        Log.w(TAG, "${AUDIO_DIAG_MARKER} releasing main audio encoder after startup fallback reason=$reason")
+        try {
+            encoder.stop()
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, "main audio encoder stop ignored during startup fallback: ${e.message}")
+        } catch (e: Exception) {
+            Log.w(TAG, "main audio encoder stop failed during startup fallback: ${e.message}")
+        }
+        try {
+            encoder.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "main audio encoder release failed during startup fallback: ${e.message}")
+        }
+        audioEncoder = null
+        audioTrackIndex = -1
+        audioInputEosQueued.set(true)
+        audioInputEosSignalFailed.set(false)
+        audioEosReached.set(true)
+    }
+
+    private fun startMainMuxerIfVideoTrackAlreadyReadyAfterAudioFallback(reason: String) {
+        synchronized(muxerLock) {
+            val activeMuxer = muxer ?: return
+            if (isMuxerStarted || muxerReleased || mainMuxAudioMode != AudioMode.NONE || videoTrackIndex < 0) return
+            activeMuxer.start()
+            isMuxerStarted = true
+            Log.d(
+                TAG,
+                "Muxer started after audio startup fallback reason=$reason videoTrack=$videoTrackIndex",
+            )
+        }
+    }
+
     /**
      * Brings active [AudioRecord] instances into [AudioRecord.RECORDSTATE_RECORDING] **before**
      * AAC encoders consume PCM. MIXED without a separate-mic route may downgrade one failed leg only
@@ -524,7 +607,10 @@ class ScreenRecorderEngine(
             }
         }
 
-        fun tryStart(which: AudioRecord?, label: String): Throwable? {
+        fun tryStart(
+            which: AudioRecord?,
+            label: String,
+        ): Throwable? {
             if (which == null) return null
             return try {
                 which.startRecording()
@@ -572,9 +658,11 @@ class ScreenRecorderEngine(
             )
         }
 
+        throwIfStopRequestedDuringSetup()
         var micThr = micRecord?.let { tryStart(it, "mic") }
         micThr?.let { err -> micRecord?.let { logFailure("mic", err) } }
 
+        throwIfStopRequestedDuringSetup()
         var intThr =
             internalRecord?.let {
                 if (micDesired && micThr == null) {
@@ -626,9 +714,9 @@ class ScreenRecorderEngine(
 
         internalPlaybackPcmCountersActive =
             internalRecord != null &&
-                runCatching {
-                    internalRecord!!.recordingState == AudioRecord.RECORDSTATE_RECORDING
-                }.getOrElse { false }
+            runCatching {
+                internalRecord!!.recordingState == AudioRecord.RECORDSTATE_RECORDING
+            }.getOrElse { false }
         val ir = internalRecord
         if (Build.VERSION.SDK_INT >= 29 && internalPlaybackPcmCountersActive && ir != null) {
             PlaybackCaptureConfig.logInternalPlaybackRecordStarted(
@@ -657,12 +745,13 @@ class ScreenRecorderEngine(
      *    playback-capture mix when the recorder starts (overlay/QS launches CatRec → its tiny
      *    projection activity is briefly foreground → game routing settles after the first
      *    AudioRecord open). Recreating gives AudioFlinger a fresh chance to attach.
-         *  - Costs at most two staged rebuild attempts per session.
+     *  - Costs at most two staged rebuild attempts per session.
      *  - Does NOT change the AAC encoder format, the muxer, the MediaProjection token, the
      *    VirtualDisplay, or any audio-routing state.
      */
     @SuppressLint("MissingPermission")
     private fun attemptInternalAudioRecordRecreation(reason: String): Boolean {
+        if (INTERNAL_SILENCE_RECREATE_ATTEMPTS <= 0) return false
         if (Build.VERSION.SDK_INT < 29) return false
         val previous = internalRecord ?: return false
         val sampleRate = audioSampleRate
@@ -819,14 +908,25 @@ class ScreenRecorderEngine(
         wantStereoUser: Boolean,
         releaseQuiet: (AudioRecord?) -> Unit,
     ) {
-        if (routeMicToSeparateFile || mAudioMode != AudioMode.MIXED || micRecord == null) {
+        if (mAudioMode != AudioMode.MIXED || micRecord == null) {
             throw IllegalStateException("${AUDIO_DIAG_MARKER} Internal capture failed — no downgrade", primaryFailure)
         }
         val mr = micRecord ?: throw IllegalStateException("${AUDIO_DIAG_MARKER} degrade mic missing")
         internalRecord?.let { releaseQuiet(it) }
         internalRecord = null
         mAudioMode = AudioMode.MIC
-        mainMuxAudioMode = computeMainMuxAudioMode()
+        mainMuxAudioMode = if (routeMicToSeparateFile) AudioMode.NONE else computeMainMuxAudioMode()
+
+        if (routeMicToSeparateFile) {
+            effectiveChannelCount.set(mr.channelCount.coerceIn(1, 2))
+            releaseMainAudioEncoderAfterStartupFallback("internal_leg_failed_kept_separate_mic")
+            startMainMuxerIfVideoTrackAlreadyReadyAfterAudioFallback("internal_leg_failed_kept_separate_mic")
+            audioDowngradeNoticeDispatcher(R.string.toast_audio_downgraded_internal_unavailable_mic_only)
+            Log.w(TAG, "${AUDIO_DIAG_MARKER} MIXED→MIC separate-mic-only internal failed; main mux audio disabled")
+            AudioRecordingCrashlyticsReporter.noteMixedDowngradeRecoverable("internal_leg_failed_kept_separate_mic")
+            return
+        }
+
         val survivorCh =
             resolveMainMuxChannelCount(
                 AudioMode.MIC,
@@ -841,13 +941,7 @@ class ScreenRecorderEngine(
                 primaryFailure,
             )
         }
-        Handler(android.os.Looper.getMainLooper()).post {
-            runCatching {
-                val txt = context.getString(R.string.toast_audio_downgraded_internal_unavailable_mic_only)
-                onAudioCaptureDowngraded?.invoke(txt)
-                    ?: Toast.makeText(context.applicationContext, txt, Toast.LENGTH_LONG).show()
-            }
-        }
+        audioDowngradeNoticeDispatcher(R.string.toast_audio_downgraded_internal_unavailable_mic_only)
         Log.w(TAG, "${AUDIO_DIAG_MARKER} MIXED→MIC internal failed; AAC layout unchanged ch=$configuredMainAacChannels")
         AudioRecordingCrashlyticsReporter.noteMixedDowngradeRecoverable("internal_leg_failed_kept_mic")
     }
@@ -933,7 +1027,10 @@ class ScreenRecorderEngine(
             internalPlaybackPcmReadsPositive = intReads.takeIf { internalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
             internalPlaybackPcmNonZeroBuffers = intNzBufs.takeIf { internalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
             internalPlaybackPcmSilentBuffers = intSilentBufs.takeIf { internalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
-            internalPlaybackPcmEverNonZero = (intNzBufs > 0L).takeIf { internalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
+            internalPlaybackPcmEverNonZero =
+                (intNzBufs > 0L).takeIf {
+                    internalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled
+                },
             internalAudioHealth = internalHealthSnapshot,
         )
     }
@@ -954,7 +1051,7 @@ class ScreenRecorderEngine(
      * Re-entry is guarded by [stopInvoked] so [start]'s failure path and the service's
      * teardown cannot both execute the sequence.
      */
-    fun stop() {
+    override fun stop() {
         if (!stopInvoked.compareAndSet(false, true)) {
             Log.d(TAG, "stop(): already invoked, ignoring duplicate call")
             return
@@ -988,7 +1085,7 @@ class ScreenRecorderEngine(
             Thread.currentThread().interrupt()
         }
         if (audioThread?.isAlive == true) {
-            Log.w(TAG, "Audio capture thread still alive after ${AUDIO_CAPTURE_JOIN_TIMEOUT_MS}ms; continuing EOS shutdown")
+            Log.w(TAG, "Audio capture thread still alive after ${AUDIO_CAPTURE_JOIN_TIMEOUT_MS}ms; proceeding with guarded EOS shutdown")
         }
 
         // ── 2. Signal EOS to every encoder ────────────────────────────────────
@@ -1180,7 +1277,7 @@ class ScreenRecorderEngine(
      * received a video sample produces an empty / non-playable recording for CatRec's workflow, so
      * the service must treat that case as "no output" and discard the file.
      */
-    fun hadOutput(): Boolean {
+    override fun hadOutput(): Boolean {
         synchronized(muxerLock) {
             return videoSamplesWritten
         }
@@ -1190,7 +1287,7 @@ class ScreenRecorderEngine(
      * Grabs the next composited frame after [requestScreenshot] is called (same pipeline as video).
      * Callback may run on the frame-relay thread; post to main if needed for UI.
      */
-    fun requestScreenshot(onBitmap: (Bitmap?) -> Unit) {
+    override fun requestScreenshot(onBitmap: (Bitmap?) -> Unit) {
         if (engineMode == RecordingEngineMode.PERFORMANCE) {
             if (performanceScreenshotBlockedLogged.compareAndSet(false, true)) {
                 Log.w(TAG, "Screenshot while recording unavailable in Performance engine")
@@ -1206,13 +1303,13 @@ class ScreenRecorderEngine(
         relay.requestScreenshot(onBitmap)
     }
 
-    fun pause() {
+    override fun pause() {
         if (!isPaused.getAndSet(true)) {
             pauseStartTimeUs = System.nanoTime() / 1000
         }
     }
 
-    fun resume() {
+    override fun resume() {
         if (isPaused.getAndSet(false)) {
             val now = System.nanoTime() / 1000
             totalPausedTimeUs.addAndGet(now - pauseStartTimeUs)
@@ -1220,11 +1317,11 @@ class ScreenRecorderEngine(
         }
     }
 
-    fun mute() {
+    override fun mute() {
         isMuted.set(true)
     }
 
-    fun unmute() {
+    override fun unmute() {
         isMuted.set(false)
     }
 
@@ -1260,7 +1357,7 @@ class ScreenRecorderEngine(
         }
     }
 
-    fun applyAdaptiveVideoBitrateBps(targetBps: Int): Boolean {
+    override fun applyAdaptiveVideoBitrateBps(targetBps: Int): Boolean {
         val encoder = videoEncoder ?: return false
         val baseline = bitrate
         val floorBps = (baseline * 0.20).toInt().coerceAtLeast(200_000)
@@ -1278,7 +1375,7 @@ class ScreenRecorderEngine(
         }
     }
 
-    fun setAdaptiveSkipModulo(modulo: Int) {
+    override fun setAdaptiveSkipModulo(modulo: Int) {
         if (engineMode == RecordingEngineMode.PERFORMANCE) return
         frameRelay?.adaptiveSkipModulo = modulo
     }
@@ -1288,23 +1385,156 @@ class ScreenRecorderEngine(
      * the encoder output resolution.  Call this when the OS reports a content-size change
      * (rotation, fold) so stale pixels no longer contaminate the captured frames.
      */
-    fun resizeCaptureSource(newW: Int, newH: Int) {
+    override fun resizeCaptureSource(
+        newW: Int,
+        newH: Int,
+    ) {
         if (engineMode == RecordingEngineMode.PERFORMANCE) {
-            if (performanceResizeIgnoredLogged.compareAndSet(false, true)) {
-                Log.i(
-                    TAG,
-                    "resizeCaptureSource ignored in Performance engine; encoder dimensions remain ${captureWidth}x$captureHeight",
-                )
-            }
+            resizePerformanceCaptureSource(newW, newH)
             return
         }
         frameRelay?.resizeCaptureSource(newW, newH)
     }
 
-    fun attachAdaptivePerformance(
+    private fun resizePerformanceCaptureSource(
+        newW: Int,
+        newH: Int,
+    ) {
+        val requested = RecordingResolutionSize(newW, newH)
+        val aligned =
+            alignedPerformanceResizeSize(
+                newW = newW,
+                newH = newH,
+                encoderType = encoderType,
+                fps = fps,
+            )
+        val oldW = captureWidth
+        val oldH = captureHeight
+        val virtualDisplay = directVirtualDisplay
+
+        if (aligned.width == oldW && aligned.height == oldH) {
+            logPerformanceResizeRequest(
+                requested = requested,
+                aligned = aligned,
+                oldW = oldW,
+                oldH = oldH,
+                path = "early-return",
+                error = null,
+            )
+            return
+        }
+
+        if (virtualDisplay == null) {
+            logPerformanceResizeRequest(
+                requested = requested,
+                aligned = aligned,
+                oldW = oldW,
+                oldH = oldH,
+                path = "early-return-no-virtual-display",
+                error = null,
+            )
+            return
+        }
+
+        try {
+            performanceVirtualDisplayResizeStrategy.resize(
+                virtualDisplay = virtualDisplay,
+                newWidth = aligned.width,
+                newHeight = aligned.height,
+                densityDpi = dpi,
+            )
+            captureWidth = aligned.width
+            captureHeight = aligned.height
+            logPerformanceResizeRequest(
+                requested = requested,
+                aligned = aligned,
+                oldW = oldW,
+                oldH = oldH,
+                path = "virtualDisplay.resize",
+                error = null,
+            )
+            pendingPerformanceResizeSampleLog.set(
+                PerformanceResizeSampleLog(
+                    requested = requested,
+                    aligned = aligned,
+                    oldW = oldW,
+                    oldH = oldH,
+                    resizeElapsedMs = SystemClock.elapsedRealtime(),
+                ),
+            )
+            // TODO: Track the first post-resize keyframe if clip saves ever show a stale-frame edge
+            // immediately after a resize. Sync-frame requests are advisory on some encoders.
+            requestSyncFrame()
+        } catch (e: Exception) {
+            logPerformanceResizeRequest(
+                requested = requested,
+                aligned = aligned,
+                oldW = oldW,
+                oldH = oldH,
+                path = "surface-recreate-unavailable",
+                error = e,
+            )
+            /*
+             * A full surface-recreate path needs the full-recording pipeline to switch from a
+             * single MediaMuxer/FileDescriptor to segment files plus a final merge. Releasing and
+             * reconfiguring MediaCodec against the existing muxer would corrupt the MP4 because
+             * MediaMuxer cannot accept a second video format/track after start().
+             */
+        }
+    }
+
+    private fun logFirstVideoSampleAfterPerformanceResizeIfNeeded(
+        encoder: MediaCodec,
+        bufferInfo: MediaCodec.BufferInfo,
+    ) {
+        val pending = pendingPerformanceResizeSampleLog.getAndSet(null) ?: return
+        val formatSize =
+            try {
+                encoder.outputFormat.mediaFormatSize()
+            } catch (e: Exception) {
+                "unavailable:${e.javaClass.simpleName}"
+            }
+        val message =
+            "performance_resize_first_video_sample requested=${pending.requested.setting} " +
+                "aligned=${pending.aligned.setting} oldEncoder=${pending.oldW}x${pending.oldH} " +
+                "currentEncoder=${captureWidth}x$captureHeight outputFormat=$formatSize " +
+                "sampleBytes=${bufferInfo.size} samplePtsUs=${bufferInfo.presentationTimeUs} " +
+                "flags=${bufferInfo.flags} elapsedSinceResizeMs=" +
+                "${SystemClock.elapsedRealtime() - pending.resizeElapsedMs}"
+        Log.i(TAG, message)
+        FirebaseCrashlytics.getInstance().log(message)
+    }
+
+    private fun MediaFormat.mediaFormatSize(): String {
+        val width = if (containsKey(MediaFormat.KEY_WIDTH)) getInteger(MediaFormat.KEY_WIDTH) else null
+        val height = if (containsKey(MediaFormat.KEY_HEIGHT)) getInteger(MediaFormat.KEY_HEIGHT) else null
+        return if (width != null && height != null) "${width}x$height" else "unknown"
+    }
+
+    private fun logPerformanceResizeRequest(
+        requested: RecordingResolutionSize,
+        aligned: RecordingResolutionSize,
+        oldW: Int,
+        oldH: Int,
+        path: String,
+        error: Exception?,
+    ) {
+        val message =
+            "performance_resize requested=${requested.setting} aligned=${aligned.setting} " +
+                "oldEncoder=${oldW}x$oldH densityDpi=$dpi path=$path"
+        if (error == null) {
+            Log.i(TAG, message)
+            FirebaseCrashlytics.getInstance().log(message)
+        } else {
+            Log.e(TAG, message, error)
+            FirebaseCrashlytics.getInstance().log("$message error=${error.javaClass.simpleName}: ${error.message}")
+        }
+    }
+
+    override fun attachAdaptivePerformance(
         sink: AdaptiveRecordingSignalSink?,
         signalsEnabled: Boolean,
-        adaptiveTierSupplier: (() -> Int)? = null,
+        adaptiveTierSupplier: (() -> Int)?,
     ) {
         if (engineMode == RecordingEngineMode.PERFORMANCE) return
         frameRelay?.adaptiveSignalSink = sink
@@ -1410,7 +1640,7 @@ class ScreenRecorderEngine(
         Log.d(
             TAG,
             "Video encoder configured codec=${result.codecName} mime=$configuredVideoMime avcOnly=$avcOnly " +
-                "safeStartFallback=$safeStartFallback size=${captureWidth}x${captureHeight} " +
+                "safeStartFallback=$safeStartFallback size=${captureWidth}x$captureHeight " +
                 "fps=${result.fps} bitrate=${result.bitrate} profile=${result.profile} level=${result.level}",
         )
     }
@@ -1547,6 +1777,10 @@ class ScreenRecorderEngine(
                             "model" to Build.MODEL,
                         ),
                     )
+                    try {
+                        internalRecord?.release()
+                    } catch (_: Exception) {
+                    }
                     internalRecord = null
                     internalPlaybackBufferBytesConfigured = 0
                     if (mAudioMode == AudioMode.INTERNAL) mAudioMode = AudioMode.MIC
@@ -1663,7 +1897,10 @@ class ScreenRecorderEngine(
                         )
                     }
             if (verboseAudioDiagnosticsEnabled) {
-                Log.d(TAG, "AAC encoder: profile=$aacProfile bitrate=$audioBitrate sampleRate=$audioSampleRate channels=$resolvedChannelCount")
+                Log.d(
+                    TAG,
+                    "AAC encoder: profile=$aacProfile bitrate=$audioBitrate sampleRate=$audioSampleRate channels=$resolvedChannelCount",
+                )
             }
             audioEncoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
             audioEncoder?.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
@@ -1696,6 +1933,7 @@ class ScreenRecorderEngine(
         val wantStereo = audioChannelCount == 2
         val stereoConfig = AudioFormat.CHANNEL_IN_STEREO
         val monoConfig = AudioFormat.CHANNEL_IN_MONO
+
         fun tryMicRecord(cfg: Int): AudioRecord? {
             return try {
                 val recBufSize =
@@ -1748,10 +1986,11 @@ class ScreenRecorderEngine(
         val wantStereo = audioChannelCount == 2
         val reuseExistingMic = micRecord != null
         if (!reuseExistingMic) {
-            val created = openMicAudioRecordForSession() ?: run {
-                Log.e(TAG, "${AUDIO_DIAG_MARKER} mic_fallback_hot_swap_blocked mic_open_failed")
-                return false
-            }
+            val created =
+                openMicAudioRecordForSession() ?: run {
+                    Log.e(TAG, "${AUDIO_DIAG_MARKER} mic_fallback_hot_swap_blocked mic_open_failed")
+                    return false
+                }
             try {
                 created.startRecording()
             } catch (e: Exception) {
@@ -1841,9 +2080,79 @@ class ScreenRecorderEngine(
     }
 
     /** Called from main / service thread; audio loop performs the actual switch. */
-    fun requestMicFallbackFromSilentInternal() {
+    override fun requestMicFallbackFromSilentInternal() {
         pendingMicFallback.set(true)
         Log.i(TAG, "${AUDIO_DIAG_MARKER} mic_fallback_requested pending=true")
+    }
+
+    internal fun shouldSwitchMixedSeparateMicMainMuxEarly(
+        routeMicToSeparateFile: Boolean,
+        currentAudioMode: AudioMode,
+        currentMainMuxAudioMode: AudioMode,
+        internalHealth: InternalAudioHealthTracker.Snapshot,
+        micStats: PcmSignalStats?,
+        earlySwitchAlreadyAttempted: Boolean,
+    ): Boolean =
+        routeMicToSeparateFile &&
+            currentAudioMode == AudioMode.MIXED &&
+            currentMainMuxAudioMode == AudioMode.INTERNAL &&
+            !earlySwitchAlreadyAttempted &&
+            internalHealth.stage1SilentAt4s &&
+            internalHealth.internalAudioRecordStarted &&
+            internalHealth.positiveReadCount > 0L &&
+            internalHealth.totalBytesRead > 0L &&
+            internalHealth.firstAudiblePcmElapsedMs < 0L &&
+            internalHealth.peakAbs == 0 &&
+            internalHealth.rmsEstimate == 0 &&
+            micStats?.audible == true
+
+    private fun maybeSwitchMixedSeparateMicMainMuxEarly(
+        silentElapsedMs: Long,
+        micStats: PcmSignalStats?,
+    ) {
+        val health =
+            internalAudioHealth.snapshot(
+                muxerStarted = isMuxerStarted,
+                muxerAudioSamplesWritten = audioSamplesWritten,
+            )
+        if (!shouldSwitchMixedSeparateMicMainMuxEarly(
+                routeMicToSeparateFile = routeMicToSeparateFile,
+                currentAudioMode = mAudioMode,
+                currentMainMuxAudioMode = mainMuxAudioMode,
+                internalHealth = health,
+                micStats = micStats,
+                earlySwitchAlreadyAttempted = earlySeparateMicMainMuxSwitchAttempted,
+            )
+        ) {
+            return
+        }
+
+        earlySeparateMicMainMuxSwitchAttempted = true
+        val switched = performMicFallbackSwitch()
+        val crash = FirebaseCrashlytics.getInstance()
+        crash.setCustomKey("arc_early_mix_sep_elapsed", silentElapsedMs.toString())
+        crash.setCustomKey("arc_early_mix_sep_sw", switched.toString())
+        crash.setCustomKey("arc_early_mix_sep_int", "bytes=${health.totalBytesRead},reads=${health.positiveReadCount},rms=${health.rmsEstimate},peak=${health.peakAbs}")
+        crash.setCustomKey("arc_early_mix_sep_mic", "bytes=${micStats?.byteCount ?: 0},rms=${micStats?.rms ?: 0},peak=${micStats?.peakAbs ?: 0}")
+        crash.log(
+            "${AUDIO_DIAG_MARKER} mixed_separate_mic_early_main_mux_switch " +
+                "elapsedMs=$silentElapsedMs switched=$switched " +
+                "intBytes=${health.totalBytesRead} intReads=${health.positiveReadCount} intRms=${health.rmsEstimate} intPeak=${health.peakAbs} " +
+                "micBytes=${micStats?.byteCount ?: 0} micRms=${micStats?.rms ?: 0} micPeak=${micStats?.peakAbs ?: 0}",
+        )
+        AudioRecordingCrashlyticsReporter.logInternalAudioStage(
+            AudioRecordingCrashlyticsReporter.RecordingKind.FULL,
+            if (switched) "stage1_separate_mic_main_mux_switched" else "stage1_separate_mic_main_mux_switch_failed",
+            internalAudioHealth.snapshot(
+                muxerStarted = isMuxerStarted,
+                muxerAudioSamplesWritten = audioSamplesWritten,
+            ),
+        )
+        if (switched) {
+            onInternalPlaybackSilenceSessionNotice?.invoke(
+                InternalPlaybackSilenceSessionNotice.MIC_FALLBACK_APPLIED,
+            )
+        }
     }
 
     /**
@@ -1991,8 +2300,30 @@ class ScreenRecorderEngine(
         var silenceCallbackFired = false
         var recoveredAfterRebuildTelemetryReported = false
         var lateRecoveryTelemetryReported = false
+        var readErrorAlreadyRecorded = false
+
+        fun safeReadAudioRecord(
+            record: AudioRecord,
+            buffer: ByteArray,
+            source: String,
+        ): Int =
+            try {
+                record.read(buffer, 0, bufferSize)
+            } catch (e: Exception) {
+                val nr = audioReadNegativeErrorCount.incrementAndGet()
+                readErrorAlreadyRecorded = true
+                if (nr == 1L || nr % READ_ERROR_LOG_EVERY_N == 0L) {
+                    Log.w(
+                        TAG,
+                        "${AUDIO_DIAG_MARKER} AUDIO_READ_EXCEPTION count=$nr source=$source loop=$loopCount mode=$mAudioMode",
+                        e,
+                    )
+                }
+                AudioRecord.ERROR_INVALID_OPERATION
+            }
 
         while (isRecording.get()) {
+            readErrorAlreadyRecorded = false
             if (isPaused.get()) {
                 // Reset silence timer while paused so we don't spuriously timeout on resume.
                 internalSilentStartMs = -1L
@@ -2033,20 +2364,24 @@ class ScreenRecorderEngine(
             // Bytes actually read from internalRecord this iteration (before mix).
             var internalReadCount = 0
             var internalHadAudibleThisIteration = false
+            var separateMicStatsThisIteration: PcmSignalStats? = null
 
             when {
                 mAudioMode == AudioMode.MIXED && internalRecord != null && micRecord != null -> {
                     if (routeMicToSeparateFile) {
-                        val r1 = internalRecord!!.read(mainBuffer, 0, bufferSize)
+                        val r1 = safeReadAudioRecord(internalRecord!!, mainBuffer, "internal")
                         internalReadCount = r1
                         internalHadAudibleThisIteration =
                             internalAudioHealth.observeRead(mainBuffer, internalReadCount, SystemClock.elapsedRealtime())
                         if (r1 > 0 && audioEncoder != null) {
                             queueInputBufferToEncoder(mainBuffer, r1, System.nanoTime() / 1000)
                         }
-                        val r2 = micRecord!!.read(mixBuffer, 0, bufferSize)
-                        if (r2 > 0 && InternalPlaybackPcmSilenceAnalyzer.pcm16BufferHasAudibleSignal(mixBuffer, r2)) {
-                            micLegEverAudibleThisSession = true
+                        val r2 = safeReadAudioRecord(micRecord!!, mixBuffer, "mic")
+                        if (r2 > 0) {
+                            separateMicStatsThisIteration = analyzePcm16Signal(mixBuffer, r2)
+                            if (separateMicStatsThisIteration.audible) {
+                                micLegEverAudibleThisSession = true
+                            }
                         }
                         if (r2 > 0 && separateMicEncoder != null) {
                             if (isMuted.get()) mixBuffer.fill(0, 0, r2)
@@ -2054,13 +2389,16 @@ class ScreenRecorderEngine(
                         }
                         readCount = if (r1 > 0) r1 else r2
                     } else {
-                        val r1 = internalRecord!!.read(mainBuffer, 0, bufferSize)
+                        val r1 = safeReadAudioRecord(internalRecord!!, mainBuffer, "internal")
                         internalReadCount = r1
                         internalHadAudibleThisIteration =
                             internalAudioHealth.observeRead(mainBuffer, internalReadCount, SystemClock.elapsedRealtime())
-                        val r2 = micRecord!!.read(mixBuffer, 0, bufferSize)
-                        if (r2 > 0 && InternalPlaybackPcmSilenceAnalyzer.pcm16BufferHasAudibleSignal(mixBuffer, r2)) {
-                            micLegEverAudibleThisSession = true
+                        val r2 = safeReadAudioRecord(micRecord!!, mixBuffer, "mic")
+                        if (r2 > 0) {
+                            val micStats = analyzePcm16Signal(mixBuffer, r2)
+                            if (micStats.audible) {
+                                micLegEverAudibleThisSession = true
+                            }
                         }
                         when {
                             r1 > 0 && r2 > 0 -> {
@@ -2085,7 +2423,7 @@ class ScreenRecorderEngine(
                     }
                 }
                 mAudioMode == AudioMode.MIXED && routeMicToSeparateFile && internalRecord == null && micRecord != null -> {
-                    val r2 = micRecord!!.read(mixBuffer, 0, bufferSize)
+                    val r2 = safeReadAudioRecord(micRecord!!, mixBuffer, "mic")
                     readCount = r2
                     if (r2 > 0 && separateMicEncoder != null) {
                         if (isMuted.get()) mixBuffer.fill(0, 0, r2)
@@ -2093,7 +2431,7 @@ class ScreenRecorderEngine(
                     }
                 }
                 internalRecord != null -> {
-                    readCount = internalRecord!!.read(mainBuffer, 0, bufferSize)
+                    readCount = safeReadAudioRecord(internalRecord!!, mainBuffer, "internal")
                     internalReadCount = readCount
                     internalHadAudibleThisIteration =
                         internalAudioHealth.observeRead(mainBuffer, internalReadCount, SystemClock.elapsedRealtime())
@@ -2103,7 +2441,7 @@ class ScreenRecorderEngine(
                     }
                 }
                 micRecord != null -> {
-                    readCount = micRecord!!.read(mainBuffer, 0, bufferSize)
+                    readCount = safeReadAudioRecord(micRecord!!, mainBuffer, "mic")
                     if (readCount > 0) {
                         if (isMuted.get()) mainBuffer.fill(0, 0, readCount)
                         val ptsUs = System.nanoTime() / 1000
@@ -2325,7 +2663,14 @@ class ScreenRecorderEngine(
                                     muxerAudioSamplesWritten = audioSamplesWritten,
                                 ),
                             )
-                            attemptInternalAudioRecordRecreation(reason = "stage1_4s_silence")
+                            val rebuildSucceeded =
+                                attemptInternalAudioRecordRecreation(reason = "stage1_4s_silence")
+                            if (!rebuildSucceeded) {
+                                maybeSwitchMixedSeparateMicMainMuxEarly(
+                                    silentElapsedMs = silentElapsedMs,
+                                    micStats = separateMicStatsThisIteration,
+                                )
+                            }
                         } else if (!internalAudioHealth.stage2SilentAt10s && silentElapsedMs >= INTERNAL_SILENCE_STAGE2_MS) {
                             internalAudioHealth.markStage2Silent()
                             AudioRecordingCrashlyticsReporter.logInternalAudioStage(
@@ -2403,7 +2748,7 @@ class ScreenRecorderEngine(
                 )
             }
 
-            if (readCount < 0) {
+            if (readCount < 0 && !readErrorAlreadyRecorded) {
                 val nr = audioReadNegativeErrorCount.incrementAndGet()
                 if (nr == 1L || nr % READ_ERROR_LOG_EVERY_N == 0L) {
                     Log.w(
@@ -2444,6 +2789,38 @@ class ScreenRecorderEngine(
             }
             i += frameBytes
         }
+    }
+
+    private fun analyzePcm16Signal(
+        buffer: ByteArray,
+        byteLen: Int,
+    ): PcmSignalStats {
+        if (byteLen <= 0) return PcmSignalStats(byteLen.coerceAtLeast(0), 0, 0, false)
+        val n = minOf(byteLen, buffer.size)
+        val frameBytes = n - (n % 2)
+        if (frameBytes <= 0) return PcmSignalStats(n, 0, 0, false)
+
+        var peak = 0
+        var sumSquares = 0.0
+        var samples = 0
+        var i = 0
+        while (i + 1 < frameBytes) {
+            val lo = buffer[i].toInt() and 0xFF
+            val hi = buffer[i + 1].toInt()
+            val sample = (lo or (hi shl 8)).toShort().toInt()
+            val absSample = abs(sample)
+            if (absSample > peak) peak = absSample
+            val sampleDouble = sample.toDouble()
+            sumSquares += sampleDouble * sampleDouble
+            samples++
+            i += 2
+        }
+
+        val rms = if (samples > 0) sqrt(sumSquares / samples).toInt() else 0
+        val audible =
+            peak >= InternalPlaybackPcmSilenceAnalyzer.NEAR_SILENCE_PEAK_ABS ||
+                rms >= InternalPlaybackPcmSilenceAnalyzer.NEAR_SILENCE_RMS
+        return PcmSignalStats(n, peak, rms, audible)
     }
 
     private fun queueInputBufferToEncoder(
@@ -2674,6 +3051,7 @@ class ScreenRecorderEngine(
                         }
 
                         if (bufferInfo.size != 0) {
+                            var wroteVideoSample = false
                             synchronized(muxerLock) {
                                 val activeMuxer = muxer
                                 if (isMuxerStarted && !muxerReleased && activeMuxer != null && !isPaused.get()) {
@@ -2683,9 +3061,17 @@ class ScreenRecorderEngine(
                                         encodedData.position(bufferInfo.offset)
                                         encodedData.limit(bufferInfo.offset + bufferInfo.size)
                                         activeMuxer.writeSampleData(trackIndex, encodedData, bufferInfo)
-                                        if (isVideo) videoSamplesWritten = true else audioSamplesWritten = true
+                                        if (isVideo) {
+                                            videoSamplesWritten = true
+                                            wroteVideoSample = true
+                                        } else {
+                                            audioSamplesWritten = true
+                                        }
                                     }
                                 }
+                            }
+                            if (wroteVideoSample) {
+                                logFirstVideoSampleAfterPerformanceResizeIfNeeded(encoder, bufferInfo)
                             }
                         }
 
@@ -2774,3 +3160,32 @@ class ScreenRecorderEngine(
         }
     }
 }
+
+/**
+ * Thin wrapper around [VirtualDisplay.resize] so JVM tests can verify Performance-engine resize
+ * behavior without constructing framework display resources.
+ */
+internal fun interface PerformanceVirtualDisplayResizeStrategy {
+    /** Applies a new logical size to the active Performance-engine [VirtualDisplay]. */
+    fun resize(
+        virtualDisplay: VirtualDisplay,
+        newWidth: Int,
+        newHeight: Int,
+        densityDpi: Int,
+    )
+}
+
+/**
+ * Applies the same capture-size policy used at session start to a Performance-engine resize event.
+ */
+internal fun alignedPerformanceResizeSize(
+    newW: Int,
+    newH: Int,
+    encoderType: String,
+    fps: Int,
+): RecordingResolutionSize =
+    RecordingResolutionSupport.getEncoderCaptureResolution(
+        requestedSize = RecordingResolutionSize(newW, newH),
+        videoEncoder = encoderType,
+        fps = fps,
+    )

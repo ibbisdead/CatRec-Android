@@ -71,7 +71,10 @@ fun BannerAdRow(
     val localeFingerprint = configuration.locales.toLanguageTags()
     val localeTag =
         remember(localeFingerprint) {
-            configuration.locales.get(0)?.toLanguageTag().orEmpty()
+            configuration.locales
+                .get(0)
+                ?.toLanguageTag()
+                .orEmpty()
         }
 
     if (adsDisabled) return

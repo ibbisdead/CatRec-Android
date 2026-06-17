@@ -29,8 +29,8 @@ import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.service.EditorVideoTransform
-import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
 import com.ibbie.catrec_screenrecorcer.ui.components.ProBadge
+import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
 import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
 import com.ibbie.catrec_screenrecorcer.ui.components.logProGateCheck
 import com.ibbie.catrec_screenrecorcer.ui.recordings.RecordingEntry

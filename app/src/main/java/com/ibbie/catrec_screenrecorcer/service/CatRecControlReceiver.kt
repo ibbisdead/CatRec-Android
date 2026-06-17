@@ -64,8 +64,8 @@ class CatRecControlReceiver : BroadcastReceiver() {
                 app.stopService(Intent(app, OverlayService::class.java))
                 // On Android 8.0+ (API 26+) startService() throws IllegalStateException when
                 // the app is in the background. If the service isn't running there is nothing
-                // to exit; if it is running it will have been promoted to a foreground service
-                // by its own recording/prepared logic, so a failed start just means nothing to do.
+                // to exit; if it is running it will have been promoted to a foreground service,
+                // so a failed start just means nothing to do.
                 runCatching {
                     app.startService(
                         Intent(app, ScreenRecordService::class.java).apply {
@@ -108,18 +108,6 @@ class CatRecControlReceiver : BroadcastReceiver() {
                         },
                     )
                 }.onFailure { e -> Log.w(TAG, "handleRecordToggle TOGGLE_PAUSE startService failed", e) }
-            }
-            RecordingState.isPrepared.value -> {
-                val mode = RecordingState.currentMode.value
-                val action =
-                    if (mode == CaptureMode.CLIPPER) {
-                        ScreenRecordService.ACTION_START_BUFFER_FROM_OVERLAY
-                    } else {
-                        ScreenRecordService.ACTION_START_FROM_OVERLAY
-                    }
-                runCatching {
-                    app.startService(Intent(app, ScreenRecordService::class.java).apply { this.action = action })
-                }.onFailure { e -> Log.w(TAG, "handleRecordToggle overlay-start startService failed", e) }
             }
             else -> {
                 val asBuffer = RecordingState.currentMode.value == CaptureMode.CLIPPER

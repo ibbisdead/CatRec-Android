@@ -9,7 +9,6 @@ import kotlin.math.sqrt
  * while sustained blocked-game silence (zeros or tiny dither) still counts as silent.
  */
 object InternalPlaybackPcmSilenceAnalyzer {
-
     /** Max absolute PCM16 sample in the window must stay below this. */
     const val NEAR_SILENCE_PEAK_ABS: Int = 128
 
@@ -45,6 +44,8 @@ object InternalPlaybackPcmSilenceAnalyzer {
         return peak < peakThreshold && rms < rmsThreshold
     }
 
-    fun pcm16BufferHasAudibleSignal(buffer: ByteArray, byteLen: Int): Boolean =
-        byteLen > 0 && !pcm16BufferIsNearSilent(buffer, byteLen)
+    fun pcm16BufferHasAudibleSignal(
+        buffer: ByteArray,
+        byteLen: Int,
+    ): Boolean = byteLen > 0 && !pcm16BufferIsNearSilent(buffer, byteLen)
 }

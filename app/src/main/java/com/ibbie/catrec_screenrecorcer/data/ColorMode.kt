@@ -37,7 +37,10 @@ object ColorMode {
      * Logs a warning whenever [raw] is absent or carries an unrecognised value so that
      * mismatch between sender and receiver is visible in logcat without crashing.
      */
-    fun resolve(raw: String?, cached: String?): String {
+    fun resolve(
+        raw: String?,
+        cached: String?,
+    ): String {
         val isRawValid = raw != null && isValid(raw)
 
         if (raw == null) {
@@ -46,9 +49,13 @@ object ColorMode {
             Log.w(TAG, "Invalid colorMode from intent: \"$raw\", falling back to cached/default")
         }
 
-        val resolved = if (isRawValid) raw
-            else cached?.takeIf(::isValid)
-            ?: FULL
+        val resolved =
+            if (isRawValid) {
+                raw
+            } else {
+                cached?.takeIf(::isValid)
+                    ?: FULL
+            }
 
         if (!isRawValid) {
             Log.d(TAG, "Resolved colorMode=$resolved (raw=$raw, cached=$cached)")

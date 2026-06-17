@@ -14,7 +14,9 @@ const val PRO_RECORDING_FPS_THRESHOLD = 90
 /** Maximum video bitrate (Mbps) on the free tier; strictly greater requires Pro. */
 const val FREE_VIDEO_BITRATE_MBPS = 16f
 
-enum class ProRecordingFeature(val logName: String) {
+enum class ProRecordingFeature(
+    val logName: String,
+) {
     RECORDING_HIGH_FPS("pro_high_fps"),
     HIGH_BITRATE("pro_high_bitrate"),
     SEPARATE_AUDIO_TRACKS("pro_separate_audio_tracks"),
@@ -24,7 +26,10 @@ enum class ProRecordingFeature(val logName: String) {
 
 sealed interface RecordingStartProGateResult {
     data object Allowed : RecordingStartProGateResult
-    data class BlockedNeedsPro(val features: List<ProRecordingFeature>) : RecordingStartProGateResult
+
+    data class BlockedNeedsPro(
+        val features: List<ProRecordingFeature>,
+    ) : RecordingStartProGateResult
 }
 
 object RecordingStartProGate {

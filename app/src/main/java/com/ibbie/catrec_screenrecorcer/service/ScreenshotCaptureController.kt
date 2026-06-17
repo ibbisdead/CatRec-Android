@@ -44,14 +44,13 @@ internal class ScreenshotCaptureController(
     private val mediaProjectionProvider: () -> MediaProjection?,
     private val setMediaProjection: (MediaProjection?) -> Unit,
     private val setProjectionResult: (code: Int, data: Intent?) -> Unit,
-    private val recorderEngineProvider: () -> ScreenRecorderEngine?,
+    private val recorderEngineProvider: () -> ActiveRecordingEngine?,
     private val rollingBufferEngineProvider: () -> RollingBufferEngine?,
     private val activeRecordingEngineModeProvider: () -> RecordingEngineMode?,
     private val activeBufferEngineModeProvider: () -> RecordingEngineMode?,
     private val recordingEngineModeProvider: () -> RecordingEngineMode,
     private val isRecorderRunningProvider: () -> Boolean,
     private val isBufferRunningProvider: () -> Boolean,
-    private val isPreparedProvider: () -> Boolean,
     private val mainForegroundActiveProvider: () -> Boolean,
     private val setMainForegroundActive: (Boolean) -> Unit,
     private val readyNotificationProvider: () -> Notification,
@@ -106,7 +105,7 @@ internal class ScreenshotCaptureController(
                                 addFlags(
                                     Intent.FLAG_ACTIVITY_NEW_TASK or
                                         Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                                    Intent.FLAG_ACTIVITY_SINGLE_TOP,
+                                        Intent.FLAG_ACTIVITY_SINGLE_TOP,
                                 )
                             }
                         if (launch != null) service.startActivity(launch)
@@ -240,7 +239,7 @@ internal class ScreenshotCaptureController(
     }
 
     private fun stopOneShotForegroundAndSelfIfIdle() {
-        if (isRecorderRunningProvider() || isBufferRunningProvider() || isPreparedProvider()) return
+        if (isRecorderRunningProvider() || isBufferRunningProvider()) return
         if (mainForegroundActiveProvider()) {
             try {
                 service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
@@ -318,7 +317,7 @@ internal class ScreenshotCaptureController(
                     service,
                     service.getString(
                         compatibility.reasonMessageResId
-                            ?: R.string.recording_engine_reason_screenshot_recording_requires_compatibility,
+                            ?: R.string.recording_screenshot_while_recording_unavailable,
                     ),
                     Toast.LENGTH_SHORT,
                 ).show()
@@ -429,11 +428,12 @@ internal class ScreenshotCaptureController(
                 if (frameIdx >= maxMirrorFrames) {
                     image.close()
                     mainHandler.post {
-                        Toast.makeText(
-                            service,
-                            service.getString(R.string.error_screenshot_capture_failed),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                service,
+                                service.getString(R.string.error_screenshot_capture_failed),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         teardownScreenshotReader(reader, virtualDisplay)
                     }
                     return@setOnImageAvailableListener
@@ -457,11 +457,12 @@ internal class ScreenshotCaptureController(
                 } catch (e: Exception) {
                     Log.e(LOG_TAG, "Screenshot capture error", e)
                     mainHandler.post {
-                        Toast.makeText(
-                            service,
-                            service.getString(R.string.error_screenshot_capture_failed),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                service,
+                                service.getString(R.string.error_screenshot_capture_failed),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 } finally {
                     image.close()

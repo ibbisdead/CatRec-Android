@@ -75,8 +75,7 @@ fun CaptureModePill(
                     shape = glassShape,
                     ambientColor = Color.Black.copy(alpha = 0.05f),
                     spotColor = Color.Black.copy(alpha = 0.1f),
-                )
-                .clip(glassShape)
+                ).clip(glassShape)
                 .background(bgColor)
                 .border(width = 1.dp, color = borderColor, shape = glassShape),
     ) {

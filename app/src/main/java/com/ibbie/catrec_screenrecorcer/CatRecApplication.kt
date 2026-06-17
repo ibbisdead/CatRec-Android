@@ -5,6 +5,7 @@ import android.content.Context
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdManager
 import com.ibbie.catrec_screenrecorcer.ads.MobileAdsInitializer
+import com.ibbie.catrec_screenrecorcer.ads.ProRewardedAdManager
 import com.ibbie.catrec_screenrecorcer.billing.CatRecBillingManager
 import com.ibbie.catrec_screenrecorcer.data.SettingsConfigCache
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
@@ -62,6 +63,7 @@ class CatRecApplication : Application() {
             val adsDisabled = settingsRepository.adsDisabled.first()
             AppOpenAdManager.adsDisabled = adsDisabled
             MobileAdsInitializer.adsDisabled = adsDisabled
+            ProRewardedAdManager.onAdsDisabledChanged(adsDisabled)
             applyPersonalizedAdsEnabled(
                 settingsRepository.personalizedAdsEnabled.first(),
                 adsSdkEnabled = !adsDisabled,
@@ -71,14 +73,12 @@ class CatRecApplication : Application() {
             settingsRepository.adsDisabled.collect { disabled ->
                 AppOpenAdManager.adsDisabled = disabled
                 MobileAdsInitializer.adsDisabled = disabled
-                if (!disabled) {
-                    MobileAdsInitializer.initializeIfReady(this@CatRecApplication)
-                }
+                ProRewardedAdManager.onAdsDisabledChanged(disabled)
             }
         }
         // Free tier only: paid users skip Ads SDK entirely (see [MobileAdsInitializer.adsDisabled]).
-        // Also defers until BLUETOOTH_CONNECT is granted on API 31+.
-        MobileAdsInitializer.initializeIfReady(this)
+        // Ads SDK initialization is started by the foreground UI, not by process startup. Services and
+        // broadcast receivers can cold-start the process while the app is backgrounded.
         billingManager = CatRecBillingManager(this)
         billingManager.start()
         // Arm Crashlytics explicitly so it is active before MainActivity applies the user's

@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.Log
 import android.view.Display
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,8 +23,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -50,16 +51,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
+import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
 import com.ibbie.catrec_screenrecorcer.data.recording.FREE_VIDEO_BITRATE_MBPS
 import com.ibbie.catrec_screenrecorcer.data.recording.PRO_RECORDING_FPS_THRESHOLD
-import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.service.OverlayService
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionInvalidReason
 import com.ibbie.catrec_screenrecorcer.service.RecordingResolutionPreset
@@ -71,13 +77,6 @@ import com.ibbie.catrec_screenrecorcer.ui.components.LocalAccentColor
 import com.ibbie.catrec_screenrecorcer.ui.recording.RecordingViewModel
 import com.ibbie.catrec_screenrecorcer.ui.safeStringResource
 import com.ibbie.catrec_screenrecorcer.ui.theme.SwitchOffGray
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.core.net.toUri
-import androidx.core.graphics.toColorInt
-import androidx.core.content.ContextCompat
-import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressionReason
-import com.ibbie.catrec_screenrecorcer.ads.AppOpenAdSuppressor
-import android.util.Log
 import com.ibbie.catrec_screenrecorcer.utils.PermissionManager
 
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
@@ -183,7 +182,14 @@ fun SettingsScreen(
                 OverlayService.onPreviewPositionChanged = null
             }
         }
-        LaunchedEffect(uiState.watermarkSize, uiState.watermarkOpacity, uiState.watermarkShape, uiState.watermarkImageUri, uiState.watermarkXFraction, uiState.watermarkYFraction) {
+        LaunchedEffect(
+            uiState.watermarkSize,
+            uiState.watermarkOpacity,
+            uiState.watermarkShape,
+            uiState.watermarkImageUri,
+            uiState.watermarkXFraction,
+            uiState.watermarkYFraction,
+        ) {
             OverlayService.updatePreviewIfActive(
                 uiState.watermarkSize,
                 uiState.watermarkOpacity,
@@ -198,8 +204,11 @@ fun SettingsScreen(
     // Camera overlay live preview (Settings, not recording)
     if (uiState.cameraOverlay && canDrawOverlays && !uiState.isRecording) {
         DisposableEffect(Unit) {
-            Log.d("CatRec/Settings", "DisposableEffect: sending ACTION_SHOW_CAMERA_PREVIEW " +
-                "(cameraOverlay=${uiState.cameraOverlay}, canDrawOverlays=$canDrawOverlays, isRecording=${uiState.isRecording})")
+            Log.d(
+                "CatRec/Settings",
+                "DisposableEffect: sending ACTION_SHOW_CAMERA_PREVIEW " +
+                    "(cameraOverlay=${uiState.cameraOverlay}, canDrawOverlays=$canDrawOverlays, isRecording=${uiState.isRecording})",
+            )
             context.startService(
                 Intent(context, OverlayService::class.java).apply {
                     action = OverlayService.ACTION_SHOW_CAMERA_PREVIEW
@@ -257,16 +266,18 @@ fun SettingsScreen(
                 viewModel.setSaveLocationUri(uri.toString())
             }
         }
+
     fun launchFolderPicker() {
         try {
             folderPickerLauncher.launch(null)
         } catch (e: ActivityNotFoundException) {
             Log.w("CatRec/Settings", "No activity available for ACTION_OPEN_DOCUMENT_TREE", e)
-            Toast.makeText(
-                context,
-                resources.getString(R.string.toast_folder_picker_unavailable),
-                Toast.LENGTH_LONG,
-            ).show()
+            Toast
+                .makeText(
+                    context,
+                    resources.getString(R.string.toast_folder_picker_unavailable),
+                    Toast.LENGTH_LONG,
+                ).show()
         }
     }
     val imagePickerLauncher =
@@ -327,8 +338,6 @@ fun SettingsScreen(
     var showResolutionDialog by remember { mutableStateOf(false) }
     var showCustomResolutionDialog by remember { mutableStateOf(false) }
     var showVideoEncoderDialog by remember { mutableStateOf(false) }
-    var showRecordingEngineDialog by remember { mutableStateOf(false) }
-    var showAdvancedEngineWarningDialog by remember { mutableStateOf(false) }
     var showColorModeDialog by remember { mutableStateOf(false) }
     var showRec709BrightnessCorrectionDialog by remember { mutableStateOf(false) }
     var showOrientationDialog by remember { mutableStateOf(false) }
@@ -360,6 +369,7 @@ fun SettingsScreen(
     var displayChangeVersion by remember { mutableIntStateOf(0) }
     DisposableEffect(context, uiState.recordingOrientation) {
         val dm = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+
         fun presetSizeKey(): String {
             val panel =
                 RecordingResolutionSupport.getPanelNativeResolution(
@@ -527,63 +537,17 @@ fun SettingsScreen(
             onDismiss = { showVideoEncoderDialog = false },
         )
     }
-    if (showRecordingEngineDialog) {
-        RecordingEngineModeDialog(
-            selectedMode = uiState.recordingEngineMode,
-            onPerformanceSelected = {
-                viewModel.setRecordingEngineMode(RecordingEngineMode.PERFORMANCE)
-                showRecordingEngineDialog = false
-            },
-            onAdvancedSelected = {
-                showRecordingEngineDialog = false
-                if (uiState.recordingEngineMode == RecordingEngineMode.COMPATIBILITY) {
-                    viewModel.setRecordingEngineMode(RecordingEngineMode.COMPATIBILITY)
-                } else {
-                    showAdvancedEngineWarningDialog = true
-                }
-            },
-            onDismiss = { showRecordingEngineDialog = false },
-        )
-    }
-    if (showAdvancedEngineWarningDialog) {
-        AlertDialog(
-            onDismissRequest = { showAdvancedEngineWarningDialog = false },
-            icon = {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = accent,
-                    modifier = Modifier.size(28.dp),
-                )
-            },
-            title = { Text(stringResource(R.string.recording_engine_compatibility_label)) },
-            text = { Text(stringResource(R.string.recording_engine_advanced_warning)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.setRecordingEngineMode(RecordingEngineMode.COMPATIBILITY)
-                        showAdvancedEngineWarningDialog = false
-                    },
-                ) {
-                    Text(stringResource(R.string.recording_engine_compatibility_label), color = accent, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAdvancedEngineWarningDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
-    }
     if (showColorModeDialog) {
-        val colorModeOptions = listOf(
-            ColorMode.FULL,
-            ColorMode.STANDARD,
-        )
-        val colorModeLabels = listOf(
-            stringResource(R.string.setting_color_mode_full),
-            stringResource(R.string.setting_color_mode_standard),
-        )
+        val colorModeOptions =
+            listOf(
+                ColorMode.FULL,
+                ColorMode.STANDARD,
+            )
+        val colorModeLabels =
+            listOf(
+                stringResource(R.string.setting_color_mode_full),
+                stringResource(R.string.setting_color_mode_standard),
+            )
         SingleChoiceDialog(
             title = stringResource(R.string.setting_color_mode),
             options = colorModeOptions,
@@ -916,45 +880,45 @@ fun SettingsScreen(
         item(key = "settings_content", contentType = "settings_card") {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 // Controls
-            GlassSectionHeader(stringResource(R.string.settings_section_controls))
-            SwitchSettingItem(
-                Icons.Default.ControlCamera,
-                stringResource(R.string.setting_floating_controls),
-                stringResource(R.string.settings_floating_controls_desc),
-                uiState.floatingControls,
-            ) {
-                if (it && !Settings.canDrawOverlays(context)) {
-                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-                    context.startActivity(
-                        Intent(
-                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                            "package:${context.packageName}".toUri(),
-                        ),
-                    )
-                } else {
-                    viewModel.setFloatingControls(it)
-                    if (it && Settings.canDrawOverlays(context)) {
-                        context.startService(
-                            Intent(context, OverlayService::class.java).apply {
-                                action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
-                            },
+                GlassSectionHeader(stringResource(R.string.settings_section_controls))
+                SwitchSettingItem(
+                    Icons.Default.ControlCamera,
+                    stringResource(R.string.setting_floating_controls),
+                    stringResource(R.string.settings_floating_controls_desc),
+                    uiState.floatingControls,
+                ) {
+                    if (it && !Settings.canDrawOverlays(context)) {
+                        Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                "package:${context.packageName}".toUri(),
+                            ),
                         )
-                    } else if (!it) {
-                        context.startService(
-                            Intent(context, OverlayService::class.java).apply {
-                                action = OverlayService.ACTION_HIDE_IDLE_CONTROLS
-                            },
-                        )
+                    } else {
+                        viewModel.setFloatingControls(it)
+                        if (it && Settings.canDrawOverlays(context)) {
+                            context.startService(
+                                Intent(context, OverlayService::class.java).apply {
+                                    action = OverlayService.ACTION_SHOW_IDLE_CONTROLS
+                                },
+                            )
+                        } else if (!it) {
+                            context.startService(
+                                Intent(context, OverlayService::class.java).apply {
+                                    action = OverlayService.ACTION_HIDE_IDLE_CONTROLS
+                                },
+                            )
+                        }
                     }
                 }
-            }
-            SwitchSettingItem(
-                Icons.Default.VisibilityOff,
-                stringResource(R.string.setting_hide_floating_while_recording),
-                stringResource(R.string.settings_hide_floating_while_recording_desc),
-                uiState.hideFloatingIconWhileRecording,
-            ) { viewModel.setHideFloatingIconWhileRecording(it) }
+                SwitchSettingItem(
+                    Icons.Default.VisibilityOff,
+                    stringResource(R.string.setting_hide_floating_while_recording),
+                    stringResource(R.string.settings_hide_floating_while_recording_desc),
+                    uiState.hideFloatingIconWhileRecording,
+                ) { viewModel.setHideFloatingIconWhileRecording(it) }
                 SwitchSettingItem(
                     Icons.Default.Share,
                     stringResource(R.string.setting_post_screenshot_options),
@@ -990,521 +954,525 @@ fun SettingsScreen(
                     stringResource(R.string.setting_clipper_duration),
                     clipperDurationLabels.getOrElse(uiState.clipperDurationMinutes - 1) { clipperDurationLabels.first() },
                 ) { showClipperDurationDialog = true }
-            if (!batteryOptimizationIgnored) {
-                ClickableSettingItem(
-                    Icons.Filled.PowerSettingsNew,
-                    stringResource(R.string.setting_allow_background_title),
-                    stringResource(R.string.setting_allow_background_desc),
-                ) { showBatteryRationaleDialog = true }
-            }
+                if (!batteryOptimizationIgnored) {
+                    ClickableSettingItem(
+                        Icons.Filled.PowerSettingsNew,
+                        stringResource(R.string.setting_allow_background_title),
+                        stringResource(R.string.setting_allow_background_desc),
+                    ) { showBatteryRationaleDialog = true }
+                }
 
                 Spacer(Modifier.height(16.dp))
                 // Recording quality (open audio / video+GIF menus)
-            GlassSectionHeader(stringResource(R.string.settings_section_recording_quality))
-            ClickableSettingItem(
-                Icons.Default.GraphicEq,
-                stringResource(R.string.settings_open_audio_menu),
-                stringResource(R.string.settings_open_audio_menu_sub),
-            ) { showAudioMenuSheet = true }
-            ClickableSettingItem(
-                Icons.Default.VideoSettings,
-                stringResource(R.string.settings_open_video_menu),
-                stringResource(R.string.settings_open_video_menu_sub),
-            ) { showVideoMenuSheet = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_recording_quality))
+                ClickableSettingItem(
+                    Icons.Default.GraphicEq,
+                    stringResource(R.string.settings_open_audio_menu),
+                    stringResource(R.string.settings_open_audio_menu_sub),
+                ) { showAudioMenuSheet = true }
+                ClickableSettingItem(
+                    Icons.Default.VideoSettings,
+                    stringResource(R.string.settings_open_video_menu),
+                    stringResource(R.string.settings_open_video_menu_sub),
+                ) { showVideoMenuSheet = true }
 
                 Spacer(Modifier.height(16.dp))
                 // Overlay
-            GlassSectionHeader(stringResource(R.string.settings_section_overlay))
-            SwitchSettingItem(
-                Icons.Default.CameraAlt,
-                stringResource(R.string.setting_camera_settings),
-                null,
-                uiState.cameraOverlay,
-                isPro = true,
-            ) { checked ->
-                val hasCamPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-                val freshOverlay = Settings.canDrawOverlays(context).also { canDrawOverlays = it }
-                Log.d("CatRec/Settings", "cameraOverlay toggle: checked=$checked, hasCamPerm=$hasCamPerm, canDrawOverlays=$freshOverlay")
-                if (checked && !hasCamPerm) {
-                    pendingEnableCamera = true
-                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                } else if (checked && !freshOverlay) {
-                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-                    context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+                GlassSectionHeader(stringResource(R.string.settings_section_overlay))
+                SwitchSettingItem(
+                    Icons.Default.CameraAlt,
+                    stringResource(R.string.setting_camera_settings),
+                    null,
+                    uiState.cameraOverlay,
+                    isPro = true,
+                ) { checked ->
+                    val hasCamPerm =
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+                    val freshOverlay = Settings.canDrawOverlays(context).also { canDrawOverlays = it }
+                    Log.d(
+                        "CatRec/Settings",
+                        "cameraOverlay toggle: checked=$checked, hasCamPerm=$hasCamPerm, canDrawOverlays=$freshOverlay",
                     )
-                } else {
-                    viewModel.setCameraOverlay(checked)
-                }
-            }
-
-            if (uiState.cameraOverlay) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
-                    color = Color(0x33006633),
-                    shape = MaterialTheme.shapes.small,
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            if (canDrawOverlays && !uiState.isRecording) {
-                                stringResource(R.string.camera_drag_hint)
-                            } else if (uiState.isRecording) {
-                                stringResource(R.string.watermark_preview_recording)
-                            } else {
-                                stringResource(R.string.watermark_preview_need_overlay)
-                            },
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFFAADDAA),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
+                    if (checked && !hasCamPerm) {
+                        pendingEnableCamera = true
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.RUNTIME_PERMISSION_REQUEST)
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    } else if (checked && !freshOverlay) {
+                        Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                        context.startActivity(
+                            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
                         )
+                    } else {
+                        viewModel.setCameraOverlay(checked)
                     }
+                }
+
+                if (uiState.cameraOverlay) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+                        color = Color(0x33006633),
+                        shape = MaterialTheme.shapes.small,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                if (canDrawOverlays && !uiState.isRecording) {
+                                    stringResource(R.string.camera_drag_hint)
+                                } else if (uiState.isRecording) {
+                                    stringResource(R.string.watermark_preview_recording)
+                                } else {
+                                    stringResource(R.string.watermark_preview_need_overlay)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFAADDAA),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+
+                    SwitchSettingItem(
+                        Icons.Default.Lock,
+                        stringResource(R.string.camera_lock_position),
+                        stringResource(R.string.camera_lock_desc_short),
+                        uiState.cameraLockPosition,
+                    ) { viewModel.setCameraLockPosition(it) }
+
+                    ClickableSettingItem(
+                        Icons.Default.Cameraswitch,
+                        stringResource(R.string.camera_facing),
+                        when (uiState.cameraFacing) {
+                            "Front" -> stringResource(R.string.camera_facing_front)
+                            "Rear" -> stringResource(R.string.camera_facing_rear)
+                            else -> uiState.cameraFacing
+                        },
+                    ) { showCameraFacingDialog = true }
+
+                    ClickableSettingItem(
+                        Icons.Default.AspectRatio,
+                        stringResource(R.string.camera_aspect_ratio),
+                        when (uiState.cameraAspectRatio) {
+                            "Circle" -> stringResource(R.string.shape_circle)
+                            "Square" -> stringResource(R.string.shape_square)
+                            "16:9" -> stringResource(R.string.ratio_16_9)
+                            "4:3" -> stringResource(R.string.ratio_4_3)
+                            else -> uiState.cameraAspectRatio
+                        },
+                    ) { showCameraAspectDialog = true }
+
+                    ClickableSettingItem(
+                        Icons.Default.ScreenRotation,
+                        stringResource(R.string.camera_orientation),
+                        when (uiState.cameraOrientation) {
+                            "Auto" -> stringResource(R.string.setting_orientation_auto)
+                            "Portrait" -> stringResource(R.string.setting_orientation_portrait)
+                            "Landscape" -> stringResource(R.string.setting_orientation_landscape)
+                            else -> uiState.cameraOrientation
+                        },
+                    ) { showCameraOrientationDialog = true }
+
+                    GlassSlider(
+                        stringResource(R.string.camera_size),
+                        safeStringResource(R.string.label_dp, uiState.cameraOverlaySize),
+                        uiState.cameraOverlaySize.toFloat(),
+                        60f..240f,
+                        35,
+                    ) { viewModel.setCameraOverlaySize(it.toInt()) }
+
+                    GlassSlider(
+                        stringResource(R.string.camera_opacity),
+                        safeStringResource(R.string.label_percent, uiState.cameraOpacity),
+                        uiState.cameraOpacity.toFloat(),
+                        10f..100f,
+                        17,
+                    ) { viewModel.setCameraOpacity(it.toInt()) }
                 }
 
                 SwitchSettingItem(
-                    Icons.Default.Lock,
-                    stringResource(R.string.camera_lock_position),
-                    stringResource(R.string.camera_lock_desc_short),
-                    uiState.cameraLockPosition,
-                ) { viewModel.setCameraLockPosition(it) }
-
-                ClickableSettingItem(
-                    Icons.Default.Cameraswitch,
-                    stringResource(R.string.camera_facing),
-                    when (uiState.cameraFacing) {
-                        "Front" -> stringResource(R.string.camera_facing_front)
-                        "Rear" -> stringResource(R.string.camera_facing_rear)
-                        else -> uiState.cameraFacing
-                    },
-                ) { showCameraFacingDialog = true }
-
-                ClickableSettingItem(
-                    Icons.Default.AspectRatio,
-                    stringResource(R.string.camera_aspect_ratio),
-                    when (uiState.cameraAspectRatio) {
-                        "Circle" -> stringResource(R.string.shape_circle)
-                        "Square" -> stringResource(R.string.shape_square)
-                        "16:9" -> stringResource(R.string.ratio_16_9)
-                        "4:3" -> stringResource(R.string.ratio_4_3)
-                        else -> uiState.cameraAspectRatio
-                    },
-                ) { showCameraAspectDialog = true }
-
-                ClickableSettingItem(
-                    Icons.Default.ScreenRotation,
-                    stringResource(R.string.camera_orientation),
-                    when (uiState.cameraOrientation) {
-                        "Auto" -> stringResource(R.string.setting_orientation_auto)
-                        "Portrait" -> stringResource(R.string.setting_orientation_portrait)
-                        "Landscape" -> stringResource(R.string.setting_orientation_landscape)
-                        else -> uiState.cameraOrientation
-                    },
-                ) { showCameraOrientationDialog = true }
-
-                GlassSlider(
-                    stringResource(R.string.camera_size),
-                    safeStringResource(R.string.label_dp, uiState.cameraOverlaySize),
-                    uiState.cameraOverlaySize.toFloat(),
-                    60f..240f,
-                    35,
-                ) { viewModel.setCameraOverlaySize(it.toInt()) }
-
-                GlassSlider(
-                    stringResource(R.string.camera_opacity),
-                    safeStringResource(R.string.label_percent, uiState.cameraOpacity),
-                    uiState.cameraOpacity.toFloat(),
-                    10f..100f,
-                    17,
-                ) { viewModel.setCameraOpacity(it.toInt()) }
-            }
-
-            SwitchSettingItem(
-                Icons.AutoMirrored.Filled.BrandingWatermark,
-                stringResource(R.string.setting_watermark),
-                null,
-                uiState.showWatermark,
-                isPro = true,
-            ) {
-                if (it && !Settings.canDrawOverlays(context)) {
-                    Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
-                    AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
-                    context.startActivity(
-                        Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
-                    )
-                } else {
-                    viewModel.setShowWatermark(it)
-                }
-            }
-
-        if (uiState.showWatermark) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
-                    color = Color(0x33FF0033),
-                    shape = MaterialTheme.shapes.small,
+                    Icons.AutoMirrored.Filled.BrandingWatermark,
+                    stringResource(R.string.setting_watermark),
+                    null,
+                    uiState.showWatermark,
+                    isPro = true,
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                    if (it && !Settings.canDrawOverlays(context)) {
+                        Toast.makeText(context, resources.getString(R.string.toast_overlay_permission), Toast.LENGTH_LONG).show()
+                        AppOpenAdSuppressor.enter(AppOpenAdSuppressionReason.ANDROID_SETTINGS)
+                        context.startActivity(
+                            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:${context.packageName}".toUri()),
+                        )
+                    } else {
+                        viewModel.setShowWatermark(it)
+                    }
+                }
+
+                if (uiState.showWatermark) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 8.dp),
+                        color = Color(0x33FF0033),
+                        shape = MaterialTheme.shapes.small,
                     ) {
-                        Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            if (canDrawOverlays && !uiState.isRecording) {
-                                stringResource(R.string.watermark_preview_active)
-                            } else if (uiState.isRecording) {
-                                stringResource(R.string.watermark_preview_recording)
-                            } else {
-                                stringResource(R.string.watermark_preview_need_overlay)
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(Icons.Default.Visibility, null, tint = accent, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                if (canDrawOverlays && !uiState.isRecording) {
+                                    stringResource(R.string.watermark_preview_active)
+                                } else if (uiState.isRecording) {
+                                    stringResource(R.string.watermark_preview_recording)
+                                } else {
+                                    stringResource(R.string.watermark_preview_need_overlay)
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color(0xFFCCAAAA),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+
+                    ClickableSettingItem(
+                        Icons.Default.Place,
+                        stringResource(R.string.watermark_snap_corner_title),
+                        stringResource(R.string.watermark_snap_corner_desc),
+                    ) {
+                        showWatermarkLocDialog2 = true
+                    }
+
+                    SettingsListRow(
+                        leadingContent = { Icon(Icons.Default.Crop, null, tint = accent.copy(alpha = 0.7f)) },
+                        headlineContent = {
+                            Text(
+                                stringResource(R.string.watermark_shape),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        trailingContent = {
+                            SingleChoiceSegmentedButtonRow {
+                                val shapeKeys = listOf("Square", "Circle")
+                                val shapeLabels =
+                                    listOf(
+                                        stringResource(R.string.shape_square),
+                                        stringResource(R.string.shape_circle),
+                                    )
+                                shapeKeys.forEachIndexed { idx, shape ->
+                                    SegmentedButton(
+                                        shape = SegmentedButtonDefaults.itemShape(idx, shapeKeys.size),
+                                        onClick = { viewModel.setWatermarkShape(shape) },
+                                        selected = uiState.watermarkShape == shape,
+                                    ) {
+                                        Text(
+                                            shapeLabels[idx],
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                    )
+
+                    GlassSlider(
+                        stringResource(R.string.setting_watermark_size),
+                        safeStringResource(R.string.label_dp, uiState.watermarkSize),
+                        uiState.watermarkSize.toFloat(),
+                        50f..300f,
+                        49,
+                    ) {
+                        viewModel.setWatermarkSize(it.toInt())
+                    }
+                    GlassSlider(
+                        stringResource(R.string.setting_watermark_opacity),
+                        safeStringResource(R.string.label_percent, uiState.watermarkOpacity),
+                        uiState.watermarkOpacity.toFloat(),
+                        10f..100f,
+                        17,
+                    ) {
+                        viewModel.setWatermarkOpacity(it.toInt())
+                    }
+
+                    ClickableSettingItem(
+                        Icons.Default.Image,
+                        stringResource(R.string.watermark_image),
+                        if (uiState.watermarkImageUri != null) {
+                            stringResource(
+                                R.string.watermark_image_custom,
+                            )
+                        } else {
+                            stringResource(R.string.watermark_image_default)
+                        },
+                    ) { imagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
+                    if (uiState.watermarkImageUri != null) {
+                        ListItem(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { viewModel.setWatermarkImageUri(null) },
+                            headlineContent = {
+                                Text(
+                                    stringResource(R.string.watermark_reset_icon),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                             },
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFFCCAAAA),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
+                            leadingContent = { Icon(Icons.Default.RestartAlt, null, tint = accent.copy(alpha = 0.7f)) },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }
                 }
 
+                Spacer(Modifier.height(16.dp))
+                // Screenshots
+                GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
+                val screenshotFormatDisplay =
+                    when (uiState.screenshotFormat) {
+                        "JPEG" -> stringResource(R.string.format_jpeg)
+                        "PNG" -> stringResource(R.string.format_png)
+                        "WebP" -> stringResource(R.string.format_webp)
+                        else -> uiState.screenshotFormat
+                    }
                 ClickableSettingItem(
-                    Icons.Default.Place,
-                    stringResource(R.string.watermark_snap_corner_title),
-                    stringResource(R.string.watermark_snap_corner_desc),
+                    Icons.Default.PhotoSizeSelectLarge,
+                    stringResource(R.string.setting_screenshot_format),
+                    screenshotFormatDisplay,
+                ) { showScreenshotFormatDialog = true }
+                GlassSlider(
+                    stringResource(R.string.setting_screenshot_quality),
+                    "${uiState.screenshotQuality}%",
+                    uiState.screenshotQuality.toFloat(),
+                    10f..100f,
+                    17,
                 ) {
-                    showWatermarkLocDialog2 = true
+                    viewModel.setScreenshotQuality(it.toInt())
                 }
 
+                Spacer(Modifier.height(16.dp))
+                // Theme
+                GlassSectionHeader(stringResource(R.string.settings_section_theme))
+                val themeDisplay =
+                    when (uiState.appTheme) {
+                        "Light" -> stringResource(R.string.theme_light)
+                        "Dark" -> stringResource(R.string.theme_dark)
+                        else -> stringResource(R.string.theme_system)
+                    }
+                ClickableSettingItem(
+                    Icons.Default.SettingsSystemDaydream,
+                    stringResource(R.string.setting_theme),
+                    themeDisplay,
+                ) { showThemeDialog = true }
+
+                // Accent color row
+                val parsedAccent =
+                    remember(uiState.accentHex) {
+                        runCatching { Color("#${uiState.accentHex.removePrefix("#").take(6)}".toColorInt()) }
+                            .getOrDefault(accent)
+                    }
+                val parsedAccent2 =
+                    remember(uiState.accentHex2) {
+                        runCatching { Color("#${uiState.accentHex2.removePrefix("#").take(6)}".toColorInt()) }
+                            .getOrDefault(Color(0xFFFF8C00))
+                    }
                 SettingsListRow(
-                    leadingContent = { Icon(Icons.Default.Crop, null, tint = accent.copy(alpha = 0.7f)) },
+                    leadingContent = {
+                        Icon(Icons.Default.Palette, null, tint = accent.copy(alpha = 0.7f))
+                    },
                     headlineContent = {
                         Text(
-                            stringResource(R.string.watermark_shape),
-                            maxLines = 2,
+                            stringResource(R.string.accent_color_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            if (uiState.accentGradient) {
+                                "#${uiState.accentHex.uppercase()}  ->  #${uiState.accentHex2.uppercase()}"
+                            } else {
+                                "#${uiState.accentHex.uppercase()}"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     },
                     trailingContent = {
-                        SingleChoiceSegmentedButtonRow {
-                            val shapeKeys = listOf("Square", "Circle")
-                            val shapeLabels =
-                                listOf(
-                                    stringResource(R.string.shape_square),
-                                    stringResource(R.string.shape_circle),
-                                )
-                            shapeKeys.forEachIndexed { idx, shape ->
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(idx, shapeKeys.size),
-                                    onClick = { viewModel.setWatermarkShape(shape) },
-                                    selected = uiState.watermarkShape == shape,
-                                ) {
-                                    Text(
-                                        shapeLabels[idx],
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                    },
-                )
-
-                GlassSlider(
-                    stringResource(R.string.setting_watermark_size),
-                    safeStringResource(R.string.label_dp, uiState.watermarkSize),
-                    uiState.watermarkSize.toFloat(),
-                    50f..300f,
-                    49,
-                ) {
-                    viewModel.setWatermarkSize(it.toInt())
-                }
-                GlassSlider(
-                    stringResource(R.string.setting_watermark_opacity),
-                    safeStringResource(R.string.label_percent, uiState.watermarkOpacity),
-                    uiState.watermarkOpacity.toFloat(),
-                    10f..100f,
-                    17,
-                ) {
-                    viewModel.setWatermarkOpacity(it.toInt())
-                }
-
-                ClickableSettingItem(
-                    Icons.Default.Image,
-                    stringResource(R.string.watermark_image),
-                    if (uiState.watermarkImageUri != null) {
-                        stringResource(
-                            R.string.watermark_image_custom,
-                        )
-                    } else {
-                        stringResource(R.string.watermark_image_default)
-                    },
-                ) { imagePickerLauncher.launch(PickVisualMediaRequest(PickVisualMedia.ImageOnly)) }
-                if (uiState.watermarkImageUri != null) {
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { viewModel.setWatermarkImageUri(null) },
-                        headlineContent = {
-                            Text(
-                                stringResource(R.string.watermark_reset_icon),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        leadingContent = { Icon(Icons.Default.RestartAlt, null, tint = accent.copy(alpha = 0.7f)) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
-                }
-        }
-
-                Spacer(Modifier.height(16.dp))
-                // Screenshots
-            GlassSectionHeader(stringResource(R.string.settings_section_screenshots))
-            val screenshotFormatDisplay =
-                when (uiState.screenshotFormat) {
-                    "JPEG" -> stringResource(R.string.format_jpeg)
-                    "PNG" -> stringResource(R.string.format_png)
-                    "WebP" -> stringResource(R.string.format_webp)
-                    else -> uiState.screenshotFormat
-                }
-            ClickableSettingItem(
-                Icons.Default.PhotoSizeSelectLarge,
-                stringResource(R.string.setting_screenshot_format),
-                screenshotFormatDisplay,
-            ) { showScreenshotFormatDialog = true }
-            GlassSlider(
-                stringResource(R.string.setting_screenshot_quality),
-                "${uiState.screenshotQuality}%",
-                uiState.screenshotQuality.toFloat(),
-                10f..100f,
-                17,
-            ) {
-                viewModel.setScreenshotQuality(it.toInt())
-            }
-
-                Spacer(Modifier.height(16.dp))
-                // Theme
-            GlassSectionHeader(stringResource(R.string.settings_section_theme))
-            val themeDisplay =
-                when (uiState.appTheme) {
-                    "Light" -> stringResource(R.string.theme_light)
-                    "Dark" -> stringResource(R.string.theme_dark)
-                    else -> stringResource(R.string.theme_system)
-                }
-            ClickableSettingItem(
-                Icons.Default.SettingsSystemDaydream,
-                stringResource(R.string.setting_theme),
-                themeDisplay,
-            ) { showThemeDialog = true }
-
-            // Accent color row
-            val parsedAccent =
-                remember(uiState.accentHex) {
-                    runCatching { Color("#${uiState.accentHex.removePrefix("#").take(6)}".toColorInt()) }
-                        .getOrDefault(accent)
-                }
-            val parsedAccent2 =
-                remember(uiState.accentHex2) {
-                    runCatching { Color("#${uiState.accentHex2.removePrefix("#").take(6)}".toColorInt()) }
-                        .getOrDefault(Color(0xFFFF8C00))
-                }
-            SettingsListRow(
-                leadingContent = {
-                    Icon(Icons.Default.Palette, null, tint = accent.copy(alpha = 0.7f))
-                },
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.accent_color_title),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        if (uiState.accentGradient) {
-                            "#${uiState.accentHex.uppercase()}  ->  #${uiState.accentHex2.uppercase()}"
-                        } else {
-                            "#${uiState.accentHex.uppercase()}"
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                trailingContent = {
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(22.dp)
-                                    .clip(CircleShape)
-                                    .background(parsedAccent)
-                                    .border(1.dp, Color(0x44FFFFFF), CircleShape),
-                        )
-                        if (uiState.accentGradient) {
+                        Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
                             Box(
                                 modifier =
                                     Modifier
                                         .size(22.dp)
                                         .clip(CircleShape)
-                                        .background(parsedAccent2)
+                                        .background(parsedAccent)
                                         .border(1.dp, Color(0x44FFFFFF), CircleShape),
                             )
-                        }
-                        TextButton(onClick = { showAccentPickerDialog = true }) {
-                            Text(
-                                stringResource(R.string.action_change),
-                                color = accent,
-                                style = MaterialTheme.typography.labelMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                },
-            )
-
-            // Performance Mode toggle
-            val perfSubtitle =
-                when {
-                    isLowEndDevice && uiState.performanceMode ->
-                        stringResource(R.string.perf_auto_low_end)
-                    isLowEndDevice && !uiState.performanceMode ->
-                        stringResource(R.string.perf_quality_may_lag)
-                    uiState.performanceMode -> stringResource(R.string.perf_static_glass)
-                    else -> stringResource(R.string.perf_dynamic_glass)
-                }
-            ListItem(
-                modifier = Modifier.fillMaxWidth(),
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    Icon(
-                        Icons.Default.Speed,
-                        contentDescription = null,
-                        tint = accent.copy(alpha = 0.7f),
-                    )
-                },
-                headlineContent = {
-                    Text(
-                        stringResource(R.string.setting_performance_mode),
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        perfSubtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color =
-                            if (isLowEndDevice && !uiState.performanceMode) {
-                                accent.copy(alpha = 0.8f)
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                trailingContent = {
-                    Switch(
-                        checked = uiState.performanceMode,
-                        onCheckedChange = { enabled ->
-                            if (!enabled && isLowEndDevice) {
-                                // User is trying to enable blur on a low-end device -> warn
-                                showLagWarningDialog = true
-                            } else {
-                                viewModel.setPerformanceMode(enabled)
+                            if (uiState.accentGradient) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(22.dp)
+                                            .clip(CircleShape)
+                                            .background(parsedAccent2)
+                                            .border(1.dp, Color(0x44FFFFFF), CircleShape),
+                                )
                             }
-                        },
-                        colors =
-                            SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = accent,
-                                uncheckedThumbColor = SwitchOffGray,
-                                uncheckedTrackColor = SwitchOffGray.copy(alpha = 0.5f),
-                            ),
-                    )
-                },
-            )
+                            TextButton(onClick = { showAccentPickerDialog = true }) {
+                                Text(
+                                    stringResource(R.string.action_change),
+                                    color = accent,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    },
+                )
+
+                // Performance Mode toggle
+                val perfSubtitle =
+                    when {
+                        isLowEndDevice && uiState.performanceMode ->
+                            stringResource(R.string.perf_auto_low_end)
+                        isLowEndDevice && !uiState.performanceMode ->
+                            stringResource(R.string.perf_quality_may_lag)
+                        uiState.performanceMode -> stringResource(R.string.perf_static_glass)
+                        else -> stringResource(R.string.perf_dynamic_glass)
+                    }
+                ListItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    leadingContent = {
+                        Icon(
+                            Icons.Default.Speed,
+                            contentDescription = null,
+                            tint = accent.copy(alpha = 0.7f),
+                        )
+                    },
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.setting_performance_mode),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            perfSubtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color =
+                                if (isLowEndDevice && !uiState.performanceMode) {
+                                    accent.copy(alpha = 0.8f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = uiState.performanceMode,
+                            onCheckedChange = { enabled ->
+                                if (!enabled && isLowEndDevice) {
+                                    // User is trying to enable blur on a low-end device -> warn
+                                    showLagWarningDialog = true
+                                } else {
+                                    viewModel.setPerformanceMode(enabled)
+                                }
+                            },
+                            colors =
+                                SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = accent,
+                                    uncheckedThumbColor = SwitchOffGray,
+                                    uncheckedTrackColor = SwitchOffGray.copy(alpha = 0.5f),
+                                ),
+                        )
+                    },
+                )
 
                 Spacer(Modifier.height(16.dp))
                 // Language
-            GlassSectionHeader(stringResource(R.string.settings_section_language))
-            ClickableSettingItem(
-                Icons.Default.Language,
-                stringResource(R.string.setting_language),
-                languageDisplay,
-            ) { showLanguageDialog = true }
+                GlassSectionHeader(stringResource(R.string.settings_section_language))
+                ClickableSettingItem(
+                    Icons.Default.Language,
+                    stringResource(R.string.setting_language),
+                    languageDisplay,
+                ) { showLanguageDialog = true }
 
                 Spacer(Modifier.height(16.dp))
                 // Storage
-            GlassSectionHeader(stringResource(R.string.settings_section_storage))
-            ClickableSettingItem(
-                Icons.Default.Folder,
-                stringResource(R.string.setting_save_location),
-                if (uiState.saveLocationUri != null) {
-                    stringResource(
-                        R.string.setting_save_location_custom,
-                    )
-                } else {
-                    stringResource(R.string.setting_save_location_default)
-                },
-            ) { launchFolderPicker() }
-            ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), uiState.filenamePattern) {
-                showPatternDialog = true
-            }
-            SwitchSettingItem(
-                Icons.Default.DeleteSweep,
-                stringResource(R.string.setting_auto_delete_title),
-                stringResource(R.string.setting_auto_delete_desc),
-                uiState.autoDelete,
-            ) {
-                viewModel.setAutoDelete(it)
-            }
+                GlassSectionHeader(stringResource(R.string.settings_section_storage))
+                ClickableSettingItem(
+                    Icons.Default.Folder,
+                    stringResource(R.string.setting_save_location),
+                    if (uiState.saveLocationUri != null) {
+                        stringResource(
+                            R.string.setting_save_location_custom,
+                        )
+                    } else {
+                        stringResource(R.string.setting_save_location_default)
+                    },
+                ) { launchFolderPicker() }
+                ClickableSettingItem(Icons.Default.TextFields, stringResource(R.string.setting_filename_pattern), uiState.filenamePattern) {
+                    showPatternDialog = true
+                }
+                SwitchSettingItem(
+                    Icons.Default.DeleteSweep,
+                    stringResource(R.string.setting_auto_delete_title),
+                    stringResource(R.string.setting_auto_delete_desc),
+                    uiState.autoDelete,
+                ) {
+                    viewModel.setAutoDelete(it)
+                }
 
                 Spacer(Modifier.height(16.dp))
                 // General
-            GlassSectionHeader(stringResource(R.string.settings_section_general))
-            SwitchSettingItem(
-                Icons.Default.Smartphone,
-                stringResource(R.string.setting_keep_screen_on_title),
-                stringResource(R.string.setting_keep_screen_on_desc),
-                uiState.keepScreenOn,
-            ) {
-                viewModel.setKeepScreenOn(it)
-            }
+                GlassSectionHeader(stringResource(R.string.settings_section_general))
+                SwitchSettingItem(
+                    Icons.Default.Smartphone,
+                    stringResource(R.string.setting_keep_screen_on_title),
+                    stringResource(R.string.setting_keep_screen_on_desc),
+                    uiState.keepScreenOn,
+                ) {
+                    viewModel.setKeepScreenOn(it)
+                }
 
                 Spacer(Modifier.height(16.dp))
                 // Privacy
-            GlassSectionHeader(stringResource(R.string.settings_section_privacy))
-            SwitchSettingItem(
-                Icons.Default.Analytics,
-                stringResource(R.string.setting_usage_analytics),
-                stringResource(R.string.setting_usage_analytics_desc),
-                uiState.analyticsEnabled,
-            ) { viewModel.setAnalyticsEnabled(it) }
-            SwitchSettingItem(
-                Icons.Default.PrivacyTip,
-                stringResource(R.string.setting_personalized_ads),
-                if (uiState.personalizedAdsEnabled) {
-                    stringResource(R.string.setting_personalized_ads_on_desc)
-                } else {
-                    stringResource(R.string.setting_personalized_ads_off_desc)
-                },
-                uiState.personalizedAdsEnabled,
-            ) { viewModel.setPersonalizedAdsEnabled(it) }
+                GlassSectionHeader(stringResource(R.string.settings_section_privacy))
+                SwitchSettingItem(
+                    Icons.Default.Analytics,
+                    stringResource(R.string.setting_usage_analytics),
+                    stringResource(R.string.setting_usage_analytics_desc),
+                    uiState.analyticsEnabled,
+                ) { viewModel.setAnalyticsEnabled(it) }
+                SwitchSettingItem(
+                    Icons.Default.PrivacyTip,
+                    stringResource(R.string.setting_personalized_ads),
+                    if (uiState.personalizedAdsEnabled) {
+                        stringResource(R.string.setting_personalized_ads_on_desc)
+                    } else {
+                        stringResource(R.string.setting_personalized_ads_off_desc)
+                    },
+                    uiState.personalizedAdsEnabled,
+                ) { viewModel.setPersonalizedAdsEnabled(it) }
             }
         }
 
@@ -1563,211 +1531,211 @@ fun SettingsScreen(
         )
     }
 
-        // Lag-warning dialog (shown when low-end user disables Performance Mode)
-        if (showLagWarningDialog) {
-            AlertDialog(
-                onDismissRequest = { showLagWarningDialog = false },
-                icon = {
-                    Icon(
-                        Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = accent,
-                        modifier = Modifier.size(28.dp),
-                    )
-                },
-                title = { Text(stringResource(R.string.performance_warning_title)) },
-                text = {
-                    Text(stringResource(R.string.performance_warning_body))
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        viewModel.setPerformanceMode(false)
-                        showLagWarningDialog = false
-                    }) {
-                        Text(stringResource(R.string.action_enable_anyway), color = accent, fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showLagWarningDialog = false }) {
-                        Text(stringResource(R.string.action_keep_performance_mode))
-                    }
-                },
-            )
-        }
-
-        // Accent color picker dialog
-        if (showAccentPickerDialog) {
-            val accentPresets =
-                listOf(
-                    "FF0033" to "Crimson",
-                    "FF4500" to "Sunset",
-                    "FFD700" to "Gold",
-                    "00C853" to "Neon",
-                    "00E5FF" to "Cyan",
-                    "2979FF" to "Electric",
-                    "D500F9" to "Plasma",
-                    "FF4081" to "Rose",
+    // Lag-warning dialog (shown when low-end user disables Performance Mode)
+    if (showLagWarningDialog) {
+        AlertDialog(
+            onDismissRequest = { showLagWarningDialog = false },
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(28.dp),
                 )
-            AlertDialog(
-                onDismissRequest = { showAccentPickerDialog = false },
-                title = {
+            },
+            title = { Text(stringResource(R.string.performance_warning_title)) },
+            text = {
+                Text(stringResource(R.string.performance_warning_body))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setPerformanceMode(false)
+                    showLagWarningDialog = false
+                }) {
+                    Text(stringResource(R.string.action_enable_anyway), color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLagWarningDialog = false }) {
+                    Text(stringResource(R.string.action_keep_performance_mode))
+                }
+            },
+        )
+    }
+
+    // Accent color picker dialog
+    if (showAccentPickerDialog) {
+        val accentPresets =
+            listOf(
+                "FF0033" to "Crimson",
+                "FF4500" to "Sunset",
+                "FFD700" to "Gold",
+                "00C853" to "Neon",
+                "00E5FF" to "Cyan",
+                "2979FF" to "Electric",
+                "D500F9" to "Plasma",
+                "FF4081" to "Rose",
+            )
+        AlertDialog(
+            onDismissRequest = { showAccentPickerDialog = false },
+            title = {
+                Text(
+                    text =
+                        if (uiState.accentGradient && accentPickingSecond) {
+                            stringResource(R.string.accent_gradient_color_2)
+                        } else {
+                            stringResource(R.string.accent_color_title)
+                        },
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Preset swatches
                     Text(
-                        text =
-                            if (uiState.accentGradient && accentPickingSecond) {
-                                stringResource(R.string.accent_gradient_color_2)
-                            } else {
-                                stringResource(R.string.accent_color_title)
-                            },
-                        fontWeight = FontWeight.Bold,
+                        stringResource(R.string.accent_presets),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        // Preset swatches
-                        Text(
-                            stringResource(R.string.accent_presets),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            accentPresets.take(8).forEach { (hex, _) ->
-                                val c =
-                                    remember(hex) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        accentPresets.take(8).forEach { (hex, _) ->
+                            val c =
+                                remember(hex) {
                                     runCatching { Color("#$hex".toColorInt()) }
-                                            .getOrDefault(accent)
-                                    }
-                                val isSelected =
-                                    if (uiState.accentGradient && accentPickingSecond) {
-                                        uiState.accentHex2.equals(hex, true)
-                                    } else {
-                                        uiState.accentHex.equals(hex, true)
-                                    }
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                            .background(c)
-                                            .border(
-                                                if (isSelected) 2.5.dp else 1.dp,
-                                                if (isSelected) Color.White else Color(0x44FFFFFF),
-                                                CircleShape,
-                                            ).clickable {
-                                                if (uiState.accentGradient && accentPickingSecond) {
-                                                    accentHex2Input = hex
-                                                    viewModel.setAccentColor2(hex)
-                                                } else {
-                                                    accentHexInput = hex
-                                                    viewModel.setAccentColor(hex)
-                                                }
-                                            },
-                                )
-                            }
-                        }
-
-                        // Hex input
-                        val hexTarget = if (uiState.accentGradient && accentPickingSecond) accentHex2Input else accentHexInput
-                        val hexSetter: (String) -> Unit = { v ->
-                            if (uiState.accentGradient && accentPickingSecond) accentHex2Input = v else accentHexInput = v
-                        }
-                        Text(
-                            stringResource(R.string.label_hex_code),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        OutlinedTextField(
-                            value = hexTarget,
-                            onValueChange = {
-                                val clean =
-                                    it
-                                        .removePrefix("#")
-                                        .uppercase()
-                                        .filter { c -> c in "0123456789ABCDEF" }
-                                        .take(6)
-                                hexSetter(clean)
-                                if (clean.length == 6) {
-                                    if (uiState.accentGradient && accentPickingSecond) {
-                                        viewModel.setAccentColor2(clean)
-                                    } else {
-                                        viewModel.setAccentColor(clean)
-                                    }
+                                        .getOrDefault(accent)
                                 }
-                            },
-                            prefix = { Text("#", color = accent) },
-                            placeholder = { Text(stringResource(R.string.accent_hex_placeholder)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-
-                        // Gradient toggle
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column {
-                                Text(stringResource(R.string.accent_gradient_toggle), style = MaterialTheme.typography.bodyMedium)
-                                Text(
-                                    stringResource(R.string.accent_gradient_desc),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(
-                                checked = uiState.accentGradient,
-                                onCheckedChange = {
-                                    viewModel.setAccentUseGradient(it)
-                                    if (it) accentPickingSecond = false
-                                },
-                                colors =
-                                    SwitchDefaults.colors(
-                                        checkedThumbColor = accent,
-                                        checkedTrackColor = accent.copy(alpha = 0.3f),
-                                        uncheckedThumbColor = Color(0xFF555555),
-                                        uncheckedTrackColor = Color(0xFF222222),
-                                    ),
+                            val isSelected =
+                                if (uiState.accentGradient && accentPickingSecond) {
+                                    uiState.accentHex2.equals(hex, true)
+                                } else {
+                                    uiState.accentHex.equals(hex, true)
+                                }
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(c)
+                                        .border(
+                                            if (isSelected) 2.5.dp else 1.dp,
+                                            if (isSelected) Color.White else Color(0x44FFFFFF),
+                                            CircleShape,
+                                        ).clickable {
+                                            if (uiState.accentGradient && accentPickingSecond) {
+                                                accentHex2Input = hex
+                                                viewModel.setAccentColor2(hex)
+                                            } else {
+                                                accentHexInput = hex
+                                                viewModel.setAccentColor(hex)
+                                            }
+                                        },
                             )
                         }
+                    }
 
-                        if (uiState.accentGradient) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                val c1 =
-                                    remember(accentHexInput) {
-                                        runCatching { Color("#$accentHexInput".toColorInt()) }
-                                            .getOrDefault(accent)
-                                    }
-                                val c2 =
-                                    remember(accentHex2Input) {
-                                        runCatching { Color("#$accentHex2Input".toColorInt()) }
-                                            .getOrDefault(Color(0xFFFF8C00))
-                                    }
-                                TextButton(
-                                    onClick = { accentPickingSecond = false },
-                                    border = if (!accentPickingSecond) BorderStroke(1.dp, accent) else null,
-                                ) {
-                                    Box(Modifier.size(14.dp).clip(CircleShape).background(c1))
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(stringResource(R.string.accent_color_1))
+                    // Hex input
+                    val hexTarget = if (uiState.accentGradient && accentPickingSecond) accentHex2Input else accentHexInput
+                    val hexSetter: (String) -> Unit = { v ->
+                        if (uiState.accentGradient && accentPickingSecond) accentHex2Input = v else accentHexInput = v
+                    }
+                    Text(
+                        stringResource(R.string.label_hex_code),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedTextField(
+                        value = hexTarget,
+                        onValueChange = {
+                            val clean =
+                                it
+                                    .removePrefix("#")
+                                    .uppercase()
+                                    .filter { c -> c in "0123456789ABCDEF" }
+                                    .take(6)
+                            hexSetter(clean)
+                            if (clean.length == 6) {
+                                if (uiState.accentGradient && accentPickingSecond) {
+                                    viewModel.setAccentColor2(clean)
+                                } else {
+                                    viewModel.setAccentColor(clean)
                                 }
-                                TextButton(
-                                    onClick = { accentPickingSecond = true },
-                                    border = if (accentPickingSecond) BorderStroke(1.dp, accent) else null,
-                                ) {
-                                    Box(Modifier.size(14.dp).clip(CircleShape).background(c2))
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(stringResource(R.string.accent_color_2))
+                            }
+                        },
+                        prefix = { Text("#", color = accent) },
+                        placeholder = { Text(stringResource(R.string.accent_hex_placeholder)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    // Gradient toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column {
+                            Text(stringResource(R.string.accent_gradient_toggle), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                stringResource(R.string.accent_gradient_desc),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = uiState.accentGradient,
+                            onCheckedChange = {
+                                viewModel.setAccentUseGradient(it)
+                                if (it) accentPickingSecond = false
+                            },
+                            colors =
+                                SwitchDefaults.colors(
+                                    checkedThumbColor = accent,
+                                    checkedTrackColor = accent.copy(alpha = 0.3f),
+                                    uncheckedThumbColor = Color(0xFF555555),
+                                    uncheckedTrackColor = Color(0xFF222222),
+                                ),
+                        )
+                    }
+
+                    if (uiState.accentGradient) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val c1 =
+                                remember(accentHexInput) {
+                                    runCatching { Color("#$accentHexInput".toColorInt()) }
+                                        .getOrDefault(accent)
                                 }
+                            val c2 =
+                                remember(accentHex2Input) {
+                                    runCatching { Color("#$accentHex2Input".toColorInt()) }
+                                        .getOrDefault(Color(0xFFFF8C00))
+                                }
+                            TextButton(
+                                onClick = { accentPickingSecond = false },
+                                border = if (!accentPickingSecond) BorderStroke(1.dp, accent) else null,
+                            ) {
+                                Box(Modifier.size(14.dp).clip(CircleShape).background(c1))
+                                Spacer(Modifier.width(6.dp))
+                                Text(stringResource(R.string.accent_color_1))
+                            }
+                            TextButton(
+                                onClick = { accentPickingSecond = true },
+                                border = if (accentPickingSecond) BorderStroke(1.dp, accent) else null,
+                            ) {
+                                Box(Modifier.size(14.dp).clip(CircleShape).background(c2))
+                                Spacer(Modifier.width(6.dp))
+                                Text(stringResource(R.string.accent_color_2))
                             }
                         }
                     }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showAccentPickerDialog = false }) {
-                        Text(stringResource(R.string.action_done), color = accent, fontWeight = FontWeight.Bold)
-                    }
-                },
-            )
-        }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAccentPickerDialog = false }) {
+                    Text(stringResource(R.string.action_done), color = accent, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
+    }
 
     if (showAudioMenuSheet) {
         ModalBottomSheet(
@@ -2009,28 +1977,11 @@ fun SettingsScreen(
                 ) {
                     if (!videoLocked) showVideoEncoderDialog = true
                 }
-                val recordingEngineLabel =
-                    when (uiState.recordingEngineMode) {
-                        RecordingEngineMode.PERFORMANCE -> stringResource(R.string.recording_engine_performance_label)
-                        RecordingEngineMode.COMPATIBILITY -> stringResource(R.string.recording_engine_compatibility_label)
+                val colorModeDisplay =
+                    when (uiState.colorMode) {
+                        ColorMode.FULL -> stringResource(R.string.setting_color_mode_full)
+                        else -> stringResource(R.string.setting_color_mode_standard)
                     }
-                val recordingEngineSummary =
-                    when (uiState.recordingEngineMode) {
-                        RecordingEngineMode.PERFORMANCE -> stringResource(R.string.recording_engine_performance_summary)
-                        RecordingEngineMode.COMPATIBILITY -> stringResource(R.string.recording_engine_compatibility_summary)
-                    }
-                ClickableSettingItem(
-                    Icons.Default.Settings,
-                    stringResource(R.string.setting_recording_engine),
-                    "$recordingEngineLabel\n$recordingEngineSummary",
-                    enabled = !videoLocked,
-                ) {
-                    if (!videoLocked) showRecordingEngineDialog = true
-                }
-                val colorModeDisplay = when (uiState.colorMode) {
-                    ColorMode.FULL -> stringResource(R.string.setting_color_mode_full)
-                    else -> stringResource(R.string.setting_color_mode_standard)
-                }
                 ClickableSettingItem(
                     Icons.Default.Palette,
                     stringResource(R.string.setting_color_mode),
@@ -2076,74 +2027,6 @@ fun SettingsScreen(
                     if (!videoLocked) showOrientationDialog = true
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun RecordingEngineModeDialog(
-    selectedMode: RecordingEngineMode,
-    onPerformanceSelected: () -> Unit,
-    onAdvancedSelected: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.setting_recording_engine)) },
-        text = {
-            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                RecordingEngineOptionRow(
-                    selected = selectedMode == RecordingEngineMode.PERFORMANCE,
-                    title = stringResource(R.string.recording_engine_performance_label),
-                    summary = stringResource(R.string.recording_engine_performance_summary),
-                    onClick = onPerformanceSelected,
-                )
-                RecordingEngineOptionRow(
-                    selected = selectedMode == RecordingEngineMode.COMPATIBILITY,
-                    title = stringResource(R.string.recording_engine_compatibility_label),
-                    summary = stringResource(R.string.recording_engine_compatibility_summary),
-                    onClick = onAdvancedSelected,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.recording_engine_scope_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
-            }
-        },
-    )
-}
-
-@Composable
-private fun RecordingEngineOptionRow(
-    selected: Boolean,
-    title: String,
-    summary: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .selectable(selected = selected, onClick = onClick)
-                .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Column(modifier = Modifier.padding(start = 16.dp).weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                summary,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -2307,11 +2190,17 @@ private fun ResolutionDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .selectable(selected = isSelected, onClick = { onOptionSelected(preset.setting); onDismiss() })
+                                .selectable(selected = isSelected, onClick = {
+                                    onOptionSelected(preset.setting)
+                                    onDismiss()
+                                })
                                 .padding(vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = isSelected, onClick = { onOptionSelected(preset.setting); onDismiss() })
+                        RadioButton(selected = isSelected, onClick = {
+                            onOptionSelected(preset.setting)
+                            onDismiss()
+                        })
                         Text(
                             resolutionPresetLabel(preset),
                             style = MaterialTheme.typography.bodyLarge,
@@ -2327,14 +2216,19 @@ private fun ResolutionDialog(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .clickable { onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION); onDismiss() }
-                            .padding(vertical = 12.dp),
+                            .clickable {
+                                onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION)
+                                onDismiss()
+                            }.padding(vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (customSelected) {
                         RadioButton(
                             selected = true,
-                            onClick = { onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION); onDismiss() },
+                            onClick = {
+                                onOptionSelected(RecordingResolutionSupport.CUSTOM_OPTION)
+                                onDismiss()
+                            },
                         )
                     } else {
                         Icon(Icons.Default.Edit, null, modifier = Modifier.padding(start = 8.dp).size(20.dp), tint = accent)
@@ -2487,11 +2381,17 @@ fun SingleChoiceDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .selectable(selected = option == selectedOption, onClick = { onOptionSelected(option); onDismiss() })
+                                .selectable(selected = option == selectedOption, onClick = {
+                                    onOptionSelected(option)
+                                    onDismiss()
+                                })
                                 .padding(vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = option == selectedOption, onClick = { onOptionSelected(option); onDismiss() })
+                        RadioButton(selected = option == selectedOption, onClick = {
+                            onOptionSelected(option)
+                            onDismiss()
+                        })
                         Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 16.dp))
                     }
                 }

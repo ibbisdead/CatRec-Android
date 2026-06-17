@@ -82,52 +82,53 @@ class SettingsConfigCache(
     ) {
         companion object {
             /** Matches [SettingsRepository] Flow defaults. Used when the cache has not warmed yet. */
-            val DEFAULTS = Snapshot(
-                captureMode = CaptureMode.RECORD,
-                gifRecorderPresetId = GifRecordingPresets.default.id,
-                recordingOrientation = "Auto",
-                recordAudio = false,
-                internalAudio = false,
-                resolution = "Native",
-                fps = 30f,
-                bitrateMbps = 10f,
-                audioBitrateKbps = 128,
-                audioSampleRate = 44100,
-                audioChannels = "Mono",
-                audioEncoder = "AAC-LC",
-                separateMicRecording = false,
-                cameraOverlay = false,
-                cameraOverlaySize = 120,
-                cameraXFraction = 0.05f,
-                cameraYFraction = 0.1f,
-                cameraLockPosition = false,
-                cameraFacing = "Front",
-                cameraAspectRatio = "Circle",
-                cameraOpacity = 100,
-                showWatermark = false,
-                stopBehavior = setOf(StopBehaviorKeys.NOTIFICATION),
-                saveLocationUri = null,
-                videoEncoder = "H.264",
-                floatingControls = false,
-                hideFloatingIconWhileRecording = false,
-                filenamePattern = "yyyyMMdd_HHmmss",
-                countdown = 0,
-                keepScreenOn = false,
-                watermarkLocation = "Top Left",
-                watermarkImageUri = null,
-                watermarkShape = "Square",
-                watermarkOpacity = 100,
-                watermarkSize = 80,
-                watermarkXFraction = 0.05f,
-                watermarkYFraction = 0.05f,
-                screenshotFormat = "JPEG",
-                screenshotQuality = 90,
-                clipperDurationMinutes = 1,
-                colorMode = ColorMode.FULL,
-                forceRec709Compatibility = false,
-                rec709CompatBrightnessCorrection = Rec709CompatBrightnessCorrection.OFF,
-                recordingEngineMode = RecordingEngineMode.DEFAULT,
-            )
+            val DEFAULTS =
+                Snapshot(
+                    captureMode = CaptureMode.RECORD,
+                    gifRecorderPresetId = GifRecordingPresets.default.id,
+                    recordingOrientation = "Auto",
+                    recordAudio = false,
+                    internalAudio = false,
+                    resolution = "Native",
+                    fps = 30f,
+                    bitrateMbps = 10f,
+                    audioBitrateKbps = 128,
+                    audioSampleRate = 44100,
+                    audioChannels = "Mono",
+                    audioEncoder = "AAC-LC",
+                    separateMicRecording = false,
+                    cameraOverlay = false,
+                    cameraOverlaySize = 120,
+                    cameraXFraction = 0.05f,
+                    cameraYFraction = 0.1f,
+                    cameraLockPosition = false,
+                    cameraFacing = "Front",
+                    cameraAspectRatio = "Circle",
+                    cameraOpacity = 100,
+                    showWatermark = false,
+                    stopBehavior = setOf(StopBehaviorKeys.NOTIFICATION),
+                    saveLocationUri = null,
+                    videoEncoder = "H.264",
+                    floatingControls = false,
+                    hideFloatingIconWhileRecording = false,
+                    filenamePattern = "yyyyMMdd_HHmmss",
+                    countdown = 0,
+                    keepScreenOn = false,
+                    watermarkLocation = "Top Left",
+                    watermarkImageUri = null,
+                    watermarkShape = "Square",
+                    watermarkOpacity = 100,
+                    watermarkSize = 80,
+                    watermarkXFraction = 0.05f,
+                    watermarkYFraction = 0.05f,
+                    screenshotFormat = "JPEG",
+                    screenshotQuality = 90,
+                    clipperDurationMinutes = 1,
+                    colorMode = ColorMode.FULL,
+                    forceRec709Compatibility = false,
+                    rec709CompatBrightnessCorrection = Rec709CompatBrightnessCorrection.OFF,
+                    recordingEngineMode = RecordingEngineMode.DEFAULT,
+                )
         }
     }
 
@@ -174,162 +175,174 @@ class SettingsConfigCache(
     /** Current snapshot or [Snapshot.DEFAULTS] if the cache has not yet warmed. */
     fun current(): Snapshot = _snapshot.value ?: Snapshot.DEFAULTS
 
-    private suspend fun buildSnapshot(): Snapshot = with(repository) {
-        Snapshot(
-            captureMode = captureMode.first(),
-            gifRecorderPresetId = gifRecorderPresetId.first(),
-            recordingOrientation = recordingOrientation.first(),
-            recordAudio = recordAudio.first(),
-            internalAudio = internalAudio.first(),
-            resolution = resolution.first(),
-            fps = fps.first(),
-            bitrateMbps = bitrate.first(),
-            audioBitrateKbps = audioBitrate.first(),
-            audioSampleRate = audioSampleRate.first(),
-            audioChannels = audioChannels.first(),
-            audioEncoder = audioEncoder.first(),
-            separateMicRecording = separateMicRecording.first(),
-            cameraOverlay = cameraOverlay.first(),
-            cameraOverlaySize = cameraOverlaySize.first(),
-            cameraXFraction = cameraXFraction.first(),
-            cameraYFraction = cameraYFraction.first(),
-            cameraLockPosition = cameraLockPosition.first(),
-            cameraFacing = cameraFacing.first(),
-            cameraAspectRatio = cameraAspectRatio.first(),
-            cameraOpacity = cameraOpacity.first(),
-            showWatermark = showWatermark.first(),
-            stopBehavior = stopBehavior.first(),
-            saveLocationUri = saveLocationUri.first(),
-            videoEncoder = videoEncoder.first(),
-            floatingControls = floatingControls.first(),
-            hideFloatingIconWhileRecording = hideFloatingIconWhileRecording.first(),
-            filenamePattern = filenamePattern.first(),
-            countdown = countdown.first(),
-            keepScreenOn = keepScreenOn.first(),
-            watermarkLocation = watermarkLocation.first(),
-            watermarkImageUri = watermarkImageUri.first(),
-            watermarkShape = watermarkShape.first(),
-            watermarkOpacity = watermarkOpacity.first(),
-            watermarkSize = watermarkSize.first(),
-            watermarkXFraction = watermarkXFraction.first(),
-            watermarkYFraction = watermarkYFraction.first(),
-            screenshotFormat = screenshotFormat.first(),
-            screenshotQuality = screenshotQuality.first(),
-            clipperDurationMinutes = clipperDurationMinutes.first(),
-            colorMode = colorMode.first(),
-            forceRec709Compatibility = forceRec709Compatibility.first(),
-            rec709CompatBrightnessCorrection = rec709CompatBrightnessCorrection.first(),
-            recordingEngineMode = recordingEngineMode.first(),
-        )
-    }
+    private suspend fun buildSnapshot(): Snapshot =
+        with(repository) {
+            Snapshot(
+                captureMode = captureMode.first(),
+                gifRecorderPresetId = gifRecorderPresetId.first(),
+                recordingOrientation = recordingOrientation.first(),
+                recordAudio = recordAudio.first(),
+                internalAudio = internalAudio.first(),
+                resolution = resolution.first(),
+                fps = fps.first(),
+                bitrateMbps = bitrate.first(),
+                audioBitrateKbps = audioBitrate.first(),
+                audioSampleRate = audioSampleRate.first(),
+                audioChannels = audioChannels.first(),
+                audioEncoder = audioEncoder.first(),
+                separateMicRecording = separateMicRecording.first(),
+                cameraOverlay = cameraOverlay.first(),
+                cameraOverlaySize = cameraOverlaySize.first(),
+                cameraXFraction = cameraXFraction.first(),
+                cameraYFraction = cameraYFraction.first(),
+                cameraLockPosition = cameraLockPosition.first(),
+                cameraFacing = cameraFacing.first(),
+                cameraAspectRatio = cameraAspectRatio.first(),
+                cameraOpacity = cameraOpacity.first(),
+                showWatermark = showWatermark.first(),
+                stopBehavior = stopBehavior.first(),
+                saveLocationUri = saveLocationUri.first(),
+                videoEncoder = videoEncoder.first(),
+                floatingControls = floatingControls.first(),
+                hideFloatingIconWhileRecording = hideFloatingIconWhileRecording.first(),
+                filenamePattern = filenamePattern.first(),
+                countdown = countdown.first(),
+                keepScreenOn = keepScreenOn.first(),
+                watermarkLocation = watermarkLocation.first(),
+                watermarkImageUri = watermarkImageUri.first(),
+                watermarkShape = watermarkShape.first(),
+                watermarkOpacity = watermarkOpacity.first(),
+                watermarkSize = watermarkSize.first(),
+                watermarkXFraction = watermarkXFraction.first(),
+                watermarkYFraction = watermarkYFraction.first(),
+                screenshotFormat = screenshotFormat.first(),
+                screenshotQuality = screenshotQuality.first(),
+                clipperDurationMinutes = clipperDurationMinutes.first(),
+                colorMode = colorMode.first(),
+                forceRec709Compatibility = forceRec709Compatibility.first(),
+                rec709CompatBrightnessCorrection = rec709CompatBrightnessCorrection.first(),
+                recordingEngineMode = recordingEngineMode.first(),
+            )
+        }
 
     /**
      * Re-emits a full [Snapshot] whenever any of the watched flows changes. DataStore
      * reads are debounced by [kotlinx.coroutines.flow.combine] — we only rebuild the
      * snapshot after a settled set of values is available for every key.
      */
-    private fun combineAll() = with(repository) {
-        // One `combine` call is limited to 5 flows, so we layer multiple combines and then
-        // merge them into the final Snapshot.
-        val video = combine(captureMode, gifRecorderPresetId, recordingOrientation, resolution, fps) { a, b, c, d, e ->
-            VideoPart(a, b, c, d, e)
-        }
-        val audioFlags = combine(recordAudio, internalAudio, bitrate, audioBitrate) { a, b, c, d ->
-            AudioFlagsPart(a, b, c, d)
-        }
-        val audio2 = combine(audioSampleRate, audioChannels, audioEncoder, separateMicRecording, videoEncoder) { a, b, c, d, e ->
-            Audio2Part(a, b, c, d, e)
-        }
-        val camera = combine(cameraOverlay, cameraOverlaySize, cameraXFraction, cameraYFraction, cameraLockPosition) { a, b, c, d, e ->
-            CameraPart(a, b, c, d, e)
-        }
-        val camera2 = combine(cameraFacing, cameraAspectRatio, cameraOpacity, showWatermark, stopBehavior) { a, b, c, d, e ->
-            Camera2Part(a, b, c, d, e)
-        }
-        val watermark = combine(watermarkLocation, watermarkImageUri, watermarkShape, watermarkOpacity, watermarkSize) { a, b, c, d, e ->
-            WatermarkPart(a, b, c, d, e)
-        }
-        val storageControls = combine(saveLocationUri, floatingControls, hideFloatingIconWhileRecording, filenamePattern, countdown) { a, b, c, d, e ->
-            StorageControlsPart(a, b, c, d, e)
-        }
-        val misc = combine(keepScreenOn, watermarkXFraction, watermarkYFraction, screenshotFormat, screenshotQuality) { a, b, c, d, e ->
-            MiscPart(a, b, c, d, e)
-        }
-        val tail =
-            combine(
-                clipperDurationMinutes,
-                recordingEngineMode,
-                colorMode,
-                forceRec709Compatibility,
-                rec709CompatBrightnessCorrection,
-            ) { a, b, c, d, e ->
-                TailPart(a, b, c, d, e)
-            }
+    private fun combineAll() =
+        with(repository) {
+            // One `combine` call is limited to 5 flows, so we layer multiple combines and then
+            // merge them into the final Snapshot.
+            val video =
+                combine(captureMode, gifRecorderPresetId, recordingOrientation, resolution, fps) { a, b, c, d, e ->
+                    VideoPart(a, b, c, d, e)
+                }
+            val audioFlags =
+                combine(recordAudio, internalAudio, bitrate, audioBitrate) { a, b, c, d ->
+                    AudioFlagsPart(a, b, c, d)
+                }
+            val audio2 =
+                combine(audioSampleRate, audioChannels, audioEncoder, separateMicRecording, videoEncoder) { a, b, c, d, e ->
+                    Audio2Part(a, b, c, d, e)
+                }
+            val camera =
+                combine(cameraOverlay, cameraOverlaySize, cameraXFraction, cameraYFraction, cameraLockPosition) { a, b, c, d, e ->
+                    CameraPart(a, b, c, d, e)
+                }
+            val camera2 =
+                combine(cameraFacing, cameraAspectRatio, cameraOpacity, showWatermark, stopBehavior) { a, b, c, d, e ->
+                    Camera2Part(a, b, c, d, e)
+                }
+            val watermark =
+                combine(watermarkLocation, watermarkImageUri, watermarkShape, watermarkOpacity, watermarkSize) { a, b, c, d, e ->
+                    WatermarkPart(a, b, c, d, e)
+                }
+            val storageControls =
+                combine(saveLocationUri, floatingControls, hideFloatingIconWhileRecording, filenamePattern, countdown) { a, b, c, d, e ->
+                    StorageControlsPart(a, b, c, d, e)
+                }
+            val misc =
+                combine(keepScreenOn, watermarkXFraction, watermarkYFraction, screenshotFormat, screenshotQuality) { a, b, c, d, e ->
+                    MiscPart(a, b, c, d, e)
+                }
+            val tail =
+                combine(
+                    clipperDurationMinutes,
+                    recordingEngineMode,
+                    colorMode,
+                    forceRec709Compatibility,
+                    rec709CompatBrightnessCorrection,
+                ) { a, b, c, d, e ->
+                    TailPart(a, b, c, d, e)
+                }
 
-        val groupA = combine(video, audioFlags, audio2, camera, camera2) { v, af, a2, c, c2 ->
-            GroupA(v, af, a2, c, c2)
+            val groupA =
+                combine(video, audioFlags, audio2, camera, camera2) { v, af, a2, c, c2 ->
+                    GroupA(v, af, a2, c, c2)
+                }
+            val groupB =
+                combine(watermark, storageControls, misc, tail) { w, sc, m, t ->
+                    GroupB(
+                        w,
+                        sc,
+                        m,
+                        t.clipperDurationMinutes,
+                        t.colorMode,
+                        t.forceRec709Compatibility,
+                        t.rec709CompatBrightnessCorrection,
+                        t.recordingEngineMode,
+                    )
+                }
+            combine(groupA, groupB) { a, b ->
+                Snapshot(
+                    captureMode = a.video.captureMode,
+                    gifRecorderPresetId = a.video.gifRecorderPresetId,
+                    recordingOrientation = a.video.recordingOrientation,
+                    recordAudio = a.audioFlags.recordAudio,
+                    internalAudio = a.audioFlags.internalAudio,
+                    resolution = a.video.resolution,
+                    fps = a.video.fps,
+                    bitrateMbps = a.audioFlags.bitrateMbps,
+                    audioBitrateKbps = a.audioFlags.audioBitrateKbps,
+                    audioSampleRate = a.audio2.audioSampleRate,
+                    audioChannels = a.audio2.audioChannels,
+                    audioEncoder = a.audio2.audioEncoder,
+                    separateMicRecording = a.audio2.separateMicRecording,
+                    cameraOverlay = a.camera.cameraOverlay,
+                    cameraOverlaySize = a.camera.cameraOverlaySize,
+                    cameraXFraction = a.camera.cameraXFraction,
+                    cameraYFraction = a.camera.cameraYFraction,
+                    cameraLockPosition = a.camera.cameraLockPosition,
+                    cameraFacing = a.camera2.cameraFacing,
+                    cameraAspectRatio = a.camera2.cameraAspectRatio,
+                    cameraOpacity = a.camera2.cameraOpacity,
+                    showWatermark = a.camera2.showWatermark,
+                    stopBehavior = a.camera2.stopBehavior,
+                    saveLocationUri = b.storage.saveLocationUri,
+                    videoEncoder = a.audio2.videoEncoder,
+                    floatingControls = b.storage.floatingControls,
+                    hideFloatingIconWhileRecording = b.storage.hideFloatingIconWhileRecording,
+                    filenamePattern = b.storage.filenamePattern,
+                    countdown = b.storage.countdown,
+                    keepScreenOn = b.misc.keepScreenOn,
+                    watermarkLocation = b.watermark.watermarkLocation,
+                    watermarkImageUri = b.watermark.watermarkImageUri,
+                    watermarkShape = b.watermark.watermarkShape,
+                    watermarkOpacity = b.watermark.watermarkOpacity,
+                    watermarkSize = b.watermark.watermarkSize,
+                    watermarkXFraction = b.misc.watermarkXFraction,
+                    watermarkYFraction = b.misc.watermarkYFraction,
+                    screenshotFormat = b.misc.screenshotFormat,
+                    screenshotQuality = b.misc.screenshotQuality,
+                    clipperDurationMinutes = b.tailClipperDurationMinutes,
+                    colorMode = b.tailColorMode,
+                    forceRec709Compatibility = b.tailForceRec709Compatibility,
+                    rec709CompatBrightnessCorrection = b.tailRec709CompatBrightnessCorrection,
+                    recordingEngineMode = b.tailRecordingEngineMode,
+                )
+            }
         }
-        val groupB = combine(watermark, storageControls, misc, tail) { w, sc, m, t ->
-            GroupB(
-                w,
-                sc,
-                m,
-                t.clipperDurationMinutes,
-                t.colorMode,
-                t.forceRec709Compatibility,
-                t.rec709CompatBrightnessCorrection,
-                t.recordingEngineMode,
-            )
-        }
-        combine(groupA, groupB) { a, b ->
-            Snapshot(
-                captureMode = a.video.captureMode,
-                gifRecorderPresetId = a.video.gifRecorderPresetId,
-                recordingOrientation = a.video.recordingOrientation,
-                recordAudio = a.audioFlags.recordAudio,
-                internalAudio = a.audioFlags.internalAudio,
-                resolution = a.video.resolution,
-                fps = a.video.fps,
-                bitrateMbps = a.audioFlags.bitrateMbps,
-                audioBitrateKbps = a.audioFlags.audioBitrateKbps,
-                audioSampleRate = a.audio2.audioSampleRate,
-                audioChannels = a.audio2.audioChannels,
-                audioEncoder = a.audio2.audioEncoder,
-                separateMicRecording = a.audio2.separateMicRecording,
-                cameraOverlay = a.camera.cameraOverlay,
-                cameraOverlaySize = a.camera.cameraOverlaySize,
-                cameraXFraction = a.camera.cameraXFraction,
-                cameraYFraction = a.camera.cameraYFraction,
-                cameraLockPosition = a.camera.cameraLockPosition,
-                cameraFacing = a.camera2.cameraFacing,
-                cameraAspectRatio = a.camera2.cameraAspectRatio,
-                cameraOpacity = a.camera2.cameraOpacity,
-                showWatermark = a.camera2.showWatermark,
-                stopBehavior = a.camera2.stopBehavior,
-                saveLocationUri = b.storage.saveLocationUri,
-                videoEncoder = a.audio2.videoEncoder,
-                floatingControls = b.storage.floatingControls,
-                hideFloatingIconWhileRecording = b.storage.hideFloatingIconWhileRecording,
-                filenamePattern = b.storage.filenamePattern,
-                countdown = b.storage.countdown,
-                keepScreenOn = b.misc.keepScreenOn,
-                watermarkLocation = b.watermark.watermarkLocation,
-                watermarkImageUri = b.watermark.watermarkImageUri,
-                watermarkShape = b.watermark.watermarkShape,
-                watermarkOpacity = b.watermark.watermarkOpacity,
-                watermarkSize = b.watermark.watermarkSize,
-                watermarkXFraction = b.misc.watermarkXFraction,
-                watermarkYFraction = b.misc.watermarkYFraction,
-                screenshotFormat = b.misc.screenshotFormat,
-                screenshotQuality = b.misc.screenshotQuality,
-                clipperDurationMinutes = b.tailClipperDurationMinutes,
-                colorMode = b.tailColorMode,
-                forceRec709Compatibility = b.tailForceRec709Compatibility,
-                rec709CompatBrightnessCorrection = b.tailRec709CompatBrightnessCorrection,
-                recordingEngineMode = b.tailRecordingEngineMode,
-            )
-        }
-    }
 
     private data class VideoPart(
         val captureMode: String,
@@ -338,12 +351,14 @@ class SettingsConfigCache(
         val resolution: String,
         val fps: Float,
     )
+
     private data class AudioFlagsPart(
         val recordAudio: Boolean,
         val internalAudio: Boolean,
         val bitrateMbps: Float,
         val audioBitrateKbps: Int,
     )
+
     private data class Audio2Part(
         val audioSampleRate: Int,
         val audioChannels: String,
@@ -351,6 +366,7 @@ class SettingsConfigCache(
         val separateMicRecording: Boolean,
         val videoEncoder: String,
     )
+
     private data class CameraPart(
         val cameraOverlay: Boolean,
         val cameraOverlaySize: Int,
@@ -358,6 +374,7 @@ class SettingsConfigCache(
         val cameraYFraction: Float,
         val cameraLockPosition: Boolean,
     )
+
     private data class Camera2Part(
         val cameraFacing: String,
         val cameraAspectRatio: String,
@@ -365,6 +382,7 @@ class SettingsConfigCache(
         val showWatermark: Boolean,
         val stopBehavior: Set<String>,
     )
+
     private data class WatermarkPart(
         val watermarkLocation: String,
         val watermarkImageUri: String?,
@@ -372,6 +390,7 @@ class SettingsConfigCache(
         val watermarkOpacity: Int,
         val watermarkSize: Int,
     )
+
     private data class StorageControlsPart(
         val saveLocationUri: String?,
         val floatingControls: Boolean,
@@ -379,6 +398,7 @@ class SettingsConfigCache(
         val filenamePattern: String,
         val countdown: Int,
     )
+
     private data class MiscPart(
         val keepScreenOn: Boolean,
         val watermarkXFraction: Float,
@@ -386,6 +406,7 @@ class SettingsConfigCache(
         val screenshotFormat: String,
         val screenshotQuality: Int,
     )
+
     private data class GroupA(
         val video: VideoPart,
         val audioFlags: AudioFlagsPart,
@@ -393,6 +414,7 @@ class SettingsConfigCache(
         val camera: CameraPart,
         val camera2: Camera2Part,
     )
+
     private data class TailPart(
         val clipperDurationMinutes: Int,
         val recordingEngineMode: RecordingEngineMode,
@@ -400,6 +422,7 @@ class SettingsConfigCache(
         val forceRec709Compatibility: Boolean,
         val rec709CompatBrightnessCorrection: String,
     )
+
     private data class GroupB(
         val watermark: WatermarkPart,
         val storage: StorageControlsPart,

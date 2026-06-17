@@ -27,7 +27,7 @@ class RecordingEngineModeTest {
             RecordingEngineMode.fromStorageValue("performance"),
         )
         assertEquals(
-            RecordingEngineMode.COMPATIBILITY,
+            RecordingEngineMode.PERFORMANCE,
             RecordingEngineMode.fromStorageValue("compatibility"),
         )
     }

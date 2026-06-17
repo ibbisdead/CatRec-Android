@@ -1,7 +1,6 @@
 package com.ibbie.catrec_screenrecorcer.service
 
 import android.annotation.SuppressLint
-import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -28,6 +27,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.BuildConfig
 import com.ibbie.catrec_screenrecorcer.R
+import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingFatalKind
 import com.ibbie.catrec_screenrecorcer.utils.AppLogger
@@ -63,7 +63,7 @@ class RollingBufferEngine(
     private val mediaProjection: MediaProjection,
     private val encoderType: String,
     private val colorMode: String = ColorMode.FULL,
-    private val engineMode: RecordingEngineMode = RecordingEngineMode.DEFAULT,
+    engineMode: RecordingEngineMode = RecordingEngineMode.DEFAULT,
     private val audioBitrate: Int = 128_000,
     private val audioSampleRate: Int = 44_100,
     private val audioChannelCount: Int = 1,
@@ -81,6 +81,8 @@ class RollingBufferEngine(
     enum class AudioMode { NONE, MIC, INTERNAL, MIXED }
 
     private val maxSegments = maxSegmentsLimit.coerceIn(MIN_MAX_SEGMENTS, ABSOLUTE_MAX_SEGMENTS)
+    private val engineMode: RecordingEngineMode =
+        if (engineMode == RecordingEngineMode.PERFORMANCE) engineMode else RecordingEngineMode.PERFORMANCE
 
     companion object {
         private const val TAG = "RollingBufferEngine"
@@ -90,14 +92,17 @@ class RollingBufferEngine(
         private const val INTERNAL_SILENCE_PERSISTENT_MS =
             InternalAudioHealthTracker.INTERNAL_AUDIO_PERSISTENT_SILENCE_MS
 
-        /** See [ScreenRecorderEngine.INTERNAL_SILENCE_RECREATE_ATTEMPTS]. */
-        private const val INTERNAL_SILENCE_RECREATE_ATTEMPTS = 2
+        /** Keep playback capture to one AudioRecord per buffer session; see [ScreenRecorderEngine]. */
+        private const val INTERNAL_SILENCE_RECREATE_ATTEMPTS = 0
 
         /** Video drain pacing — see [ScreenRecorderEngine] companion. */
         private const val VIDEO_DRAIN_SLEEP_MS = 2L
 
         private const val READ_ERROR_LOG_EVERY_N = 50L
         private const val PCM_DROP_LOG_EVERY_N = 250L
+        private const val AUDIO_CAPTURE_JOIN_TIMEOUT_MS = 5_000L
+        private const val AUDIO_DRAIN_JOIN_TIMEOUT_MS = 15_000L
+        private const val VIDEO_DRAIN_JOIN_TIMEOUT_MS = 6_000L
         internal const val AUDIO_DIAG_MARKER = "[CatRecAudioSession]"
 
         private val verboseAudioDiagnosticsEnabled: Boolean
@@ -149,6 +154,7 @@ class RollingBufferEngine(
 
     // ── Control flags ──────────────────────────────────────────────────────────
     private val isRunning = AtomicBoolean(false)
+    private val stopInvoked = AtomicBoolean(false)
     private val pendingRotate = AtomicBoolean(false)
     private val videoEncodeFatalSignaled = AtomicBoolean(false)
 
@@ -211,6 +217,7 @@ class RollingBufferEngine(
     // ══════════════════════════════════════════════════════════════════════════
 
     fun start() {
+        stopInvoked.set(false)
         rollingInternalPlaybackPcmReadsPositive.set(0L)
         rollingInternalPlaybackPcmNonZeroBuffers.set(0L)
         rollingInternalPlaybackPcmSilentOnlyBuffers.set(0L)
@@ -358,8 +365,13 @@ class RollingBufferEngine(
     }
 
     fun stop() {
-        if (!isRunning.getAndSet(false)) return
-        Log.d(TAG, "Stopping buffer engine…")
+        if (!stopInvoked.compareAndSet(false, true)) {
+            Log.d(TAG, "stop(): already invoked, ignoring duplicate call")
+            return
+        }
+        val wasRunning = isRunning.getAndSet(false)
+        if (!wasRunning && !hasAllocatedStartResources()) return
+        Log.d(TAG, if (wasRunning) "Stopping buffer engine…" else "Cleaning up partial buffer engine start…")
 
         rotationScheduler?.shutdown()
         rotationScheduler = null
@@ -374,7 +386,14 @@ class RollingBufferEngine(
             internalRecord?.stop()
         } catch (_: Exception) {
         }
-        audioThread?.join(2000)
+        try {
+            audioThread?.join(AUDIO_CAPTURE_JOIN_TIMEOUT_MS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        if (audioThread?.isAlive == true) {
+            Log.w(TAG, "Buffer audio capture thread still alive after ${AUDIO_CAPTURE_JOIN_TIMEOUT_MS}ms")
+        }
 
         try {
             videoEncoder?.signalEndOfInputStream()
@@ -382,8 +401,22 @@ class RollingBufferEngine(
         }
         signalAudioEOS()
 
-        videoThread?.join(2000)
-        audioDrainThread?.join(2000)
+        try {
+            videoThread?.join(VIDEO_DRAIN_JOIN_TIMEOUT_MS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        if (videoThread?.isAlive == true) {
+            Log.w(TAG, "Buffer video drain thread still alive after ${VIDEO_DRAIN_JOIN_TIMEOUT_MS}ms")
+        }
+        try {
+            audioDrainThread?.join(AUDIO_DRAIN_JOIN_TIMEOUT_MS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
+        if (audioDrainThread?.isAlive == true) {
+            Log.w(TAG, "Buffer audio drain thread still alive after ${AUDIO_DRAIN_JOIN_TIMEOUT_MS}ms")
+        }
 
         val finalMuxerAudioWritten = rollingAudioPcmSamplesQueued.get() > 0L
         val finalMuxerStarted =
@@ -398,7 +431,11 @@ class RollingBufferEngine(
             muxerAudioSamplesWrittenBeforeFinalize = finalMuxerAudioWritten,
         )
 
-        videoEncoder?.release()
+        try {
+            videoEncoder?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "buffer videoEncoder.release() failed: ${e.message}")
+        }
         videoEncoder = null
 
         try {
@@ -407,14 +444,44 @@ class RollingBufferEngine(
         }
         inputSurface = null
 
-        audioEncoder?.release()
+        try {
+            audioEncoder?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "buffer audioEncoder.release() failed: ${e.message}")
+        }
         audioEncoder = null
-        micRecord?.release()
+        try {
+            micRecord?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "buffer micRecord.release() failed: ${e.message}")
+        }
         micRecord = null
-        internalRecord?.release()
+        try {
+            internalRecord?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "buffer internalRecord.release() failed: ${e.message}")
+        }
         internalRecord = null
+        videoThread = null
+        audioThread = null
+        audioDrainThread = null
         Log.d(TAG, "Buffer engine stopped.")
     }
+
+    private fun hasAllocatedStartResources(): Boolean =
+        videoEncoder != null ||
+            inputSurface != null ||
+            audioEncoder != null ||
+            micRecord != null ||
+            internalRecord != null ||
+            frameRelay != null ||
+            directVirtualDisplay != null ||
+            videoThread != null ||
+            audioThread != null ||
+            audioDrainThread != null ||
+            synchronized(muxerLock) {
+                currentMuxer != null || currentSegFile != null || isMuxerReady
+            }
 
     /**
      * Returns a snapshot of all completed segments plus the current partial segment.
@@ -494,7 +561,10 @@ class RollingBufferEngine(
      * the encoder output resolution.  Call this when the OS reports a content-size change
      * (rotation, fold) so stale pixels no longer contaminate the captured frames.
      */
-    fun resizeCaptureSource(newW: Int, newH: Int) {
+    fun resizeCaptureSource(
+        newW: Int,
+        newH: Int,
+    ) {
         if (engineMode == RecordingEngineMode.PERFORMANCE) {
             if (performanceResizeIgnoredLogged.compareAndSet(false, true)) {
                 Log.i(
@@ -723,19 +793,41 @@ class RollingBufferEngine(
         var silenceCallbackFired = false
         var recoveredAfterRebuildTelemetryReported = false
         var lateRecoveryTelemetryReported = false
+        var readErrorAlreadyRecorded = false
+
+        fun safeReadAudioRecord(
+            record: AudioRecord,
+            buffer: ByteArray,
+            source: String,
+        ): Int =
+            try {
+                record.read(buffer, 0, bufSize)
+            } catch (e: Exception) {
+                val n = rollingAudioReadNegativeCount.incrementAndGet()
+                readErrorAlreadyRecorded = true
+                if (n == 1L || n % READ_ERROR_LOG_EVERY_N == 0L) {
+                    Log.w(
+                        TAG,
+                        "${AUDIO_DIAG_MARKER} BUFFER AUDIO_READ_EXCEPTION count=$n source=$source loop=$loopCount mode=$mAudioMode",
+                        e,
+                    )
+                }
+                AudioRecord.ERROR_INVALID_OPERATION
+            }
 
         while (isRunning.get()) {
+            readErrorAlreadyRecorded = false
             var readCount = 0
             var internalReadCount = 0
             var internalHadAudibleThisIteration = false
 
             when {
                 mAudioMode == AudioMode.MIXED && internalRecord != null && micRecord != null -> {
-                    val r1 = internalRecord!!.read(main, 0, bufSize)
+                    val r1 = safeReadAudioRecord(internalRecord!!, main, "internal")
                     internalReadCount = r1
                     internalHadAudibleThisIteration =
                         internalAudioHealth.observeRead(main, internalReadCount, SystemClock.elapsedRealtime())
-                    val r2 = micRecord!!.read(mix, 0, bufSize)
+                    val r2 = safeReadAudioRecord(micRecord!!, mix, "mic")
                     if (r2 > 0 && InternalPlaybackPcmSilenceAnalyzer.pcm16BufferHasAudibleSignal(mix, r2)) {
                         rollingMicLegEverAudibleThisSession = true
                     }
@@ -752,12 +844,12 @@ class RollingBufferEngine(
                     }
                 }
                 internalRecord != null -> {
-                    readCount = internalRecord!!.read(main, 0, bufSize)
+                    readCount = safeReadAudioRecord(internalRecord!!, main, "internal")
                     internalReadCount = readCount
                     internalHadAudibleThisIteration =
                         internalAudioHealth.observeRead(main, internalReadCount, SystemClock.elapsedRealtime())
                 }
-                micRecord != null -> readCount = micRecord!!.read(main, 0, bufSize)
+                micRecord != null -> readCount = safeReadAudioRecord(micRecord!!, main, "mic")
             }
 
             loopCount++
@@ -782,7 +874,7 @@ class RollingBufferEngine(
                         ),
                     )
                 }
-            } else if (readCount < 0) {
+            } else if (readCount < 0 && !readErrorAlreadyRecorded) {
                 val n = rollingAudioReadNegativeCount.incrementAndGet()
                 if (n == 1L || n % READ_ERROR_LOG_EVERY_N == 0L) {
                     Log.w(
@@ -1185,7 +1277,7 @@ class RollingBufferEngine(
         configuredVideoMime = result.mime
         captureWidth = result.encodedWidth
         captureHeight = result.encodedHeight
-        Log.d(TAG, "Buffer video encoder mime=$configuredVideoMime avcOnly=$avcOnly size=${captureWidth}x${captureHeight}")
+        Log.d(TAG, "Buffer video encoder mime=$configuredVideoMime avcOnly=$avcOnly size=${captureWidth}x$captureHeight")
     }
 
     private fun resolveRollingBufferChannelCount(wantStereo: Boolean): Int {
@@ -1224,7 +1316,10 @@ class RollingBufferEngine(
             }
         }
 
-        fun tryStart(which: AudioRecord?, label: String): Throwable? {
+        fun tryStart(
+            which: AudioRecord?,
+            label: String,
+        ): Throwable? {
             if (which == null) return null
             return try {
                 which.startRecording()
@@ -1313,9 +1408,9 @@ class RollingBufferEngine(
 
         rollingInternalPlaybackPcmCountersActive =
             internalRecord != null &&
-                runCatching {
-                    internalRecord!!.recordingState == AudioRecord.RECORDSTATE_RECORDING
-                }.getOrElse { false }
+            runCatching {
+                internalRecord!!.recordingState == AudioRecord.RECORDSTATE_RECORDING
+            }.getOrElse { false }
         val rbIr = internalRecord
         if (Build.VERSION.SDK_INT >= 29 && rollingInternalPlaybackPcmCountersActive && rbIr != null) {
             PlaybackCaptureConfig.logInternalPlaybackRecordStarted(
@@ -1397,6 +1492,7 @@ class RollingBufferEngine(
     /** Buffer-side counterpart of [ScreenRecorderEngine.attemptInternalAudioRecordRecreation]. */
     @SuppressLint("MissingPermission")
     private fun attemptInternalAudioRecordRecreation(reason: String): Boolean {
+        if (INTERNAL_SILENCE_RECREATE_ATTEMPTS <= 0) return false
         if (Build.VERSION.SDK_INT < 29) return false
         val previous = internalRecord ?: return false
         val sampleRate = audioSampleRate
@@ -1552,7 +1648,10 @@ class RollingBufferEngine(
             internalPlaybackPcmReadsPositive = rReads.takeIf { rollingInternalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
             internalPlaybackPcmNonZeroBuffers = rNz.takeIf { rollingInternalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
             internalPlaybackPcmSilentBuffers = rSil.takeIf { rollingInternalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
-            internalPlaybackPcmEverNonZero = (rNz > 0L).takeIf { rollingInternalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled },
+            internalPlaybackPcmEverNonZero =
+                (rNz > 0L).takeIf {
+                    rollingInternalPlaybackPcmCountersActive && verboseAudioDiagnosticsEnabled
+                },
             internalAudioHealth = internalHealthSnapshot,
         )
     }
@@ -1670,6 +1769,10 @@ class RollingBufferEngine(
                             "model" to Build.MODEL,
                         ),
                     )
+                    try {
+                        internalRecord?.release()
+                    } catch (_: Exception) {
+                    }
                     internalRecord = null
                     rollingInternalPlaybackBufferBytesConfigured = 0
                     if (mAudioMode == AudioMode.INTERNAL) mAudioMode = AudioMode.MIC

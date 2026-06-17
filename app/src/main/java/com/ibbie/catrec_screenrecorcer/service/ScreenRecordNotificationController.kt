@@ -6,11 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
-import android.net.Uri
-import android.os.Build
-import android.util.Size
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -327,107 +322,6 @@ internal class ScreenRecordNotificationController(
             .build()
     }
 
-    fun buildPreparedNotificationWithSavedRecording(uri: Uri): Notification {
-        val thumbnail: Bitmap? =
-            try {
-                if (Build.VERSION.SDK_INT >= 29) {
-                    context.contentResolver.loadThumbnail(uri, Size(320, 180), null)
-                } else {
-                    val retriever = MediaMetadataRetriever()
-                    retriever.setDataSource(context.applicationContext, uri)
-                    val bmp = retriever.getFrameAtTime(500_000, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
-                    retriever.release()
-                    bmp
-                }
-            } catch (_: Exception) {
-                null
-            }
-
-        val tapPending =
-            PendingIntent.getActivity(
-                context,
-                10,
-                Intent(context, MainActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE,
-            )
-        val openPending =
-            PendingIntent.getActivity(
-                context,
-                11,
-                Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, "video/mp4")
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                },
-                PendingIntent.FLAG_IMMUTABLE,
-            )
-        val sharePending =
-            PendingIntent.getActivity(
-                context,
-                12,
-                Intent
-                    .createChooser(
-                        Intent(Intent.ACTION_SEND).apply {
-                            type = "video/mp4"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        },
-                        context.getString(R.string.share_recording_title),
-                    ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-                PendingIntent.FLAG_IMMUTABLE,
-            )
-        val deletePending =
-            PendingIntent.getService(
-                context,
-                13,
-                Intent(context, ScreenRecordService::class.java).apply {
-                    action = ACTION_DELETE_SAVED_RECORDING
-                    putExtra(EXTRA_LAST_SAVED_RECORDING_URI, uri.toString())
-                },
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-        val revokePI =
-            PendingIntent.getService(
-                context,
-                50,
-                Intent(context, ScreenRecordService::class.java).apply { action = ScreenRecordService.ACTION_REVOKE_PREPARE },
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-
-        val style =
-            NotificationCompat
-                .BigPictureStyle()
-                .setBigContentTitle(context.getString(R.string.notif_post_title))
-                .setSummaryText(context.getString(R.string.notif_ready_text))
-        if (thumbnail != null) {
-            style.bigPicture(thumbnail)
-        }
-
-        return NotificationCompat
-            .Builder(context, CHANNEL_ID)
-            .setContentTitle(context.getString(R.string.notif_post_title))
-            .setContentText(context.getString(R.string.notif_ready_text))
-            .setSubText(context.getString(R.string.notif_post_text))
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(tapPending)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .setStyle(style)
-            .apply {
-                if (thumbnail != null) setLargeIcon(thumbnail)
-            }.addAction(android.R.drawable.ic_menu_view, context.getString(R.string.notif_post_open), openPending)
-            .addAction(android.R.drawable.ic_menu_share, context.getString(R.string.notif_post_share), sharePending)
-            .addAction(android.R.drawable.ic_menu_delete, context.getString(R.string.notif_post_delete), deletePending)
-            .addAction(
-                android.R.drawable.ic_menu_close_clear_cancel,
-                context.getString(R.string.notif_action_revoke),
-                revokePI,
-            ).build()
-            .also { n ->
-                n.flags = n.flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT
-            }
-    }
-
     private fun bindShadeOverlayExit(
         collapsed: RemoteViews,
         expanded: RemoteViews,
@@ -502,7 +396,5 @@ internal class ScreenRecordNotificationController(
         private const val CHANNEL_ID = "CatRec_Recording_Channel"
         private const val CHANNEL_DONE_ID = "CatRec_Done_Channel"
         private const val CHANNEL_BUFFER_ID = "CatRec_Buffer_Channel"
-        private const val ACTION_DELETE_SAVED_RECORDING = "com.ibbie.catrec_screenrecorcer.DELETE_SAVED_RECORDING"
-        private const val EXTRA_LAST_SAVED_RECORDING_URI = "EXTRA_LAST_SAVED_RECORDING_URI"
     }
 }

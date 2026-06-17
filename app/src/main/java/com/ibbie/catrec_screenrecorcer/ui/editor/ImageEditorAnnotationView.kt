@@ -15,13 +15,13 @@ import android.graphics.RectF
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withMatrix
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.withMatrix
 
 enum class EditorDrawTool { PEN, ERASER, SQUARE, CIRCLE, ARROW, BLUR }
 
@@ -357,14 +357,15 @@ class ImageEditorAnnotationView(
                 EditorDrawTool.ERASER -> drawPath(currentPath, eraserPreviewPaint)
                 EditorDrawTool.SQUARE -> drawRect(previewRect, shapePaint)
                 EditorDrawTool.CIRCLE -> drawOval(previewRect, shapePaint)
-                EditorDrawTool.ARROW -> drawArrowOnCanvas(
-                    this,
-                    shapeStartX,
-                    shapeStartY,
-                    shapeEndX,
-                    shapeEndY,
-                    shapePaint
-                )
+                EditorDrawTool.ARROW ->
+                    drawArrowOnCanvas(
+                        this,
+                        shapeStartX,
+                        shapeStartY,
+                        shapeEndX,
+                        shapeEndY,
+                        shapePaint,
+                    )
 
                 EditorDrawTool.BLUR -> {
                     shapePaint.style = Paint.Style.STROKE

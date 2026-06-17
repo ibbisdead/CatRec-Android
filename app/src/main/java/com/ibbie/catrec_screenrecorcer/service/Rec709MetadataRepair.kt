@@ -8,9 +8,9 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
-import kotlinx.coroutines.suspendCancellableCoroutine
 
 object Rec709MetadataRepair {
     private const val TAG = "Rec709MetadataRepair"
@@ -26,10 +26,11 @@ object Rec709MetadataRepair {
         if (!inputFile.exists() || inputFile.length() == 0L) return inputFile
 
         val videoMime = resolveVideoMime(inputFile)
-        val bitstreamFilter = bitstreamFilterFor(videoMime) ?: run {
-            Log.w(TAG, "Rec.709 compatibility: unsupported video mime for metadata repair: $videoMime")
-            return inputFile
-        }
+        val bitstreamFilter =
+            bitstreamFilterFor(videoMime) ?: run {
+                Log.w(TAG, "Rec.709 compatibility: unsupported video mime for metadata repair: $videoMime")
+                return inputFile
+            }
 
         val repairedFile =
             repairMetadata(

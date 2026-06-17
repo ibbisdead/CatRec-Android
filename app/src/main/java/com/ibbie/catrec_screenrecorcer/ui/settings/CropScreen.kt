@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import com.ibbie.catrec_screenrecorcer.ui.editor.CropGeometry
 import com.ibbie.catrec_screenrecorcer.ui.editor.EditorFreeformCropContent
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +49,6 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import androidx.core.net.toUri
 
 @Composable
 fun CropScreen(

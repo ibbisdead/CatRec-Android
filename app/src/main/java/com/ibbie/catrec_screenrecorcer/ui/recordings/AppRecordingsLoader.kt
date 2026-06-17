@@ -2,19 +2,19 @@ package com.ibbie.catrec_screenrecorcer.ui.recordings
 
 import android.content.ContentUris
 import android.content.Context
-import android.provider.DocumentsContract
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import java.io.File
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import androidx.core.net.toUri
 
 private const val RECOVERY_INDEX_SCAN_INTERVAL_MS = 24L * 60L * 60L * 1000L
 private val lastRecoveryIndexScanMsByScope = ConcurrentHashMap<String, Long>()
@@ -73,18 +73,20 @@ internal fun ensureCatRecMediaIndexed(context: Context) {
     val paths = mutableListOf<String>()
     val mimes = mutableListOf<String?>()
 
-    val moviesDir = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
-        "CatRec",
-    )
-    val shotsDir = if (Build.VERSION.SDK_INT >= 29) {
+    val moviesDir =
         File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-            "CatRec${File.separator}Screenshots",
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+            "CatRec",
         )
-    } else {
-        null
-    }
+    val shotsDir =
+        if (Build.VERSION.SDK_INT >= 29) {
+            File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                "CatRec${File.separator}Screenshots",
+            )
+        } else {
+            null
+        }
 
     // Always include the directories themselves so the scanner can find files even when
     // File.listFiles() is unavailable (scoped storage restrictions on API 33+).

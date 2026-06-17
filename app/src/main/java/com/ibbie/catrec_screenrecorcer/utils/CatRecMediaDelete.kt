@@ -224,7 +224,12 @@ private fun queryMediaPathHints(
     }
 }
 
-private fun normalizedRelPath(rel: String): String = rel.trim().trimEnd('/', '\\').replace('\\', '/').lowercase()
+private fun normalizedRelPath(rel: String): String =
+    rel
+        .trim()
+        .trimEnd('/', '\\')
+        .replace('\\', '/')
+        .lowercase()
 
 private fun relMatchesMoviesCatRec(rel: String): Boolean {
     val n = normalizedRelPath(rel)

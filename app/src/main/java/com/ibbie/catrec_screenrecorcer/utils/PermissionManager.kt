@@ -91,7 +91,8 @@ class PermissionManager(
                 ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VIDEO) == PackageManager.PERMISSION_GRANTED &&
                     ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED
             val hasPartialVisual =
-                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) == PackageManager.PERMISSION_GRANTED
+                ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED) ==
+                    PackageManager.PERMISSION_GRANTED
             hasFullVisual || hasPartialVisual
         } else {
             mediaLibraryReadPermissions().all {
@@ -99,15 +100,13 @@ class PermissionManager(
             }
         }
 
-    fun mediaAudioReadPermissions(): Array<String> =
-        if (Build.VERSION.SDK_INT >= 33) arrayOf(Manifest.permission.READ_MEDIA_AUDIO) else emptyArray()
+    fun mediaAudioReadPermissions(): Array<String> = if (Build.VERSION.SDK_INT >= 33) arrayOf(Manifest.permission.READ_MEDIA_AUDIO) else emptyArray()
 
     fun isMediaAudioReadGranted(): Boolean =
         Build.VERSION.SDK_INT < 33 ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED
 
-    fun bluetoothPermissions(): Array<String> =
-        if (Build.VERSION.SDK_INT >= 31) arrayOf(Manifest.permission.BLUETOOTH_CONNECT) else emptyArray()
+    fun bluetoothPermissions(): Array<String> = if (Build.VERSION.SDK_INT >= 31) arrayOf(Manifest.permission.BLUETOOTH_CONNECT) else emptyArray()
 
     fun isBluetoothConnectGranted(): Boolean =
         if (Build.VERSION.SDK_INT >= 31) {
@@ -157,8 +156,13 @@ class PermissionManager(
 
     fun markStartupPermissionFlowComplete() = prefs.edit { putBoolean(KEY_SETUP_COMPLETE, true) }
 
-    fun isStartupPermissionRequestBlocked(permission: StartupPermission): Boolean =
-        prefs.getBoolean(startupPermissionRequestBlockedKey(permission), false)
+    fun isStartupPermissionRequestBlocked(permission: StartupPermission): Boolean = prefs.getBoolean(startupPermissionRequestBlockedKey(permission), false)
+
+    fun markStartupPermissionRequestBlocked(permission: StartupPermission) =
+        prefs.edit {
+            putBoolean(startupPermissionAttemptedKey(permission), true)
+            putBoolean(startupPermissionRequestBlockedKey(permission), true)
+        }
 
     fun recordStartupPermissionDialogResult(
         permission: StartupPermission,
@@ -217,17 +221,13 @@ class PermissionManager(
             }
         }
 
-    fun saveNotificationGranted(granted: Boolean) =
-        prefs.edit { putBoolean(KEY_NOTIFICATIONS_GRANTED, granted) }
+    fun saveNotificationGranted(granted: Boolean) = prefs.edit { putBoolean(KEY_NOTIFICATIONS_GRANTED, granted) }
 
-    fun saveAudioGranted(granted: Boolean) =
-        prefs.edit { putBoolean(KEY_AUDIO_GRANTED, granted) }
+    fun saveAudioGranted(granted: Boolean) = prefs.edit { putBoolean(KEY_AUDIO_GRANTED, granted) }
 
-    fun saveCameraGranted(granted: Boolean) =
-        prefs.edit { putBoolean(KEY_CAMERA_GRANTED, granted) }
+    fun saveCameraGranted(granted: Boolean) = prefs.edit { putBoolean(KEY_CAMERA_GRANTED, granted) }
 
-    fun saveOverlayGranted(granted: Boolean) =
-        prefs.edit { putBoolean(KEY_OVERLAY_GRANTED, granted) }
+    fun saveOverlayGranted(granted: Boolean) = prefs.edit { putBoolean(KEY_OVERLAY_GRANTED, granted) }
 
     fun isSetupComplete(): Boolean = isStartupPermissionFlowComplete()
 
@@ -237,9 +237,7 @@ class PermissionManager(
 
     fun markAppLaunchedOnce() = prefs.edit { putBoolean(KEY_APP_LAUNCHED_ONCE, true) }
 
-    private fun startupPermissionAttemptedKey(permission: StartupPermission): String =
-        KEY_STARTUP_PERMISSION_ATTEMPTED_PREFIX + permission.name
+    private fun startupPermissionAttemptedKey(permission: StartupPermission): String = KEY_STARTUP_PERMISSION_ATTEMPTED_PREFIX + permission.name
 
-    private fun startupPermissionRequestBlockedKey(permission: StartupPermission): String =
-        KEY_STARTUP_PERMISSION_REQUEST_BLOCKED_PREFIX + permission.name
+    private fun startupPermissionRequestBlockedKey(permission: StartupPermission): String = KEY_STARTUP_PERMISSION_REQUEST_BLOCKED_PREFIX + permission.name
 }

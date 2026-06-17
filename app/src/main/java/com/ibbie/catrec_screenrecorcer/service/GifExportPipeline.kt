@@ -7,9 +7,9 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifPaletteDither
 import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics

@@ -59,6 +59,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.ibbie.catrec_screenrecorcer.R
 import com.ibbie.catrec_screenrecorcer.ui.settings.createCroppedBitmapFromOverlay
@@ -67,8 +69,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import android.graphics.Color as AndroidColor
-import androidx.core.graphics.createBitmap
-import androidx.core.net.toUri
 
 private enum class EditorPanel { Rotate, Crop, Annotate }
 

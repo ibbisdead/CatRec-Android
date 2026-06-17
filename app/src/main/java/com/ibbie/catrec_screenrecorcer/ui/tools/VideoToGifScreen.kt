@@ -29,8 +29,8 @@ import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.service.GifExportPipeline
-import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
 import com.ibbie.catrec_screenrecorcer.ui.components.ProBadge
+import com.ibbie.catrec_screenrecorcer.ui.components.ProFeature
 import com.ibbie.catrec_screenrecorcer.ui.components.ProUnlockDialog
 import com.ibbie.catrec_screenrecorcer.ui.components.logProGateCheck
 import com.ibbie.catrec_screenrecorcer.utils.contentUriReadableForPlayback

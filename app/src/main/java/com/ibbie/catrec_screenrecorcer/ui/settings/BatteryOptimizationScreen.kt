@@ -77,12 +77,12 @@ fun BatteryOptimizationRationaleDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         GlassCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-
                 // ── Header ────────────────────────────────────────────────────
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(

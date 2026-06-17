@@ -36,36 +36,40 @@ object MediaStorePublishDiagnostics {
     ): RowSnapshot? {
         if (Build.VERSION.SDK_INT < 29) return null
         return try {
-            cr.query(
-                uri,
-                arrayOf(
-                    MediaStore.MediaColumns.SIZE,
-                    MediaStore.MediaColumns.IS_PENDING,
-                    MediaStore.MediaColumns.RELATIVE_PATH,
-                ),
-                null,
-                null,
-                null,
-            )?.use { c ->
-                if (!c.moveToFirst()) return@use null
-                fun longCol(name: String): Long? {
-                    val i = c.getColumnIndex(name)
-                    return if (i >= 0) c.getLong(i) else null
+            cr
+                .query(
+                    uri,
+                    arrayOf(
+                        MediaStore.MediaColumns.SIZE,
+                        MediaStore.MediaColumns.IS_PENDING,
+                        MediaStore.MediaColumns.RELATIVE_PATH,
+                    ),
+                    null,
+                    null,
+                    null,
+                )?.use { c ->
+                    if (!c.moveToFirst()) return@use null
+
+                    fun longCol(name: String): Long? {
+                        val i = c.getColumnIndex(name)
+                        return if (i >= 0) c.getLong(i) else null
+                    }
+
+                    fun intCol(name: String): Int? {
+                        val i = c.getColumnIndex(name)
+                        return if (i >= 0) c.getInt(i) else null
+                    }
+
+                    fun strCol(name: String): String? {
+                        val i = c.getColumnIndex(name)
+                        return if (i >= 0) c.getString(i) else null
+                    }
+                    RowSnapshot(
+                        sizeBytes = longCol(MediaStore.MediaColumns.SIZE),
+                        isPending = intCol(MediaStore.MediaColumns.IS_PENDING),
+                        relativePath = strCol(MediaStore.MediaColumns.RELATIVE_PATH),
+                    )
                 }
-                fun intCol(name: String): Int? {
-                    val i = c.getColumnIndex(name)
-                    return if (i >= 0) c.getInt(i) else null
-                }
-                fun strCol(name: String): String? {
-                    val i = c.getColumnIndex(name)
-                    return if (i >= 0) c.getString(i) else null
-                }
-                RowSnapshot(
-                    sizeBytes = longCol(MediaStore.MediaColumns.SIZE),
-                    isPending = intCol(MediaStore.MediaColumns.IS_PENDING),
-                    relativePath = strCol(MediaStore.MediaColumns.RELATIVE_PATH),
-                )
-            }
         } catch (e: Exception) {
             log("query_row", "failed: ${e.message}")
             null

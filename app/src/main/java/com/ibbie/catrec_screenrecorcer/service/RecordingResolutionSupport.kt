@@ -79,8 +79,13 @@ internal data class CaptureSizingTrace(
 }
 
 internal sealed class RecordingResolutionValidation {
-    data class Valid(val size: RecordingResolutionSize) : RecordingResolutionValidation()
-    data class Invalid(val reason: RecordingResolutionInvalidReason) : RecordingResolutionValidation()
+    data class Valid(
+        val size: RecordingResolutionSize,
+    ) : RecordingResolutionValidation()
+
+    data class Invalid(
+        val reason: RecordingResolutionInvalidReason,
+    ) : RecordingResolutionValidation()
 }
 
 internal enum class RecordingResolutionInvalidReason {
@@ -104,6 +109,7 @@ internal object RecordingResolutionSupport {
     private const val MAX_SAFE_SIDE = 7680
     private const val MAX_SAFE_PIXELS = 7680L * 4320L
     private const val LOW_END_PROFILE_MAX_PIXELS = 2560L * 1440L
+
     /**
      * MediaProjection + overlay windows compete for GPU buffer-queue slots. Crashlytics ANRs on
      * Adreno (Nothing Phone 3a, etc.) showed RenderThread blocked in [Surface.dequeueBuffer] while

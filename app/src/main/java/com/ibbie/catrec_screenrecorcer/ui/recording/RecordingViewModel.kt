@@ -10,15 +10,15 @@ import com.ibbie.catrec_screenrecorcer.CatRecApplication
 import com.ibbie.catrec_screenrecorcer.data.CaptureMode
 import com.ibbie.catrec_screenrecorcer.data.ColorMode
 import com.ibbie.catrec_screenrecorcer.data.GifRecordingPresets
-import com.ibbie.catrec_screenrecorcer.data.PreparedPausedSavingState
+import com.ibbie.catrec_screenrecorcer.data.PausedSavingState
 import com.ibbie.catrec_screenrecorcer.data.Rec709CompatBrightnessCorrection
 import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.data.RecordingUiSnapshot
 import com.ibbie.catrec_screenrecorcer.data.SettingsRepository
 import com.ibbie.catrec_screenrecorcer.data.SettingsUiState
 import com.ibbie.catrec_screenrecorcer.data.StopBehaviorKeys
-import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingEngineMode
+import com.ibbie.catrec_screenrecorcer.data.recording.RecordingError
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingLifecycleState
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingSessionRepository
 import com.ibbie.catrec_screenrecorcer.data.recording.RecordingStartProGate
@@ -48,7 +48,7 @@ class RecordingViewModel(
     private val recordingSessionRepository: RecordingSessionRepository =
         (application as CatRecApplication).recordingSessionRepository
 
-    /** High-level capture lifecycle for Compose (Idle / Preparing / Recording / Paused). */
+    /** High-level capture lifecycle for Compose (Idle / Recording / Paused). */
     val sessionLifecycleState: StateFlow<RecordingLifecycleState> = recordingSessionRepository.sessionState
 
     /** Encoder / projection failures — collect in UI for snackbars. */
@@ -70,7 +70,6 @@ class RecordingViewModel(
 
     val isRecording: StateFlow<Boolean> = RecordingState.isRecording
     val isBuffering: StateFlow<Boolean> = RecordingState.isBuffering
-    val isPrepared: StateFlow<Boolean> = RecordingState.isPrepared
     val isSaving: StateFlow<Boolean> = RecordingState.isSaving
     val screenshotSavedCount: StateFlow<Int> = RecordingState.screenshotSavedCount
     val recordingSavedCount: StateFlow<Int> = RecordingState.recordingSavedCount
@@ -80,10 +79,18 @@ class RecordingViewModel(
     val bitrate: StateFlow<Float> = settingsRepository.bitrate.stateIn(viewModelScope, SharingStarted.Lazily, 10f)
     val videoEncoder: StateFlow<String> = settingsRepository.videoEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "H.264")
     val resolution: StateFlow<String> = settingsRepository.resolution.stateIn(viewModelScope, SharingStarted.Lazily, "Native")
-    val recordingOrientation: StateFlow<String> = settingsRepository.recordingOrientation.stateIn(viewModelScope, SharingStarted.Lazily, "Auto")
-    val colorMode: StateFlow<String> = settingsRepository.colorMode.stateIn(
-        viewModelScope, SharingStarted.Lazily, ColorMode.FULL,
-    )
+    val recordingOrientation: StateFlow<String> =
+        settingsRepository.recordingOrientation.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            "Auto",
+        )
+    val colorMode: StateFlow<String> =
+        settingsRepository.colorMode.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            ColorMode.FULL,
+        )
     val forceRec709Compatibility: StateFlow<Boolean> =
         settingsRepository.forceRec709Compatibility.stateIn(viewModelScope, SharingStarted.Lazily, false)
     val rec709CompatBrightnessCorrection: StateFlow<String> =
@@ -100,7 +107,12 @@ class RecordingViewModel(
     val audioSampleRate: StateFlow<Int> = settingsRepository.audioSampleRate.stateIn(viewModelScope, SharingStarted.Lazily, 44100)
     val audioChannels: StateFlow<String> = settingsRepository.audioChannels.stateIn(viewModelScope, SharingStarted.Lazily, "Mono")
     val audioEncoder: StateFlow<String> = settingsRepository.audioEncoder.stateIn(viewModelScope, SharingStarted.Lazily, "AAC-LC")
-    val separateMicRecording: StateFlow<Boolean> = settingsRepository.separateMicRecording.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val separateMicRecording: StateFlow<Boolean> =
+        settingsRepository.separateMicRecording.stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            false,
+        )
 
     // Controls
     val floatingControls: StateFlow<Boolean> = settingsRepository.floatingControls.stateIn(viewModelScope, SharingStarted.Lazily, false)
@@ -132,19 +144,18 @@ class RecordingViewModel(
             combine(isRecording, isBuffering, ::Pair),
             combine(captureMode, recordAudio, ::Pair),
             internalAudio,
-            combine(isPrepared, RecordingState.isRecordingPaused, RecordingState.isSaving) { p, pa, sv ->
-                PreparedPausedSavingState(p, pa, sv)
+            combine(RecordingState.isRecordingPaused, RecordingState.isSaving) { paused, saving ->
+                PausedSavingState(paused, saving)
             },
-        ) { recBuf, modeAudio, internalEnabled, prepPausedSaving ->
+        ) { recBuf, modeAudio, internalEnabled, pausedSaving ->
             RecordingUiSnapshot(
                 isRecording = recBuf.first,
                 isBuffering = recBuf.second,
                 captureMode = modeAudio.first,
                 recordAudio = modeAudio.second,
                 internalAudio = internalEnabled,
-                isPrepared = prepPausedSaving.isPrepared,
-                isRecordingPaused = prepPausedSaving.isRecordingPaused,
-                isSaving = prepPausedSaving.isSaving,
+                isRecordingPaused = pausedSaving.isRecordingPaused,
+                isSaving = pausedSaving.isSaving,
             )
         }.stateIn(
             viewModelScope,
@@ -194,7 +205,12 @@ class RecordingViewModel(
 
     // Watermark
     val showWatermark: StateFlow<Boolean> = settingsRepository.showWatermark.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-    val watermarkLocation: StateFlow<String> = settingsRepository.watermarkLocation.stateIn(viewModelScope, SharingStarted.Lazily, "Top Left")
+    val watermarkLocation: StateFlow<String> =
+        settingsRepository.watermarkLocation.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            "Top Left",
+        )
     val watermarkImageUri: StateFlow<String?> = settingsRepository.watermarkImageUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
     val watermarkShape: StateFlow<String> = settingsRepository.watermarkShape.stateIn(viewModelScope, SharingStarted.Lazily, "Square")
     val watermarkOpacity: StateFlow<Int> = settingsRepository.watermarkOpacity.stateIn(viewModelScope, SharingStarted.Lazily, 100)
@@ -211,7 +227,12 @@ class RecordingViewModel(
     val appLanguage: StateFlow<String> = settingsRepository.appLanguage.stateIn(viewModelScope, SharingStarted.Lazily, "system")
 
     // Storage
-    val filenamePattern: StateFlow<String> = settingsRepository.filenamePattern.stateIn(viewModelScope, SharingStarted.Lazily, "yyyyMMdd_HHmmss")
+    val filenamePattern: StateFlow<String> =
+        settingsRepository.filenamePattern.stateIn(
+            viewModelScope,
+            SharingStarted.Lazily,
+            "yyyyMMdd_HHmmss",
+        )
     val saveLocationUri: StateFlow<String?> = settingsRepository.saveLocationUri.stateIn(viewModelScope, SharingStarted.Lazily, null)
     val autoDelete: StateFlow<Boolean> = settingsRepository.autoDelete.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
@@ -274,8 +295,7 @@ class RecordingViewModel(
 
     fun setForceRec709Compatibility(value: Boolean) = viewModelScope.launch { settingsRepository.setForceRec709Compatibility(value) }
 
-    fun setRec709CompatBrightnessCorrection(value: String) =
-        viewModelScope.launch { settingsRepository.setRec709CompatBrightnessCorrection(value) }
+    fun setRec709CompatBrightnessCorrection(value: String) = viewModelScope.launch { settingsRepository.setRec709CompatBrightnessCorrection(value) }
 
     fun setResolution(value: String) = viewModelScope.launch { settingsRepository.setResolution(value) }
 
@@ -296,8 +316,7 @@ class RecordingViewModel(
 
     fun setSeparateMicRecording(value: Boolean) = viewModelScope.launch { settingsRepository.setSeparateMicRecording(value) }
 
-    fun setAutoMicFallbackWhenInternalSilent(value: Boolean) =
-        viewModelScope.launch { settingsRepository.setAutoMicFallbackWhenInternalSilent(value) }
+    fun setAutoMicFallbackWhenInternalSilent(value: Boolean) = viewModelScope.launch { settingsRepository.setAutoMicFallbackWhenInternalSilent(value) }
 
     // Setters — Controls
     fun setFloatingControls(value: Boolean) = viewModelScope.launch { settingsRepository.setFloatingControls(value) }
@@ -416,8 +435,7 @@ class RecordingViewModel(
     // Setters — UI Mode
     fun setPerformanceMode(value: Boolean) = viewModelScope.launch { settingsRepository.setPerformanceMode(value) }
 
-    fun setRecordingEngineMode(mode: RecordingEngineMode) =
-        viewModelScope.launch { settingsRepository.setRecordingEngineMode(mode) }
+    fun setRecordingEngineMode(mode: RecordingEngineMode) = viewModelScope.launch { settingsRepository.setRecordingEngineMode(mode) }
 
     fun setAdaptivePerformanceEnabled(value: Boolean) = viewModelScope.launch { settingsRepository.setAdaptiveRecordingPerformance(value) }
 
@@ -445,11 +463,9 @@ class RecordingViewModel(
         }
 
     // Setters — Accent Color
-    suspend fun checkRecordingProGate(source: String): RecordingStartProGateResult =
-        RecordingStartProGate.checkFullRecording(settingsRepository, source)
+    suspend fun checkRecordingProGate(source: String): RecordingStartProGateResult = RecordingStartProGate.checkFullRecording(settingsRepository, source)
 
-    suspend fun checkBufferProGate(source: String): RecordingStartProGateResult =
-        RecordingStartProGate.checkBuffer(settingsRepository, source)
+    suspend fun checkBufferProGate(source: String): RecordingStartProGateResult = RecordingStartProGate.checkBuffer(settingsRepository, source)
 
     fun setAccentColor(value: String) = viewModelScope.launch { settingsRepository.setAccentColor(value) }
 
@@ -466,13 +482,13 @@ class RecordingViewModel(
         context: Context,
         resultCode: Int,
         data: Intent,
-    ) {
+    ): Boolean {
         val config =
             recordingSessionRepository.createSessionConfigForFullRecording(
                 context,
                 resultCode,
             )
-        recordingSessionRepository.startRecording(context, config, data)
+        return recordingSessionRepository.startRecording(context, config, data)
     }
 
     fun stopRecordingService(context: Context) {
@@ -484,29 +500,13 @@ class RecordingViewModel(
         context: Context,
         resultCode: Int,
         data: Intent,
-    ) {
+    ): Boolean {
         val config =
             recordingSessionRepository.createSessionConfigForBuffer(
                 context,
                 resultCode,
             )
-        recordingSessionRepository.startBufferSession(context, config, data)
-    }
-
-    /**
-     * Pre-grant mode: obtain MediaProjection while the Activity is visible and keep it
-     * alive in [ScreenRecordService] so the overlay can start recordings without a dialog.
-     */
-    fun prepareForOverlayRecording(
-        context: Context,
-        resultCode: Int,
-        data: Intent,
-    ) {
-        recordingSessionRepository.prepareOverlaySession(context, resultCode, data)
-    }
-
-    fun revokeOverlayPreparation(context: Context) {
-        recordingSessionRepository.revokePrepare(context)
+        return recordingSessionRepository.startBufferSession(context, config, data)
     }
 
     fun stopBufferService(context: Context) {

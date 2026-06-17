@@ -8,15 +8,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
@@ -60,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -107,13 +108,15 @@ import com.ibbie.catrec_screenrecorcer.ui.tools.CompressVideoScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.MergeVideosScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.ToolsScreen
 import com.ibbie.catrec_screenrecorcer.ui.tools.VideoToGifScreen
-import androidx.core.graphics.toColorInt
 
 private const val NAV_GRAPH_LOG = "CatRecNavGraph"
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
+fun CatRecNavGraph(
+    navController: NavHostController = rememberNavController(),
+    sharedViewModel: RecordingViewModel = viewModel(),
+) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -189,8 +192,6 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val sharedViewModel: RecordingViewModel = viewModel()
-
     // Effective performance mode = user preference OR hardware auto-detection
     val userPerformanceMode by sharedViewModel.performanceMode.collectAsState()
     val isLowEnd = rememberIsLowEndDevice()
@@ -249,15 +250,20 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
 
     val adsDisabled by sharedViewModel.adsDisabled.collectAsState()
 
-    val hideChrome =
-        currentRoute?.let { route ->
-            route.startsWith("crop") ||
-                route.startsWith("player") ||
-                route.startsWith("trim") ||
-                route.startsWith("image_editor") ||
-                route == Screen.Faq.route ||
-                route == Screen.Feedback.route
+    fun routeHidesChrome(route: String?): Boolean =
+        route?.let {
+            it.startsWith("crop") ||
+                it.startsWith("player") ||
+                it.startsWith("trim") ||
+                it.startsWith("image_editor") ||
+                it == Screen.Faq.route ||
+                it == Screen.Feedback.route
         } ?: false
+
+    val visibleBackStackEntries by navController.visibleEntries.collectAsState()
+    val hideChrome =
+        routeHidesChrome(currentRoute) ||
+            visibleBackStackEntries.any { entry -> routeHidesChrome(entry.destination.route) }
 
     /** Full-screen editor flows where the FAB would cover tool UI (trim uses hideChrome; these keep the top bar). */
     val hideRecordFab =
@@ -335,8 +341,7 @@ fun CatRecNavGraph(navController: NavHostController = rememberNavController()) {
                                             WindowInsets.safeDrawing.only(
                                                 WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
                                             ),
-                                        )
-                                        .padding(
+                                        ).padding(
                                             horizontal = if (widthCompact) 6.dp else 8.dp,
                                             vertical = if (widthCompact) 2.dp else 4.dp,
                                         ),

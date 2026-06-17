@@ -1,7 +1,7 @@
 package com.ibbie.catrec_screenrecorcer.service
 
-import android.content.ContentValues
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
@@ -18,6 +18,21 @@ import com.ibbie.catrec_screenrecorcer.data.RecordingState
 import com.ibbie.catrec_screenrecorcer.utils.MediaStorePublishDiagnostics
 import java.io.File
 import java.io.FileInputStream
+
+internal data class TempFileCommitResult(
+    val success: Boolean,
+    val failureReason: TempFileCommitFailure? = null,
+    val tempBytes: Long = -1L,
+    val usableBytes: Long = -1L,
+)
+
+internal enum class TempFileCommitFailure {
+    SOURCE_MISSING,
+    SOURCE_EMPTY,
+    INSUFFICIENT_SPACE,
+    OUTPUT_UNAVAILABLE,
+    WRITE_FAILED,
+}
 
 internal class MediaStorePublisher(
     private val context: Context,
@@ -160,26 +175,63 @@ internal class MediaStorePublisher(
         source: File,
         destUri: Uri,
         diagLabel: String = "commit",
-    ): Boolean {
+    ): Boolean = commitTempFileToUriDetailed(source, destUri, diagLabel).success
+
+    fun commitTempFileToUriDetailed(
+        source: File,
+        destUri: Uri,
+        diagLabel: String = "commit",
+    ): TempFileCommitResult {
         val api = Build.VERSION.SDK_INT
         val tempLen = runCatching { if (source.exists()) source.length() else -1L }.getOrDefault(-1L)
+        val usableBytes = source.parentFile?.usableSpace ?: -1L
         MediaStorePublishDiagnostics.log(
             diagLabel,
-            "api=$api dest=${destUri.toString().take(160)} temp=${source.absolutePath} tempLen=$tempLen",
+            "api=$api dest=${destUri.toString().take(160)} temp=${source.absolutePath} " +
+                "tempLen=$tempLen usable=$usableBytes",
         )
-        val ok =
+        if (!source.exists()) {
+            return TempFileCommitResult(false, TempFileCommitFailure.SOURCE_MISSING, tempLen, usableBytes)
+        }
+        if (tempLen <= 0L) {
+            return TempFileCommitResult(false, TempFileCommitFailure.SOURCE_EMPTY, tempLen, usableBytes)
+        }
+        if (isLikelyInsufficientSpaceForMediaStoreCopy(destUri, tempLen, usableBytes)) {
+            MediaStorePublishDiagnostics.log(
+                diagLabel,
+                "skipped_insufficient_space api=$api tempLen=$tempLen usable=$usableBytes",
+            )
+            return TempFileCommitResult(false, TempFileCommitFailure.INSUFFICIENT_SPACE, tempLen, usableBytes)
+        }
+
+        val result =
             try {
-                if (!source.exists() || source.length() == 0L) return false
-                context.contentResolver.openOutputStream(destUri)?.use { out ->
-                    FileInputStream(source).use { it.copyTo(out) }
-                } ?: return false
-                true
+                val opened =
+                    context.contentResolver.openOutputStream(destUri)?.use { out ->
+                        FileInputStream(source).use { it.copyTo(out) }
+                        true
+                    } == true
+                if (opened) {
+                    TempFileCommitResult(true, tempBytes = tempLen, usableBytes = usableBytes)
+                } else {
+                    TempFileCommitResult(false, TempFileCommitFailure.OUTPUT_UNAVAILABLE, tempLen, usableBytes)
+                }
             } catch (e: Exception) {
-                Log.e(LOG_TAG, "commitTempFileToUri failed", e)
-                false
+                val refreshedUsable = source.parentFile?.usableSpace ?: usableBytes
+                val reason =
+                    if (isLikelyInsufficientSpaceForMediaStoreCopy(destUri, tempLen, refreshedUsable)) {
+                        TempFileCommitFailure.INSUFFICIENT_SPACE
+                    } else {
+                        TempFileCommitFailure.WRITE_FAILED
+                    }
+                Log.e(LOG_TAG, "commitTempFileToUri failed reason=$reason", e)
+                TempFileCommitResult(false, reason, tempLen, refreshedUsable)
             }
-        MediaStorePublishDiagnostics.log(diagLabel, "success=$ok api=$api")
-        if (ok && Build.VERSION.SDK_INT >= 29) {
+        MediaStorePublishDiagnostics.log(
+            diagLabel,
+            "success=${result.success} reason=${result.failureReason} api=$api usable=${result.usableBytes}",
+        )
+        if (result.success && Build.VERSION.SDK_INT >= 29) {
             MediaStorePublishDiagnostics.logPostPublishVideo(
                 context.contentResolver,
                 destUri,
@@ -187,8 +239,22 @@ internal class MediaStorePublisher(
                 api = api,
             )
         }
-        return ok
+        return result
     }
+
+    private fun isLikelyInsufficientSpaceForMediaStoreCopy(
+        destUri: Uri,
+        sourceBytes: Long,
+        usableBytes: Long,
+    ): Boolean =
+        sourceBytes > 0L &&
+            usableBytes >= 0L &&
+            isMediaStoreUri(destUri) &&
+            usableBytes < sourceBytes + MIN_COMMIT_FREE_SPACE_RESERVE_BYTES
+
+    private fun isMediaStoreUri(uri: Uri): Boolean =
+        ContentResolver.SCHEME_CONTENT.equals(uri.scheme, ignoreCase = true) &&
+            uri.authority == MediaStore.AUTHORITY
 
     fun finalizeVideoUri(uri: Uri): Boolean {
         if (isSafDocumentUri(uri)) {
@@ -378,5 +444,6 @@ internal class MediaStorePublisher(
 
     private companion object {
         private const val LOG_TAG = "ScreenRecordService"
+        private const val MIN_COMMIT_FREE_SPACE_RESERVE_BYTES = 16L * 1024L * 1024L
     }
 }

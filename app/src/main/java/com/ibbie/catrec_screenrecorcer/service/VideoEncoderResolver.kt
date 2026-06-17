@@ -29,8 +29,7 @@ internal object VideoEncoderResolver {
     }
 
     /** Matches a live [MediaCodec] instance to its [MediaCodecInfo] (for [MediaCodecInfo.getCapabilitiesForType]). */
-    fun findEncoderInfo(codecName: String): MediaCodecInfo? =
-        regularCodecList().codecInfos.firstOrNull { it.isEncoder && it.name == codecName }
+    fun findEncoderInfo(codecName: String): MediaCodecInfo? = regularCodecList().codecInfos.firstOrNull { it.isEncoder && it.name == codecName }
 
     fun resolveVideoEncoderName(
         mimeType: String,
@@ -40,22 +39,22 @@ internal object VideoEncoderResolver {
     ): String? {
         val mediaCodecList = regularCodecList()
         val hardware =
-            mediaCodecList.codecInfos.firstOrNull { info ->
-                val caps =
-                    try {
-                        info.getCapabilitiesForType(mimeType)
-                    } catch (_: Throwable) {
-                        null
-                    }
-                info.isEncoder &&
-                    info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
-                    caps?.colorFormats?.any {
-                        it == MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
-                    } == true &&
-                    !info.name.contains("google", ignoreCase = true) &&
-                    if (Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated else true
-            }
-                ?.name
+            mediaCodecList.codecInfos
+                .firstOrNull { info ->
+                    val caps =
+                        try {
+                            info.getCapabilitiesForType(mimeType)
+                        } catch (_: Throwable) {
+                            null
+                        }
+                    info.isEncoder &&
+                        info.supportedTypes.any { it.equals(mimeType, ignoreCase = true) } &&
+                        caps?.colorFormats?.any {
+                            it == MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface
+                        } == true &&
+                        !info.name.contains("google", ignoreCase = true) &&
+                        if (Build.VERSION.SDK_INT >= 29) info.isHardwareAccelerated else true
+                }?.name
         if (hardware != null) return hardware
         val discoveryFormat =
             MediaFormat.createVideoFormat(mimeType, width, height).apply {

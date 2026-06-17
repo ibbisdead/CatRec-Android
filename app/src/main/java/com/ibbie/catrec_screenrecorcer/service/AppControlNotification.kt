@@ -67,13 +67,12 @@ object AppControlNotification {
 
         val isRecording = RecordingState.isRecording.value
         val isBuffering = RecordingState.isBuffering.value
-        val isPrepared = RecordingState.isPrepared.value
         val isSaving = RecordingState.isSaving.value
 
         if (Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(
                 TAG,
-                "refresh: recording=$isRecording buffering=$isBuffering prepared=$isPrepared saving=$isSaving",
+                "refresh: recording=$isRecording buffering=$isBuffering saving=$isSaving",
             )
         }
 
@@ -86,7 +85,7 @@ object AppControlNotification {
             cancel(app)
             return
         }
-        if (isPrepared || isRecording) {
+        if (isRecording) {
             if (Log.isLoggable(TAG, Log.DEBUG)) {
                 Log.d(TAG, "refresh: delegate to ScreenRecordService ACTION_REFRESH_MAIN_NOTIFICATION")
             }
