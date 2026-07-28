@@ -1,6 +1,6 @@
 # Terms of Service
 
-**CatRec – Screen Recorder** · Last updated: May 27, 2026
+**CatRec – Screen Recorder** · Last updated: July 23, 2026
 
 ---
 
@@ -17,10 +17,15 @@ CatRec is an Android screen recorder that lets you:
 - Record your device screen (standard recording and rolling **Clipper** buffer mode)
 - Capture screenshots from the overlay or in-app controls
 - Optionally record microphone audio, internal app audio (where supported), and separate mic tracks
+- Optionally enable the **CatRec game mic helper** accessibility service so CatRec can record microphone audio while teammates continue to hear you in a supported game or chat app
 - Use floating overlay controls, drawing tools, camera bubble, and watermark options
 - Manage recordings in a library, trim videos, export GIFs, and use related editing tools
 
 The App is provided by **ibbie** ("Developer", "we", "us"). Features may vary by device, Android version, and OEM restrictions.
+
+### Optional AccessibilityService API use
+
+CatRec is not an accessibility tool. The optional **CatRec game mic helper** uses Android’s AccessibilityService API only for the game/chat microphone compatibility feature described above. It cannot retrieve window content, cannot perform gestures, does not control other apps, and does not collect or share data through the AccessibilityService API. The helper is not required for ordinary recording, must be enabled manually in Android Accessibility settings, and can be disabled there at any time. Full details are provided in the [Permissions Disclosure](https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md) and [Privacy Policy](https://github.com/ibbisdead/CatRec-Android/blob/main/privacy-policy.md).
 
 ---
 

@@ -30,6 +30,15 @@ This document explains every permission CatRec requests, why it is needed, and h
 ### `RECORD_AUDIO`
 **Why needed:** Records microphone audio when you enable mic audio or separate mic recording. Audio is saved on your device only.
 
+### AccessibilityService API — optional **CatRec game mic helper**
+**Core functionality:** On supported Android devices, this optional service helps CatRec keep access to the microphone while a foreground game or chat app is also using it. This lets CatRec record the microphone track while teammates can continue to hear you in game or voice chat. CatRec is not an accessibility tool, and this service is not needed for ordinary screen recording.
+
+**How it is enabled:** CatRec provides a **Game mic** action beside the capture-mode controls during normal app use, as well as a **Fix game chat mic** entry in CatRec settings. Choosing either action opens a dedicated in-app disclosure. Only after you tap **Agree and continue** does CatRec direct you to Android Accessibility settings, where you must manually enable **CatRec game mic helper**. Choosing **No thanks**, dismissing the disclosure, or leaving the app is not treated as consent. You can disable the helper at any time in **Android Settings → Accessibility → Installed apps → CatRec game mic helper** (the exact path may vary by device).
+
+**What the service can access:** The service is configured with `canRetrieveWindowContent=false` and `canPerformGestures=false`. It cannot read screen content or text, inspect the view hierarchy, click, type, scroll, or control other apps. Android may deliver window-state-change event callbacks containing limited metadata such as the foreground app’s package name. CatRec ignores those callbacks and does not collect, store, transmit, or share their contents.
+
+**Data use and sharing:** CatRec does not collect, store, transmit, or share personal or sensitive data through the AccessibilityService API. The service itself does not record audio. CatRec’s recording engine captures microphone audio separately using `RECORD_AUDIO`, only after you start a recording with microphone audio enabled. The resulting audio remains on your device unless you choose to share it.
+
 ### Internal audio (playback capture — no separate manifest permission)
 **How it works:** When you enable **Internal audio** on Android 10+, CatRec captures app/system playback using Android’s **audio playback capture** API together with your approved screen-capture (Media Projection) session—not a standalone `CAPTURE_AUDIO_OUTPUT` permission. Some apps block capture or use unsupported audio paths; the App may notify you or offer fallbacks where supported.
 
@@ -74,6 +83,7 @@ When you choose an image or video (watermark, merge, GIF tool, feedback attachme
 |-----------|-------------------|------------------------------------------|
 | Screen recordings & screenshots | Yes | No |
 | Microphone / internal audio tracks | Yes | No |
+| Accessibility events / window content | No; window content is not accessible and event callbacks are ignored | No |
 | Settings & purchase flags | Yes | No |
 | Ad / analytics data (if enabled) | Processed by Google | Via Google services only |
 | Support email you send | In your mail app | Only if you send it to us |
@@ -89,4 +99,4 @@ Questions about these permissions:
 
 ---
 
-_Last updated: May 27, 2026_
+_Last updated: July 23, 2026_

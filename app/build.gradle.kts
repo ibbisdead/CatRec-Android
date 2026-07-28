@@ -24,7 +24,7 @@ android {
         applicationId = "com.ibbie.catrec_screenrecorder"
         minSdk = 27
         targetSdk = 36
-        versionCode = 29
+        versionCode = 33
         versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

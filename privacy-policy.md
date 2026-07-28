@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**CatRec – Screen Recorder** · Last updated: May 27, 2026
+**CatRec – Screen Recorder** · Last updated: July 23, 2026
 
 ---
 
@@ -39,6 +39,24 @@ You can delete media from within the App or from your device file manager at any
 The App requests Android permissions only to provide its features (recording, overlay controls, library, camera bubble, notifications, and related tools). A detailed permission-by-permission explanation is in our [Permissions Disclosure](https://github.com/ibbisdead/CatRec-Android/blob/main/permissions-disclosure.md).
 
 Permissions are not used to build a profile of you or to upload your recordings to us.
+
+### Optional Accessibility Service: CatRec game mic helper
+
+CatRec includes an optional Android accessibility service named **CatRec game mic helper**. CatRec is not an accessibility tool, and this service is not required for ordinary screen recording.
+
+The service supports one user-facing recording feature: on supported Android devices, it helps CatRec keep access to the microphone while a foreground game or chat app is also using the microphone. This lets CatRec record the microphone track while teammates can continue to hear the user in game or voice chat. The user must deliberately enable the service in Android Accessibility settings and can disable it there at any time.
+
+The accessibility service itself does not record audio. Microphone audio is captured only by CatRec’s recording engine, with the separate Android `RECORD_AUDIO` permission, after the user starts a recording with microphone audio enabled.
+
+CatRec limits this accessibility service as follows:
+
+- It cannot retrieve window content (`canRetrieveWindowContent=false`).
+- It cannot perform gestures (`canPerformGestures=false`).
+- It does not read screen text, inspect app interfaces, click buttons, type, scroll, or change settings.
+- Android may deliver window-state-change accessibility event callbacks containing limited metadata such as the foreground app’s package name; CatRec ignores those callbacks and does not collect, store, transmit, or share their contents.
+- No personal or sensitive data is collected, stored, or shared through the AccessibilityService API.
+
+Enabling the service does not upload microphone audio, recordings, accessibility events, or screen content to the Developer. Recordings and microphone tracks remain stored locally unless the user chooses to share them.
 
 ---
 
